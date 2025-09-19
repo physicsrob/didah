@@ -1,6 +1,6 @@
 # Claude Code Configuration
 
-This file contains configuration and context for working with this Morse code learning app using Claude Code.
+This file contains configuration and context for working with CodeBeat using Claude Code.
 
 ## Project Overview
 

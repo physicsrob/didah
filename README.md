@@ -1,4 +1,4 @@
-# Morse Code Learning App
+# CodeBeat
 
 A modern web application for learning Morse code with real-time feedback, statistics tracking, and multiple study modes.
 
