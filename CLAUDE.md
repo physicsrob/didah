@@ -70,3 +70,13 @@ Following the build order from `arch.md`:
 # Import Context
 @spec.md
 @arch.md
+@STATUS.md
+
+# Instructions for AI Assistants
+
+When working on this project:
+1. **Always read STATUS.md first** to understand current progress
+2. **Update STATUS.md** when completing tasks or making significant progress
+3. **Follow the implementation order** outlined in STATUS.md and arch.md
+4. **Run tests** after implementing core logic (`npm test`)
+5. **Commit frequently** with descriptive messages including 🤖 Generated with [Claude Code]
