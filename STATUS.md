@@ -1,8 +1,8 @@
 # CodeBeat Implementation Status
 
-## Overall Progress: 15% Complete
+## Overall Progress: 25% Complete
 
-### Phase 1: Core Foundation ✅ 75% Complete
+### Phase 1: Core Foundation ✅ 100% Complete
 - [x] Project setup (Vite + React + TypeScript)
 - [x] Directory structure from arch.md
 - [x] Domain types (`src/core/types/domain.ts`)
@@ -11,10 +11,11 @@
   - [x] Speed tier window multipliers
   - [x] Active/Passive timing calculations
   - [x] Comprehensive test suite (9 tests passing)
-- [ ] **Scheduler** (`src/features/session/services/scheduler.ts`) 🚧 NEXT
-  - [ ] Emission timeline generation
-  - [ ] Precise timestamp calculations
-  - [ ] Test suite
+- [x] **Scheduler** (`src/features/session/services/scheduler.ts`)
+  - [x] Emission timeline generation
+  - [x] Precise timestamp calculations for Active/Passive modes
+  - [x] Schedule utilities (getNextEvent, getEventsUntil, shouldEndSession)
+  - [x] Comprehensive test suite (14 tests passing)
 
 ### Phase 2: Session State Machine ⏳ 0% Complete
 - [ ] XState session machine (`src/features/session/machine/`)
@@ -69,15 +70,17 @@
 - [ ] Performance testing
 
 ## Current Task
-**Implementing Scheduler** - The next component needed to generate precise timing schedules for character emissions and input windows based on the timing engine calculations.
+**Phase 1 Complete!** - Ready to begin Phase 2: Session State Machine implementation using XState for deterministic session orchestration.
 
 ## Key Files Implemented
 - ✅ `src/core/morse/timing.ts` - Core timing calculations
 - ✅ `src/core/types/domain.ts` - TypeScript domain types
-- ✅ `src/tests/timing.test.ts` - Timing engine tests
+- ✅ `src/features/session/services/scheduler.ts` - Session timing scheduler
+- ✅ `src/tests/timing.test.ts` - Timing engine tests (9 tests)
+- ✅ `src/tests/scheduler.test.ts` - Scheduler tests (14 tests)
 - ✅ Project configuration and documentation
 
 ## Next Steps
-1. Implement Scheduler with comprehensive tests
-2. Begin session state machine implementation
-3. Create minimal audio engine for basic tone generation
+1. Install XState and implement session state machine
+2. Create Active/Passive mode state transitions
+3. Implement minimal audio engine for basic tone generation
