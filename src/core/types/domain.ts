@@ -18,6 +18,7 @@ export type UserConfig = {
 export type SessionConfig = {
   mode: "active" | "passive";
   lengthMs: number;
+  wpm: number;
   speedTier: "slow" | "medium" | "fast" | "lightning";
   sourceId: string;
   feedback: "buzzer" | "flash" | "both";

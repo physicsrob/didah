@@ -17,12 +17,16 @@
   - [x] Schedule utilities (getNextEvent, getEventsUntil, shouldEndSession)
   - [x] Comprehensive test suite (14 tests passing)
 
-### Phase 2: Session State Machine ⏳ 0% Complete
-- [ ] XState session machine (`src/features/session/machine/`)
-- [ ] Active mode states (emitting → awaitingInput → feedback → loop)
-- [ ] Passive mode states (emitting → preRevealDelay → reveal → postRevealDelay → loop)
-- [ ] State machine tests with fake timers
-- [ ] Session orchestration
+### Phase 2: Session Controller ⏳ 0% Complete
+- [ ] SessionController (`src/features/session/SessionController.ts`)
+- [ ] Pure transition function (`src/features/session/transition.ts`)
+- [ ] Effect types and runner (`src/features/session/effects.ts`)
+- [ ] Session types and Clock interface (`src/features/session/types.ts`)
+- [ ] Active mode phases (emitting → awaitingInput → feedback → loop)
+- [ ] Passive mode phases (emitting → preRevealDelay → reveal → postRevealDelay → loop)
+- [ ] Pure transition tests (`__tests__/transition.test.ts`)
+- [ ] Controller timing tests with fake clock (`__tests__/controller.timing.test.ts`)
+- [ ] Controller race condition tests (`__tests__/controller.races.test.ts`)
 
 ### Phase 3: Audio & Feedback ⏳ 0% Complete
 - [ ] Audio Engine (`src/features/session/services/audioEngine.ts`)
@@ -70,7 +74,7 @@
 - [ ] Performance testing
 
 ## Current Task
-**Phase 1 Complete!** - Ready to begin Phase 2: Session State Machine implementation using XState for deterministic session orchestration.
+**Phase 1 Complete!** - Ready to begin Phase 2: SessionController implementation with pure transitions, effect runner, and epoch-based cancellation for deterministic session orchestration.
 
 ## Key Files Implemented
 - ✅ `src/core/morse/timing.ts` - Core timing calculations
@@ -81,6 +85,7 @@
 - ✅ Project configuration and documentation
 
 ## Next Steps
-1. Install XState and implement session state machine
-2. Create Active/Passive mode state transitions
-3. Implement minimal audio engine for basic tone generation
+1. Implement SessionController with pure transition function and effect runner
+2. Create Active/Passive mode phase transitions with Clock injection
+3. Add comprehensive tests for transitions and controller timing
+4. Implement minimal audio engine for basic tone generation

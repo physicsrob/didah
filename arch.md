@@ -9,7 +9,7 @@
 **Feature modules**
 1. **Session** (Active/Passive practice)
    - Orchestrates timing, audio, input handling, instant feedback, and session logging.
-   - Built around a deterministic **state machine** so timing rules and transitions are predictable and testable.
+   - Built around a **SessionController** that executes a pure transition function and an effect runner, with an injected clock and epoch-based cancellation. Active mode's input window opens at audio start; latency is measured from audio start to first correct key.
 
 2. **Statistics**
    - Aggregates session logs into daily metrics, speed/latency, confusion matrix, and study time.
@@ -147,29 +147,34 @@ type SessionLog = {
   - Fast: send → `2×dit` → reveal → `1×dit` → next
 - Morse rendering: character timing (dit/dah ratio 1:3) and **intra-symbol**/symbol/word spacing (1/3/7 dits) handled by the **Morse Timing Engine**, separate from "recognition windows."
 
-## 4) Session orchestration as a state machine
+## 4) Session orchestration with SessionController + Pure Transitions
 
-Using XState (or a small homegrown state machine), the **Session** has predictable transitions:
+Using a **SessionController** that executes a pure transition function and an effect runner, the **Session** has predictable behavior with clock injection and epoch-based cancellation:
 
-**States**
-- `idle` → `running.active` or `running.passive` → `ended`
-- `running.active` substates:
-  - `emitting` (play character audio)
-  - `awaitingInput` (window open; abort early on correct)
-  - `feedback` (on fail/timeout → buzzer/flash; optional replay overlay)
-  - loop
-- `running.passive` substates:
-  - `emitting` → `preRevealDelay` → `reveal` → `postRevealDelay` → loop
+**Phases**
+- `idle` → `emitting` → (`awaitingInput` | `feedback` | `preRevealDelay` → `reveal` → `postRevealDelay`) → `ended`
+- **Active mode**: `emitting` (audio + input window open) → `awaitingInput` (if window remains after audio) → `feedback` (on timeout)
+- **Passive mode**: `emitting` → `preRevealDelay` → `reveal` → `postRevealDelay`
 
 **Events**
-- `TICK` (Scheduler driven)
-- `KEYPRESS(key)`
-- `TIMEOUT`
-- `CORRECT` | `INCORRECT`
-- `END` (duration reached)
+- `Start` with SessionConfig
+- `AudioEnded` (emission audio finished)
+- `Keypress` with key and timestamp
+- `Timeout` with kind (window/pre/post)
+- `Advance` (move to next character)
+- `End` with reason (user/duration)
+
+**Key Contracts:**
+- **Active mode**: Input window opens at audio start; correct input during audio stops playback immediately
+- **Latency measurement**: From audio start to first correct key
+- **No retries**: Failed characters advance to next (per spec)
+- **Clock injection**: All timing comes from injected Clock interface
+- **Epoch cancellation**: Timer callbacks check epoch; stale callbacks are ignored
 
 **Why this matters:**
-- Deterministic flow → easy to unit-test timing and edge cases (early input, late input, race conditions) without touching audio.
+- Deterministic flow with pure transitions → easy to unit-test timing and edge cases without audio
+- Clock injection eliminates timer races and enables fake timer testing
+- Effect-based architecture separates concerns (logic vs. side effects)
 
 ## 5) Text Sources (pluggable providers)
 
@@ -247,10 +252,14 @@ Feature-first with a small shared core. (Vite + React + TS assumed.)
       Nav.tsx
   /features
     /session
-      machine/
-        sessionMachine.ts   // XState config (pure logic)
-        guards.ts
-        actions.ts
+      SessionController.ts
+      transition.ts          // pure transitions
+      effects.ts            // Effect type & runner (audio, feedback)
+      types.ts              // phases, events, context, Clock, Effect
+      __tests__/
+        transition.test.ts
+        controller.timing.test.ts
+        controller.races.test.ts
       services/
         scheduler.ts        // deterministic clock; test with fake timers
         audioEngine.ts      // WebAudio wrapper (thin, not unit tested)
@@ -316,7 +325,9 @@ Feature-first with a small shared core. (Vite + React + TS assumed.)
   /styles
     globals.css
   /tests
-    sessionMachine.test.ts
+    transition.test.ts
+    controller.timing.test.ts
+    controller.races.test.ts
     scheduler.test.ts
     timing.test.ts
     frequencySampler.test.ts
@@ -334,12 +345,13 @@ Notes:
 
 Focus on pure, deterministic logic where tests buy you confidence and guard against regressions:
 
-1. **Session state machine** (`features/session/machine/sessionMachine.ts`)
-   - Correct transitions for Active/Passive flows.
-   - Early correct input aborts the window and advances.
-   - Timeout behavior triggers feedback + optional replay; does not re-queue the failed letter.
-   - Edge cases: input during `emitting`, input exactly at boundary, rapid successive keypresses.
-   - Use **fake timers** to simulate time—no audio.
+1. **SessionController / transition** (`features/session/SessionController.ts`, `transition.ts`)
+   - Phase transitions: Active (emitting → awaitingInput → feedback), Passive (emitting → preRevealDelay → reveal → postRevealDelay)
+   - Timer scheduling and cancellation with epoch-based race protection
+   - Early correct input during audio stops playback and advances immediately
+   - Boundary timings: minimum window enforcement, precise reveal spacing
+   - Edge cases: input during phases, timeout vs keypress precedence, rapid successive keypresses
+   - Pure transition function tested without side effects; controller tested with fake clock
 
 2. **Scheduler** (`features/session/services/scheduler.ts`)
    - Given a WPM + speed tier, emits precise timestamps for:
@@ -383,8 +395,8 @@ Focus on pure, deterministic logic where tests buy you confidence and guard agai
 
 ## 11) Implementation details that pay off
 
-- **State management**: Zustand (or Redux Toolkit) for app-level config + repositories; XState for the session machine. They complement each other.
-- **Strict TypeScript** (`"strict": true`) + ESLint rules for exhaustive switch on state machine events.
+- **State management**: Zustand (or Redux Toolkit) for app-level config + repositories; SessionController for session orchestration with pure transitions.
+- **Strict TypeScript** (`"strict": true`) + ESLint rules for exhaustive switch on session events and phases.
 - **Performance**:
   - Precompute audio buffers for common characters at current WPM to avoid runtime oscillator setup overhead.
   - Keep the "previously sent characters" list virtualized if needed (but realistically it's small).
@@ -433,7 +445,7 @@ Focus on pure, deterministic logic where tests buy you confidence and guard agai
 ### TL;DR: What to build first (in order)
 
 1. Core **Morse Timing Engine** + **Scheduler** (with tests).
-2. **Session state machine** (with tests) using a dummy "random letters" source.
+2. **SessionController + pure transitions** (with tests) using a dummy "random letters" source.
 3. Minimal **Audio Engine** (enough to play dit/dah sequences) + **Feedback** adapters.
 4. **Event Log** + **Statistics selectors** + basic charts.
 5. **Text Sources** providers (weighted words, RSS proxy, hard characters sampler) with tests.
