@@ -66,30 +66,10 @@ export async function runActiveEmission(
   sessionSignal.addEventListener('abort', linkAbort, { once: true });
 
   try {
-    // Observe all keys to log incorrect ones
-    input.observe((event: KeyEvent) => {
-      if (isValidChar(event.key)) {
-        const upperKey = event.key.toUpperCase();
-        const upperChar = char.toUpperCase();
-
-        if (upperKey !== upperChar) {
-          console.log(`[Input] Key pressed: '${upperKey}' at ${event.at}ms - INCORRECT (expected '${upperChar}')`);
-          io.log({
-            type: 'incorrect',
-            at: event.at,
-            expected: char,
-            got: upperKey
-          });
-          // Optional: feedback on incorrect (uncomment if desired)
-          // io.feedback('incorrect', char);
-        }
-      }
-    }, charScope.signal);
-
     // Log emission start
     io.log({ type: 'emission', at: emissionStart, char });
 
-    // Race: correct key vs timeout
+    // Race: correct key vs incorrect key vs timeout
     const result = await select([
       // Arm 0: Wait for correct key
       waitForEvent(async (signal) => {
@@ -109,17 +89,38 @@ export async function runActiveEmission(
           char,
           latencyMs
         });
-        return 'correct' as const;
+        return { type: 'correct', key: event.key } as const;
       }),
 
-      // Arm 1: Timeout (after audio completes + recognition window)
-      clockTimeout(clock, charDurationMs + windowMs, 'timeout' as const)
+      // Arm 1: Wait for incorrect key
+      waitForEvent(async (signal) => {
+        const event = await input.takeUntil(
+          (e: KeyEvent) => {
+            const upperKey = e.key.toUpperCase();
+            const upperChar = char.toUpperCase();
+            return isValidChar(e.key) && upperKey !== upperChar;
+          },
+          signal
+        );
+
+        io.log({
+          type: 'incorrect',
+          at: event.at,
+          expected: char,
+          got: event.key.toUpperCase()
+        });
+        return { type: 'incorrect', key: event.key } as const;
+      }),
+
+      // Arm 2: Timeout (after audio completes + recognition window)
+      clockTimeout(clock, charDurationMs + windowMs, { type: 'timeout' } as const)
     ], sessionSignal);
 
     // Clean up observers
     charScope.abort();
 
-    if (result.winner === 0) {
+    // Handle result based on type
+    if (result.value.type === 'correct') {
       // Correct key won
       console.log(`[Input] Correct key pressed for '${char}'`);
       await io.stopAudio(); // Stop audio early
@@ -127,6 +128,22 @@ export async function runActiveEmission(
 
       console.log(`[Emission] End - Char: '${char}', Outcome: correct`);
       return 'correct';
+    } else if (result.value.type === 'incorrect') {
+      // Incorrect key won - treat like timeout
+      console.log(`[Input] Incorrect key '${result.value.key}' pressed for '${char}' at ${clock.now()}ms`);
+      await io.stopAudio(); // Stop audio early
+      io.feedback('incorrect', char);
+      console.log(`[Feedback] Triggering incorrect feedback for '${char}'`);
+
+      // Optional replay on incorrect
+      if (cfg.replay && io.replay) {
+        console.log(`[Replay] Starting replay for '${char}'`);
+        await io.replay(char, cfg.wpm);
+        console.log(`[Replay] Complete for '${char}'`);
+      }
+
+      console.log(`[Emission] End - Char: '${char}', Outcome: incorrect (advanced immediately)`);
+      return 'timeout'; // Return 'timeout' for compatibility
     } else {
       // Timeout won
       console.log(`[Input] Timeout at ${clock.now()}ms for '${char}'`);

@@ -103,7 +103,7 @@ describe('runActiveEmission', () => {
     expect(timeoutLog).toBeDefined();
   });
 
-  it('logs incorrect keys during window', async () => {
+  it('advances immediately on incorrect key', async () => {
     const config = createTestConfig({ speedTier: 'medium' });
 
     // Start emission
@@ -116,25 +116,24 @@ describe('runActiveEmission', () => {
       signal
     );
 
-    // Type incorrect characters then correct
+    // Type incorrect character
     input.type('A', clock.now());
-    input.type('B', clock.now());
-    input.type('C', clock.now()); // Finally correct
     await flushPromises();
-
-    // Advance for inter-character spacing after correct input
-    await advanceAndFlush(clock, 180);
 
     const result = await emissionPromise;
 
-    expect(result).toBe('correct');
+    // Should return timeout (fail) immediately on wrong key
+    expect(result).toBe('timeout');
 
-    // Check that incorrect keys were logged
+    // Check that incorrect key was logged
     const logCalls = io.getCalls('log');
     const incorrectLogs = logCalls.filter(c => c.args[0].type === 'incorrect');
-    expect(incorrectLogs).toHaveLength(2);
+    expect(incorrectLogs).toHaveLength(1);
     expect(incorrectLogs[0].args[0].got).toBe('A');
-    expect(incorrectLogs[1].args[0].got).toBe('B');
+
+    // Check that feedback was triggered for incorrect
+    const feedbackCalls = io.getCalls('feedback');
+    expect(feedbackCalls.some(c => c.args[0] === 'incorrect')).toBe(true);
   });
 
   it('handles replay when enabled and timeout occurs', async () => {
