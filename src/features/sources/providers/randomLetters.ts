@@ -15,8 +15,10 @@ export interface RandomLettersConfig {
 
 export class RandomLettersSource implements CharacterSource {
   private alphabet: string[] = [];
+  private config: RandomLettersConfig;
 
-  constructor(private config: RandomLettersConfig) {
+  constructor(config: RandomLettersConfig) {
+    this.config = config;
     // Initialize random letters source with config
     this.updateAlphabet();
   }
@@ -48,6 +50,10 @@ export class RandomLettersSource implements CharacterSource {
 
     const index = Math.floor(Math.random() * this.alphabet.length);
     return this.alphabet[index];
+  }
+
+  reset(): void {
+    // No state to reset for random source
   }
 
   updateConfig(config: Partial<RandomLettersConfig>): void {

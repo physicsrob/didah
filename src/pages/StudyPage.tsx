@@ -100,8 +100,10 @@ export function StudyPage() {
   // Start session
   const startSession = useCallback(async () => {
     await initializeAudio();
+    // Update audio engine with session WPM before starting
+    audioEngine.updateConfig({ wpm: DEFAULT_SESSION_CONFIG.wpm });
     runner.start(DEFAULT_SESSION_CONFIG);
-  }, [runner, initializeAudio]);
+  }, [runner, initializeAudio, audioEngine]);
 
   // Stop session
   const stopSession = useCallback(() => {

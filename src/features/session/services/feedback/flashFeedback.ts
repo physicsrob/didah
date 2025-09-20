@@ -16,7 +16,10 @@ export interface FlashConfig {
 export class FlashFeedback implements Feedback {
   private currentTimeout: number | null = null;
 
-  constructor(private config: FlashConfig) {
+  private config: FlashConfig;
+
+  constructor(config: FlashConfig) {
+    this.config = config;
     // Initialize flash feedback with config
   }
 

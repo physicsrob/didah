@@ -21,7 +21,10 @@ export class AudioEngine {
   private isPlaying = false;
   private playbackPromise: Promise<void> | null = null;
 
-  constructor(private config: AudioEngineConfig) {
+  private config: AudioEngineConfig;
+
+  constructor(config: AudioEngineConfig) {
+    this.config = config;
     // Initialize audio engine with provided config
   }
 
@@ -138,7 +141,7 @@ export class AudioEngine {
 
       for (let i = 0; i < pattern.length; i++) {
         const element = pattern[i];
-        const duration = element === 'dit' ? ditMs : ditMs * 3; // dah is 3x dit
+        const duration = element === '.' ? ditMs : ditMs * 3; // dah is 3x dit
 
         await this.playTone(duration);
 

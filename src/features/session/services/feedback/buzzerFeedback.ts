@@ -16,7 +16,10 @@ export interface BuzzerConfig {
 export class BuzzerFeedback implements Feedback {
   private audioContext: AudioContext | null = null;
 
-  constructor(private config: BuzzerConfig) {
+  private config: BuzzerConfig;
+
+  constructor(config: BuzzerConfig) {
+    this.config = config;
     // Initialize buzzer feedback with config
   }
 

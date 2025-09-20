@@ -24,9 +24,6 @@ const clock = args.clockMode === 'instant'
 // Create input bus
 const inputBus = new SimpleInputBus();
 
-// Create mock IO
-const io = createMockIO(clock, args.clockMode);
-
 // Session config
 const config: SessionConfig = {
   mode: args.mode,
@@ -35,6 +32,9 @@ const config: SessionConfig = {
   lengthMs: 60000, // Not used for CLI simulation
   replay: args.mode === 'active'
 };
+
+// Create mock IO with correct WPM
+const io = createMockIO(clock, args.clockMode, config.wpm);
 
 // Setup keyboard input for real-time active mode
 let rl: readline.Interface | null = null;
