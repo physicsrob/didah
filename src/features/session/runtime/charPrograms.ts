@@ -7,6 +7,7 @@ import type { IO } from './io';
 import type { InputBus, KeyEvent } from './inputBus';
 import { select, waitForEvent, clockTimeout } from './select';
 import { getActiveWindowMs, getPassiveTimingMs, wpmToDitMs, calculateCharacterDurationMs, MORSE_SPACING } from '../../../core/morse/timing';
+import { debug } from '../../../core/debug';
 
 // Session config type - simplified for now
 export type SessionConfig = {
@@ -42,12 +43,12 @@ export async function runActiveEmission(
   sessionSignal: AbortSignal
 ): Promise<ActiveOutcome> {
   const emissionStart = clock.now();
-  console.log(`[Emission] Start - Char: '${char}', Time: ${emissionStart}ms`);
+  debug.log(`[Emission] Start - Char: '${char}', Time: ${emissionStart}ms`);
 
   // Start audio but don't await - we accept input during audio
   io.playChar(char, cfg.wpm).catch(() => {
     // Audio errors shouldn't crash the emission
-    console.warn(`Audio failed for char: ${char}`);
+    debug.warn(`Audio failed for char: ${char}`);
   });
 
   // Calculate recognition window and character audio duration
@@ -57,8 +58,8 @@ export async function runActiveEmission(
     Math.max(60, ditMs) // Minimum 60ms or 1 dit
   );
   const charDurationMs = calculateCharacterDurationMs(char, cfg.wpm);
-  console.log(`[Window] Recognition window: ${windowMs}ms (${cfg.speedTier} @ ${cfg.wpm} WPM, dit=${ditMs}ms)`);
-  console.log(`[Audio] Character duration: ${charDurationMs}ms`);
+  debug.log(`[Window] Recognition window: ${windowMs}ms (${cfg.speedTier} @ ${cfg.wpm} WPM, dit=${ditMs}ms)`);
+  debug.log(`[Audio] Character duration: ${charDurationMs}ms`);
 
   // Create a scoped abort controller for this emission
   const charScope = new AbortController();
@@ -122,33 +123,33 @@ export async function runActiveEmission(
     // Handle result based on type
     if (result.value.type === 'correct') {
       // Correct key won
-      console.log(`[Input] Correct key pressed for '${char}'`);
+      debug.log(`[Input] Correct key pressed for '${char}'`);
       await io.stopAudio(); // Stop audio early
       io.feedback('correct', char);
 
-      console.log(`[Emission] End - Char: '${char}', Outcome: correct`);
+      debug.log(`[Emission] End - Char: '${char}', Outcome: correct`);
       return 'correct';
     } else if (result.value.type === 'incorrect') {
       // Incorrect key won - treat like timeout
-      console.log(`[Input] Incorrect key '${result.value.key}' pressed for '${char}' at ${clock.now()}ms`);
+      debug.log(`[Input] Incorrect key '${result.value.key}' pressed for '${char}' at ${clock.now()}ms`);
       await io.stopAudio(); // Stop audio early
       io.feedback('incorrect', char);
-      console.log(`[Feedback] Triggering incorrect feedback for '${char}'`);
+      debug.log(`[Feedback] Triggering incorrect feedback for '${char}'`);
 
       // Optional replay on incorrect
       if (cfg.replay && io.replay) {
-        console.log(`[Replay] Starting replay for '${char}'`);
+        debug.log(`[Replay] Starting replay for '${char}'`);
         await io.replay(char, cfg.wpm);
-        console.log(`[Replay] Complete for '${char}'`);
+        debug.log(`[Replay] Complete for '${char}'`);
       }
 
-      console.log(`[Emission] End - Char: '${char}', Outcome: incorrect (advanced immediately)`);
+      debug.log(`[Emission] End - Char: '${char}', Outcome: incorrect (advanced immediately)`);
       return 'timeout'; // Return 'timeout' for compatibility
     } else {
       // Timeout won
-      console.log(`[Input] Timeout at ${clock.now()}ms for '${char}'`);
+      debug.log(`[Input] Timeout at ${clock.now()}ms for '${char}'`);
       io.feedback('timeout', char);
-      console.log(`[Feedback] Triggering timeout feedback for '${char}'`);
+      debug.log(`[Feedback] Triggering timeout feedback for '${char}'`);
       io.log({
         type: 'timeout',
         at: clock.now(),
@@ -157,12 +158,12 @@ export async function runActiveEmission(
 
       // Optional replay
       if (cfg.replay && io.replay) {
-        console.log(`[Replay] Starting replay for '${char}'`);
+        debug.log(`[Replay] Starting replay for '${char}'`);
         await io.replay(char, cfg.wpm);
-        console.log(`[Replay] Complete for '${char}'`);
+        debug.log(`[Replay] Complete for '${char}'`);
       }
 
-      console.log(`[Emission] End - Char: '${char}', Outcome: timeout`);
+      debug.log(`[Emission] End - Char: '${char}', Outcome: timeout`);
       return 'timeout';
     }
   } finally {
@@ -197,7 +198,7 @@ export async function runPassiveEmission(
   try {
     await io.playChar(char, cfg.wpm);
   } catch (error) {
-    console.warn(`Audio failed for char: ${char}`, error);
+    debug.warn(`Audio failed for char: ${char}`, error);
   }
 
   // Get passive timing parameters

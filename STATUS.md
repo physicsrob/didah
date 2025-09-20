@@ -40,7 +40,6 @@ The actual session orchestration implementation:
 - **feedback/index.ts**: Feedback factory
 
 ### ⚠️ Partially Implemented
-- **scheduler.ts**: Exists but appears unused (was part of old approach?)
 - **Text sources**: Only RandomCharSource implemented, others missing
 
 ### ✅ UI Components
@@ -49,7 +48,6 @@ The actual session orchestration implementation:
 
 ### ✅ Test Coverage
 - `/src/tests/timing.test.ts`: Timing calculations (9 tests)
-- `/src/tests/scheduler.test.ts`: Scheduler tests (14 tests - but scheduler unused?)
 - `/src/tests/audioEngine.integration.test.ts`: Audio integration tests (9 tests)
 - `/src/features/session/runtime/__tests__/`: Runtime system tests
   - `charPrograms.test.ts`
@@ -127,14 +125,6 @@ See `tech_debt.md` for detailed analysis. Key issues:
 ❌ Text sources beyond random
 ❌ User settings
 ❌ Multiple practice modes/configs
-
-## Test Results
-
-Last test run shows **32 tests passing** across:
-- Core timing logic
-- Scheduler (though unused in production)
-- Audio engine integration
-- Runtime system components
 
 ## Next Steps (Recommended Priority)
 
