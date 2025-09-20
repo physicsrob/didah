@@ -46,12 +46,10 @@ export function createMockIO(clock: Clock, clockMode: 'instant' | 'realtime'): I
         await clock.sleep(duration);
         console.log(`[${clock.now()}ms] AUDIO_COMPLETE: '${char}' (played for ${duration}ms)`);
       } else {
-        // Instant mode: just log the event
+        // Instant mode: use clock.sleep which auto-advances
         console.log(`[${startTime}ms] PLAY_CHAR: '${char}' (duration: ${duration}ms)`);
-        // Simulate the passage of time in instant mode
-        if ('advance' in clock) {
-          (clock as any).advance(duration);
-        }
+        // Don't manually advance - clock.sleep handles it
+        await clock.sleep(duration);
         console.log(`[${clock.now()}ms] AUDIO_COMPLETE: '${char}' (played for ${duration}ms)`);
       }
     },
@@ -82,9 +80,8 @@ export function createMockIO(clock: Clock, clockMode: 'instant' | 'realtime'): I
         await clock.sleep(duration);
         console.log(`[${clock.now()}ms] REPLAY_COMPLETE: '${char}' (played for ${duration}ms)`);
       } else {
-        if ('advance' in clock) {
-          (clock as any).advance(duration);
-        }
+        // Use clock.sleep which auto-advances - don't manually advance
+        await clock.sleep(duration);
         console.log(`[${clock.now()}ms] REPLAY_COMPLETE: '${char}' (played for ${duration}ms)`);
       }
     },

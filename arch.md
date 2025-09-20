@@ -261,7 +261,6 @@ useEffect(() => {
         ioAdapter.ts
       /services
         audioEngine.ts    # WebAudio implementation
-        scheduler.ts      # (Unused - from old approach)
         /feedback         # Feedback implementations
 
     /sources              # Text source providers

@@ -21,25 +21,6 @@ export function wpmToDitMs(wpm: number): number {
 }
 
 /**
- * Get the recognition window duration for Active mode based on speed tier
- * Returns multiplier of dit length per spec:
- * - slow: 5x dit
- * - medium: 3x dit
- * - fast: 2x dit
- * - lightning: 1x dit
- */
-export function getActiveWindowMultiplier(speedTier: SpeedTier): number {
-  const multipliers = {
-    slow: 5,
-    medium: 3,
-    fast: 2,
-    lightning: 1,
-  } as const;
-
-  return multipliers[speedTier];
-}
-
-/**
  * Get the timing configuration for Passive mode based on speed tier
  * Returns { preRevealDits, postRevealDits } per spec:
  * - slow: 3 dits → reveal → 3 dits
@@ -61,12 +42,22 @@ export function getPassiveTimingMultipliers(speedTier: SpeedTier): {
 }
 
 /**
- * Calculate the recognition window duration in milliseconds for Active mode
+ * Get the recognition window duration for Active mode based on speed tier
+ * Returns constant milliseconds regardless of WPM:
+ * - slow: 2000ms
+ * - medium: 1000ms
+ * - fast: 500ms
+ * - lightning: 300ms
  */
 export function getActiveWindowMs(wpm: number, speedTier: SpeedTier): number {
-  const ditMs = wpmToDitMs(wpm);
-  const multiplier = getActiveWindowMultiplier(speedTier);
-  return ditMs * multiplier;
+  const windows = {
+    slow: 2000,
+    medium: 1000,
+    fast: 500,
+    lightning: 300,
+  } as const;
+
+  return windows[speedTier];
 }
 
 /**

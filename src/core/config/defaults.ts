@@ -9,9 +9,9 @@ import type { SessionConfig } from '../types/domain';
 
 /**
  * Default WPM (Words Per Minute) for Morse code practice
- * Standard beginner speed - not too fast, not too slow
+ * Set to very slow speed for easier testing
  */
-export const DEFAULT_WPM = 20;
+export const DEFAULT_WPM = 5;
 
 /**
  * Default session configuration used when starting a new practice session

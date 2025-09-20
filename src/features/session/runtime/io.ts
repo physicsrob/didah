@@ -3,6 +3,7 @@
  */
 
 import type { Clock } from './clock';
+import { calculateCharacterDurationMs } from '../../../core/morse/timing';
 
 export type SessionSnapshot = {
   phase: 'idle' | 'running' | 'ended';
@@ -73,23 +74,18 @@ export interface IO {
  */
 export class MockIO implements IO {
   calls: Array<{ method: string; args: any[] }> = [];
-  private clock?: Clock;
+  private clock: Clock;
 
-  constructor(clock?: Clock) {
+  constructor(clock: Clock) {
     this.clock = clock;
   }
 
   async playChar(char: string, wpm: number): Promise<void> {
     this.calls.push({ method: 'playChar', args: [char, wpm] });
-    // Simulate some audio duration based on actual character length
-    // For tests, we'll use a simplified duration
-    if (this.clock) {
-      // Use the test clock if provided
-      await this.clock.sleep(100);
-    } else {
-      // Use real time otherwise
-      await new Promise(resolve => setTimeout(resolve, 100));
-    }
+
+    // Use actual character duration instead of hardcoded 100ms
+    const duration = calculateCharacterDurationMs(char, wpm);
+    await this.clock.sleep(duration);
   }
 
   async stopAudio(): Promise<void> {
@@ -110,11 +106,9 @@ export class MockIO implements IO {
 
   async replay(char: string, wpm: number): Promise<void> {
     this.calls.push({ method: 'replay', args: [char, wpm] });
-    if (this.clock) {
-      await this.clock.sleep(50);
-    } else {
-      await new Promise(resolve => setTimeout(resolve, 50));
-    }
+    // Use actual character duration for replay as well
+    const duration = calculateCharacterDurationMs(char, wpm);
+    await this.clock.sleep(duration);
   }
 
   log(event: LogEvent): void {

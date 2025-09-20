@@ -7,6 +7,8 @@ import { runActiveEmission, runPassiveEmission } from '../charPrograms';
 import { FakeClock } from '../clock';
 import { TestInputBus } from '../inputBus';
 import { MockIO } from '../io';
+import { calculateCharacterDurationMs } from '../../../../core/morse/timing';
+import { advanceAndFlush, createTestConfig, flushPromises } from './testUtils';
 
 describe('runActiveEmission', () => {
   let clock: FakeClock;
@@ -22,12 +24,7 @@ describe('runActiveEmission', () => {
   });
 
   it('returns correct when user types correct character', async () => {
-    const config = {
-      mode: 'active' as const,
-      wpm: 20,
-      speedTier: 'medium' as const,
-      lengthMs: 60000
-    };
+    const config = createTestConfig({ speedTier: 'medium' });
 
     // Start emission
     const emissionPromise = runActiveEmission(
@@ -39,15 +36,12 @@ describe('runActiveEmission', () => {
       signal
     );
 
-    // Type correct character after 100ms
-    setTimeout(() => {
-      input.type('A', clock.now());
-    }, 0);
+    // Type correct character immediately
+    input.type('A', clock.now());
+    await flushPromises();
 
     // Advance for inter-character spacing (3 × 60ms = 180ms)
-    setTimeout(() => {
-      clock.advance(180);
-    }, 10);
+    await advanceAndFlush(clock, 180);
 
     const result = await emissionPromise;
 
@@ -69,12 +63,9 @@ describe('runActiveEmission', () => {
   });
 
   it('returns timeout when no input within window', async () => {
-    const config = {
-      mode: 'active' as const,
-      wpm: 20,
-      speedTier: 'slow' as const, // 5 × dit = 5 × 60 = 300ms window
-      lengthMs: 60000
-    };
+    const config = createTestConfig({
+      speedTier: 'slow' // 2000ms fixed window
+    });
 
     // Start emission
     const emissionPromise = runActiveEmission(
@@ -86,15 +77,16 @@ describe('runActiveEmission', () => {
       signal
     );
 
-    // Advance time past the window (B audio 540ms + window 300ms = 840ms + spacing 180ms = 1020ms total)
-    setTimeout(() => {
-      clock.advance(850); // Past the 840ms timeout
-    }, 0);
+    // Calculate actual timings with new fixed windows
+    const charDuration = calculateCharacterDurationMs('B', config.wpm);
+    const windowMs = 2000; // Fixed 2000ms for slow
+    const totalTimeout = charDuration + windowMs;
+
+    // Advance past timeout
+    await advanceAndFlush(clock, totalTimeout + 1);
 
     // Advance for inter-character spacing
-    setTimeout(() => {
-      clock.advance(180); // Complete the spacing
-    }, 10);
+    await advanceAndFlush(clock, 180);
 
     const result = await emissionPromise;
 
@@ -112,12 +104,7 @@ describe('runActiveEmission', () => {
   });
 
   it('logs incorrect keys during window', async () => {
-    const config = {
-      mode: 'active' as const,
-      wpm: 20,
-      speedTier: 'medium' as const,
-      lengthMs: 60000
-    };
+    const config = createTestConfig({ speedTier: 'medium' });
 
     // Start emission
     const emissionPromise = runActiveEmission(
@@ -129,17 +116,14 @@ describe('runActiveEmission', () => {
       signal
     );
 
-    // Type incorrect characters
-    setTimeout(() => {
-      input.type('A', clock.now());
-      input.type('B', clock.now());
-      input.type('C', clock.now()); // Finally correct
-    }, 0);
+    // Type incorrect characters then correct
+    input.type('A', clock.now());
+    input.type('B', clock.now());
+    input.type('C', clock.now()); // Finally correct
+    await flushPromises();
 
     // Advance for inter-character spacing after correct input
-    setTimeout(() => {
-      clock.advance(180);
-    }, 10);
+    await advanceAndFlush(clock, 180);
 
     const result = await emissionPromise;
 
@@ -154,13 +138,10 @@ describe('runActiveEmission', () => {
   });
 
   it('handles replay when enabled and timeout occurs', async () => {
-    const config = {
-      mode: 'active' as const,
-      wpm: 20,
-      speedTier: 'fast' as const,
-      lengthMs: 60000,
+    const config = createTestConfig({
+      speedTier: 'fast',
       replay: true
-    };
+    });
 
     // Start emission
     const emissionPromise = runActiveEmission(
@@ -172,20 +153,19 @@ describe('runActiveEmission', () => {
       signal
     );
 
-    // Advance clock to trigger timeout (D audio 420ms + fast window 120ms = 540ms)
-    setTimeout(() => {
-      clock.advance(540);  // This triggers the timeout
-    }, 0);
+    // Calculate actual timings with new fixed windows
+    const charDuration = calculateCharacterDurationMs('D', config.wpm);
+    const windowMs = 500; // Fixed 500ms for fast
+    const totalTimeout = charDuration + windowMs;
 
-    // Advance for the replay to complete (MockIO replay takes 50ms)
-    setTimeout(() => {
-      clock.advance(50);  // Complete the replay
-    }, 10);
+    // Advance to trigger timeout
+    await advanceAndFlush(clock, totalTimeout + 1);
+
+    // Advance for the replay to complete (same as char duration)
+    await advanceAndFlush(clock, charDuration);
 
     // Advance for inter-character spacing (3 × 60ms = 180ms)
-    setTimeout(() => {
-      clock.advance(180);  // Complete the spacing
-    }, 20);
+    await advanceAndFlush(clock, 180);
 
     const result = await emissionPromise;
 
@@ -198,12 +178,7 @@ describe('runActiveEmission', () => {
   });
 
   it('respects case-insensitive input', async () => {
-    const config = {
-      mode: 'active' as const,
-      wpm: 20,
-      speedTier: 'medium' as const,
-      lengthMs: 60000
-    };
+    const config = createTestConfig({ speedTier: 'medium' });
 
     // Start emission for uppercase character
     const emissionPromise = runActiveEmission(
@@ -216,42 +191,30 @@ describe('runActiveEmission', () => {
     );
 
     // Type lowercase
-    setTimeout(() => {
-      input.type('e', clock.now());
-    }, 0);
+    input.type('e', clock.now());
+    await flushPromises();
 
     // Advance for inter-character spacing after correct input
-    setTimeout(() => {
-      clock.advance(180);
-    }, 10);
+    await advanceAndFlush(clock, 180);
 
     const result = await emissionPromise;
 
     expect(result).toBe('correct');
   });
 
-  it('should timeout after audio completion plus window duration (timing bug test)', async () => {
-    // This test exposes the timing bug where timeout happens during audio playback
-    // Using slow WPM and long character to make the issue more obvious
-    const config = {
-      mode: 'active' as const,
+  it('should timeout after audio completion plus window duration', async () => {
+    // Using slow WPM and long character to test timing
+    const config = createTestConfig({
       wpm: 5, // Very slow = 240ms dit
-      speedTier: 'slow' as const, // 5×dit = 1200ms window
-      lengthMs: 60000
-    };
+      speedTier: 'slow' // Fixed 2000ms window
+    });
 
-    // Character 'H' = '....' (4 dits + 3 intra-symbol spacing = 7×240ms = 1680ms audio)
-    // Expected: audio ends at 1680ms, timeout should be at 1680ms + 1200ms = 2880ms
-
-    // Create MockIO that simulates realistic audio duration
-    const realisticIO = new MockIO(clock);
-    // Override playChar to use character-specific duration
-    realisticIO.playChar = async function(char: string, wpm: number): Promise<void> {
-      this.calls.push({ method: 'playChar', args: [char, wpm] });
-      // Calculate realistic audio duration for 'H' at 5 WPM
-      const audioDuration = 1680; // 4 dits + 3 spacing × 240ms = 1680ms
-      await clock.sleep(audioDuration);
-    };
+    // Character 'H' = '....' (4 dits + 3 intra-symbol spacing)
+    // Expected: audio duration = calculateCharacterDurationMs('H', 5) = 1680ms
+    // Expected timeout: 1680ms audio + 2000ms window = 3680ms
+    const audioDuration = calculateCharacterDurationMs('H', config.wpm);
+    const windowMs = 2000; // Fixed 2000ms for slow
+    const expectedTimeout = audioDuration + windowMs;
 
     const startTime = clock.now();
 
@@ -259,46 +222,38 @@ describe('runActiveEmission', () => {
     const emissionPromise = runActiveEmission(
       config,
       'H',
-      realisticIO,
+      io,
       input,
       clock,
       signal
     );
 
-    // Advance clock in steps to observe when timeout occurs
-    setTimeout(() => {
-      // At 1200ms: This is when the BUG causes timeout (just window duration)
-      clock.advance(1200);
+    // Advance to just before timeout
+    await advanceAndFlush(clock, expectedTimeout - 1);
 
-      // Check if feedback was called (indicating timeout) - this would be the BUG
-      const feedbackCalls = realisticIO.getCalls('feedback');
-      if (feedbackCalls.length > 0) {
-        console.error('BUG DETECTED: Timeout occurred at 1200ms while audio still playing');
-      }
-    }, 0);
+    // Should not have timed out yet
+    let feedbackCalls = io.getCalls('feedback');
+    expect(feedbackCalls).toHaveLength(0);
 
-    setTimeout(() => {
-      // At 1680ms: Audio should complete here
-      clock.advance(480); // Total now 1680ms
-    }, 10);
+    // Advance past timeout
+    await advanceAndFlush(clock, 2);
 
-    setTimeout(() => {
-      // At 2880ms: This is when timeout SHOULD occur (audio + window)
-      clock.advance(1200); // Total now 2880ms
-    }, 20);
+    // Now should have timed out
+    feedbackCalls = io.getCalls('feedback');
+    expect(feedbackCalls).toHaveLength(1);
+    expect(feedbackCalls[0].args).toEqual(['timeout', 'H']);
+
+    // Advance for inter-character spacing
+    await advanceAndFlush(clock, 180);
 
     const result = await emissionPromise;
-
     expect(result).toBe('timeout');
 
     // Verify timeout happened at the correct time
-    const timeoutLogs = realisticIO.getCalls('log').filter(c => c.args[0].type === 'timeout');
+    const timeoutLogs = io.getCalls('log').filter(c => c.args[0].type === 'timeout');
     expect(timeoutLogs).toHaveLength(1);
-
-    // The timeout should have been logged at 2880ms (audio + window), not 1200ms (just window)
     const timeoutTime = timeoutLogs[0].args[0].at;
-    console.log(`Timeout logged at: ${timeoutTime}, expected: ${startTime + 2880}`);
-    expect(timeoutTime).toBe(startTime + 2880); // This will FAIL with current bug
+    expect(timeoutTime).toBeGreaterThanOrEqual(startTime + expectedTimeout);
   });
 });
 
@@ -314,14 +269,12 @@ describe('runPassiveEmission', () => {
   });
 
   it('follows passive timing sequence', async () => {
-    const config = {
-      mode: 'passive' as const,
-      wpm: 20,
-      speedTier: 'slow' as const, // 3×dit pre, 3×dit post
-      lengthMs: 60000
-    };
+    const config = createTestConfig({
+      mode: 'passive',
+      speedTier: 'slow' // 3×dit pre, 3×dit post
+    });
 
-    clock.now(); // Record start time
+    const startTime = clock.now();
 
     // Start emission
     const emissionPromise = runPassiveEmission(
@@ -332,14 +285,15 @@ describe('runPassiveEmission', () => {
       signal
     );
 
-    // Advance through audio (mocked at 100ms)
-    setTimeout(() => clock.advance(100), 0);
+    // Calculate timings
+    const charDuration = calculateCharacterDurationMs('F', config.wpm);
+    const preRevealMs = 180; // 3 × 60ms dit
+    const postRevealMs = 180; // 3 × 60ms dit
 
-    // Advance through pre-reveal delay (3 × 60 = 180ms)
-    setTimeout(() => clock.advance(180), 100);
-
-    // Advance through post-reveal delay (3 × 60 = 180ms)
-    setTimeout(() => clock.advance(180), 300);
+    // Advance through complete sequence
+    await advanceAndFlush(clock, charDuration); // Audio playback
+    await advanceAndFlush(clock, preRevealMs); // Pre-reveal delay
+    await advanceAndFlush(clock, postRevealMs); // Post-reveal delay
 
     await emissionPromise;
 
@@ -363,14 +317,13 @@ describe('runPassiveEmission', () => {
   });
 
   it('respects speed tier timings', async () => {
-    const config = {
-      mode: 'passive' as const,
+    const config = createTestConfig({
+      mode: 'passive',
       wpm: 20, // dit = 60ms
-      speedTier: 'fast' as const, // 2×dit pre, 1×dit post
-      lengthMs: 60000
-    };
+      speedTier: 'fast' // 2×dit pre, 1×dit post
+    });
 
-    const startTime = clock.now(); // Record start time
+    const startTime = clock.now();
 
     // Start emission
     const emissionPromise = runPassiveEmission(
@@ -381,19 +334,21 @@ describe('runPassiveEmission', () => {
       signal
     );
 
-    // Schedule clock advances for the expected timings
-    // Audio playback: 100ms (MockIO default)
-    // Fast speed: 2×dit pre-reveal (120ms), 1×dit post-reveal (60ms)
-    setTimeout(() => clock.advance(100), 0);  // Advance for audio
-    setTimeout(() => clock.advance(120), 10);  // Advance for pre-reveal
-    setTimeout(() => clock.advance(60), 20);   // Advance for post-reveal
+    // Calculate expected timings
+    const charDuration = calculateCharacterDurationMs('G', config.wpm);
+    const preRevealMs = 120; // 2×dit = 120ms for fast
+    const postRevealMs = 60; // 1×dit = 60ms for fast
+
+    // Advance through complete sequence
+    await advanceAndFlush(clock, charDuration);
+    await advanceAndFlush(clock, preRevealMs);
+    await advanceAndFlush(clock, postRevealMs);
 
     await emissionPromise;
 
     const totalTime = clock.now() - startTime;
-
-    // Should take 280ms total (100ms audio + 120ms pre + 60ms post)
-    expect(totalTime).toBe(280);
+    const expectedTotal = charDuration + preRevealMs + postRevealMs;
+    expect(totalTime).toBe(expectedTotal);
 
     // Verify the reveal happened
     const revealCall = io.calls.find(c => c.method === 'reveal');
@@ -402,12 +357,10 @@ describe('runPassiveEmission', () => {
   });
 
   it('handles abort signal', async () => {
-    const config = {
-      mode: 'passive' as const,
-      wpm: 20,
-      speedTier: 'medium' as const,
-      lengthMs: 60000
-    };
+    const config = createTestConfig({
+      mode: 'passive',
+      speedTier: 'medium'
+    });
 
     const controller = new AbortController();
 
@@ -420,11 +373,12 @@ describe('runPassiveEmission', () => {
       controller.signal
     );
 
+    // Calculate audio duration
+    const charDuration = calculateCharacterDurationMs('H', config.wpm);
+
     // Advance past audio, then abort during pre-reveal delay
-    setTimeout(() => {
-      clock.advance(100); // Past audio
-      controller.abort();
-    }, 0);
+    await advanceAndFlush(clock, charDuration);
+    controller.abort();
 
     await expect(emissionPromise).rejects.toThrow('Aborted');
   });

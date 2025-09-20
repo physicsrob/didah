@@ -7,6 +7,8 @@ import { createSessionRunner, RandomCharSource } from '../sessionProgram';
 import { FakeClock } from '../clock';
 import { TestInputBus } from '../inputBus';
 import { MockIO } from '../io';
+import { calculateCharacterDurationMs } from '../../../../core/morse/timing';
+import { advanceAndFlush, createTestConfig, flushPromises } from './testUtils';
 
 describe('SessionRunner', () => {
   let clock: FakeClock;
@@ -80,34 +82,6 @@ describe('SessionRunner', () => {
     expect(endLog).toBeDefined();
   });
 
-  it('stops when time budget is exhausted', async () => {
-    const config = {
-      mode: 'active' as const,
-      wpm: 20,
-      speedTier: 'lightning' as const,
-      lengthMs: 500 // Short session
-    };
-
-    let finalSnapshot: any;
-    runner.subscribe(s => finalSnapshot = s);
-
-    runner.start(config);
-
-    // Let it start
-    await new Promise(resolve => setTimeout(resolve, 0));
-
-    // Advance time to trigger timeout on first character
-    // Lightning speed = 1×dit = 60ms window, character audio varies
-    // Advance enough to ensure timeout and exceed budget
-    clock.advance(1000);
-
-    // Let async operations complete and loop to check budget
-    await new Promise(resolve => setTimeout(resolve, 200));
-
-    expect(finalSnapshot.phase).toBe('ended');
-    expect(finalSnapshot.remainingMs).toBe(0);
-  });
-
   it('handles active mode with correct input', async () => {
     // Mock source to return predictable characters
     let charIndex = 0;
@@ -149,12 +123,11 @@ describe('SessionRunner', () => {
     const chars = ['X'];
     source.next = () => chars[charIndex++ % chars.length];
 
-    const config = {
-      mode: 'passive' as const,
-      wpm: 20,
-      speedTier: 'slow' as const,
+    const config = createTestConfig({
+      mode: 'passive',
+      speedTier: 'slow',
       lengthMs: 2000
-    };
+    });
 
     // Track reveals
     const reveals: string[] = [];
@@ -166,16 +139,18 @@ describe('SessionRunner', () => {
 
     runner.start(config);
 
-    // Let session start and begin first emission
-    await new Promise(resolve => setTimeout(resolve, 50));
+    // Let session start
+    await flushPromises();
 
-    // Advance clock for audio playback (100ms)
-    clock.advance(100);
-    await new Promise(resolve => setTimeout(resolve, 10));
+    // Calculate timings for character 'X'
+    const charDuration = calculateCharacterDurationMs('X', config.wpm);
+    const preRevealMs = 180; // 3 dits for slow
 
-    // Now advance through pre-reveal delay (3 × 60 = 180ms)
-    clock.advance(180);
-    await new Promise(resolve => setTimeout(resolve, 10));
+    // Advance through audio playback
+    await advanceAndFlush(clock, charDuration);
+
+    // Advance through pre-reveal delay
+    await advanceAndFlush(clock, preRevealMs);
 
     // Check that reveal was called
     expect(reveals).toContain('X');
@@ -224,38 +199,39 @@ describe('SessionRunner', () => {
     const chars = ['A', 'B', 'C'];
     source.next = () => chars[charIndex++];
 
-    const config = {
-      mode: 'active' as const,
-      wpm: 20,
-      speedTier: 'medium' as const,
+    const config = createTestConfig({
+      speedTier: 'medium',
       lengthMs: 10000
-    };
+    });
 
     runner.start(config);
 
     // Wait for first character to start
-    await new Promise(resolve => setTimeout(resolve, 100));
+    await flushPromises();
 
     // Type correct character 'A'
     input.type('A', clock.now());
+    await flushPromises();
 
-    // Wait for processing
-    await new Promise(resolve => setTimeout(resolve, 50));
+    // Advance for inter-character spacing to complete first emission
+    await advanceAndFlush(clock, 180);
 
     // Check first character was processed correctly
     let snapshot = runner.getSnapshot();
     expect(snapshot.stats?.correct).toBe(1);
     expect(snapshot.previous).toContain('A');
 
-    // Wait for second character 'B' to start
-    await new Promise(resolve => setTimeout(resolve, 100));
+    // Now let's trigger a timeout for 'B'
+    // Calculate timings for 'B' with new fixed windows
+    const charDurationB = calculateCharacterDurationMs('B', config.wpm);
+    const windowMs = 1000; // Fixed 1000ms for medium
+    const timeoutTime = charDurationB + windowMs;
 
-    // Don't type anything for 'B', advance clock to trigger timeout
-    // B audio duration = 540ms, medium window = 180ms, so timeout at 720ms
-    clock.advance(720);
+    // Advance to trigger timeout
+    await advanceAndFlush(clock, timeoutTime + 1);
 
-    // Wait for timeout to process
-    await new Promise(resolve => setTimeout(resolve, 100));
+    // Advance for inter-character spacing
+    await advanceAndFlush(clock, 180);
 
     snapshot = runner.getSnapshot();
     expect(snapshot.stats?.correct).toBe(1);

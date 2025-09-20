@@ -1,7 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import {
   wpmToDitMs,
-  getActiveWindowMultiplier,
   getPassiveTimingMultipliers,
   getActiveWindowMs,
   getPassiveTimingMs,
@@ -24,14 +23,6 @@ describe('Morse Timing Engine', () => {
     });
   });
 
-  describe('getActiveWindowMultiplier', () => {
-    it('returns correct multipliers for each speed tier', () => {
-      expect(getActiveWindowMultiplier('slow')).toBe(5);
-      expect(getActiveWindowMultiplier('medium')).toBe(3);
-      expect(getActiveWindowMultiplier('fast')).toBe(2);
-      expect(getActiveWindowMultiplier('lightning')).toBe(1);
-    });
-  });
 
   describe('getPassiveTimingMultipliers', () => {
     it('returns correct timing for each speed tier', () => {
@@ -51,15 +42,17 @@ describe('Morse Timing Engine', () => {
   });
 
   describe('getActiveWindowMs', () => {
-    it('calculates correct window duration for different WPM and speed tiers', () => {
-      // 20 WPM = 60ms dit
-      expect(getActiveWindowMs(20, 'slow')).toBe(300); // 60 * 5
-      expect(getActiveWindowMs(20, 'medium')).toBe(180); // 60 * 3
-      expect(getActiveWindowMs(20, 'fast')).toBe(120); // 60 * 2
-      expect(getActiveWindowMs(20, 'lightning')).toBe(60); // 60 * 1
+    it('returns constant window duration regardless of WPM', () => {
+      // Windows are now constant, not based on WPM
+      expect(getActiveWindowMs(20, 'slow')).toBe(2000);
+      expect(getActiveWindowMs(20, 'medium')).toBe(1000);
+      expect(getActiveWindowMs(20, 'fast')).toBe(500);
+      expect(getActiveWindowMs(20, 'lightning')).toBe(300);
 
-      // 25 WPM = 48ms dit
-      expect(getActiveWindowMs(25, 'medium')).toBe(144); // 48 * 3
+      // Should be the same at different WPMs
+      expect(getActiveWindowMs(5, 'slow')).toBe(2000);
+      expect(getActiveWindowMs(25, 'slow')).toBe(2000);
+      expect(getActiveWindowMs(40, 'slow')).toBe(2000);
     });
   });
 
@@ -156,7 +149,7 @@ describe('Morse Timing Engine', () => {
 
       // Active mode at medium speed should give reasonable recognition window
       const windowMs = getActiveWindowMs(wpm, 'medium');
-      expect(windowMs).toBe(144); // 48 * 3 = 144ms - reasonable for recognition
+      expect(windowMs).toBe(1000); // Constant 1000ms window for medium speed
 
       // Passive mode timing should flow naturally
       const passiveTiming = getPassiveTimingMs(wpm, 'medium');

@@ -44,12 +44,10 @@ export class InstantClock implements Clock {
         signal.addEventListener('abort', onAbort, { once: true });
       }
 
-      // Schedule automatic advancement (for instant mode)
+      // Schedule processing of next event
       // Use setTimeout(0) to allow other promises in the race to setup
       setTimeout(() => {
-        if (!signal?.aborted && this.sleepers.has(sleeperId)) {
-          this.advance(ms);
-        }
+        this.processNextEvent();
       }, 0);
     });
   }
@@ -61,11 +59,9 @@ export class InstantClock implements Clock {
       time: this.currentTime + ms
     });
 
-    // In instant mode, schedule the timer to fire automatically
+    // In instant mode, schedule processing of next event
     setTimeout(() => {
-      if (this.timers.has(id)) {
-        this.advance(ms);
-      }
+      this.processNextEvent();
     }, 0);
 
     return id;
@@ -73,6 +69,32 @@ export class InstantClock implements Clock {
 
   clearTimeout(id: number): void {
     this.timers.delete(id);
+  }
+
+  /**
+   * Process the next scheduled event (timer or sleeper)
+   * Advances time to that event and executes it
+   */
+  processNextEvent(): void {
+    // Find the next event time
+    let nextTime = Infinity;
+
+    for (const timer of this.timers.values()) {
+      if (timer.time < nextTime) {
+        nextTime = timer.time;
+      }
+    }
+
+    for (const sleeper of this.sleepers.values()) {
+      if (sleeper.time < nextTime) {
+        nextTime = sleeper.time;
+      }
+    }
+
+    // If there's a next event, advance to it
+    if (nextTime !== Infinity && nextTime > this.currentTime) {
+      this.advance(nextTime - this.currentTime);
+    }
   }
 
   /**
