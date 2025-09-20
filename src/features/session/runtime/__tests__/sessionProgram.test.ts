@@ -6,20 +6,20 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import { createSessionRunner, RandomCharSource } from '../sessionProgram';
 import { FakeClock } from '../clock';
 import { TestInputBus } from '../inputBus';
-import { MockIO } from '../io';
+import { TestIO } from './testIO';
 import { calculateCharacterDurationMs } from '../../../../core/morse/timing';
 import { advanceAndFlush, createTestConfig, flushPromises } from './testUtils';
 
 describe('SessionRunner', () => {
   let clock: FakeClock;
-  let io: MockIO;
+  let io: TestIO;
   let input: TestInputBus;
   let source: RandomCharSource;
   let runner: ReturnType<typeof createSessionRunner>;
 
   beforeEach(() => {
     clock = new FakeClock();
-    io = new MockIO(clock);
+    io = new TestIO(clock);
     input = new TestInputBus();
     source = new RandomCharSource('ABC'); // Simple alphabet for predictable tests
     runner = createSessionRunner({ clock, io, input, source });
@@ -69,17 +69,13 @@ describe('SessionRunner', () => {
     await new Promise(resolve => setTimeout(resolve, 50));
 
     // Check start log
-    const startLogs = io.getCalls('log');
-    const startLog = startLogs.find(l => l.args[0].type === 'sessionStart');
-    expect(startLog).toBeDefined();
+    expect(io.hasLoggedEvent('sessionStart')).toBe(true);
 
     // Stop session and wait for it to complete
     await runner.stop();
 
-    const allLogs = io.getCalls('log');
-    const endLog = allLogs.find(l => l.args[0].type === 'sessionEnd');
-
-    expect(endLog).toBeDefined();
+    // Check end log
+    expect(io.hasLoggedEvent('sessionEnd')).toBe(true);
   });
 
   it('handles active mode with correct input', async () => {
@@ -155,10 +151,8 @@ describe('SessionRunner', () => {
     // Check that reveal was called
     expect(reveals).toContain('X');
 
-    // Also check using getCalls
-    const revealCalls = io.getCalls('reveal');
-    expect(revealCalls.length).toBeGreaterThan(0);
-    expect(revealCalls[0].args).toEqual(['X']);
+    // Also check using TestIO's semantic methods
+    expect(io.getReveals()).toContain('X');
 
     await runner.stop();
   });

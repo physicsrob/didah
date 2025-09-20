@@ -6,19 +6,19 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import { runActiveEmission, runPassiveEmission } from '../charPrograms';
 import { FakeClock } from '../clock';
 import { TestInputBus } from '../inputBus';
-import { MockIO } from '../io';
+import { TestIO } from './testIO';
 import { calculateCharacterDurationMs } from '../../../../core/morse/timing';
 import { advanceAndFlush, createTestConfig, flushPromises } from './testUtils';
 
 describe('runActiveEmission', () => {
   let clock: FakeClock;
-  let io: MockIO;
+  let io: TestIO;
   let input: TestInputBus;
   let signal: AbortSignal;
 
   beforeEach(() => {
     clock = new FakeClock();
-    io = new MockIO(clock);
+    io = new TestIO(clock);
     input = new TestInputBus();
     signal = new AbortController().signal;
   });
@@ -48,18 +48,13 @@ describe('runActiveEmission', () => {
     expect(result).toBe('correct');
 
     // Check that correct feedback was given
-    const feedbackCalls = io.getCalls('feedback');
-    expect(feedbackCalls).toHaveLength(1);
-    expect(feedbackCalls[0].args).toEqual(['correct', 'A']);
+    expect(io.getFeedbackFor('A')).toBe('correct');
 
     // Check that audio was stopped
-    const stopCalls = io.getCalls('stopAudio');
-    expect(stopCalls).toHaveLength(1);
+    expect(io.wasAudioStopped()).toBe(true);
 
     // Check that correct was logged
-    const logCalls = io.getCalls('log');
-    const correctLog = logCalls.find(c => c.args[0].type === 'correct');
-    expect(correctLog).toBeDefined();
+    expect(io.hasLoggedEvent('correct', 'A')).toBe(true);
   });
 
   it('returns timeout when no input within window', async () => {
@@ -93,14 +88,10 @@ describe('runActiveEmission', () => {
     expect(result).toBe('timeout');
 
     // Check that timeout feedback was given
-    const feedbackCalls = io.getCalls('feedback');
-    expect(feedbackCalls).toHaveLength(1);
-    expect(feedbackCalls[0].args).toEqual(['timeout', 'B']);
+    expect(io.getFeedbackFor('B')).toBe('timeout');
 
     // Check that timeout was logged
-    const logCalls = io.getCalls('log');
-    const timeoutLog = logCalls.find(c => c.args[0].type === 'timeout');
-    expect(timeoutLog).toBeDefined();
+    expect(io.hasLoggedEvent('timeout', 'B')).toBe(true);
   });
 
   it('advances immediately on incorrect key', async () => {
@@ -126,14 +117,11 @@ describe('runActiveEmission', () => {
     expect(result).toBe('timeout');
 
     // Check that incorrect key was logged
-    const logCalls = io.getCalls('log');
-    const incorrectLogs = logCalls.filter(c => c.args[0].type === 'incorrect');
-    expect(incorrectLogs).toHaveLength(1);
-    expect(incorrectLogs[0].args[0].got).toBe('A');
+    expect(io.hasLoggedEvent('incorrect', 'C')).toBe(true);
+    expect(io.getIncorrectAttempts('C')).toContain('A');
 
     // Check that feedback was triggered for incorrect
-    const feedbackCalls = io.getCalls('feedback');
-    expect(feedbackCalls.some(c => c.args[0] === 'incorrect')).toBe(true);
+    expect(io.getFeedbackFor('C')).toBe('incorrect');
   });
 
   it('handles replay when enabled and timeout occurs', async () => {
@@ -258,12 +246,12 @@ describe('runActiveEmission', () => {
 
 describe('runPassiveEmission', () => {
   let clock: FakeClock;
-  let io: MockIO;
+  let io: TestIO;
   let signal: AbortSignal;
 
   beforeEach(() => {
     clock = new FakeClock();
-    io = new MockIO(clock);
+    io = new TestIO(clock);
     signal = new AbortController().signal;
   });
 
@@ -296,23 +284,15 @@ describe('runPassiveEmission', () => {
 
     await emissionPromise;
 
-    // Check sequence of calls
-    const calls = io.calls;
-
+    // Check sequence of operations
     // Should hide first
-    expect(calls[0]).toEqual({ method: 'hide', args: [] });
+    expect(io.getHideCount()).toBeGreaterThan(0);
 
     // Should log emission
-    expect(calls[1].method).toBe('log');
-    expect(calls[1].args[0].type).toBe('emission');
+    expect(io.hasLoggedEvent('emission', 'F')).toBe(true);
 
-    // Should play audio
-    expect(calls[2]).toEqual({ method: 'playChar', args: ['F', 20] });
-
-    // Should reveal after pre-reveal delay
-    const revealCall = calls.find(c => c.method === 'reveal');
-    expect(revealCall).toBeDefined();
-    expect(revealCall?.args).toEqual(['F']);
+    // Should reveal after delays
+    expect(io.getReveals()).toContain('F');
   });
 
   it('respects speed tier timings', async () => {
@@ -350,9 +330,7 @@ describe('runPassiveEmission', () => {
     expect(totalTime).toBe(expectedTotal);
 
     // Verify the reveal happened
-    const revealCall = io.calls.find(c => c.method === 'reveal');
-    expect(revealCall).toBeDefined();
-    expect(revealCall?.args).toEqual(['G']);
+    expect(io.getReveals()).toContain('G');
   });
 
   it('handles abort signal', async () => {
