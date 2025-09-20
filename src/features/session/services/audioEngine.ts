@@ -221,6 +221,6 @@ export class AudioEngine {
  */
 export const DEFAULT_AUDIO_CONFIG: AudioEngineConfig = {
   frequency: 700, // Hz
-  wpm: 20,       // Words per minute
+  wpm: 5,        // Words per minute - slowed down for debugging
   volume: 0.3,   // 30% volume
 };

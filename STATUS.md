@@ -129,3 +129,6 @@
 2. Create Statistics selectors for data analysis
 3. Build accuracy, latency, and confusion matrix calculations
 4. Add study time aggregation and chart components
+
+## Known Issues / Tech Debt
+1. **Redundant WPM Configuration**: WPM is configured in two places (AudioEngine defaults and Session config). The session config should be the single source of truth that updates the audio engine when a session starts. Currently both need to be kept in sync manually.
