@@ -33,7 +33,7 @@ We should support several high quality text options:
 - Reddit headlines
 - Hard characters (the 10 hardest characters for the user)
 
-I've tested that reddis supports RSS feeds
+I've tested that Reddit supports RSS feeds
 curl -H "User-Agent: Mozilla/5.0 (compatible; RSS reader)" \
      -H "Accept: application/rss+xml, application/xml" \
      "https://old.reddit.com/r/popular.rss"
@@ -44,18 +44,18 @@ By default we should support a few obvious reddits, but we should let the user a
 - User selects how much time they want this session to be, from 1, 2, or 5 minutes
 - User selects text source from drop down of options
 - User selects mode: Active or Passive
-- User specifies speed: slow, medium, fast
+- User specifies speed: slow, medium, fast, lightning
 - If active, user selects:
--- Feedback: buzzer, flash, both
--- Replay: True / False
+  - Feedback: buzzer, flash, both
+  - Replay: True / False
 
 ## Mode: Active
 In active mode, text will be sent to the user, and the user will be expected to type what they hear quickly.
 The user has limited time to recognize each character:
-- slow 5 times the dit length
-- medium 3 times the dit lenght
-- fast 2 times the dit length
-- lightning 1 times the dit length
+- slow: 5 times the dit length
+- medium: 3 times the dit length
+- fast: 2 times the dit length
+- lightning: 1 times the dit length
 
 If the user is successful we move on immediately to the next character.
 If the user fails:
@@ -73,11 +73,7 @@ The timing should work as follows:
 - Slow: character sent, 3 dits spacing, character displayed on screen, 3 dit spacing, next character
 - Medium: character sent, 3 dits spacing, character displayed on screen, 2 dit spacing, next character
 - Fast: character sent, 2 dits spacing, character displayed on screen, 1 dit spacing, next character
-
-# Tech stack
-- React frontend
-- Local storage for stats/data
-- Vercel for hosting + serverless functions (for RSS later)
+- Lightning: character sent, 2 dits spacing, character displayed on screen, 1 dit spacing, next character (same as fast)
 
 
 

@@ -19,12 +19,12 @@ import type { SessionConfig } from '../core/types/domain.js';
 const DEFAULT_SESSION_CONFIG: SessionConfig = {
   mode: 'active',
   lengthMs: 60000, // 1 minute
-  speedTier: 'medium',
+  speedTier: 'slow',
   sourceId: 'randomLetters',
   feedback: 'flash',
   replay: true,
   effectiveAlphabet: ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z'],
-  wpm: 20,  // Standard speed
+  wpm: 5,  // Slow practice speed
 };
 
 export function StudyPage() {
@@ -38,7 +38,7 @@ export function StudyPage() {
   });
 
   const [revealedChar, setRevealedChar] = useState<string | null>(null);
-  const [replayOverlay] = useState<string | null>(null);
+  const [replayOverlay, setReplayOverlay] = useState<string | null>(null);
   const [feedbackFlash, setFeedbackFlash] = useState<string | null>(null);
   const [isAudioInitialized, setIsAudioInitialized] = useState(false);
 
@@ -55,9 +55,26 @@ export function StudyPage() {
     return createIOAdapter({
       audioEngine,
       feedback,
-      onReveal: (char: string) => setRevealedChar(char),
-      onHide: () => setRevealedChar(null),
+      onReveal: (char: string) => {
+        console.log(`[UI] onReveal called with '${char}'`);
+        if (DEFAULT_SESSION_CONFIG.mode === 'active') {
+          // In active mode, use this for replay overlay
+          setReplayOverlay(char);
+        } else {
+          // In passive mode, use this for normal reveal
+          setRevealedChar(char);
+        }
+      },
+      onHide: () => {
+        console.log(`[UI] onHide called`);
+        if (DEFAULT_SESSION_CONFIG.mode === 'active') {
+          setReplayOverlay(null);
+        } else {
+          setRevealedChar(null);
+        }
+      },
       onSnapshot: (snap: SessionSnapshot) => setSnapshot(snap),
+      replayDuration: 1500  // Show replay for 1.5 seconds
     });
   }, [audioEngine, feedback]);
 
@@ -99,6 +116,7 @@ export function StudyPage() {
 
   // Start session
   const startSession = useCallback(async () => {
+    console.log(`[Session] Starting - Mode: ${DEFAULT_SESSION_CONFIG.mode}, WPM: ${DEFAULT_SESSION_CONFIG.wpm}, Speed: ${DEFAULT_SESSION_CONFIG.speedTier}`);
     await initializeAudio();
     // Update audio engine with session WPM before starting
     audioEngine.updateConfig({ wpm: DEFAULT_SESSION_CONFIG.wpm });
@@ -301,17 +319,35 @@ export function StudyPage() {
         .stat-value.incorrect { color: #f44336; }
         .stat-value.timeout { color: #ff9800; }
 
-        /* Flash feedback styles */
-        .morse-flash-incorrect {
-          background-color: rgba(255, 67, 54, 0.2);
+        /* Flash feedback styles - matching the new FlashFeedback class names */
+        .morse-flash-error-subtle {
+          background-color: rgba(255, 67, 54, 0.1) !important;
+          transition: background-color 0.05s ease-out;
         }
 
-        .morse-flash-correct {
-          background-color: rgba(76, 175, 80, 0.2);
+        .morse-flash-error-medium {
+          background-color: rgba(255, 67, 54, 0.3) !important;
+          transition: background-color 0.05s ease-out;
         }
 
-        .morse-flash-timeout {
-          background-color: rgba(255, 152, 0, 0.2);
+        .morse-flash-error-strong {
+          background-color: rgba(255, 67, 54, 0.5) !important;
+          transition: background-color 0.05s ease-out;
+        }
+
+        .morse-flash-success-subtle {
+          background-color: rgba(76, 175, 80, 0.1) !important;
+          transition: background-color 0.05s ease-out;
+        }
+
+        .morse-flash-success-medium {
+          background-color: rgba(76, 175, 80, 0.3) !important;
+          transition: background-color 0.05s ease-out;
+        }
+
+        .morse-flash-success-strong {
+          background-color: rgba(76, 175, 80, 0.5) !important;
+          transition: background-color 0.05s ease-out;
         }
 
         /* Replay overlay */
@@ -320,21 +356,31 @@ export function StudyPage() {
           top: 50%;
           left: 50%;
           transform: translate(-50%, -50%);
-          background: rgba(0, 0, 0, 0.9);
+          background: rgba(255, 0, 0, 0.95);
           color: white;
-          font-size: 8rem;
+          font-size: 12rem;
           font-weight: bold;
-          padding: 2rem 4rem;
-          border-radius: 16px;
-          z-index: 1000;
+          padding: 3rem 5rem;
+          border-radius: 20px;
+          z-index: 10000;
           font-family: 'Courier New', monospace;
-          box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
-          animation: fadeIn 0.2s ease-out;
+          box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8);
+          border: 4px solid rgba(255, 255, 255, 0.3);
+          animation: fadeInPulse 0.3s ease-out;
         }
 
-        @keyframes fadeIn {
-          from { opacity: 0; transform: translate(-50%, -50%) scale(0.8); }
-          to { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+        @keyframes fadeInPulse {
+          0% {
+            opacity: 0;
+            transform: translate(-50%, -50%) scale(0.5);
+          }
+          50% {
+            transform: translate(-50%, -50%) scale(1.05);
+          }
+          100% {
+            opacity: 1;
+            transform: translate(-50%, -50%) scale(1);
+          }
         }
 
         .config-info {
@@ -403,7 +449,7 @@ export function StudyPage() {
         <div className="character-display">
           <div className={`current-character ${DEFAULT_SESSION_CONFIG.mode === 'passive' && !revealedChar ? 'hidden' : ''}`}>
             {DEFAULT_SESSION_CONFIG.mode === 'active'
-              ? (snapshot.currentChar || '·')
+              ? '·'  // Never show character in active mode during normal play
               : (revealedChar || (snapshot.currentChar ? '?' : '·'))
             }
           </div>
@@ -434,7 +480,7 @@ export function StudyPage() {
         </div>
 
         <div className="previous-characters">
-          {snapshot.previous.length > 0 ? snapshot.previous.join(' ') : 'Previous characters will appear here'}
+          {snapshot.previous.length > 0 ? snapshot.previous.join('') : 'Previous characters will appear here'}
         </div>
 
         {snapshot.phase !== 'idle' && (

@@ -1,23 +1,16 @@
 # CodeBeat
 
-A modern web application for learning Morse code with real-time feedback, statistics tracking, and multiple study modes.
+A modern web application for learning Morse code with real-time feedback and instant character recognition.
 
-## Features
+## Documentation
 
-- **Active Mode**: Type what you hear with immediate feedback
-- **Passive Mode**: Listen and learn with visual reveals
-- **Real-time Statistics**: Track accuracy, speed, and progress over time
-- **Multiple Text Sources**: Random letters, frequency-weighted words, Reddit headlines
-- **Configurable Timing**: Adjustable WPM and difficulty levels
+- **[spec.md](spec.md)** - Product requirements and feature specifications
+- **[arch.md](arch.md)** - Technical architecture and implementation details
+- **[STATUS.md](STATUS.md)** - Current implementation status and next steps
+- **[tech_debt.md](tech_debt.md)** - Known technical debt and cleanup needed
+- **[CLAUDE.md](CLAUDE.md)** - Claude Code configuration and AI assistant context
 
-## Development
-
-### Prerequisites
-
-- Node.js 18+ (current version: v18.20.7)
-- npm
-
-### Setup
+## Quick Start
 
 ```bash
 # Install dependencies
@@ -26,54 +19,95 @@ npm install
 # Start development server
 npm run dev
 
-# Run tests
+# Run tests (watch mode)
 npm test
 
-# Run tests with UI
-npm run test:ui
+# Run all quality checks before committing
+npm run check
+```
 
-# Build for production
-npm run build
+## Features
 
-# Lint code
-npm run lint
+### Implemented ✅
+- **Active Mode**: Type what you hear with immediate feedback
+- **Passive Mode**: Listen and learn with timed character reveals
+- **Real-time feedback**: Visual flash on errors
+- **Session timer**: Track remaining time
+- **Accuracy tracking**: Within-session statistics
+- **Random letters**: Basic text source
+
+### Not Yet Implemented ❌
+- Statistics persistence and history
+- Multiple text sources (words, RSS, hard characters)
+- User settings and configuration
+- Multiple pages/routing
+
+## Architecture
+
+The app uses a **runtime-based session orchestration** approach (not state machines):
+- Single async conductor function manages the entire session
+- Centralized timing through Clock abstraction with AbortSignal cancellation
+- IO abstraction isolates all side effects
+- Race/select utility for handling concurrent operations (input vs timeout)
+
+See [arch.md](arch.md) for detailed architecture documentation.
+
+## Development
+
+### Commands
+
+```bash
+# Development
+npm run dev          # Start dev server on http://localhost:5173
+npm test            # Run tests in watch mode
+npm run test:ui     # Interactive test UI
+npm run build       # Build for production
+
+# Quality Checks (run before committing!)
+npm run check       # TypeScript, ESLint, and tests
+npm run check:fix   # Same but auto-fix lint issues
+npm run typecheck   # TypeScript only
+npm run lint        # ESLint only
+```
+
+### Project Structure
+
+```
+/src
+  /core           # Domain logic (timing, alphabet, types)
+  /features
+    /session
+      /runtime    # Main session orchestration
+      /services   # Audio engine, feedback
+    /sources      # Text source providers
+  /pages          # React components
+  /tests          # Test files
 ```
 
 ### Testing
 
-The project uses Vitest for testing. Tests are located in `src/tests/` and focus on:
+Tests use Vitest and focus on core logic:
+- Timing calculations (`src/tests/timing.test.ts`)
+- Runtime session logic (`src/features/session/runtime/__tests__/`)
+- Audio engine integration (`src/tests/audioEngine.integration.test.ts`)
 
-- Core timing calculations (`timing.test.ts`)
-- Session state machine logic
-- Text source providers
-- Statistics selectors
+Currently ~32 tests passing.
 
-Run tests with:
-```bash
-npm test           # Run all tests
-npm run test:ui    # Interactive test UI
-```
+## Tech Stack
 
-### Architecture
+- **Frontend**: React 18 + TypeScript + Vite
+- **Styling**: Inline styles (tech debt - should be CSS modules)
+- **Audio**: WebAudio API
+- **Testing**: Vitest
+- **Future**: Vercel for hosting + serverless functions
 
-The app follows a feature-first architecture:
+## Contributing
 
-- `src/core/` - Shared domain logic (timing, storage, types)
-- `src/features/` - Feature modules (session, stats, sources, config)
-- `src/pages/` - Page components
-- `api/` - Serverless functions (RSS proxy)
+1. Read [STATUS.md](STATUS.md) to understand current state
+2. Check [tech_debt.md](tech_debt.md) for cleanup opportunities
+3. Follow the runtime architecture patterns in [arch.md](arch.md)
+4. Run `npm run check` before committing
 
-Key design principles:
-- State machine-driven session orchestration
-- Pluggable text source providers
-- Local storage with versioned migrations
-- Test-driven development for core logic
+## License
 
-### Current Status
-
-✅ Project setup with Vite + React + TypeScript
-✅ Morse timing engine with comprehensive tests
-🚧 Session scheduler implementation
-⏳ Audio engine
-⏳ Session state machine
-⏳ UI components
+Private project - not for public distribution.

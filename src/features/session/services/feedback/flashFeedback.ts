@@ -20,14 +20,16 @@ export class FlashFeedback implements Feedback {
 
   constructor(config: FlashConfig) {
     this.config = config;
-    // Initialize flash feedback with config
+    console.log('[FlashFeedback] Initialized with config:', config);
   }
 
   onFail(_char: string): void {
+    console.log(`[FlashFeedback] onFail triggered for '${_char}'`);
     this.triggerFlash('error');
   }
 
   onCorrect?(_char: string): void {
+    console.log(`[FlashFeedback] onCorrect triggered for '${_char}'`);
     this.triggerFlash('success');
   }
 
@@ -43,6 +45,7 @@ export class FlashFeedback implements Feedback {
   private triggerFlash(type: 'error' | 'success'): void {
     const element = this.config.element || document.body;
     const className = `morse-flash-${type}-${this.config.intensity}`;
+    console.log(`[FlashFeedback] Triggering flash: ${className} on`, element);
 
     // Clear any existing flash
     this.removeFlashClasses();
@@ -52,10 +55,12 @@ export class FlashFeedback implements Feedback {
 
     // Add flash class
     element.classList.add(className);
+    console.log(`[FlashFeedback] Added class: ${className}`);
 
     // Remove class after duration
     this.currentTimeout = window.setTimeout(() => {
       element.classList.remove(className);
+      console.log(`[FlashFeedback] Removed class: ${className}`);
       this.currentTimeout = null;
     }, this.config.duration);
   }

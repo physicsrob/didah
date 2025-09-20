@@ -6,7 +6,7 @@ import type { Clock } from './clock';
 import type { IO } from './io';
 import type { InputBus, KeyEvent } from './inputBus';
 import { select, waitForEvent, clockTimeout } from './select';
-import { getActiveWindowMs, getPassiveTimingMs, wpmToDitMs, calculateCharacterDurationMs } from '../../../core/morse/timing';
+import { getActiveWindowMs, getPassiveTimingMs, wpmToDitMs, calculateCharacterDurationMs, MORSE_SPACING } from '../../../core/morse/timing';
 
 // Session config type - simplified for now
 export type SessionConfig = {
@@ -42,6 +42,7 @@ export async function runActiveEmission(
   sessionSignal: AbortSignal
 ): Promise<ActiveOutcome> {
   const emissionStart = clock.now();
+  console.log(`[Emission] Start - Char: '${char}', Time: ${emissionStart}ms`);
 
   // Start audio but don't await - we accept input during audio
   io.playChar(char).catch(() => {
@@ -56,6 +57,8 @@ export async function runActiveEmission(
     Math.max(60, ditMs) // Minimum 60ms or 1 dit
   );
   const charDurationMs = calculateCharacterDurationMs(char, cfg.wpm);
+  console.log(`[Window] Recognition window: ${windowMs}ms (${cfg.speedTier} @ ${cfg.wpm} WPM, dit=${ditMs}ms)`);
+  console.log(`[Audio] Character duration: ${charDurationMs}ms`);
 
   // Create a scoped abort controller for this emission
   const charScope = new AbortController();
@@ -70,6 +73,7 @@ export async function runActiveEmission(
         const upperChar = char.toUpperCase();
 
         if (upperKey !== upperChar) {
+          console.log(`[Input] Key pressed: '${upperKey}' at ${event.at}ms - INCORRECT (expected '${upperChar}')`);
           io.log({
             type: 'incorrect',
             at: event.at,
@@ -117,12 +121,22 @@ export async function runActiveEmission(
 
     if (result.winner === 0) {
       // Correct key won
+      console.log(`[Input] Correct key pressed for '${char}'`);
       await io.stopAudio(); // Stop audio early
       io.feedback('correct', char);
+
+      // Add inter-character spacing per Morse standard
+      const interCharSpacingMs = ditMs * MORSE_SPACING.symbol;
+      console.log(`[Spacing] Adding inter-character spacing: ${interCharSpacingMs}ms (${MORSE_SPACING.symbol} dits)`);
+      await clock.sleep(interCharSpacingMs, sessionSignal);
+
+      console.log(`[Emission] End - Char: '${char}', Outcome: correct`);
       return 'correct';
     } else {
       // Timeout won
+      console.log(`[Input] Timeout at ${clock.now()}ms for '${char}'`);
       io.feedback('timeout', char);
+      console.log(`[Feedback] Triggering timeout feedback for '${char}'`);
       io.log({
         type: 'timeout',
         at: clock.now(),
@@ -131,9 +145,17 @@ export async function runActiveEmission(
 
       // Optional replay
       if (cfg.replay && io.replay) {
+        console.log(`[Replay] Starting replay for '${char}'`);
         await io.replay(char);
+        console.log(`[Replay] Complete for '${char}'`);
       }
 
+      // Add inter-character spacing after replay
+      const interCharSpacingMs = ditMs * MORSE_SPACING.symbol;
+      console.log(`[Spacing] Adding inter-character spacing: ${interCharSpacingMs}ms (${MORSE_SPACING.symbol} dits)`);
+      await clock.sleep(interCharSpacingMs, sessionSignal);
+
+      console.log(`[Emission] End - Char: '${char}', Outcome: timeout`);
       return 'timeout';
     }
   } finally {

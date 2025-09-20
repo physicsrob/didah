@@ -44,6 +44,11 @@ describe('runActiveEmission', () => {
       input.type('A', clock.now());
     }, 0);
 
+    // Advance for inter-character spacing (3 × 60ms = 180ms)
+    setTimeout(() => {
+      clock.advance(180);
+    }, 10);
+
     const result = await emissionPromise;
 
     expect(result).toBe('correct');
@@ -81,10 +86,15 @@ describe('runActiveEmission', () => {
       signal
     );
 
-    // Advance time past the window (B audio 540ms + window 300ms = 840ms total)
+    // Advance time past the window (B audio 540ms + window 300ms = 840ms + spacing 180ms = 1020ms total)
     setTimeout(() => {
       clock.advance(850); // Past the 840ms timeout
     }, 0);
+
+    // Advance for inter-character spacing
+    setTimeout(() => {
+      clock.advance(180); // Complete the spacing
+    }, 10);
 
     const result = await emissionPromise;
 
@@ -126,6 +136,11 @@ describe('runActiveEmission', () => {
       input.type('C', clock.now()); // Finally correct
     }, 0);
 
+    // Advance for inter-character spacing after correct input
+    setTimeout(() => {
+      clock.advance(180);
+    }, 10);
+
     const result = await emissionPromise;
 
     expect(result).toBe('correct');
@@ -162,10 +177,15 @@ describe('runActiveEmission', () => {
       clock.advance(540);  // This triggers the timeout
     }, 0);
 
-    // Advance for the replay to complete
+    // Advance for the replay to complete (MockIO replay takes 50ms)
     setTimeout(() => {
-      clock.advance(50);  // This completes the replay
+      clock.advance(50);  // Complete the replay
     }, 10);
+
+    // Advance for inter-character spacing (3 × 60ms = 180ms)
+    setTimeout(() => {
+      clock.advance(180);  // Complete the spacing
+    }, 20);
 
     const result = await emissionPromise;
 
@@ -199,6 +219,11 @@ describe('runActiveEmission', () => {
     setTimeout(() => {
       input.type('e', clock.now());
     }, 0);
+
+    // Advance for inter-character spacing after correct input
+    setTimeout(() => {
+      clock.advance(180);
+    }, 10);
 
     const result = await emissionPromise;
 
@@ -262,6 +287,11 @@ describe('runActiveEmission', () => {
       // At 2880ms: This is when timeout SHOULD occur (audio + window)
       clock.advance(1200); // Total now 2880ms
     }, 20);
+
+    setTimeout(() => {
+      // Advance for inter-character spacing (3 × 240ms = 720ms)
+      clock.advance(720); // Total now 3600ms
+    }, 30);
 
     const result = await emissionPromise;
     const endTime = clock.now();

@@ -35,6 +35,7 @@ export function createIOAdapter(config: IOAdapterConfig): IO {
 
   return {
     async playChar(char: string): Promise<void> {
+      console.log(`[Audio] Playing '${char}'`);
       try {
         await audioEngine.playCharacter(char);
       } catch (error) {
@@ -52,15 +53,21 @@ export function createIOAdapter(config: IOAdapterConfig): IO {
     },
 
     reveal(char: string): void {
+      console.log(`[IO] Revealing character: '${char}'`);
       onReveal?.(char);
     },
 
     hide(): void {
+      console.log(`[IO] Hiding character`);
       onHide?.();
     },
 
     feedback(kind: 'correct' | 'incorrect' | 'timeout', char: string): void {
-      if (!feedback) return;
+      console.log(`[Feedback] ${kind} for '${char}'`);
+      if (!feedback) {
+        console.log(`[Feedback] No feedback handler configured`);
+        return;
+      }
 
       switch (kind) {
         case 'correct':
@@ -76,25 +83,32 @@ export function createIOAdapter(config: IOAdapterConfig): IO {
     },
 
     async replay(char: string): Promise<void> {
+      console.log(`[Replay] Starting replay for '${char}'`);
       if (!onReveal || !audioEngine) {
+        console.log(`[Replay] Missing dependencies - onReveal: ${!!onReveal}, audioEngine: ${!!audioEngine}`);
         return;
       }
 
       // Show the character
+      console.log(`[Replay] Showing character: '${char}'`);
       onReveal(char);
 
       // Play the audio
       try {
+        console.log(`[Replay] Playing audio for '${char}'`);
         await audioEngine.playCharacter(char);
       } catch (error) {
         console.warn(`Failed to replay audio for char: ${char}`, error);
       }
 
       // Wait a bit for the user to see
+      console.log(`[Replay] Waiting ${replayDuration}ms`);
       await new Promise(resolve => setTimeout(resolve, replayDuration));
 
       // Hide the character
+      console.log(`[Replay] Hiding character`);
       onHide?.();
+      console.log(`[Replay] Complete for '${char}'`);
     },
 
     log(event: LogEvent): void {

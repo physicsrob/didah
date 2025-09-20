@@ -1,454 +1,431 @@
 # Morse Code App Architecture
 
-## 1) How the whole app fits together (large modules first)
+## Overview
 
-**App Shell (layout + routing)**
-- Provides top-level navigation, global providers (state, audio context), and page containers.
-- Routes: **Study**, **Statistics**, **Text Sources**, **Settings** (plus an **About**/Help page if you like).
+This document describes the ACTUAL architecture as implemented, following the runtime-based approach from `plan_update.md`. The system uses a linear, async/await-based design that prioritizes simplicity and readability over complex state machines.
 
-**Feature modules**
-1. **Session** (Active/Passive practice)
-   - Orchestrates timing, audio, input handling, instant feedback, and session logging.
-   - Built around a **SessionController** that executes a pure transition function and an effect runner, with epoch-based cancellation. Active mode's input window opens at audio start; latency is measured from audio start to first correct key.
+## Core Architectural Principles
 
-2. **Statistics**
-   - Aggregates session logs into daily metrics, speed/latency, confusion matrix, and study time.
-   - Includes chart components and selectors to compute derived data.
+### Single Conductor Pattern
+The entire session is orchestrated by a single async function that runs a straightforward loop: emit character → wait for input/timeout → feedback → next. This eliminates the complexity of distributed state management.
 
-3. **Text Sources**
-   - Pluggable providers: Random letters, frequency-weighted words, Reddit RSS headlines, "hard characters" sampler.
-   - Uniform interface so Session doesn't care where characters came from.
+For Active mode: `playChar('H')` → `race(firstCorrectKey === 'H', timeout)` → feedback → next
+For Passive mode: `playChar('H')` → `sleep(preReveal)` → `reveal('H')` → `sleep(postReveal)` → next
 
-4. **Settings / Configuration**
-   - Character speed (WPM), enable numbers/punctuation, session length, mode, speed tiers, feedback/replay toggles.
-   - Writes to a versioned local data store and emits change events.
+Everything is linear code—no distributed timers, no "audioEnded" events, no cross-layer epoch tracking.
 
-5. **Core Domain (shared, headless logic)**
-   - **Morse Timing Engine** (maps WPM → dit length, symbol spacing, Passive mode delays).
-   - **Scheduler** (micro-timeline driving when to play, when input windows open/close).
-   - **Audio Engine** (WebAudio tone + shaped envelope, decoupled from UI).
-   - **Feedback** adapters (buzzer/flash/both) behind a single interface.
-   - **Event Log** (append-only session events → later folded into stats).
-   - **Storage** (local persistence abstraction + migrations).
+### Centralized Timing
+All timing operations go through a Clock abstraction with AbortSignal-based cancellation. The Clock provides:
+- `now()`: Current time in milliseconds
+- `sleep(ms, signal)`: Cancelable delay
 
-6. **Serverless (tiny)**
-   - RSS proxy function (avoids CORS and lets us set headers).
-   - Optional pre-filtering or simple caching for feeds.
+No scattered setTimeout calls, no epoch accounting, no guards calling into other layers. All waits are centralized through `sleep` and `select`, making concurrency explicit only where needed.
 
-**Data flow at runtime:**
-**Session** pulls a batch/stream from **Text Sources** → asks **Scheduler** (using **Morse Timing Engine**) when to play and when to accept input → **Audio Engine** plays tones → **Session** captures keypresses and emits **Event Log** entries (correct/incorrect/latency/timeouts) → **Statistics** later reads logs from storage to render charts and the confusion matrix.
+### IO Abstraction
+All side effects (audio, visual feedback, logging) are isolated behind a simple IO interface. The session logic calls IO methods directly without an intermediate "effects runner." The IO interface provides:
+- `playChar(char)`: Start audio playback (async, resolves when done)
+- `stopAudio()`: Stop current audio
+- `reveal(char)` / `hide()`: Passive mode display control
+- `feedback(kind, char)`: Trigger error feedback
+- `replay(char)`: Show missed character with audio
+- `log(event)`: Record session events
 
-## 2) UI composition (pages → sections → components)
+### Race/Select Utility
+A small utility handles "first wins" scenarios (e.g., correct keypress vs timeout) with automatic cancellation of the loser. When one promise wins, the others are automatically aborted via their AbortSignals. This makes concurrent operations explicit and manageable, eliminating timer races and leaked timeouts.
 
-**App Shell**
-- `<AppLayout>`: header/nav + outlet; error boundary; toasts.
-- `<RouteProvider>` using TanStack Router or React Router.
+## System Architecture
 
-**Study Page**
-- **Config strip**: session length (1/2/5m), mode (Active/Passive), speed (slow/medium/fast/lightning), source selector.
-- **Live panel**:
-  - **Now playing lane**:
-    - Active: shows "previously sent characters" (scrolling line); current character is visible (expected to type).
-    - Passive: same previous line, but current character hidden until reveal timing.
-  - **Input lane** (Active): text field or full-screen key capture.
-  - **Immediate feedback** area (flash overlay; optional sound).
-  - **Replay overlay** (large letter + auto-replay audio on fail).
-- **Session HUD**: elapsed/remaining time, live accuracy %, current WPM/latency, source label.
-- **Accessibility**: all feedback mirrored with ARIA live regions.
+### 1. Core Domain (`/src/core/`)
 
-**Statistics Page**
-- **Time window dropdown** (7/14/30/90 days; custom).
-- **Accuracy over time** (line or area).
-- **Speed/latency over time** (median/95th percentile; can be toggled onto the same chart).
-- **Confusion matrix** (grid or top-N pairs list).
-- **Study time by day** (bar).
-- "Hard characters" card (current top-10).
+**Morse Timing Engine** - Pure functions for timing calculations
+- WPM to dit length conversion (1200/WPM ms formula)
+- Speed tier multipliers (slow=5x, medium=3x, fast=2x, lightning=1x dit)
+- Character duration calculations including intra-symbol spacing
+- Passive mode reveal timings
 
-**Text Sources Page**
-- **Sources list**:
-  - Random letters (with filters: letters/numbers/punctuation toggles).
-  - Frequency-weighted words (dictionary stats; show example words).
-  - Reddit headlines (default subs + user-added RSS).
-  - Hard characters sampler (live list).
-- **Add RSS** form (validate, test fetch, save).
+**Morse Alphabet** - Character to Morse pattern mappings
+- Complete coverage: letters, numbers, standard and advanced punctuation
+- Case-insensitive lookups
+- Pattern-based duration calculations
 
-**Settings Page**
-- Character speed WPM.
-- Feature toggles: numbers, standard punctuation, advanced punctuation.
-- Audio test (tone preview).
-- Data: export/import, reset, clear cache.
+**Domain Types** - TypeScript definitions
+- SessionConfig, SpeedTier, and other core types
+- Shared across the application for type safety
 
-## 3) Core domain design (types + rules)
+### 2. Session Runtime (`/src/features/session/runtime/`)
 
-### Key types (TypeScript)
+**Clock** - Time abstraction for testability
+- SystemClock for production (uses performance.now)
+- Supports test clocks for deterministic testing
+- AbortSignal integration for cancellation
 
-```typescript
-// Configuration
-type UserConfig = {
-  wpm: number;                  // character speed in WPM
-  includeNumbers: boolean;
-  includeStdPunct: boolean;
-  includeAdvPunct: boolean;
-  sessionDefaults: {
-    lengthSec: 60 | 120 | 300;
-    mode: "active" | "passive";
-    speedTier: "slow" | "medium" | "fast" | "lightning";
-    feedback: "buzzer" | "flash" | "both";
-    replay: boolean;
-    sourceId: string;
-  };
-};
+**InputBus** - Keyboard input event stream
+- Push/pull interface for key events
+- Observable pattern for monitoring all keypresses
+- Predicate-based waiting (e.g., wait for correct key)
 
-// Session lifecycle
-type SessionConfig = {
-  mode: "active" | "passive";
-  lengthMs: number;
-  speedTier: "slow" | "medium" | "fast" | "lightning";
-  sourceId: string;
-  feedback: "buzzer" | "flash" | "both";
-  replay: boolean;
-  effectiveAlphabet: string[]; // based on toggles
-};
+**IO Interface** - Side effect abstraction
+- playChar/stopAudio for Morse playback
+- reveal/hide for passive mode display
+- feedback for error indication
+- replay for showing missed characters
+- log for event recording
 
-type Emission = {
-  id: string;            // unique per emitted character
-  char: string;
-  startedAt: number;     // ms, audio start
-  windowCloseAt: number; // active: end of recognition window; passive: reveal moment
-};
+**Select Utility** - Race condition handler
+- Manages concurrent promises (input vs timeout)
+- Automatic cancellation of non-winners
+- Clean AbortSignal propagation
 
-type InputEvent = {
-  at: number;
-  key: string;
-  emissionId: string;
-};
+**Character Programs** - Core emission logic
+- runActiveEmission: handles active mode (input during audio, timeout windows)
+- runPassiveEmission: handles passive mode (play, wait, reveal, wait)
+- Centralized timing logic with proper Morse spacing
 
-type OutcomeEvent =
-  | { type: "correct"; at: number; emissionId: string; latencyMs: number }
-  | { type: "timeout"; at: number; emissionId: string }
-  | { type: "incorrect"; at: number; emissionId: string; expected: string; got: string };
+**Session Program** - Main orchestrator
+- createSessionRunner: factory for session runners
+- Single async loop managing the entire session
+- Time budget enforcement
+- Clean start/stop with AbortController
 
-type SessionLog = {
-  sessionId: string;
-  startedAt: number;
-  cfg: SessionConfig;
-  events: (InputEvent | OutcomeEvent | Emission)[];
-  endedAt: number;
-};
+### 3. Audio & Feedback (`/src/features/session/services/`)
+
+**AudioEngine** - WebAudio-based Morse generation
+- Shaped envelopes to prevent clicks
+- Dit/dah timing based on WPM
+- Character-to-audio using alphabet patterns
+- Async control (play, stop, dispose)
+
+**Feedback Adapters** - Error indication
+- BuzzerFeedback: audio-based error sound
+- FlashFeedback: visual screen flash
+- CombinedFeedback: both audio and visual
+- Factory pattern for easy selection
+
+### 4. UI Layer (`/src/pages/`)
+
+**StudyPage** - Main practice interface
+- React hooks connecting to runtime
+- Session configuration controls
+- Live display of current/previous characters
+- Accuracy statistics within session
+- Inline styles (tech debt)
+
+Connection to runtime (simplified):
+```javascript
+// Create runtime dependencies
+const clock = useMemo(() => new SystemClock(), [])
+const input = useMemo(() => new SimpleInputBus(), [])
+const io = useMemo(() => createIOAdapter({
+  audioEngine,
+  feedback,
+  onReveal: setRevealedChar,
+  onHide: () => setRevealedChar(null),
+  onSnapshot: setSnapshot
+}), [audioEngine, feedback])
+
+// Create and subscribe to session runner
+const runner = useMemo(() =>
+  createSessionRunner({ clock, io, input, source }),
+  [clock, io, input, source]
+)
+
+// Push keyboard events to input bus
+useEffect(() => {
+  const onKey = (e) => input.push({
+    at: performance.now(),
+    key: e.key
+  })
+  window.addEventListener('keydown', onKey)
+  return () => window.removeEventListener('keydown', onKey)
+}, [input])
 ```
 
-### Timing model
-- **Dit length** = `1200 / WPM` ms (standard CW formula).
-- **Active mode input window** per spec:
-  - slow = `5 × dit`, medium = `3 × dit`, fast = `2 × dit`, lightning = `1 × dit`.
-- **Passive mode sequence** per spec:
-  - Slow: send char → `3×dit` → **reveal** → `3×dit` → next
-  - Medium: send → `3×dit` → reveal → `2×dit` → next
-  - Fast: send → `2×dit` → reveal → `1×dit` → next
-- Morse rendering: character timing (dit/dah ratio 1:3) and **intra-symbol**/symbol/word spacing (1/3/7 dits) handled by the **Morse Timing Engine**, separate from "recognition windows."
+**App** - Minimal wrapper
+- Currently just renders StudyPage
+- No routing implemented yet
 
-## 4) Session orchestration with SessionController + Pure Transitions
+## Data Flow
 
-Using a **SessionController** that executes a pure transition function and an effect runner, the **Session** has predictable behavior with epoch-based cancellation:
+### Session Lifecycle
 
-**Phases**
-- `idle` → `emitting` → (`awaitingInput` | `feedback` | `preRevealDelay` → `reveal` → `postRevealDelay`) → `ended`
-- **Active mode**: `emitting` (audio + input window open) → `awaitingInput` (if window remains after audio) → `feedback` (on timeout)
-- **Passive mode**: `emitting` → `preRevealDelay` → `reveal` → `postRevealDelay`
+1. **Initialization**
+   - User configures session (mode, speed, duration)
+   - StudyPage creates runtime dependencies (Clock, InputBus, IO adapter)
+   - Session runner created with dependencies
 
-**Events**
-- `Start` with SessionConfig
-- `AudioEnded` (emission audio finished)
-- `Keypress` with key and timestamp
-- `Timeout` with kind (window/pre/post)
-- `Advance` (move to next character)
-- `End` with reason (user/duration)
+2. **Active Mode Flow**
+   - Fetch character from source
+   - Start audio playback (non-blocking) - input window opens immediately
+   - Race: wait for correct key OR timeout
+   - If correct: stop audio immediately, positive feedback, advance
+   - If timeout: negative feedback, optional replay showing the character, advance
+   - Add inter-character spacing (3 dits per Morse standard)
+   - Repeat until time budget exhausted
 
-**Key Contracts:**
-- **Active mode**: Input window opens at audio start; correct input during audio stops playback immediately
-- **Latency measurement**: From audio start to first correct key
-- **No retries**: Failed characters advance to next (per spec)
-- **Epoch cancellation**: Timer callbacks check epoch; stale callbacks are ignored
-- **Effect-based timing**: All timing implemented via effects and the EffectRunner
+   **Key policies:**
+   - Input window opens at audio start (not after)
+   - Latency measured from audio end to correct key (0 if pressed during audio)
+   - On correct input during audio, stop playback immediately
+   - On incorrect key, log it and optionally buzz, but don't advance
+   - On timeout, show character replay if enabled
+   - No retries - failed characters advance to next
 
-**Why this matters:**
-- Deterministic flow with pure transitions → easy to unit-test timing and edge cases without audio
-- Epoch-based cancellation eliminates timer races and prevents stale callbacks
-- Effect-based architecture separates concerns (logic vs. side effects) and enables testing with TestEffectRunner
+3. **Passive Mode Flow**
+   - Fetch character from source
+   - Play audio (blocking - wait for completion)
+   - Wait pre-reveal delay (2-3 dits depending on speed)
+   - Show character
+   - Wait post-reveal delay (1-3 dits depending on speed)
+   - Hide character and advance
+   - Repeat until time budget exhausted
 
-## 5) Text Sources (pluggable providers)
+   **Timing by speed tier:**
+   - Slow: 3 dits → reveal → 3 dits
+   - Medium: 3 dits → reveal → 2 dits
+   - Fast: 2 dits → reveal → 1 dit
+   - Lightning: 2 dits → reveal → 1 dit (same as fast)
 
-**Provider interface**
-```typescript
-interface TextSource {
-  id: string;
-  label: string;
-  prepare(ctx: { alphabet: string[] }): Promise<void> | void;
-  next(): string; // returns a single character each call
-}
-```
+### Input Handling
 
-Even for "words" or "headlines," the provider streams characters one at a time. It internally buffers the current word/headline and yields the next character.
+- Keyboard events captured at window level
+- Pushed to InputBus with timestamp: `input.push({ at: performance.now(), key: e.key })`
+- Active mode monitors for correct key while logging incorrect attempts
+- Uses observable pattern to log all keypresses during input window
+- Latency measured from audio end to correct key (or 0 if key pressed before audio ends)
 
-**Built-ins**
-- **Random letters**: uniform or weighted by user difficulty (optional toggle).
-- **Frequency-weighted words**: load a list with per-word frequencies; sample via alias method for O(1) weighted picks.
-- **Reddit RSS**: serverless fetch → normalize titles → in-memory ring buffer → stream characters.
-- **Hard characters**: dynamically recomputed top-10 hardest based on 30-day accuracy/latency; yields from that set with higher probability.
+### Timing Management
 
-## 6) Feedback system
+- **Dit length**: 1200/WPM milliseconds (standard CW formula)
+- **Recognition windows** (Active mode):
+  - Slow: 5×dit
+  - Medium: 3×dit
+  - Fast: 2×dit
+  - Lightning: 1×dit
+  - Minimum window enforced (at least 60ms or 1 dit, whichever is larger)
+- **Passive mode delays**:
+  - Pre-reveal: 2-3 dits depending on speed
+  - Post-reveal: 1-3 dits depending on speed
+- **Inter-character spacing**: 3 dits (Morse standard)
+- **Intra-symbol spacing**: 1 dit between dits/dahs within a character
 
-**Feedback adapters** implement a simple interface:
-```typescript
-interface Feedback {
-  onFail(char: string): void;     // buzzer/flash/both
-  onCorrect?(char: string): void; // optional
-}
-```
+### Session End Policies
 
-- **Buzzer**: short tone via Audio Engine (different frequency) or preloaded sample.
-- **Flash**: CSS class toggled on the app root (fast fade animation).
+- **Time budget**: Session ends after current emission completes (no mid-tone cut)
+- **User stop**: Aborts immediately via AbortController
+- **No partial emissions**: Always complete or skip entire character
 
-These are trivially swappable and **do not** block the main state machine.
+## What's NOT Implemented
 
-## 7) Storage (local, versioned) & data pipeline
+### Storage & Persistence
+- No event log persistence
+- No session history
+- No user settings storage
+- No data export/import
 
-- Wrap persistent storage behind a **Repository** interface:
-  - `EventRepo.append(SessionLog | SessionEvent)`
-  - `EventRepo.readRange({ from, to })`
-  - `ConfigRepo.get/set`
-  - `SourcesRepo.get/set` (for custom RSS)
-- Use **IndexedDB** via a tiny helper (`idb-keyval` or Dexie) for resilience and size; if you truly want `localStorage`, keep the repository abstraction so you can swap later without refactoring.
-- Include a schema version + **migrations** to evolve event shapes safely.
-- **Selectors** in the Statistics module compute:
-  - Accuracy per day (`correct / (correct + incorrect + timeout)`)
-  - Latency per day (median, p95)
-  - Confusion pairs: counts of `(expected, got)` sorted by frequency
-  - Study time per day: sum of session durations
-- Optional export/import (JSONL of events) for backup.
+### Statistics
+- No historical tracking
+- No accuracy over time
+- No confusion matrix
+- No study time aggregation
 
-## 8) Serverless functions (Vercel)
+### Text Sources
+- Only random letters implemented
+- Missing: weighted words, RSS feeds, hard characters
 
-- `/api/rss-proxy?url=...`
-  - Sets `User-Agent` and `Accept: application/rss+xml` headers.
-  - Parses XML → safe JSON (title, link, pubDate) or returns raw XML and parse client-side.
-  - Caches for a few minutes (immutable revalidation).
-- (Optional) `/api/wordlist` to deliver frequency lists efficiently.
+### Multi-Page Application
+- No routing
+- No statistics page
+- No settings page
+- No text source configuration
 
-These are minimal—everything else stays on the client.
-
-## 9) Recommended directory structure
-
-Feature-first with a small shared core. (Vite + React + TS assumed.)
+## File Organization
 
 ```
 /src
-  /app
-    App.tsx
-    routes.tsx
-    providers.tsx           // Query/Zustand/XState providers
-    layout/
-      AppLayout.tsx
-      Nav.tsx
+  /core                    # Domain logic (no UI dependencies)
+    /morse
+      alphabet.ts         # Morse patterns
+      timing.ts           # Timing calculations
+    /types
+      domain.ts           # Shared types
+
   /features
     /session
-      SessionController.ts
-      transition.ts          // pure transitions
-      effects.ts            // Effect type & runner (audio, feedback)
-      types.ts              // phases, events, context, Effect
-      __tests__/
-        transition.test.ts
-        controller.timing.test.ts
-        controller.races.test.ts
-      services/
-        scheduler.ts        // emission timeline generation
-        audioEngine.ts      // WebAudio wrapper (thin, not unit tested)
-        feedback/
-          flashFeedback.ts
-          buzzerFeedback.ts
-      components/
-        StudyPanel.tsx
-        InputCapture.tsx
-        PreviousLine.tsx
-        ReplayOverlay.tsx
-        Hud.tsx
-      utils/
-        keymap.ts           // normalize keystrokes to characters
-    /stats
-      selectors/
-        accuracy.ts
-        latency.ts
-        confusion.ts
-        studyTime.ts
-      components/
-        AccuracyChart.tsx
-        LatencyChart.tsx
-        ConfusionMatrix.tsx
-        StudyTimeChart.tsx
-      charts/
-        charting.ts         // small wrapper around Recharts/Chart.js
-    /sources
-      providers/
-        randomLetters.ts
-        weightedWords.ts
-        redditRss.ts
-        hardChars.ts
-      components/
-        SourcesPage.tsx
-        AddRssForm.tsx
-      utils/
-        normalizeHeadline.ts
-        frequencySampler.ts // alias method
-    /config
-      ConfigPage.tsx
-      configStore.ts        // Zustand slice or similar
-      schema.ts             // UserConfig type & defaults
-    /core
-      morse/
-        timing.ts           // dit length, spacing math
-        alphabet.ts         // maps char -> dit/dah; constants
-      storage/
-        index.ts            // repo interfaces
-        idbRepo.ts          // IndexedDB impl
-        migrations.ts
-      analytics/
-        eventLog.ts         // append-only; writes to storage
-      types/
-        domain.ts           // shared TS types
-  /pages
+      /runtime            # Main session orchestration
+        clock.ts
+        inputBus.ts
+        io.ts
+        select.ts
+        charPrograms.ts
+        sessionProgram.ts
+        ioAdapter.ts
+      /services
+        audioEngine.ts    # WebAudio implementation
+        scheduler.ts      # (Unused - from old approach)
+        /feedback         # Feedback implementations
+
+    /sources              # Text source providers
+      /providers
+        randomLetters.ts  # Only one implemented
+
+  /pages                  # React components
     StudyPage.tsx
-    StatisticsPage.tsx
-    TextSourcesPage.tsx
-    SettingsPage.tsx
-  /api                       // Vercel serverless
-    rss-proxy.ts
-  /styles
-    globals.css
-  /tests
-    transition.test.ts
-    controller.timing.test.ts
-    controller.races.test.ts
-    scheduler.test.ts
+
+  /tests                  # Test files
     timing.test.ts
-    frequencySampler.test.ts
-    selectors.accuracy.test.ts
-    selectors.confusion.test.ts
-    sources.redditRss.test.ts
-    e2e/ (Playwright)
+    audioEngine.integration.test.ts
+
+  /cli                    # CLI tools (should be moved)
 ```
 
-Notes:
-- **constants** (alphabet maps) live under `/core/morse/alphabet.ts` and do **not** get unit tests.
-- Audio playback is thin and integration-tested only (no unit tests).
+## Key Design Decisions
 
-## 10) High-value, test-driven development (TDD) targets
+### Why Runtime Over State Machine
+The original plan called for a state machine with transitions and effects. The implemented runtime approach is simpler:
+- **Linear code flow** - You can read the timing logic top-to-bottom in one function
+- **Explicit timing** - Every delay and timeout is visible in the code path
+- **Easier debugging** - Step through one async function instead of tracing state transitions
+- **Simpler testing** - Inject fake clock and inputs, advance time deterministically
+- **No distributed timers** - All timing goes through centralized Clock abstraction
+- **Automatic cleanup** - AbortSignal cascades cancel all child operations
 
-Focus on pure, deterministic logic where tests buy you confidence and guard against regressions:
+Example of the simplicity - Active mode in pseudocode:
+```
+async function runActiveEmission(char) {
+  playChar(char)  // don't await
+  result = race(correctKey(char), timeout(window))
+  if (result === correct) {
+    stopAudio()
+    feedback('correct')
+  } else {
+    feedback('timeout')
+    if (replay) await replay(char)
+  }
+}
+```
 
-1. **SessionController / transition** (`features/session/SessionController.ts`, `transition.ts`)
-   - Phase transitions: Active (emitting → awaitingInput → feedback), Passive (emitting → preRevealDelay → reveal → postRevealDelay)
-   - Timer scheduling and cancellation with epoch-based race protection
-   - Early correct input during audio stops playback and advances immediately
-   - Boundary timings: minimum window enforcement, precise reveal spacing
-   - Edge cases: input during phases, timeout vs keypress precedence, rapid successive keypresses
-   - Pure transition function tested without side effects; controller tested with TestEffectRunner
+Compare this to a state machine with states like `EMITTING`, `AWAITING_INPUT`, `FEEDBACK`, each with their own timers and transition logic.
 
-2. **Scheduler** (`features/session/services/scheduler.ts`)
-   - Given a WPM + speed tier, emits precise timestamps for:
-     - Audio start/stop per symbol
-     - Input window open/close (Active)
-     - Reveal and inter-character spacing (Passive)
-   - Verify calculations align with spec (dit multipliers above).
+### Why IO Abstraction
+Separating side effects from logic enables:
+- **Easy testing** - Mock IO for deterministic tests
+- **Multiple implementations** - CLI vs browser vs future platforms
+- **Clear boundaries** - Session logic doesn't know about DOM or WebAudio
+- **Future flexibility** - Add new feedback types without touching core logic
 
-3. **Morse Timing Engine** (`/core/morse/timing.ts`)
-   - `wpmToDitMs`, symbol spacing math, and any Farnsworth option you might add later.
-   - Ensures timing is stable across browsers with integer rounding strategy (e.g., accumulate drift and correct).
+The IO interface is intentionally minimal - just the operations needed for a session, no timing logic.
 
-4. **Text Source providers**
-   - **Random letters**: respects effective alphabet (numbers/punctuation toggles).
-   - **Frequency-weighted words**: statistical sanity (χ² check over many samples or simpler bounds).
-   - **Reddit RSS**: parsing/normalization; error handling on malformed feeds (mock fetch with MSW).
-   - **Hard characters**: correct top-10 computation given synthetic logs.
+### Why InputBus
+Decoupling input from session logic allows:
+- **Testing without DOM** - Push synthetic events in tests
+- **Multiple input sources** - Keyboard, touch, voice, etc.
+- **Clean separation** - React components just push events, don't know about session logic
+- **Observable pattern** - Monitor all attempts for logging incorrect keys
 
-5. **Selectors for statistics**
-   - **Accuracy by day**: correct numerator/denominator, filters by time window.
-   - **Latency**: median and p95 vs. outliers.
-   - **Confusion matrix**: (expected, got) aggregation and top-N pairs; ensure symmetry rules are handled as intended (pairs vs. ordered pairs).
-   - **Study time by day**: sessions spanning midnight counted correctly.
+The InputBus uses a push/pull model: push events in, pull them out with predicates.
 
-6. **Keymap utility** (`features/session/utils/keymap.ts`)
-   - Maps keyboard events to expected characters, including punctuation.
+### Why Select/Race Utility
+Managing concurrent operations (input vs timeout) needs careful handling:
+- **Automatic cancellation** - Losing promises are aborted via their signals
+- **No leaked timers** - AbortSignal ensures cleanup
+- **Explicit concurrency** - Only where actually needed (the race)
+- **Composable** - Can race any number of operations
 
-7. **Storage repositories & migrations**
-   - Round-trip tests: write events → read events.
-   - Migration from vX→vX+1 transforms shape but preserves meaning.
+## Future Architecture Considerations
 
-8. **End-to-end (Playwright)**
-   - Start a 1-minute Active session on Random Letters at medium speed; type a few correct, a few incorrect; ensure live accuracy moves and session ends.
-   - Passive session ensures current char is hidden until reveal.
-   - Add a custom RSS feed; provider yields headline characters.
+### Adding Persistence
+- Implement EventLog with localStorage/IndexedDB backend
+- Add repository pattern for data access
+- Include migration system for schema evolution
 
-**Intentionally *not* unit-tested**
-- **Audio Engine** (WebAudio): exercise through an integration smoke test (tone starts/stops without throwing).
-- **Pure constants** (alphabet maps, UI tokens).
-- **Chart rendering** (snapshot tests are brittle); validate via selector tests and a tiny "renders without crash" smoke.
+### Adding Statistics
+- Build selectors that compute from event logs
+- Add caching layer for expensive calculations
+- Create chart components with time window controls
 
-## 11) Implementation details that pay off
+### Adding Multiple Pages
+- Introduce React Router or TanStack Router
+- Create layout component with navigation
+- Add route guards for unsaved changes
 
-- **State management**: Zustand (or Redux Toolkit) for app-level config + repositories; SessionController for session orchestration with pure transitions.
-- **Strict TypeScript** (`"strict": true`) + ESLint rules for exhaustive switch on session events and phases.
-- **Performance**:
-  - Precompute audio buffers for common characters at current WPM to avoid runtime oscillator setup overhead.
-  - Keep the "previously sent characters" list virtualized if needed (but realistically it's small).
-- **Accessibility**:
-  - Ensure flash feedback is not seizure-triggering (limit intensity/duration, offer reduced-motion).
-  - Provide hotkeys for pause/resume/end session.
-- **Mobile**:
-  - Full-screen key capture with an on-screen keyboard as a fallback.
+### Production Deployment
+- Add error boundaries
+- Implement proper error logging
+- Add performance monitoring
+- Configure Vercel deployment
+- Create RSS proxy serverless function
 
-## 12) How the app behaves end-to-end (high-level functionality)
+## Testing Strategy
 
-1. User opens **Study** → chooses Session config (length, mode, speed, source).
-2. **Session starts**:
-   - **Scheduler** computes the next character's audio schedule and (for Active) the recognition window.
-   - **Audio Engine** emits the tone for that character; **Session** logs `Emission`.
-   - **Active**: input window opens; first correct key within the window ends the window and immediately advances. Otherwise, on timeout → **Feedback** triggers and optional **Replay** overlay shows the letter while replaying its audio. The same letter is **not** re-queued.
-   - **Passive**: character is hidden; after pre-reveal spacing elapses, the character is shown; post-reveal spacing elapses; advance.
-   - The "previously sent characters" line accumulates.
-3. **Session ends** on time budget; **Event Log** is persisted.
-4. **Statistics** reads logs:
-   - Displays accuracy/speed graphs for the selected window.
-   - Computes confusion pairs and identifies "hard characters."
-   - Shows daily study time.
+### Unit Tests
+- Pure functions (timing calculations, alphabet lookups)
+- Runtime logic with fake clock and inputs
+- Select utility race conditions
+- Character emission flows with deterministic timing
 
-## 13) Speed tiers and windows (exact table)
+Example test approach with fake clock:
+```
+const clock = new FakeClock()
+const input = new SimpleInputBus()
+const io = mockIO()
 
-| Mode    | Tier      | Recognition window / Reveal spacing rules |
-|---------|-----------|-------------------------------------------|
-| Active  | slow      | 5 × dit input window                      |
-|         | medium    | 3 × dit input window                      |
-|         | fast      | 2 × dit input window                      |
-|         | lightning | 1 × dit input window                      |
-| Passive | slow      | emit → 3×dit → **reveal** → 3×dit         |
-|         | medium    | emit → 3×dit → **reveal** → 2×dit         |
-|         | fast      | emit → 2×dit → **reveal** → 1×dit         |
+// Start emission
+runActiveEmission(config, 'A', io, input, clock, signal)
 
-*(Dit length = 1200/WPM ms; symbol spacing is still governed by Morse rules inside `emit`.)*
+// Advance time, push input
+clock.advance(100)
+input.push({ at: 100, key: 'A' })
 
-## 14) Small roadmap (nice to have, later)
+// Verify correct outcome
+```
 
-- **Adaptive sampling**: weight hard characters more when accuracy dips below a threshold.
-- **Session presets** (e.g., "Numbers sprint", "Punctuation drill").
-- **Export to CSV** of daily stats for sharing.
-- **Cloud backup** (optional) gated behind user opt-in.
+### Integration Tests
+- Audio engine with actual WebAudio
+- Full session flow with mock IO
+- React component rendering
+- End-to-end session with time advancement
 
-### TL;DR: What to build first (in order)
+### What's NOT Tested
+- Audio playback quality
+- Visual feedback appearance
+- Browser compatibility
+- Performance under load
 
-1. Core **Morse Timing Engine** + **Scheduler** (with tests).
-2. **SessionController + pure transitions** (with tests) using a dummy "random letters" source.
-3. Minimal **Audio Engine** (enough to play dit/dah sequences) + **Feedback** adapters.
-4. **Event Log** + **Statistics selectors** + basic charts.
-5. **Text Sources** providers (weighted words, RSS proxy, hard characters sampler) with tests.
-6. **Settings** + versioned **Storage** + migrations.
+### Test Coverage Goals
+- Core logic: 100% coverage (timing, alphabet, runtime)
+- UI components: Smoke tests (renders without crashing)
+- Integration: Happy paths + key edge cases
 
-This plan gives you a clean separation of concerns (UI vs orchestration vs pure logic), keeps the most critical behavior deterministic and testable, and leaves the finicky parts (audio) thin and swappable.
+## Performance Considerations
+
+### Current State
+- No performance optimizations
+- Inline styles parsed on each render
+- No memoization of expensive calculations
+- No code splitting
+
+### Future Optimizations
+- Extract styles to CSS modules
+- Memoize timing calculations
+- Precompute audio buffers
+- Implement virtual scrolling for long character lists
+- Add React.memo where beneficial
+
+## Security Considerations
+
+### Current Risks
+- No input validation on session config
+- No rate limiting on session starts
+- No protection against localStorage quota
+
+### Future Mitigations
+- Validate all user inputs
+- Add rate limiting
+- Handle quota errors gracefully
+- Sanitize any user-generated content
+
+## Conclusion
+
+The implemented architecture prioritizes simplicity and correctness over premature optimization. The runtime approach has proven easier to understand and debug than the originally planned state machine. The main gaps are in persistence, statistics, and multi-page support rather than core functionality.
+
+Next steps should focus on adding data persistence and basic statistics before expanding to multiple text sources or advanced features. The architecture is flexible enough to support these additions without major refactoring.

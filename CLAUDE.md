@@ -24,53 +24,58 @@ npm run lint        # ESLint only
 
 ## Architecture
 
-The app follows a feature-first architecture based on `arch.md`:
+The app uses a runtime-based approach (NOT state machines) - see `arch.md` for details:
 
-- **Core Domain**: `src/core/` - Timing engine, storage, types
-- **Features**: `src/features/` - Session, stats, sources, config
-- **Pages**: `src/pages/` - Page components
-- **API**: `api/` - Serverless functions
+- **Core Domain**: `src/core/` - Timing engine, alphabet, types
+- **Runtime System**: `src/features/session/runtime/` - Session orchestration
+- **Services**: `src/features/session/services/` - Audio, feedback
+- **Pages**: `src/pages/` - React components
 
 ## Key Files
 
-- `src/core/morse/timing.ts` - Morse timing calculations (WPM → dit length, spacing)
-- `src/core/types/domain.ts` - TypeScript domain types
-- `src/tests/timing.test.ts` - Timing engine tests
+- `src/core/morse/timing.ts` - Morse timing calculations (WPM → dit length)
+- `src/core/morse/alphabet.ts` - Character to Morse pattern mappings
+- `src/features/session/runtime/sessionProgram.ts` - Main session orchestrator
+- `src/features/session/runtime/charPrograms.ts` - Active/Passive mode logic
+- `src/pages/StudyPage.tsx` - Main UI component
 
 ## Current Status
 
-✅ Project setup with Vite + React + TypeScript
-✅ Morse timing engine with comprehensive tests
-🚧 Session scheduler implementation
-⏳ Audio engine
-⏳ Session state machine
-⏳ UI components
+✅ Core timing engine with tests
+✅ Runtime session orchestration
+✅ Audio engine (WebAudio)
+✅ Basic UI with Active/Passive modes
+❌ No persistence/statistics
+❌ Limited text sources (random only)
 
-## Testing Strategy
+## Implementation Priority
 
-Focus on test-driven development for core logic:
-- Timing calculations (✅ complete)
-- Session state machine (next)
-- Text source providers
-- Statistics selectors
-- Storage repositories
+See `STATUS.md` for detailed next steps. Priority order:
+1. Fix WPM configuration duplication (tech debt)
+2. Add event logging and persistence
+3. Implement basic statistics
+4. Add more text sources
+5. User settings management
 
-## Implementation Order
+## Testing
 
-Following the build order from `arch.md`:
-1. ✅ Core Morse Timing Engine + Scheduler
-2. Session state machine (XState)
-3. Audio Engine + Feedback adapters
-4. Event Log + Statistics selectors
-5. Text Sources providers
-6. Settings + Storage + migrations
+- ~32 tests currently passing
+- Focus on core logic (timing, runtime, alphabet)
+- Using Vitest with fake clocks for deterministic testing
 
-## Notes
+## Important Notes
 
-- Using Vitest for testing (node environment, no jsdom needed for core logic)
-- TypeScript strict mode enabled
-- All timing calculations based on standard CW formula: dit = 1200/WPM ms
+- Dit length = 1200/WPM ms (standard CW formula)
 - Speed tiers: slow(5×dit), medium(3×dit), fast(2×dit), lightning(1×dit)
+- Latency measured from audio END to keypress (0 if pressed during audio)
+- No retries on failed characters - advance to next
+
+## Documentation
+
+- `spec.md` - What to build (product requirements)
+- `arch.md` - How it's built (technical architecture)
+- `STATUS.md` - Current state and next steps
+- `tech_debt.md` - Known issues to fix
 
 # Import Context
 @spec.md
