@@ -199,7 +199,17 @@ export function createSessionRunner(deps: SessionRunnerDeps): SessionRunner {
           // Update remaining time
           const newElapsed = deps.clock.now() - startTime;
           snapshot.remainingMs = Math.max(0, config.lengthMs - newElapsed);
+
+          // Publish snapshot after all updates
           publish();
+
+          // Add inter-character spacing (only for active mode; passive has its own timing)
+          if (config.mode === 'active') {
+            const ditMs = 1200 / config.wpm;
+            const interCharSpacingMs = ditMs * 3; // 3 dits per Morse standard
+            console.log(`[Spacing] Adding inter-character spacing: ${interCharSpacingMs}ms (3 dits)`);
+            await deps.clock.sleep(interCharSpacingMs, signal);
+          }
 
         } catch (error) {
           // Handle abort

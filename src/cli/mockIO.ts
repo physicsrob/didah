@@ -7,11 +7,11 @@ import type { Clock } from '../features/session/runtime/clock';
 import { MORSE_ALPHABET } from '../core/morse/alphabet';
 import { wpmToDitMs } from '../core/morse/timing';
 
-export function createMockIO(clock: Clock, clockMode: 'instant' | 'realtime', wpm: number = 20): IO {
+export function createMockIO(clock: Clock, clockMode: 'instant' | 'realtime'): IO {
   const isRealtime = clockMode === 'realtime';
 
   // Calculate audio duration for a character
-  function getAudioDuration(char: string, sessionWpm: number = wpm): number {
+  function getAudioDuration(char: string, sessionWpm: number): number {
     const pattern = MORSE_ALPHABET[char.toUpperCase()];
     if (!pattern) return 100; // Default for unknown chars
 
@@ -36,8 +36,8 @@ export function createMockIO(clock: Clock, clockMode: 'instant' | 'realtime', wp
   }
 
   return {
-    async playChar(char: string): Promise<void> {
-      const duration = getAudioDuration(char);
+    async playChar(char: string, wpm: number): Promise<void> {
+      const duration = getAudioDuration(char, wpm);
       const startTime = clock.now();
 
       if (isRealtime) {
@@ -72,8 +72,8 @@ export function createMockIO(clock: Clock, clockMode: 'instant' | 'realtime', wp
       console.log(`[${clock.now()}ms] FEEDBACK: ${kind} for '${char}'`);
     },
 
-    async replay(char: string): Promise<void> {
-      const duration = getAudioDuration(char);
+    async replay(char: string, wpm: number): Promise<void> {
+      const duration = getAudioDuration(char, wpm);
       const startTime = clock.now();
 
       console.log(`[${startTime}ms] REPLAY: '${char}' (duration: ${duration}ms)`);

@@ -362,7 +362,7 @@ describe('Session Scheduler', () => {
       const ditMs = wpmToDitMs(15); // 80ms
       const windowMs = 3 * ditMs; // medium = 3 dits = 240ms
 
-      testChars.forEach((char, index) => {
+      testChars.forEach((char) => {
         const charDuration = calculateCharacterDurationMs(char, 15);
         const emitEvent = schedule.events.find(
           e => e.type === 'emit' && (e as any).emission.char === char

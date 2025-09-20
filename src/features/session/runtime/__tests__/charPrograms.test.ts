@@ -194,7 +194,7 @@ describe('runActiveEmission', () => {
     // Check that replay was called
     const replayCalls = io.getCalls('replay');
     expect(replayCalls).toHaveLength(1);
-    expect(replayCalls[0].args).toEqual(['D']);
+    expect(replayCalls[0].args).toEqual(['D', 20]);
   });
 
   it('respects case-insensitive input', async () => {
@@ -246,9 +246,8 @@ describe('runActiveEmission', () => {
     // Create MockIO that simulates realistic audio duration
     const realisticIO = new MockIO(clock);
     // Override playChar to use character-specific duration
-    const originalPlayChar = realisticIO.playChar.bind(realisticIO);
-    realisticIO.playChar = async function(char: string): Promise<void> {
-      this.calls.push({ method: 'playChar', args: [char] });
+    realisticIO.playChar = async function(char: string, wpm: number): Promise<void> {
+      this.calls.push({ method: 'playChar', args: [char, wpm] });
       // Calculate realistic audio duration for 'H' at 5 WPM
       const audioDuration = 1680; // 4 dits + 3 spacing × 240ms = 1680ms
       await clock.sleep(audioDuration);
@@ -288,13 +287,7 @@ describe('runActiveEmission', () => {
       clock.advance(1200); // Total now 2880ms
     }, 20);
 
-    setTimeout(() => {
-      // Advance for inter-character spacing (3 × 240ms = 720ms)
-      clock.advance(720); // Total now 3600ms
-    }, 30);
-
     const result = await emissionPromise;
-    const endTime = clock.now();
 
     expect(result).toBe('timeout');
 
@@ -304,6 +297,7 @@ describe('runActiveEmission', () => {
 
     // The timeout should have been logged at 2880ms (audio + window), not 1200ms (just window)
     const timeoutTime = timeoutLogs[0].args[0].at;
+    console.log(`Timeout logged at: ${timeoutTime}, expected: ${startTime + 2880}`);
     expect(timeoutTime).toBe(startTime + 2880); // This will FAIL with current bug
   });
 });
@@ -360,7 +354,7 @@ describe('runPassiveEmission', () => {
     expect(calls[1].args[0].type).toBe('emission');
 
     // Should play audio
-    expect(calls[2]).toEqual({ method: 'playChar', args: ['F'] });
+    expect(calls[2]).toEqual({ method: 'playChar', args: ['F', 20] });
 
     // Should reveal after pre-reveal delay
     const revealCall = calls.find(c => c.method === 'reveal');

@@ -10,7 +10,6 @@ import { wpmToDitMs, getSpacingMs } from '../../../core/morse/timing.js';
 
 export interface AudioEngineConfig {
   frequency: number; // Tone frequency in Hz (typically 600-800 Hz)
-  wpm: number;       // Words per minute for timing calculations
   volume: number;    // Volume (0.0 to 1.0)
 }
 
@@ -66,7 +65,7 @@ export class AudioEngine {
   /**
    * Play a character's Morse pattern
    */
-  async playCharacter(char: string): Promise<void> {
+  async playCharacter(char: string, wpm: number): Promise<void> {
     if (!this.audioContext) {
       throw new Error('Audio context not initialized');
     }
@@ -77,7 +76,7 @@ export class AudioEngine {
     }
 
     await this.stop(); // Stop any current playback
-    this.playbackPromise = this.playPattern(pattern);
+    this.playbackPromise = this.playPattern(pattern, wpm);
     return this.playbackPromise;
   }
 
@@ -128,7 +127,7 @@ export class AudioEngine {
   /**
    * Play a dit/dah pattern with proper timing and spacing
    */
-  private async playPattern(pattern: MorsePattern): Promise<void> {
+  private async playPattern(pattern: MorsePattern, wpm: number): Promise<void> {
     if (!this.audioContext) {
       throw new Error('Audio context not initialized');
     }
@@ -136,8 +135,8 @@ export class AudioEngine {
     this.isPlaying = true;
 
     try {
-      const ditMs = wpmToDitMs(this.config.wpm);
-      const { intraSymbolMs } = getSpacingMs(this.config.wpm);
+      const ditMs = wpmToDitMs(wpm);
+      const { intraSymbolMs } = getSpacingMs(wpm);
 
       for (let i = 0; i < pattern.length; i++) {
         const element = pattern[i];
@@ -221,11 +220,4 @@ export class AudioEngine {
   }
 }
 
-/**
- * Default audio configuration
- */
-export const DEFAULT_AUDIO_CONFIG: AudioEngineConfig = {
-  frequency: 700, // Hz
-  wpm: 5,        // Words per minute - slowed down for debugging
-  volume: 0.3,   // 30% volume
-};
+// Default audio config moved to src/core/config/defaults.ts

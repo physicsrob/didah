@@ -11,21 +11,9 @@ import { createIOAdapter } from '../features/session/runtime/ioAdapter.js';
 import type { SessionSnapshot } from '../features/session/runtime/io.js';
 import { createSessionRunner } from '../features/session/runtime/sessionProgram.js';
 import { RandomCharSource } from '../features/session/runtime/sessionProgram.js';
-import { AudioEngine, DEFAULT_AUDIO_CONFIG } from '../features/session/services/audioEngine.js';
+import { AudioEngine } from '../features/session/services/audioEngine.js';
 import { createFeedback } from '../features/session/services/feedback/index.js';
-import type { SessionConfig } from '../core/types/domain.js';
-
-// Default session configuration
-const DEFAULT_SESSION_CONFIG: SessionConfig = {
-  mode: 'active',
-  lengthMs: 60000, // 1 minute
-  speedTier: 'slow',
-  sourceId: 'randomLetters',
-  feedback: 'flash',
-  replay: true,
-  effectiveAlphabet: ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z'],
-  wpm: 5,  // Slow practice speed
-};
+import { DEFAULT_SESSION_CONFIG, DEFAULT_AUDIO_CONFIG } from '../core/config/defaults.js';
 
 export function StudyPage() {
   const [snapshot, setSnapshot] = useState<SessionSnapshot>({
@@ -118,10 +106,8 @@ export function StudyPage() {
   const startSession = useCallback(async () => {
     console.log(`[Session] Starting - Mode: ${DEFAULT_SESSION_CONFIG.mode}, WPM: ${DEFAULT_SESSION_CONFIG.wpm}, Speed: ${DEFAULT_SESSION_CONFIG.speedTier}`);
     await initializeAudio();
-    // Update audio engine with session WPM before starting
-    audioEngine.updateConfig({ wpm: DEFAULT_SESSION_CONFIG.wpm });
     runner.start(DEFAULT_SESSION_CONFIG);
-  }, [runner, initializeAudio, audioEngine]);
+  }, [runner, initializeAudio]);
 
   // Stop session
   const stopSession = useCallback(() => {

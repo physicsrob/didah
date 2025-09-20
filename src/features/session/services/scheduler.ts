@@ -7,7 +7,6 @@
 
 import type { SessionConfig, Emission } from '../../../core/types/domain';
 import {
-  wpmToDitMs,
   getActiveWindowMs,
   getPassiveTimingMs,
   calculateCharacterDurationMs
@@ -36,7 +35,6 @@ export function generateSessionSchedule(
   const events: ScheduleEvent[] = [];
   let currentTime = startTime;
 
-  const ditMs = wpmToDitMs(config.wpm);
 
   for (let i = 0; i < characters.length; i++) {
     const char = characters[i];

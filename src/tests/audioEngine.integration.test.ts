@@ -7,7 +7,8 @@
  */
 
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import { AudioEngine, DEFAULT_AUDIO_CONFIG } from '../features/session/services/audioEngine.js';
+import { AudioEngine } from '../features/session/services/audioEngine.js';
+import { DEFAULT_AUDIO_CONFIG, DEFAULT_WPM } from '../core/config/defaults.js';
 
 // Mock AudioContext for testing environment
 class MockAudioContext {
@@ -90,22 +91,22 @@ describe('AudioEngine Integration', () => {
   });
 
   it('should throw error when playing character without initialization', async () => {
-    await expect(audioEngine.playCharacter('A')).rejects.toThrow('Audio context not initialized');
+    await expect(audioEngine.playCharacter('A', DEFAULT_WPM)).rejects.toThrow('Audio context not initialized');
   });
 
   it('should handle known characters after initialization', async () => {
     await audioEngine.initialize();
 
     // These should not throw
-    await expect(audioEngine.playCharacter('A')).resolves.not.toThrow();
-    await expect(audioEngine.playCharacter('E')).resolves.not.toThrow();
-    await expect(audioEngine.playCharacter('5')).resolves.not.toThrow();
-    await expect(audioEngine.playCharacter('.')).resolves.not.toThrow();
+    await expect(audioEngine.playCharacter('A', DEFAULT_WPM)).resolves.not.toThrow();
+    await expect(audioEngine.playCharacter('E', DEFAULT_WPM)).resolves.not.toThrow();
+    await expect(audioEngine.playCharacter('5', DEFAULT_WPM)).resolves.not.toThrow();
+    await expect(audioEngine.playCharacter('.', DEFAULT_WPM)).resolves.not.toThrow();
   });
 
   it('should throw error for unknown characters', async () => {
     await audioEngine.initialize();
-    await expect(audioEngine.playCharacter('~')).rejects.toThrow('No Morse pattern found for character: ~');
+    await expect(audioEngine.playCharacter('~', DEFAULT_WPM)).rejects.toThrow('No Morse pattern found for character: ~');
   });
 
   it('should handle stop without throwing', async () => {
@@ -131,7 +132,7 @@ describe('AudioEngine Integration', () => {
     await audioEngine.initialize();
 
     // Should work with both cases
-    await expect(audioEngine.playCharacter('a')).resolves.not.toThrow();
-    await expect(audioEngine.playCharacter('A')).resolves.not.toThrow();
+    await expect(audioEngine.playCharacter('a', DEFAULT_WPM)).resolves.not.toThrow();
+    await expect(audioEngine.playCharacter('A', DEFAULT_WPM)).resolves.not.toThrow();
   });
 });

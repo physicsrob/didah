@@ -33,8 +33,8 @@ const config: SessionConfig = {
   replay: args.mode === 'active'
 };
 
-// Create mock IO with correct WPM
-const io = createMockIO(clock, args.clockMode, config.wpm);
+// Create mock IO
+const io = createMockIO(clock, args.clockMode);
 
 // Setup keyboard input for real-time active mode
 let rl: readline.Interface | null = null;

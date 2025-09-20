@@ -34,10 +34,10 @@ export function createIOAdapter(config: IOAdapterConfig): IO {
   } = config;
 
   return {
-    async playChar(char: string): Promise<void> {
-      console.log(`[Audio] Playing '${char}'`);
+    async playChar(char: string, wpm: number): Promise<void> {
+      console.log(`[Audio] Playing '${char}' at ${wpm} WPM`);
       try {
-        await audioEngine.playCharacter(char);
+        await audioEngine.playCharacter(char, wpm);
       } catch (error) {
         // Log but don't throw - let the session continue
         console.warn(`Failed to play audio for char: ${char}`, error);
@@ -82,8 +82,8 @@ export function createIOAdapter(config: IOAdapterConfig): IO {
       }
     },
 
-    async replay(char: string): Promise<void> {
-      console.log(`[Replay] Starting replay for '${char}'`);
+    async replay(char: string, wpm: number): Promise<void> {
+      console.log(`[Replay] Starting replay for '${char}' at ${wpm} WPM`);
       if (!onReveal || !audioEngine) {
         console.log(`[Replay] Missing dependencies - onReveal: ${!!onReveal}, audioEngine: ${!!audioEngine}`);
         return;
@@ -96,7 +96,7 @@ export function createIOAdapter(config: IOAdapterConfig): IO {
       // Play the audio
       try {
         console.log(`[Replay] Playing audio for '${char}'`);
-        await audioEngine.playCharacter(char);
+        await audioEngine.playCharacter(char, wpm);
       } catch (error) {
         console.warn(`Failed to replay audio for char: ${char}`, error);
       }
@@ -132,8 +132,8 @@ export class BrowserIOAdapter implements IO {
     this.config = config;
   }
 
-  async playChar(char: string): Promise<void> {
-    return this.config.audioEngine.playCharacter(char);
+  async playChar(char: string, wpm: number): Promise<void> {
+    return this.config.audioEngine.playCharacter(char, wpm);
   }
 
   async stopAudio(): Promise<void> {
@@ -183,7 +183,7 @@ export class BrowserIOAdapter implements IO {
     }, 200);
   }
 
-  async replay(char: string): Promise<void> {
+  async replay(char: string, wpm: number): Promise<void> {
     // Create or update replay overlay
     if (!this.replayOverlay) {
       this.replayOverlay = document.createElement('div');
@@ -211,7 +211,7 @@ export class BrowserIOAdapter implements IO {
 
     // Play audio
     try {
-      await this.config.audioEngine.playCharacter(char);
+      await this.config.audioEngine.playCharacter(char, wpm);
     } catch (error) {
       console.warn(`Failed to replay audio for char: ${char}`, error);
     }

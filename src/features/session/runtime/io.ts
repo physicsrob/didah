@@ -30,7 +30,7 @@ export interface IO {
   /**
    * Play audio for a character, resolves when audio completes
    */
-  playChar(char: string): Promise<void>;
+  playChar(char: string, wpm: number): Promise<void>;
 
   /**
    * Stop currently playing audio
@@ -55,7 +55,7 @@ export interface IO {
   /**
    * Replay character with visual (optional, for active mode with replay enabled)
    */
-  replay?(char: string): Promise<void>;
+  replay?(char: string, wpm: number): Promise<void>;
 
   /**
    * Log session events
@@ -79,9 +79,10 @@ export class MockIO implements IO {
     this.clock = clock;
   }
 
-  async playChar(char: string): Promise<void> {
-    this.calls.push({ method: 'playChar', args: [char] });
-    // Simulate some audio duration
+  async playChar(char: string, wpm: number): Promise<void> {
+    this.calls.push({ method: 'playChar', args: [char, wpm] });
+    // Simulate some audio duration based on actual character length
+    // For tests, we'll use a simplified duration
     if (this.clock) {
       // Use the test clock if provided
       await this.clock.sleep(100);
@@ -107,8 +108,8 @@ export class MockIO implements IO {
     this.calls.push({ method: 'feedback', args: [kind, char] });
   }
 
-  async replay(char: string): Promise<void> {
-    this.calls.push({ method: 'replay', args: [char] });
+  async replay(char: string, wpm: number): Promise<void> {
+    this.calls.push({ method: 'replay', args: [char, wpm] });
     if (this.clock) {
       await this.clock.sleep(50);
     } else {

@@ -96,11 +96,13 @@ describe('SessionRunner', () => {
     // Let it start
     await new Promise(resolve => setTimeout(resolve, 0));
 
-    // Advance time past budget
-    clock.advance(600);
+    // Advance time to trigger timeout on first character
+    // Lightning speed = 1×dit = 60ms window, character audio varies
+    // Advance enough to ensure timeout and exceed budget
+    clock.advance(1000);
 
-    // Let async operations complete
-    await new Promise(resolve => setTimeout(resolve, 100));
+    // Let async operations complete and loop to check budget
+    await new Promise(resolve => setTimeout(resolve, 200));
 
     expect(finalSnapshot.phase).toBe('ended');
     expect(finalSnapshot.remainingMs).toBe(0);
@@ -238,7 +240,7 @@ describe('SessionRunner', () => {
     input.type('A', clock.now());
 
     // Wait for processing
-    await new Promise(resolve => setTimeout(resolve, 150));
+    await new Promise(resolve => setTimeout(resolve, 50));
 
     // Check first character was processed correctly
     let snapshot = runner.getSnapshot();
@@ -249,11 +251,11 @@ describe('SessionRunner', () => {
     await new Promise(resolve => setTimeout(resolve, 100));
 
     // Don't type anything for 'B', advance clock to trigger timeout
-    // Medium speed = 3 × 60ms = 180ms window
-    clock.advance(200);
+    // B audio duration = 540ms, medium window = 180ms, so timeout at 720ms
+    clock.advance(720);
 
     // Wait for timeout to process
-    await new Promise(resolve => setTimeout(resolve, 50));
+    await new Promise(resolve => setTimeout(resolve, 100));
 
     snapshot = runner.getSnapshot();
     expect(snapshot.stats?.correct).toBe(1);

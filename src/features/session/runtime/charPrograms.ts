@@ -45,7 +45,7 @@ export async function runActiveEmission(
   console.log(`[Emission] Start - Char: '${char}', Time: ${emissionStart}ms`);
 
   // Start audio but don't await - we accept input during audio
-  io.playChar(char).catch(() => {
+  io.playChar(char, cfg.wpm).catch(() => {
     // Audio errors shouldn't crash the emission
     console.warn(`Audio failed for char: ${char}`);
   });
@@ -125,11 +125,6 @@ export async function runActiveEmission(
       await io.stopAudio(); // Stop audio early
       io.feedback('correct', char);
 
-      // Add inter-character spacing per Morse standard
-      const interCharSpacingMs = ditMs * MORSE_SPACING.symbol;
-      console.log(`[Spacing] Adding inter-character spacing: ${interCharSpacingMs}ms (${MORSE_SPACING.symbol} dits)`);
-      await clock.sleep(interCharSpacingMs, sessionSignal);
-
       console.log(`[Emission] End - Char: '${char}', Outcome: correct`);
       return 'correct';
     } else {
@@ -146,14 +141,9 @@ export async function runActiveEmission(
       // Optional replay
       if (cfg.replay && io.replay) {
         console.log(`[Replay] Starting replay for '${char}'`);
-        await io.replay(char);
+        await io.replay(char, cfg.wpm);
         console.log(`[Replay] Complete for '${char}'`);
       }
-
-      // Add inter-character spacing after replay
-      const interCharSpacingMs = ditMs * MORSE_SPACING.symbol;
-      console.log(`[Spacing] Adding inter-character spacing: ${interCharSpacingMs}ms (${MORSE_SPACING.symbol} dits)`);
-      await clock.sleep(interCharSpacingMs, sessionSignal);
 
       console.log(`[Emission] End - Char: '${char}', Outcome: timeout`);
       return 'timeout';
@@ -188,7 +178,7 @@ export async function runPassiveEmission(
 
   // Play audio and wait for completion
   try {
-    await io.playChar(char);
+    await io.playChar(char, cfg.wpm);
   } catch (error) {
     console.warn(`Audio failed for char: ${char}`, error);
   }
