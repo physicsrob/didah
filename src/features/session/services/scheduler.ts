@@ -9,8 +9,7 @@ import type { SessionConfig, Emission } from '../../../core/types/domain';
 import {
   wpmToDitMs,
   getActiveWindowMs,
-  getPassiveTimingMs,
-  type SpeedTier
+  getPassiveTimingMs
 } from '../../../core/morse/timing';
 
 export type ScheduleEvent =
@@ -154,7 +153,7 @@ export function shouldEndSession(
  * Extract WPM from session config - simplified for now
  * In a real implementation, this would come from user settings
  */
-function extractWpmFromConfig(config: SessionConfig): { wpm: number } {
+function extractWpmFromConfig(_config: SessionConfig): { wpm: number } {
   // Default WPM for now - this should come from user config
   return { wpm: 20 };
 }
@@ -164,7 +163,7 @@ function extractWpmFromConfig(config: SessionConfig): { wpm: number } {
  * This is a simplified version - real Morse timing would account for
  * actual dit/dah patterns per character
  */
-function estimateCharacterDuration(char: string, ditMs: number): number {
+function estimateCharacterDuration(_char: string, ditMs: number): number {
   // Simplified: assume average character takes about 5 dits
   // Real implementation would use actual Morse patterns
   const avgDitsPerChar = 5;

@@ -101,7 +101,7 @@ describe('Morse Timing Engine', () => {
   describe('integration scenarios', () => {
     it('produces reasonable timings for typical session configurations', () => {
       const wpm = 25; // Common learning speed
-      const ditMs = wpmToDitMs(wpm); // 48ms
+      wpmToDitMs(wpm); // 48ms
 
       // Active mode at medium speed should give reasonable recognition window
       const windowMs = getActiveWindowMs(wpm, 'medium');

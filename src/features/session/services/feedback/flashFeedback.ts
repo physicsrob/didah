@@ -16,13 +16,15 @@ export interface FlashConfig {
 export class FlashFeedback implements Feedback {
   private currentTimeout: number | null = null;
 
-  constructor(private config: FlashConfig) {}
+  constructor(private config: FlashConfig) {
+    // Initialize flash feedback with config
+  }
 
-  onFail(char: string): void {
+  onFail(_char: string): void {
     this.triggerFlash('error');
   }
 
-  onCorrect?(char: string): void {
+  onCorrect?(_char: string): void {
     this.triggerFlash('success');
   }
 

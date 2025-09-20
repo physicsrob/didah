@@ -1,7 +1,7 @@
-import { StudyPageNew } from './pages/StudyPageNew'
+import { StudyPage } from './pages/StudyPage'
 
 function App() {
-  return <StudyPageNew />
+  return <StudyPage />
 }
 
 export default App

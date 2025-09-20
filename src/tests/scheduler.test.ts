@@ -3,8 +3,7 @@ import {
   generateSessionSchedule,
   getNextEvent,
   getEventsUntil,
-  shouldEndSession,
-  type ScheduleEvent
+  shouldEndSession
 } from '../features/session/services/scheduler';
 import type { SessionConfig } from '../core/types/domain';
 
@@ -16,7 +15,8 @@ describe('Session Scheduler', () => {
     sourceId: 'random',
     feedback: 'both',
     replay: true,
-    effectiveAlphabet: ['A', 'B', 'C']
+    effectiveAlphabet: ['A', 'B', 'C'],
+    wpm: 20
   };
 
   describe('generateSessionSchedule', () => {

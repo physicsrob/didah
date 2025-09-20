@@ -225,7 +225,7 @@ describe('runPassiveEmission', () => {
       lengthMs: 60000
     };
 
-    const startTime = clock.now();
+    clock.now(); // Record start time
 
     // Start emission
     const emissionPromise = runPassiveEmission(
@@ -274,7 +274,7 @@ describe('runPassiveEmission', () => {
       lengthMs: 60000
     };
 
-    const startTime = clock.now();
+    const startTime = clock.now(); // Record start time
 
     // Start emission
     const emissionPromise = runPassiveEmission(

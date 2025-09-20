@@ -21,7 +21,9 @@ export class AudioEngine {
   private isPlaying = false;
   private playbackPromise: Promise<void> | null = null;
 
-  constructor(private config: AudioEngineConfig) {}
+  constructor(private config: AudioEngineConfig) {
+    // Initialize audio engine with provided config
+  }
 
   /**
    * Initialize the audio context (must be called after user interaction)

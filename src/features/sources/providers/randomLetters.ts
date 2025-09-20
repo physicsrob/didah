@@ -4,7 +4,7 @@
  * Provides random letters from the configured alphabet for practice sessions.
  */
 
-import type { CharacterSource } from '../../session/types.js';
+import type { CharacterSource } from '../../session/runtime/sessionProgram.js';
 import { getCharactersByCategory } from '../../../core/morse/alphabet.js';
 
 export interface RandomLettersConfig {
@@ -17,6 +17,7 @@ export class RandomLettersSource implements CharacterSource {
   private alphabet: string[] = [];
 
   constructor(private config: RandomLettersConfig) {
+    // Initialize random letters source with config
     this.updateAlphabet();
   }
 

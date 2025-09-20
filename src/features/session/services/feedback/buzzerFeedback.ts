@@ -16,7 +16,9 @@ export interface BuzzerConfig {
 export class BuzzerFeedback implements Feedback {
   private audioContext: AudioContext | null = null;
 
-  constructor(private config: BuzzerConfig) {}
+  constructor(private config: BuzzerConfig) {
+    // Initialize buzzer feedback with config
+  }
 
   /**
    * Initialize audio context
@@ -25,11 +27,11 @@ export class BuzzerFeedback implements Feedback {
     this.audioContext = audioContext;
   }
 
-  onFail(char: string): void {
+  onFail(_char: string): void {
     this.playBuzzer();
   }
 
-  onCorrect?(char: string): void {
+  onCorrect?(_char: string): void {
     // Optional: could play a different positive sound
   }
 
