@@ -12,7 +12,7 @@ function createInitialContext(): SessionContext {
     previousCharacters: [],
     sessionId: null,
     epoch: 0,
-    pendingTimeouts: new Set()
+    activeTimeouts: {}
   };
 }
 
@@ -63,17 +63,17 @@ describe('transition', () => {
       );
     });
 
-    it('should not schedule timeout for active mode (tick-based timing)', () => {
+    it('should schedule recognition timeout for active mode', () => {
       const context = createInitialContext();
       const config = createActiveConfig();
       const event: SessionEvent = { type: 'start', config };
 
       const result = transition(context, event);
 
-      // No timeout effects in tick-based system
-      expect(result.effects).not.toContainEqual(
+      // Should schedule recognition timeout for active mode
+      expect(result.effects).toContainEqual(
         expect.objectContaining({
-          type: 'startTimeout'
+          type: 'startRecognitionTimeout'
         })
       );
       expect(result.context.phase).toBe('emitting');
@@ -136,8 +136,9 @@ describe('transition', () => {
           feedbackType: 'correct'
         })
       );
-      expect(result.context.phase).toBe('feedback');
-      expect(result.context.pendingAdvance).toBe(true);
+      // Correct input advances immediately to next emission
+      expect(result.context.phase).toBe('emitting');
+      expect(result.context.previousCharacters).toContain('A');
     });
 
     it('should handle incorrect keypress during emission', () => {
@@ -160,17 +161,16 @@ describe('transition', () => {
       expect(result.effects).not.toContainEqual(
         expect.objectContaining({ type: 'stopAudio' })
       );
-      expect(result.context.pendingAdvance).toBe(undefined);
     });
 
-    it('should handle window expiry via tick during awaitingInput', () => {
+    it('should handle window expiry via timeout during awaitingInput', () => {
       const context = {
         ...createEmittingActiveContext(),
         phase: 'awaitingInput' as const
       };
       const event: SessionEvent = {
-        type: 'tick',
-        timestamp: 1300 // past the window (1000 + 180ms = 1180)
+        type: 'timeout',
+        kind: 'window'
       };
 
       const result = transition(context, event);
@@ -207,12 +207,6 @@ describe('transition', () => {
       const result = transition(context, event);
 
       expect(result.context.phase).toBe('preRevealDelay');
-      // No timeout scheduling in tick-based system
-      expect(result.effects).not.toContainEqual(
-        expect.objectContaining({
-          type: 'startTimeout'
-        })
-      );
     });
   });
 
@@ -250,15 +244,16 @@ describe('transition', () => {
       expect(result.effects).toContainEqual(
         expect.objectContaining({ type: 'logEvent' })
       );
-      expect(result.context.phase).toBe('feedback');
-      expect(result.context.pendingAdvance).toBe(true);
+      // Correct input advances immediately to next emission
+      expect(result.context.phase).toBe('emitting');
+      expect(result.context.previousCharacters).toContain('A');
     });
 
-    it('should handle window expiry via tick', () => {
+    it('should handle window expiry via timeout', () => {
       const context = createAwaitingInputContext();
       const event: SessionEvent = {
-        type: 'tick',
-        timestamp: 1300 // past the window (1000 + 180ms = 1180)
+        type: 'timeout',
+        kind: 'window'
       };
 
       const result = transition(context, event);
@@ -288,11 +283,11 @@ describe('transition', () => {
       };
     }
 
-    it('should transition from preRevealDelay to reveal via tick', () => {
+    it('should transition from preRevealDelay to reveal via timeout', () => {
       const context = createPreRevealContext();
       const event: SessionEvent = {
-        type: 'tick',
-        timestamp: 1180 // past preReveal delay (1000 + 180ms = 1180)
+        type: 'timeout',
+        kind: 'preReveal'
       };
 
       const result = transition(context, event);
@@ -301,22 +296,22 @@ describe('transition', () => {
       expect(result.effects).toContainEqual(
         expect.objectContaining({ type: 'revealCharacter' })
       );
-      // No timeout scheduling in tick-based system
-      expect(result.effects).not.toContainEqual(
+      // Should schedule post-reveal timeout
+      expect(result.effects).toContainEqual(
         expect.objectContaining({
-          type: 'startTimeout'
+          type: 'startPostRevealTimeout'
         })
       );
     });
 
-    it('should advance from reveal phase via tick', () => {
+    it('should advance from reveal phase via timeout', () => {
       const context = {
         ...createPreRevealContext(),
         phase: 'reveal' as const
       };
       const event: SessionEvent = {
-        type: 'tick',
-        timestamp: 1300 // past postReveal delay (1000 + 180 + 120 = 1300)
+        type: 'timeout',
+        kind: 'postReveal'
       };
 
       const result = transition(context, event);
@@ -331,17 +326,17 @@ describe('transition', () => {
       const context = {
         ...createInitialContext(),
         phase: 'emitting' as const,
-        pendingTimeouts: new Set(['timeout-1', 'timeout-2'])
+        activeTimeouts: { recognition: 1, feedback: 2 }
       };
       const event: SessionEvent = { type: 'end', reason: 'user' };
 
       const result = transition(context, event);
 
       expect(result.context.phase).toBe('ended');
-      expect(result.context.pendingTimeouts.size).toBe(0);
-      // No timeout cancellation effects in tick-based system
-      expect(result.effects).not.toContainEqual(
-        expect.objectContaining({ type: 'cancelTimeout' })
+      expect(Object.keys(result.context.activeTimeouts).length).toBe(0);
+      // Should cancel all timeouts
+      expect(result.effects).toContainEqual(
+        expect.objectContaining({ type: 'cancelAllTimeouts' })
       );
       expect(result.effects).toContainEqual(
         expect.objectContaining({ type: 'endSession', reason: 'user' })

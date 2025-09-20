@@ -1,8 +1,8 @@
-import type { Effect, Clock } from './types.js';
+import type { Effect } from './types.js';
 
 // Effect runner interface
 export interface EffectRunner {
-  run(effect: Effect, epoch: number): void;
+  run(effect: Effect, epoch: number): number | void;
 }
 
 // Effect handlers interface
@@ -19,14 +19,16 @@ export interface EffectHandlers {
 
 // Default effect runner implementation
 export class DefaultEffectRunner implements EffectRunner {
-  private timeouts = new Map<string, { handle: NodeJS.Timeout; epoch: number }>();
+  private timeouts = new Map<string, { handle: NodeJS.Timeout; epoch: number; kind: string }>();
+  private nextTimeoutId = 1;
 
   constructor(
     private handlers: EffectHandlers,
-    private onTimeout: (kind: 'window' | 'preReveal' | 'postReveal') => void
+    private onTimeout: (kind: 'window' | 'preReveal' | 'postReveal' | 'feedback') => void,
+    private getActiveTimeouts?: () => { recognition?: number; feedback?: number; reveal?: number; postReveal?: number }
   ) {}
 
-  run(effect: Effect, epoch: number): void {
+  run(effect: Effect, epoch: number): number | void {
     switch (effect.type) {
       case 'playAudio':
         this.handlers.onPlayAudio?.(effect.char, effect.emissionId);
@@ -36,26 +38,108 @@ export class DefaultEffectRunner implements EffectRunner {
         this.handlers.onStopAudio?.();
         break;
 
-      case 'startTimeout': {
+      case 'startRecognitionTimeout': {
+        const timeoutId = `recognition-${this.nextTimeoutId++}`;
         const timeoutHandle = setTimeout(() => {
           // Check if this timeout is still valid (epoch check)
-          const timeoutInfo = this.timeouts.get(effect.timeoutId);
+          const timeoutInfo = this.timeouts.get(timeoutId);
           if (timeoutInfo && timeoutInfo.epoch === epoch) {
-            this.timeouts.delete(effect.timeoutId);
-            this.onTimeout(effect.kind);
+            this.timeouts.delete(timeoutId);
+            this.onTimeout('window');
           }
         }, effect.delayMs);
 
-        this.timeouts.set(effect.timeoutId, { handle: timeoutHandle, epoch });
-        break;
+        this.timeouts.set(timeoutId, { handle: timeoutHandle, epoch, kind: 'recognition' });
+        return this.nextTimeoutId - 1; // Return numeric ID for tracking
       }
 
-      case 'cancelTimeout': {
-        const timeoutInfo = this.timeouts.get(effect.timeoutId);
-        if (timeoutInfo) {
-          clearTimeout(timeoutInfo.handle);
-          this.timeouts.delete(effect.timeoutId);
+      case 'cancelRecognitionTimeout':
+        // Cancel only recognition timeouts
+        for (const [timeoutId, timeoutInfo] of this.timeouts) {
+          if (timeoutInfo.kind === 'recognition') {
+            clearTimeout(timeoutInfo.handle);
+            this.timeouts.delete(timeoutId);
+          }
         }
+        break;
+
+      case 'startFeedbackTimeout': {
+        const timeoutId = `feedback-${this.nextTimeoutId++}`;
+        const timeoutHandle = setTimeout(() => {
+          const timeoutInfo = this.timeouts.get(timeoutId);
+          if (timeoutInfo && timeoutInfo.epoch === epoch) {
+            this.timeouts.delete(timeoutId);
+            this.onTimeout('feedback');
+          }
+        }, effect.delayMs);
+
+        this.timeouts.set(timeoutId, { handle: timeoutHandle, epoch, kind: 'feedback' });
+        return this.nextTimeoutId - 1;
+      }
+
+      case 'cancelFeedbackTimeout':
+        // Cancel only feedback timeouts
+        for (const [timeoutId, timeoutInfo] of this.timeouts) {
+          if (timeoutInfo.kind === 'feedback') {
+            clearTimeout(timeoutInfo.handle);
+            this.timeouts.delete(timeoutId);
+          }
+        }
+        break;
+
+      case 'startRevealTimeout': {
+        const timeoutId = `reveal-${this.nextTimeoutId++}`;
+        const timeoutHandle = setTimeout(() => {
+          const timeoutInfo = this.timeouts.get(timeoutId);
+          if (timeoutInfo && timeoutInfo.epoch === epoch) {
+            this.timeouts.delete(timeoutId);
+            this.onTimeout('preReveal');
+          }
+        }, effect.delayMs);
+
+        this.timeouts.set(timeoutId, { handle: timeoutHandle, epoch, kind: 'reveal' });
+        return this.nextTimeoutId - 1;
+      }
+
+      case 'cancelRevealTimeout':
+        // Cancel only reveal timeouts
+        for (const [timeoutId, timeoutInfo] of this.timeouts) {
+          if (timeoutInfo.kind === 'reveal') {
+            clearTimeout(timeoutInfo.handle);
+            this.timeouts.delete(timeoutId);
+          }
+        }
+        break;
+
+      case 'startPostRevealTimeout': {
+        const timeoutId = `postReveal-${this.nextTimeoutId++}`;
+        const timeoutHandle = setTimeout(() => {
+          const timeoutInfo = this.timeouts.get(timeoutId);
+          if (timeoutInfo && timeoutInfo.epoch === epoch) {
+            this.timeouts.delete(timeoutId);
+            this.onTimeout('postReveal');
+          }
+        }, effect.delayMs);
+
+        this.timeouts.set(timeoutId, { handle: timeoutHandle, epoch, kind: 'postReveal' });
+        return this.nextTimeoutId - 1;
+      }
+
+      case 'cancelPostRevealTimeout':
+        // Cancel only post reveal timeouts
+        for (const [timeoutId, timeoutInfo] of this.timeouts) {
+          if (timeoutInfo.kind === 'postReveal') {
+            clearTimeout(timeoutInfo.handle);
+            this.timeouts.delete(timeoutId);
+          }
+        }
+        break;
+
+      case 'cancelAllTimeouts': {
+        for (const [_, timeoutInfo] of this.timeouts) {
+          clearTimeout(timeoutInfo.handle);
+        }
+        this.timeouts.clear();
         break;
       }
 
@@ -87,7 +171,7 @@ export class DefaultEffectRunner implements EffectRunner {
 
   // Cleanup method to cancel all pending timeouts
   cleanup(): void {
-    for (const [timeoutId, timeoutInfo] of this.timeouts) {
+    for (const [_, timeoutInfo] of this.timeouts) {
       clearTimeout(timeoutInfo.handle);
     }
     this.timeouts.clear();

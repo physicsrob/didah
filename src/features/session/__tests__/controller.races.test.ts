@@ -251,8 +251,9 @@ describe('SessionController race conditions', () => {
       const windowMs = 3 * ditMs;
       vi.advanceTimersByTime(windowMs + 100);
 
-      // New session should be unaffected by stale timeouts
-      expect(controller.getPhase()).toBe('emitting'); // Still in new session
+      // New session should progress normally (window timeout fires, moves to feedback)
+      // The key is that we're in the NEW session's feedback, not crashed or in ended state
+      expect(controller.getPhase()).toBe('feedback'); // New session progressed normally
     });
   });
 

@@ -16,8 +16,7 @@ export type SessionEvent =
   | { type: 'start'; config: SessionConfig }
   | { type: 'audioEnded'; emissionId: string }
   | { type: 'keypress'; key: string; timestamp: number }
-  | { type: 'timeout'; kind: 'window' | 'preReveal' | 'postReveal' }
-  | { type: 'tick'; timestamp: number }
+  | { type: 'timeout'; kind: 'window' | 'preReveal' | 'postReveal' | 'feedback' }
   | { type: 'advance' }
   | { type: 'end'; reason: 'user' | 'duration' };
 
@@ -29,17 +28,28 @@ export interface SessionContext {
   currentEmission: Emission | null;
   previousCharacters: string[];
   sessionId: string | null;
-  epoch: number; // For cancellation
-  pendingTimeouts: Set<string>; // Track active timeout IDs
-  pendingAdvance?: boolean; // Flag for tick handler to advance immediately
+  epoch: number; // For session boundary cancellation only
+  activeTimeouts: {
+    recognition?: number;  // Current recognition window timeout
+    feedback?: number;     // Feedback display timeout (active mode)
+    reveal?: number;       // Character reveal timeout (passive mode)
+    postReveal?: number;   // Post-reveal delay timeout (passive mode)
+  };
 }
 
 // Effects that the session can emit
 export type Effect =
   | { type: 'playAudio'; char: string; emissionId: string }
   | { type: 'stopAudio' }
-  | { type: 'startTimeout'; kind: 'window' | 'preReveal' | 'postReveal'; delayMs: number; timeoutId: string }
-  | { type: 'cancelTimeout'; timeoutId: string }
+  | { type: 'startRecognitionTimeout'; delayMs: number }
+  | { type: 'cancelRecognitionTimeout' }
+  | { type: 'startFeedbackTimeout'; delayMs: number }
+  | { type: 'cancelFeedbackTimeout' }
+  | { type: 'startRevealTimeout'; delayMs: number }
+  | { type: 'cancelRevealTimeout' }
+  | { type: 'startPostRevealTimeout'; delayMs: number }
+  | { type: 'cancelPostRevealTimeout' }
+  | { type: 'cancelAllTimeouts' } // Only for session end
   | { type: 'showFeedback'; feedbackType: 'correct' | 'incorrect' | 'timeout'; char: string }
   | { type: 'showReplay'; char: string }
   | { type: 'revealCharacter'; char: string }
@@ -47,87 +57,13 @@ export type Effect =
   | { type: 'logEvent'; event: any }
   | { type: 'endSession'; reason: 'user' | 'duration' };
 
-// Clock interface for dependency injection
-export interface Clock {
-  now(): number;
-  setTimeout(callback: () => void, delayMs: number): string; // returns timeout ID
-  clearTimeout(timeoutId: string): void;
+// Character source interface for providing next character
+export interface CharacterSource {
+  next(): string;
 }
 
 // Transition result
 export interface TransitionResult {
   context: SessionContext;
   effects: Effect[];
-}
-
-// Real clock implementation
-export class RealClock implements Clock {
-  private timeouts = new Map<string, NodeJS.Timeout>();
-
-  now(): number {
-    return Date.now();
-  }
-
-  setTimeout(callback: () => void, delayMs: number): string {
-    const id = Math.random().toString(36);
-    const handle = setTimeout(callback, delayMs);
-    this.timeouts.set(id, handle);
-    return id;
-  }
-
-  clearTimeout(timeoutId: string): void {
-    const handle = this.timeouts.get(timeoutId);
-    if (handle) {
-      clearTimeout(handle);
-      this.timeouts.delete(timeoutId);
-    }
-  }
-}
-
-// Fake clock for testing
-export class FakeClock implements Clock {
-  private currentTime = 0;
-  private timeouts = new Map<string, { callback: () => void; triggerTime: number }>();
-  private nextTimeoutId = 0;
-
-  now(): number {
-    return this.currentTime;
-  }
-
-  setTimeout(callback: () => void, delayMs: number): string {
-    const id = (this.nextTimeoutId++).toString();
-    this.timeouts.set(id, {
-      callback,
-      triggerTime: this.currentTime + delayMs
-    });
-    return id;
-  }
-
-  clearTimeout(timeoutId: string): void {
-    this.timeouts.delete(timeoutId);
-  }
-
-  // Test utilities
-  setTime(time: number): void {
-    this.currentTime = time;
-  }
-
-  tick(ms: number): void {
-    this.currentTime += ms;
-    this.flushExpiredTimeouts();
-  }
-
-  flushExpiredTimeouts(): void {
-    const expired = Array.from(this.timeouts.entries())
-      .filter(([_, timeout]) => timeout.triggerTime <= this.currentTime);
-
-    for (const [id, timeout] of expired) {
-      this.timeouts.delete(id);
-      timeout.callback();
-    }
-  }
-
-  getPendingTimeouts(): number {
-    return this.timeouts.size;
-  }
 }

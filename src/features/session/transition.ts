@@ -1,14 +1,9 @@
-import type { SessionContext, SessionEvent, TransitionResult, Effect } from './types.js';
+import type { SessionContext, SessionEvent, TransitionResult, Effect, CharacterSource } from './types.js';
 import { getActiveWindowMs, getPassiveTimingMs } from '../../core/morse/timing.js';
 import type { Emission, SessionConfig } from '../../core/types/domain.js';
 
-export function transition(context: SessionContext, event: SessionEvent): TransitionResult {
+export function transition(context: SessionContext, event: SessionEvent, characterSource?: CharacterSource): TransitionResult {
   const effects: Effect[] = [];
-
-  // Handle tick events - check for time-based transitions
-  if (event.type === 'tick') {
-    return handleTick(context, event, effects);
-  }
 
   switch (context.phase) {
     case 'idle':
@@ -20,25 +15,28 @@ export function transition(context: SessionContext, event: SessionEvent): Transi
           config: event.config,
           startedAt: Date.now(),
           sessionId: Math.random().toString(36),
-          epoch: context.epoch + 1,
-          pendingTimeouts: new Set()
+          epoch: context.epoch + 1, // Increment epoch on session start
+          activeTimeouts: {}
         };
 
         // Start first emission
-        const firstEmission = createEmission(event.config);
-
+        const firstEmission = createEmission(event.config, characterSource);
         newContext.currentEmission = firstEmission;
+
         effects.push(
           { type: 'playAudio', char: firstEmission.char, emissionId: firstEmission.id },
           { type: 'logEvent', event: firstEmission }
         );
 
-        // Schedule phase transition based on mode
+        // Schedule appropriate timeout based on mode
         if (event.config.mode === 'active') {
-          // No timeout needed - tick handler will manage timing
+          const windowMs = getActiveWindowMs(event.config.wpm, event.config.speedTier);
+          effects.push({ type: 'startRecognitionTimeout', delayMs: windowMs });
         } else {
-          // Passive mode - hide character initially
+          // Passive mode - hide character initially and schedule reveal
           effects.push({ type: 'hideCharacter' });
+          const delays = getPassiveTimingMs(event.config.wpm, event.config.speedTier);
+          effects.push({ type: 'startRevealTimeout', delayMs: delays.preRevealMs });
         }
 
         return { context: newContext, effects };
@@ -52,13 +50,13 @@ export function transition(context: SessionContext, event: SessionEvent): Transi
         }
 
         if (context.config.mode === 'active') {
-          // Transition to awaiting input if window is still open
+          // Active mode - transition to awaiting input (recognition timeout still running)
           return {
             context: { ...context, phase: 'awaitingInput' },
             effects
           };
         } else {
-          // Passive mode - transition to pre-reveal delay phase
+          // Passive mode - already scheduled reveal timeout when emission started
           return {
             context: { ...context, phase: 'preRevealDelay' },
             effects
@@ -67,51 +65,88 @@ export function transition(context: SessionContext, event: SessionEvent): Transi
       }
 
       if (event.type === 'keypress' && context.config?.mode === 'active') {
-        return handleActiveInput(context, event, effects);
+        return handleActiveInput(context, event, effects, characterSource);
       }
 
-      // Timeout handling removed - tick handler manages timing
-
+      if (event.type === 'timeout' && event.kind === 'window') {
+        // Recognition window expired during emission
+        return transitionToFeedback(context, effects, 'timeout');
+      }
       break;
 
     case 'awaitingInput':
       if (event.type === 'keypress') {
-        return handleActiveInput(context, event, effects);
+        return handleActiveInput(context, event, effects, characterSource);
       }
 
-      // Timeout handling removed - tick handler manages timing
+      if (event.type === 'timeout' && event.kind === 'window') {
+        // Recognition window expired
+        return transitionToFeedback(context, effects, 'timeout');
+      }
       break;
 
     case 'feedback':
+      if (event.type === 'timeout' && event.kind === 'feedback') {
+        // Feedback duration complete - advance to next
+        return advanceToNextCharacter(context, effects, characterSource);
+      }
+
       if (event.type === 'advance') {
-        return advanceToNextCharacter(context, effects);
+        // Manual advance (for correct answers that skip feedback)
+        return advanceToNextCharacter(context, effects, characterSource);
       }
       break;
 
     case 'preRevealDelay':
-      // Tick handler manages timing transitions
+      if (event.type === 'timeout' && event.kind === 'preReveal') {
+        // Time to reveal character
+        if (!context.currentEmission || !context.config) {
+          return { context, effects };
+        }
+
+        effects.push({ type: 'revealCharacter', char: context.currentEmission.char });
+
+        // Schedule post-reveal delay
+        const delays = getPassiveTimingMs(context.config.wpm, context.config.speedTier);
+        effects.push({ type: 'startPostRevealTimeout', delayMs: delays.postRevealMs });
+
+        return {
+          context: { ...context, phase: 'reveal' },
+          effects
+        };
+      }
       break;
 
     case 'reveal':
-      // Tick handler manages timing transitions
+      if (event.type === 'timeout' && event.kind === 'postReveal') {
+        // Post-reveal delay complete - advance to next
+        return advanceToNextCharacter(context, effects, characterSource);
+      }
       break;
 
+    case 'postRevealDelay':
+      if (event.type === 'timeout' && event.kind === 'postReveal') {
+        return advanceToNextCharacter(context, effects, characterSource);
+      }
+      break;
 
     default:
       break;
   }
 
-  // Handle end event from any state (moved outside switch)
+  // Handle end event from any state
   if (event.type === 'end') {
-    // No timeouts to cancel in tick-based system
-    effects.push({ type: 'endSession', reason: event.reason });
+    effects.push(
+      { type: 'cancelAllTimeouts' },
+      { type: 'endSession', reason: event.reason }
+    );
 
     return {
       context: {
         ...context,
         phase: 'ended',
-        epoch: context.epoch + 1,
-        pendingTimeouts: new Set()
+        epoch: context.epoch + 1, // Increment epoch on session end
+        activeTimeouts: {}
       },
       effects
     };
@@ -123,20 +158,20 @@ export function transition(context: SessionContext, event: SessionEvent): Transi
 function handleActiveInput(
   context: SessionContext,
   event: { type: 'keypress'; key: string; timestamp: number },
-  effects: Effect[]
+  effects: Effect[],
+  characterSource?: CharacterSource
 ): TransitionResult {
   if (!context.currentEmission || !context.config) {
     return { context, effects };
   }
 
   // Check if input is within the allowed window
-  const withinWindow = isInputWithinWindow(event.timestamp, context.currentEmission, context.config);
+  const windowMs = getActiveWindowMs(context.config.wpm, context.config.speedTier);
+  const windowEnd = context.currentEmission.startedAt + windowMs;
+  const withinWindow = event.timestamp <= windowEnd;
 
   if (!withinWindow) {
-    // Input came too late - just log as late input, no phase change
-    effects.push(
-      { type: 'logEvent', event: { type: 'timeout', at: event.timestamp, emissionId: context.currentEmission.id } }
-    );
+    // Input came too late - ignore it
     return { context, effects };
   }
 
@@ -144,30 +179,23 @@ function handleActiveInput(
   const latencyMs = event.timestamp - context.currentEmission.startedAt;
 
   if (isCorrect) {
-    // Correct input within window - stop audio and mark for immediate advance
+    // Correct input - stop audio, cancel recognition timeout, and advance immediately
     effects.push(
       { type: 'stopAudio' },
+      { type: 'cancelRecognitionTimeout' },
       { type: 'showFeedback', feedbackType: 'correct', char: context.currentEmission.char },
       { type: 'logEvent', event: {
         type: 'correct',
         at: event.timestamp,
         emissionId: context.currentEmission.id,
         latencyMs
-      } }
+      }}
     );
 
-    // Mark context to indicate we should advance immediately on next tick
-    return {
-      context: {
-        ...context,
-        phase: 'feedback',
-        // Store the advance trigger for tick handler to pick up
-        pendingAdvance: true
-      },
-      effects
-    };
+    // Immediately advance to next character (no feedback delay for correct)
+    return advanceToNextCharacter(context, effects, characterSource);
   } else {
-    // Incorrect input within window - log but don't change phase
+    // Incorrect input - show feedback but don't change phase
     effects.push(
       { type: 'showFeedback', feedbackType: 'incorrect', char: context.currentEmission.char },
       { type: 'logEvent', event: {
@@ -176,14 +204,47 @@ function handleActiveInput(
         emissionId: context.currentEmission.id,
         expected: context.currentEmission.char,
         got: event.key
-      } }
+      }}
     );
 
+    // Stay in current phase, recognition timeout will handle advancement
     return { context, effects };
   }
 }
 
-function advanceToNextCharacter(context: SessionContext, effects: Effect[]): TransitionResult {
+function transitionToFeedback(
+  context: SessionContext,
+  effects: Effect[],
+  reason: 'timeout'
+): TransitionResult {
+  if (!context.currentEmission || !context.config) {
+    return { context, effects };
+  }
+
+  effects.push(
+    { type: 'showFeedback', feedbackType: 'timeout', char: context.currentEmission.char },
+    { type: 'logEvent', event: {
+      type: 'timeout',
+      at: Date.now(),
+      emissionId: context.currentEmission.id
+    }}
+  );
+
+  if (context.config.replay) {
+    effects.push({ type: 'showReplay', char: context.currentEmission.char });
+  }
+
+  // Schedule advancement after feedback
+  const feedbackDurationMs = 500; // Could be configurable
+  effects.push({ type: 'startFeedbackTimeout', delayMs: feedbackDurationMs });
+
+  return {
+    context: { ...context, phase: 'feedback' },
+    effects
+  };
+}
+
+function advanceToNextCharacter(context: SessionContext, effects: Effect[], characterSource?: CharacterSource): TransitionResult {
   if (!context.config || !context.currentEmission) {
     return { context, effects };
   }
@@ -193,23 +254,29 @@ function advanceToNextCharacter(context: SessionContext, effects: Effect[]): Tra
 
   // Check if session should end
   const startedAt = context.startedAt ?? Date.now();
-  const shouldEnd = shouldEndSession(context.config, startedAt);
+  const shouldEnd = Date.now() - startedAt >= context.config.lengthMs;
 
   if (shouldEnd) {
-    effects.push({ type: 'endSession', reason: 'duration' });
+    effects.push(
+      { type: 'cancelAllTimeouts' },
+      { type: 'endSession', reason: 'duration' }
+    );
+
     return {
       context: {
         ...context,
         phase: 'ended',
         previousCharacters,
-        currentEmission: null
+        currentEmission: null,
+        epoch: context.epoch + 1, // Increment epoch on session end
+        activeTimeouts: {}
       },
       effects
     };
   }
 
-  // Get next emission
-  const nextEmission = createEmission(context.config);
+  // Create next emission
+  const nextEmission = createEmission(context.config, characterSource);
 
   // Start next emission
   effects.push(
@@ -221,15 +288,21 @@ function advanceToNextCharacter(context: SessionContext, effects: Effect[]): Tra
     ...context,
     phase: 'emitting',
     currentEmission: nextEmission,
-    previousCharacters
+    previousCharacters,
+    activeTimeouts: {} // Clear timeout tracking for new emission
+    // Don't increment epoch - this is normal progression within a session
   };
 
-  // Schedule next phase transition
+  // Schedule timeout for next character
   if (context.config.mode === 'active') {
-    // No timeout needed - tick handler will manage timing
+    // Schedule recognition window timeout
+    const windowMs = getActiveWindowMs(context.config.wpm, context.config.speedTier);
+    effects.push({ type: 'startRecognitionTimeout', delayMs: windowMs });
   } else {
-    // Passive mode - hide character
+    // Passive mode - hide character and schedule reveal
     effects.push({ type: 'hideCharacter' });
+    const delays = getPassiveTimingMs(context.config.wpm, context.config.speedTier);
+    effects.push({ type: 'startRevealTimeout', delayMs: delays.preRevealMs });
   }
 
   return { context: newContext, effects };
@@ -237,112 +310,21 @@ function advanceToNextCharacter(context: SessionContext, effects: Effect[]): Tra
 
 // Helper functions
 
-function createEmission(config: any): Emission {
-  const char = getRandomCharacter(config.effectiveAlphabet);
+function createEmission(config: SessionConfig, characterSource?: CharacterSource): Emission {
+  const char = characterSource ? characterSource.next() : getRandomCharacter(config.effectiveAlphabet);
   const now = Date.now();
+  const windowMs = config.mode === 'active'
+    ? getActiveWindowMs(config.wpm, config.speedTier)
+    : 0; // Passive mode doesn't use windowCloseAt
+
   return {
     id: `emission-${now}-${Math.random().toString(36).substr(2, 9)}`,
     char,
     startedAt: now,
-    windowCloseAt: now + 1000 // placeholder
+    windowCloseAt: now + windowMs
   };
 }
 
 function getRandomCharacter(alphabet: string[]): string {
   return alphabet[Math.floor(Math.random() * alphabet.length)];
-}
-
-function shouldEndSession(config: any, startedAt: number): boolean {
-  return Date.now() - startedAt >= config.lengthMs;
-}
-
-function isInputWithinWindow(
-  inputTimestamp: number,
-  emission: Emission,
-  config: SessionConfig
-): boolean {
-  if (config.mode !== 'active') return true;
-
-  const windowMs = getActiveWindowMs(config.wpm, config.speedTier);
-  const windowEnd = emission.startedAt + windowMs;
-  return inputTimestamp <= windowEnd;
-}
-
-function handleTick(
-  context: SessionContext,
-  event: { type: 'tick'; timestamp: number },
-  effects: Effect[]
-): TransitionResult {
-  if (!context.config || !context.currentEmission) {
-    return { context, effects };
-  }
-
-  const currentTime = event.timestamp;
-
-  // Check for session duration expiry
-  if (context.startedAt && currentTime - context.startedAt >= context.config.lengthMs) {
-    effects.push({ type: 'endSession', reason: 'duration' });
-    return {
-      context: { ...context, phase: 'ended' },
-      effects
-    };
-  }
-
-  // Check for pending advance (from correct keypress)
-  if (context.pendingAdvance) {
-    const advanceResult = advanceToNextCharacter(context, effects);
-    return {
-      context: { ...advanceResult.context, pendingAdvance: undefined },
-      effects: advanceResult.effects
-    };
-  }
-
-  // Handle active mode window expiry
-  if (context.phase === 'awaitingInput' && context.config.mode === 'active') {
-    const windowMs = getActiveWindowMs(context.config.wpm, context.config.speedTier);
-    const windowEnd = context.currentEmission.startedAt + windowMs;
-
-    if (currentTime > windowEnd) {
-      // Window expired - transition to feedback
-      effects.push(
-        { type: 'showFeedback', feedbackType: 'timeout', char: context.currentEmission.char },
-        { type: 'logEvent', event: { type: 'timeout', at: currentTime, emissionId: context.currentEmission.id } }
-      );
-
-      if (context.config.replay) {
-        effects.push({ type: 'showReplay', char: context.currentEmission.char });
-      }
-
-      return {
-        context: { ...context, phase: 'feedback' },
-        effects
-      };
-    }
-  }
-
-  // Handle passive mode timing
-  if (context.config.mode === 'passive') {
-    const delays = getPassiveTimingMs(context.config.wpm, context.config.speedTier);
-
-    if (context.phase === 'preRevealDelay') {
-      const revealTime = context.currentEmission.startedAt + delays.preRevealMs;
-      if (currentTime >= revealTime) {
-        effects.push({ type: 'revealCharacter', char: context.currentEmission.char });
-        return {
-          context: { ...context, phase: 'reveal' },
-          effects
-        };
-      }
-    }
-
-    if (context.phase === 'reveal') {
-      const postRevealTime = context.currentEmission.startedAt + delays.preRevealMs + delays.postRevealMs;
-      if (currentTime >= postRevealTime) {
-        return advanceToNextCharacter(context, effects);
-      }
-    }
-  }
-
-  // No transitions needed
-  return { context, effects };
 }

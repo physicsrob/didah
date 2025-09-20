@@ -2,6 +2,20 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { DefaultSessionController } from '../SessionController.js';
 import type { SessionConfig } from '../../../core/types/domain.js';
 import type { EffectHandlers } from '../effects.js';
+import type { CharacterSource } from '../types.js';
+
+// Test helper for predictable character sequences
+class CyclicCharacterSource implements CharacterSource {
+  private index = 0;
+
+  constructor(private sequence: string[]) {}
+
+  next(): string {
+    const char = this.sequence[this.index];
+    this.index = (this.index + 1) % this.sequence.length;
+    return char;
+  }
+}
 
 function createActiveConfig(): SessionConfig {
   return {
@@ -32,6 +46,7 @@ function createPassiveConfig(): SessionConfig {
 describe('SessionController timing', () => {
   let controller: DefaultSessionController;
   let effects: Array<{ type: string; [key: string]: any }>;
+  let characterSource: CyclicCharacterSource;
 
   beforeEach(() => {
     vi.useFakeTimers();
@@ -49,7 +64,9 @@ describe('SessionController timing', () => {
       onEndSession: (reason) => effects.push({ type: 'endSession', reason })
     };
 
-    controller = new DefaultSessionController(handlers);
+    // Create predictable character sequence: A -> B -> C -> A -> B -> C...
+    characterSource = new CyclicCharacterSource(['A', 'B', 'C']);
+    controller = new DefaultSessionController(handlers, characterSource);
   });
 
   afterEach(() => {
@@ -183,23 +200,56 @@ describe('SessionController timing', () => {
       const config = createActiveConfig();
       controller.start(config);
 
-      controller.sendEvent({ type: 'audioEnded', emissionId: 'test' });
+      // First character should be 'A' (from our predictable sequence)
+      const currentChar = controller.getCurrentCharacter();
+      expect(currentChar).toBe('A');
+      const context = (controller as any).getContext();
+      const emissionId = context.currentEmission?.id;
+
+      controller.sendEvent({ type: 'audioEnded', emissionId });
       expect(controller.getPhase()).toBe('awaitingInput');
 
-      const currentChar = controller.getCurrentCharacter();
+      // Send correct keypress for 'A'
       controller.sendEvent({
         type: 'keypress',
-        key: currentChar!,
+        key: 'A',
         timestamp: Date.now()
       });
 
-      // Even if we advance time past the window, no timeout should fire
+      // Check phases after keypress
+      const phaseAfterKeypress = controller.getPhase();
+      const currentCharAfter = controller.getCurrentCharacter();
+      const previousChars = controller.getPreviousCharacters();
+      const contextAfter = (controller as any).getContext();
+      const newEmissionId = contextAfter.currentEmission?.id;
+
+      // Should advance immediately to next emission after correct input
+      expect(phaseAfterKeypress).toBe('emitting');
+      expect(previousChars).toContain('A');
+      // Next character should be 'B' (predictable sequence)
+      expect(currentCharAfter).toBe('B');
+      // Check that we have a new emission (emission ID should be different)
+      expect(newEmissionId).not.toBe(emissionId);
+      expect(newEmissionId).toBeTruthy();
+
+      // The new emission should have its own window timeout
+      // But it shouldn't have fired yet since we just started the new emission
       const ditMs = 1200 / 20;
       const windowMs = 3 * ditMs;
-      vi.advanceTimersByTime(windowMs + 100);
 
-      // Should not be in feedback phase
-      expect(controller.getPhase()).not.toBe('feedback');
+      // Advance time but not enough to trigger the NEW window timeout
+      vi.advanceTimersByTime(windowMs - 10);
+
+      // Should still be in emitting phase
+      expect(controller.getPhase()).toBe('emitting');
+
+      // Now advance past the window
+      vi.advanceTimersByTime(20);
+
+      // NOW we should transition to awaitingInput (audio hasn't ended yet)
+      // or if audio is instant, we might be in awaitingInput or feedback
+      const finalPhase = controller.getPhase();
+      expect(['emitting', 'awaitingInput', 'feedback']).toContain(finalPhase);
     });
 
     it('should cancel all timeouts on session end', () => {

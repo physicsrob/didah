@@ -1,6 +1,6 @@
 # CodeBeat Implementation Status
 
-## Overall Progress: 25% Complete
+## Overall Progress: 50% Complete
 
 ### Phase 1: Core Foundation ✅ 100% Complete
 - [x] Project setup (Vite + React + TypeScript)
@@ -17,16 +17,18 @@
   - [x] Schedule utilities (getNextEvent, getEventsUntil, shouldEndSession)
   - [x] Comprehensive test suite (14 tests passing)
 
-### Phase 2: Session Controller ⏳ 0% Complete
-- [ ] SessionController (`src/features/session/SessionController.ts`)
-- [ ] Pure transition function (`src/features/session/transition.ts`)
-- [ ] Effect types and runner (`src/features/session/effects.ts`)
-- [ ] Session types and Clock interface (`src/features/session/types.ts`)
-- [ ] Active mode phases (emitting → awaitingInput → feedback → loop)
-- [ ] Passive mode phases (emitting → preRevealDelay → reveal → postRevealDelay → loop)
-- [ ] Pure transition tests (`__tests__/transition.test.ts`)
-- [ ] Controller timing tests with fake clock (`__tests__/controller.timing.test.ts`)
-- [ ] Controller race condition tests (`__tests__/controller.races.test.ts`)
+### Phase 2: Session Controller ✅ 95% Complete
+- [x] SessionController (`src/features/session/SessionController.ts`)
+- [x] Pure transition function (`src/features/session/transition.ts`)
+- [x] Effect types and runner (`src/features/session/effects.ts`)
+- [x] Session types and Clock interface (`src/features/session/types.ts`)
+- [x] Active mode phases (emitting → awaitingInput → feedback → loop)
+- [x] Passive mode phases (emitting → preRevealDelay → reveal → postRevealDelay → loop)
+- [x] Pure transition tests (`__tests__/transition.test.ts`)
+- [x] Controller timing tests with fake clock (`__tests__/controller.timing.test.ts`)
+- [x] Controller race condition tests (`__tests__/controller.races.test.ts`)
+- [x] Epoch-based cancellation for race condition prevention
+- [x] Comprehensive test suite (57 tests passing across 5 files)
 
 ### Phase 3: Audio & Feedback ⏳ 0% Complete
 - [ ] Audio Engine (`src/features/session/services/audioEngine.ts`)
@@ -74,18 +76,25 @@
 - [ ] Performance testing
 
 ## Current Task
-**Phase 1 Complete!** - Ready to begin Phase 2: SessionController implementation with pure transitions, effect runner, and epoch-based cancellation for deterministic session orchestration.
+**Phase 2 Complete!** - SessionController with pure transitions, effect runner, and epoch-based cancellation fully implemented. Ready to begin Phase 3: Audio Engine integration for tone generation and playback.
 
 ## Key Files Implemented
 - ✅ `src/core/morse/timing.ts` - Core timing calculations
 - ✅ `src/core/types/domain.ts` - TypeScript domain types
 - ✅ `src/features/session/services/scheduler.ts` - Session timing scheduler
+- ✅ `src/features/session/SessionController.ts` - Session orchestration controller
+- ✅ `src/features/session/transition.ts` - Pure state transition function
+- ✅ `src/features/session/effects.ts` - Effect types and runner
+- ✅ `src/features/session/types.ts` - Session types and interfaces
 - ✅ `src/tests/timing.test.ts` - Timing engine tests (9 tests)
 - ✅ `src/tests/scheduler.test.ts` - Scheduler tests (14 tests)
+- ✅ `src/features/session/__tests__/transition.test.ts` - Transition tests (14 tests)
+- ✅ `src/features/session/__tests__/controller.timing.test.ts` - Controller timing tests (11 tests)
+- ✅ `src/features/session/__tests__/controller.races.test.ts` - Race condition tests (9 tests)
 - ✅ Project configuration and documentation
 
 ## Next Steps
-1. Implement SessionController with pure transition function and effect runner
-2. Create Active/Passive mode phase transitions with Clock injection
-3. Add comprehensive tests for transitions and controller timing
-4. Implement minimal audio engine for basic tone generation
+1. Implement minimal Audio Engine for WebAudio tone generation
+2. Create dit/dah sequence playback functionality
+3. Integrate audio with SessionController effects
+4. Add basic feedback adapters (buzzer, flash)

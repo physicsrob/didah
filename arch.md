@@ -9,7 +9,7 @@
 **Feature modules**
 1. **Session** (Active/Passive practice)
    - Orchestrates timing, audio, input handling, instant feedback, and session logging.
-   - Built around a **SessionController** that executes a pure transition function and an effect runner, with an injected clock and epoch-based cancellation. Active mode's input window opens at audio start; latency is measured from audio start to first correct key.
+   - Built around a **SessionController** that executes a pure transition function and an effect runner, with epoch-based cancellation. Active mode's input window opens at audio start; latency is measured from audio start to first correct key.
 
 2. **Statistics**
    - Aggregates session logs into daily metrics, speed/latency, confusion matrix, and study time.
@@ -149,7 +149,7 @@ type SessionLog = {
 
 ## 4) Session orchestration with SessionController + Pure Transitions
 
-Using a **SessionController** that executes a pure transition function and an effect runner, the **Session** has predictable behavior with clock injection and epoch-based cancellation:
+Using a **SessionController** that executes a pure transition function and an effect runner, the **Session** has predictable behavior with epoch-based cancellation:
 
 **Phases**
 - `idle` → `emitting` → (`awaitingInput` | `feedback` | `preRevealDelay` → `reveal` → `postRevealDelay`) → `ended`
@@ -168,13 +168,13 @@ Using a **SessionController** that executes a pure transition function and an ef
 - **Active mode**: Input window opens at audio start; correct input during audio stops playback immediately
 - **Latency measurement**: From audio start to first correct key
 - **No retries**: Failed characters advance to next (per spec)
-- **Clock injection**: All timing comes from injected Clock interface
 - **Epoch cancellation**: Timer callbacks check epoch; stale callbacks are ignored
+- **Effect-based timing**: All timing implemented via effects and the EffectRunner
 
 **Why this matters:**
 - Deterministic flow with pure transitions → easy to unit-test timing and edge cases without audio
-- Clock injection eliminates timer races and enables fake timer testing
-- Effect-based architecture separates concerns (logic vs. side effects)
+- Epoch-based cancellation eliminates timer races and prevents stale callbacks
+- Effect-based architecture separates concerns (logic vs. side effects) and enables testing with TestEffectRunner
 
 ## 5) Text Sources (pluggable providers)
 
@@ -255,13 +255,13 @@ Feature-first with a small shared core. (Vite + React + TS assumed.)
       SessionController.ts
       transition.ts          // pure transitions
       effects.ts            // Effect type & runner (audio, feedback)
-      types.ts              // phases, events, context, Clock, Effect
+      types.ts              // phases, events, context, Effect
       __tests__/
         transition.test.ts
         controller.timing.test.ts
         controller.races.test.ts
       services/
-        scheduler.ts        // deterministic clock; test with fake timers
+        scheduler.ts        // emission timeline generation
         audioEngine.ts      // WebAudio wrapper (thin, not unit tested)
         feedback/
           flashFeedback.ts
@@ -351,7 +351,7 @@ Focus on pure, deterministic logic where tests buy you confidence and guard agai
    - Early correct input during audio stops playback and advances immediately
    - Boundary timings: minimum window enforcement, precise reveal spacing
    - Edge cases: input during phases, timeout vs keypress precedence, rapid successive keypresses
-   - Pure transition function tested without side effects; controller tested with fake clock
+   - Pure transition function tested without side effects; controller tested with TestEffectRunner
 
 2. **Scheduler** (`features/session/services/scheduler.ts`)
    - Given a WPM + speed tier, emits precise timestamps for:

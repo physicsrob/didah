@@ -2,7 +2,8 @@ import type { SessionConfig } from '../../core/types/domain.js';
 import type {
   SessionContext,
   SessionEvent,
-  SessionPhase
+  SessionPhase,
+  CharacterSource
 } from './types.js';
 import type { EffectRunner, EffectHandlers } from './effects.js';
 import { transition } from './transition.js';
@@ -20,14 +21,16 @@ export interface SessionController {
 export class DefaultSessionController implements SessionController {
   private context: SessionContext;
   private effectRunner: EffectRunner;
-  private tickTimer: NodeJS.Timeout | null = null;
+  private characterSource?: CharacterSource;
 
-  constructor(handlers: EffectHandlers = {}) {
+  constructor(handlers: EffectHandlers = {}, characterSource?: CharacterSource) {
     this.context = this.createInitialContext();
+    this.characterSource = characterSource;
 
     this.effectRunner = new DefaultEffectRunner(
       handlers,
-      (kind) => this.sendEvent({ type: 'timeout', kind })
+      (kind) => this.sendEvent({ type: 'timeout', kind }),
+      () => this.context.activeTimeouts
     );
   }
 
@@ -40,38 +43,59 @@ export class DefaultSessionController implements SessionController {
       previousCharacters: [],
       sessionId: null,
       epoch: 0,
-      pendingTimeouts: new Set()
+      activeTimeouts: {}
     };
   }
 
   start(config: SessionConfig): void {
     this.sendEvent({ type: 'start', config });
-    this.startTickTimer();
   }
 
-  private startTickTimer(): void {
-    this.stopTickTimer();
-    this.tickTimer = setInterval(() => {
-      if (this.context.phase !== 'idle' && this.context.phase !== 'ended') {
-        this.sendEvent({ type: 'tick', timestamp: Date.now() });
-      }
-    }, 10); // 10ms tick interval
-  }
-
-  private stopTickTimer(): void {
-    if (this.tickTimer) {
-      clearInterval(this.tickTimer);
-      this.tickTimer = null;
-    }
-  }
 
   sendEvent(event: SessionEvent): void {
-    const result = transition(this.context, event);
+    const result = transition(this.context, event, this.characterSource);
     this.context = result.context;
 
-    // Run all effects
+    // Run all effects and track timeout IDs
     for (const effect of result.effects) {
-      this.effectRunner.run(effect, this.context.epoch);
+      const timeoutId = this.effectRunner.run(effect, this.context.epoch);
+
+      // Track timeout IDs in context
+      if (timeoutId !== undefined) {
+        switch (effect.type) {
+          case 'startRecognitionTimeout':
+            this.context.activeTimeouts.recognition = timeoutId;
+            break;
+          case 'startFeedbackTimeout':
+            this.context.activeTimeouts.feedback = timeoutId;
+            break;
+          case 'startRevealTimeout':
+            this.context.activeTimeouts.reveal = timeoutId;
+            break;
+          case 'startPostRevealTimeout':
+            this.context.activeTimeouts.postReveal = timeoutId;
+            break;
+        }
+      }
+
+      // Clear timeout IDs when canceling
+      switch (effect.type) {
+        case 'cancelRecognitionTimeout':
+          this.context.activeTimeouts.recognition = undefined;
+          break;
+        case 'cancelFeedbackTimeout':
+          this.context.activeTimeouts.feedback = undefined;
+          break;
+        case 'cancelRevealTimeout':
+          this.context.activeTimeouts.reveal = undefined;
+          break;
+        case 'cancelPostRevealTimeout':
+          this.context.activeTimeouts.postReveal = undefined;
+          break;
+        case 'cancelAllTimeouts':
+          this.context.activeTimeouts = {};
+          break;
+      }
     }
   }
 
@@ -89,7 +113,6 @@ export class DefaultSessionController implements SessionController {
 
   stop(): void {
     this.sendEvent({ type: 'end', reason: 'user' });
-    this.stopTickTimer();
   }
 
   // Additional methods for testing and debugging
@@ -99,7 +122,6 @@ export class DefaultSessionController implements SessionController {
 
   // Cleanup method
   cleanup(): void {
-    this.stopTickTimer();
     if (this.effectRunner && 'cleanup' in this.effectRunner) {
       (this.effectRunner as any).cleanup();
     }
@@ -108,7 +130,8 @@ export class DefaultSessionController implements SessionController {
 
 // Factory function for easier testing
 export function createSessionController(
-  handlers: EffectHandlers = {}
+  handlers: EffectHandlers = {},
+  characterSource?: CharacterSource
 ): SessionController {
-  return new DefaultSessionController(handlers);
+  return new DefaultSessionController(handlers, characterSource);
 }
