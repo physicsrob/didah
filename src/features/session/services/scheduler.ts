@@ -5,7 +5,7 @@
  * and reveal timings based on session configuration and timing engine.
  */
 
-import { SessionConfig, Emission } from '../../../core/types/domain';
+import type { SessionConfig, Emission } from '../../../core/types/domain';
 import {
   wpmToDitMs,
   getActiveWindowMs,

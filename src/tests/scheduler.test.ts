@@ -6,7 +6,7 @@ import {
   shouldEndSession,
   type ScheduleEvent
 } from '../features/session/services/scheduler';
-import { SessionConfig } from '../core/types/domain';
+import type { SessionConfig } from '../core/types/domain';
 
 describe('Session Scheduler', () => {
   const baseConfig: SessionConfig = {

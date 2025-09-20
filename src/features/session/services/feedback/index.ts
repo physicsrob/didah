@@ -4,16 +4,21 @@
  * Export all feedback adapters and utilities
  */
 
-export type { Feedback, FeedbackType } from './feedbackInterface.js';
+import type { Feedback, FeedbackType } from './feedbackInterface.js';
+import { BuzzerFeedback, DEFAULT_BUZZER_CONFIG } from './buzzerFeedback.js';
+import type { BuzzerConfig } from './buzzerFeedback.js';
+import { FlashFeedback, DEFAULT_FLASH_CONFIG } from './flashFeedback.js';
+import type { FlashConfig } from './flashFeedback.js';
+import { CombinedFeedback } from './combinedFeedback.js';
+import type { CombinedFeedbackConfig } from './combinedFeedback.js';
 
-export { BuzzerFeedback, DEFAULT_BUZZER_CONFIG } from './buzzerFeedback.js';
-export type { BuzzerConfig } from './buzzerFeedback.js';
-
-export { FlashFeedback, DEFAULT_FLASH_CONFIG } from './flashFeedback.js';
-export type { FlashConfig } from './flashFeedback.js';
-
-export { CombinedFeedback } from './combinedFeedback.js';
-export type { CombinedFeedbackConfig } from './combinedFeedback.js';
+export type { Feedback, FeedbackType };
+export { BuzzerFeedback, DEFAULT_BUZZER_CONFIG };
+export type { BuzzerConfig };
+export { FlashFeedback, DEFAULT_FLASH_CONFIG };
+export type { FlashConfig };
+export { CombinedFeedback };
+export type { CombinedFeedbackConfig };
 
 /**
  * Factory function to create feedback adapters based on type

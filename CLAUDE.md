@@ -11,10 +11,15 @@ A modern web application for learning Morse code with real-time feedback, statis
 ```bash
 # Development
 npm run dev          # Start development server
-npm test            # Run all tests
+npm test            # Run all tests (watch mode)
 npm run test:ui     # Interactive test UI
 npm run build       # Build for production
-npm run lint        # Lint code
+
+# Quality Checks (run these before committing!)
+npm run check       # Run ALL checks: TypeScript, ESLint, and tests
+npm run check:fix   # Same as check but auto-fix lint issues
+npm run typecheck   # TypeScript type checking only
+npm run lint        # ESLint only
 ```
 
 ## Architecture
