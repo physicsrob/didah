@@ -81,9 +81,9 @@ describe('runActiveEmission', () => {
       signal
     );
 
-    // Advance time past the window
+    // Advance time past the window (B audio 540ms + window 300ms = 840ms total)
     setTimeout(() => {
-      clock.advance(400);
+      clock.advance(850); // Past the 840ms timeout
     }, 0);
 
     const result = await emissionPromise;
@@ -157,9 +157,9 @@ describe('runActiveEmission', () => {
       signal
     );
 
-    // Advance clock to trigger timeout (fast = 2×60ms = 120ms)
+    // Advance clock to trigger timeout (D audio 420ms + fast window 120ms = 540ms)
     setTimeout(() => {
-      clock.advance(120);  // This triggers the timeout
+      clock.advance(540);  // This triggers the timeout
     }, 0);
 
     // Advance for the replay to complete
@@ -203,6 +203,78 @@ describe('runActiveEmission', () => {
     const result = await emissionPromise;
 
     expect(result).toBe('correct');
+  });
+
+  it('should timeout after audio completion plus window duration (timing bug test)', async () => {
+    // This test exposes the timing bug where timeout happens during audio playback
+    // Using slow WPM and long character to make the issue more obvious
+    const config = {
+      mode: 'active' as const,
+      wpm: 5, // Very slow = 240ms dit
+      speedTier: 'slow' as const, // 5×dit = 1200ms window
+      lengthMs: 60000
+    };
+
+    // Character 'H' = '....' (4 dits + 3 intra-symbol spacing = 7×240ms = 1680ms audio)
+    // Expected: audio ends at 1680ms, timeout should be at 1680ms + 1200ms = 2880ms
+
+    // Create MockIO that simulates realistic audio duration
+    const realisticIO = new MockIO(clock);
+    // Override playChar to use character-specific duration
+    const originalPlayChar = realisticIO.playChar.bind(realisticIO);
+    realisticIO.playChar = async function(char: string): Promise<void> {
+      this.calls.push({ method: 'playChar', args: [char] });
+      // Calculate realistic audio duration for 'H' at 5 WPM
+      const audioDuration = 1680; // 4 dits + 3 spacing × 240ms = 1680ms
+      await clock.sleep(audioDuration);
+    };
+
+    const startTime = clock.now();
+
+    // Start emission
+    const emissionPromise = runActiveEmission(
+      config,
+      'H',
+      realisticIO,
+      input,
+      clock,
+      signal
+    );
+
+    // Advance clock in steps to observe when timeout occurs
+    setTimeout(() => {
+      // At 1200ms: This is when the BUG causes timeout (just window duration)
+      clock.advance(1200);
+
+      // Check if feedback was called (indicating timeout) - this would be the BUG
+      const feedbackCalls = realisticIO.getCalls('feedback');
+      if (feedbackCalls.length > 0) {
+        console.error('BUG DETECTED: Timeout occurred at 1200ms while audio still playing');
+      }
+    }, 0);
+
+    setTimeout(() => {
+      // At 1680ms: Audio should complete here
+      clock.advance(480); // Total now 1680ms
+    }, 10);
+
+    setTimeout(() => {
+      // At 2880ms: This is when timeout SHOULD occur (audio + window)
+      clock.advance(1200); // Total now 2880ms
+    }, 20);
+
+    const result = await emissionPromise;
+    const endTime = clock.now();
+
+    expect(result).toBe('timeout');
+
+    // Verify timeout happened at the correct time
+    const timeoutLogs = realisticIO.getCalls('log').filter(c => c.args[0].type === 'timeout');
+    expect(timeoutLogs).toHaveLength(1);
+
+    // The timeout should have been logged at 2880ms (audio + window), not 1200ms (just window)
+    const timeoutTime = timeoutLogs[0].args[0].at;
+    expect(timeoutTime).toBe(startTime + 2880); // This will FAIL with current bug
   });
 });
 

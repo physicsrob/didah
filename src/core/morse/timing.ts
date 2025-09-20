@@ -5,6 +5,8 @@
  * Uses the standard formula: dit length = 1200 / WPM ms
  */
 
+import { getMorsePattern } from './alphabet.js';
+
 export type SpeedTier = "slow" | "medium" | "fast" | "lightning";
 
 /**
@@ -106,4 +108,30 @@ export function getSpacingMs(wpm: number) {
     symbolMs: ditMs * MORSE_SPACING.symbol,
     wordMs: ditMs * MORSE_SPACING.word,
   };
+}
+
+/**
+ * Calculate the total duration in milliseconds for playing a character's Morse pattern
+ * Includes the time for all dits/dahs plus intra-symbol spacing
+ */
+export function calculateCharacterDurationMs(char: string, wpm: number): number {
+  const pattern = getMorsePattern(char);
+  if (!pattern) {
+    return 0; // Unknown characters have no duration
+  }
+
+  const ditMs = wpmToDitMs(wpm);
+  let totalMs = 0;
+
+  // Add duration for each element (dit or dah)
+  for (const element of pattern) {
+    totalMs += element === '.' ? ditMs : ditMs * 3; // dah = 3 dits
+  }
+
+  // Add intra-symbol spacing between elements (1 dit between each element)
+  if (pattern.length > 1) {
+    totalMs += ditMs * (pattern.length - 1);
+  }
+
+  return totalMs;
 }

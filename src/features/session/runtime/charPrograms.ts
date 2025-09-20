@@ -6,7 +6,7 @@ import type { Clock } from './clock';
 import type { IO } from './io';
 import type { InputBus, KeyEvent } from './inputBus';
 import { select, waitForEvent, clockTimeout } from './select';
-import { getActiveWindowMs, getPassiveTimingMs, wpmToDitMs } from '../../../core/morse/timing';
+import { getActiveWindowMs, getPassiveTimingMs, wpmToDitMs, calculateCharacterDurationMs } from '../../../core/morse/timing';
 
 // Session config type - simplified for now
 export type SessionConfig = {
@@ -49,12 +49,13 @@ export async function runActiveEmission(
     console.warn(`Audio failed for char: ${char}`);
   });
 
-  // Calculate recognition window
+  // Calculate recognition window and character audio duration
   const ditMs = wpmToDitMs(cfg.wpm);
   const windowMs = Math.max(
     getActiveWindowMs(cfg.wpm, cfg.speedTier),
     Math.max(60, ditMs) // Minimum 60ms or 1 dit
   );
+  const charDurationMs = calculateCharacterDurationMs(char, cfg.wpm);
 
   // Create a scoped abort controller for this emission
   const charScope = new AbortController();
@@ -107,8 +108,8 @@ export async function runActiveEmission(
         return 'correct' as const;
       }),
 
-      // Arm 1: Timeout
-      clockTimeout(clock, windowMs, 'timeout' as const)
+      // Arm 1: Timeout (after audio completes + recognition window)
+      clockTimeout(clock, charDurationMs + windowMs, 'timeout' as const)
     ], sessionSignal);
 
     // Clean up observers
