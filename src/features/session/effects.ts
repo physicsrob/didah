@@ -1,4 +1,5 @@
 import type { Effect } from './types.js';
+import { AudioEngine, type AudioEngineConfig } from './services/audioEngine.js';
 
 // Effect runner interface
 export interface EffectRunner {
@@ -175,6 +176,84 @@ export class DefaultEffectRunner implements EffectRunner {
       clearTimeout(timeoutInfo.handle);
     }
     this.timeouts.clear();
+  }
+}
+
+// Audio effect handler that manages AudioEngine integration
+export class AudioEffectHandler {
+  private audioEngine: AudioEngine;
+  private currentPlayback: Promise<void> | null = null;
+
+  constructor(config: AudioEngineConfig) {
+    this.audioEngine = new AudioEngine(config);
+  }
+
+  /**
+   * Initialize audio context (must be called after user interaction)
+   */
+  async initialize(): Promise<void> {
+    await this.audioEngine.initialize();
+  }
+
+  /**
+   * Update audio configuration
+   */
+  updateConfig(config: Partial<AudioEngineConfig>): void {
+    this.audioEngine.updateConfig(config);
+  }
+
+  /**
+   * Get effect handlers for use with DefaultEffectRunner
+   */
+  getHandlers(): Pick<EffectHandlers, 'onPlayAudio' | 'onStopAudio'> {
+    return {
+      onPlayAudio: async (char: string, emissionId: string) => {
+        try {
+          // Store the playback promise so we can cancel it if needed
+          this.currentPlayback = this.audioEngine.playCharacter(char);
+          await this.currentPlayback;
+          this.currentPlayback = null;
+
+          // Notify that audio ended (this would typically trigger a callback to the session)
+          // The session controller should listen for audio completion to trigger 'audioEnded' event
+          this.onAudioEnded?.(emissionId);
+        } catch (error) {
+          console.error('Error playing audio:', error);
+          this.currentPlayback = null;
+          // Still notify audio ended even on error to prevent session hanging
+          this.onAudioEnded?.(emissionId);
+        }
+      },
+
+      onStopAudio: async () => {
+        try {
+          await this.audioEngine.stop();
+          this.currentPlayback = null;
+        } catch (error) {
+          console.error('Error stopping audio:', error);
+        }
+      },
+    };
+  }
+
+  /**
+   * Callback for when audio playback completes
+   * Should be set by the session controller
+   */
+  onAudioEnded?: (emissionId: string) => void;
+
+  /**
+   * Check if audio is currently playing
+   */
+  get isPlaying(): boolean {
+    return this.audioEngine.playing;
+  }
+
+  /**
+   * Dispose of resources
+   */
+  dispose(): void {
+    this.audioEngine.dispose();
   }
 }
 
