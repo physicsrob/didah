@@ -7,8 +7,12 @@
 
 /**
  * Check if debug mode is enabled
+ * - In Node.js: checks DEBUG_MORSE environment variable
+ * - In browser: defaults to true (for demo/development)
  */
-export const DEBUG = process.env.DEBUG_MORSE === 'true';
+export const DEBUG = typeof process !== 'undefined' && process.env
+  ? process.env.DEBUG_MORSE === 'true'
+  : true; // Default to true in browser for demo
 
 /**
  * Debug logger that only outputs when DEBUG is true

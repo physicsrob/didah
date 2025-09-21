@@ -55,7 +55,7 @@ export class TestIO implements IO {
     this.loggedEvents.push(event);
   }
 
-  snapshot(snapshot: SessionSnapshot): void {
+  snapshot(_snapshot: SessionSnapshot): void {
     // Not needed for most tests
   }
 
@@ -117,7 +117,8 @@ export class TestIO implements IO {
    */
   getIncorrectAttempts(expectedChar: string): string[] {
     return this.loggedEvents
-      .filter(e => e.type === 'incorrect' && e.expected === expectedChar)
+      .filter((e): e is Extract<LogEvent, { type: 'incorrect' }> =>
+        e.type === 'incorrect' && e.expected === expectedChar)
       .map(e => e.got);
   }
 
@@ -186,8 +187,6 @@ TestIO Summary:
 
   // ============= Legacy Support (for gradual migration) =============
 
-  private calls: Array<{ method: string; args: any[] }> = [];
-
   /**
    * Legacy method for backward compatibility
    * @deprecated Use semantic query methods instead
@@ -236,6 +235,5 @@ TestIO Summary:
    */
   clear(): void {
     this.reset();
-    this.calls = [];
   }
 }

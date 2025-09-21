@@ -257,7 +257,6 @@ describe('runPassiveEmission', () => {
       speedTier: 'slow' // Timings from TestTiming.passive.slow
     });
 
-    const startTime = clock.now();
 
     // Start emission
     const emissionPromise = runPassiveEmission(

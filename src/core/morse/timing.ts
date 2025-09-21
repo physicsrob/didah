@@ -49,7 +49,7 @@ export function getPassiveTimingMultipliers(speedTier: SpeedTier): {
  * - fast: 500ms
  * - lightning: 300ms
  */
-export function getActiveWindowMs(wpm: number, speedTier: SpeedTier): number {
+export function getActiveWindowMs(_wpm: number, speedTier: SpeedTier): number {
   const windows = {
     slow: 2000,
     medium: 1000,

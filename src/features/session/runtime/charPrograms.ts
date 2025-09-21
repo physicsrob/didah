@@ -6,7 +6,7 @@ import type { Clock } from './clock';
 import type { IO } from './io';
 import type { InputBus, KeyEvent } from './inputBus';
 import { select, waitForEvent, clockTimeout } from './select';
-import { getActiveWindowMs, getPassiveTimingMs, wpmToDitMs, calculateCharacterDurationMs, MORSE_SPACING } from '../../../core/morse/timing';
+import { getActiveWindowMs, getPassiveTimingMs, wpmToDitMs, calculateCharacterDurationMs } from '../../../core/morse/timing';
 import { debug } from '../../../core/debug';
 
 // Session config type - simplified for now
@@ -71,7 +71,12 @@ export async function runActiveEmission(
     io.log({ type: 'emission', at: emissionStart, char });
 
     // Race: correct key vs incorrect key vs timeout
-    const result = await select([
+    type RaceResult =
+      | { type: 'correct', key: string }
+      | { type: 'incorrect', key: string }
+      | { type: 'timeout' };
+
+    const result = await select<RaceResult>([
       // Arm 0: Wait for correct key
       waitForEvent(async (signal) => {
         const event = await input.takeUntil(

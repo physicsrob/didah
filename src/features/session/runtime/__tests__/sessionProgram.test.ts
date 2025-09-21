@@ -9,8 +9,7 @@ import { TestInputBus } from '../inputBus';
 import { TestIO } from './testIO';
 import { calculateCharacterDurationMs } from '../../../../core/morse/timing';
 import { advanceAndFlush, createTestConfig, flushPromises } from './testUtils';
-import { TestTiming, getCharTimeout, getPassiveSequence } from './timingTestHelpers';
-import { createFixture } from './testFixture';
+import { TestTiming, getCharTimeout } from './timingTestHelpers';
 
 describe('SessionRunner', () => {
   let clock: FakeClock;
@@ -142,7 +141,7 @@ describe('SessionRunner', () => {
 
     // Calculate timings for character 'X'
     const charDuration = calculateCharacterDurationMs('X', config.wpm);
-    const preRevealMs = TestTiming.passive.slow.preReveal; // 3 dits for slow
+    const preRevealMs = TestTiming.passive.slow.preReveal;
 
     // Advance through audio playback
     await advanceAndFlush(clock, charDuration);
