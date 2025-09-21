@@ -32,13 +32,13 @@ export class CombinedFeedback implements Feedback {
 
   onFail(char: string): void {
     // Trigger both feedback types simultaneously
-    this.buzzer.onFail(char);
+    this.buzzer.onFail();
     this.flash.onFail(char);
   }
 
   onCorrect?(char: string): void {
     // Trigger both feedback types for correct answer (if enabled)
-    this.buzzer.onCorrect?.(char);
+    this.buzzer.onCorrect?.();
     this.flash.onCorrect?.(char);
   }
 

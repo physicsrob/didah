@@ -233,9 +233,12 @@ describe('runActiveEmission', () => {
     expect(result).toBe('timeout');
 
     // Verify timeout happened at the correct time
-    const timeoutLogs = io.getCalls('log').filter(c => c.args[0].type === 'timeout');
+    const timeoutLogs = io.getCalls('log').filter(c => {
+      const event = c.args[0] as { type: string; at: number };
+      return event.type === 'timeout';
+    });
     expect(timeoutLogs).toHaveLength(1);
-    const timeoutTime = timeoutLogs[0].args[0].at;
+    const timeoutTime = (timeoutLogs[0].args[0] as { at: number }).at;
     expect(timeoutTime).toBeGreaterThanOrEqual(startTime + expectedTimeout);
   });
 });
