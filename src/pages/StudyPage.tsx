@@ -12,15 +12,22 @@ import { createIOAdapter } from '../features/session/runtime/ioAdapter.js';
 import type { SessionSnapshot } from '../features/session/runtime/io.js';
 import { createSessionRunner } from '../features/session/runtime/sessionProgram.js';
 import { RandomCharSource } from '../features/session/runtime/sessionProgram.js';
-import { AudioEngine } from '../features/session/services/audioEngine.js';
 import { createFeedback } from '../features/session/services/feedback/index.js';
-import { DEFAULT_SESSION_CONFIG, DEFAULT_AUDIO_CONFIG } from '../core/config/defaults.js';
+import { DEFAULT_SESSION_CONFIG } from '../core/config/defaults.js';
 import { getMorsePattern as getMorsePatternFromAlphabet } from '../core/morse/alphabet.js';
+import { useAudio } from '../contexts/AudioContext.tsx';
 import '../styles/main.css';
 import '../styles/studyPage.css';
 
+type StudyPhase = 'waiting' | 'countdown' | 'session';
+
 export function StudyPage() {
   const navigate = useNavigate();
+  const { initializeAudio, getAudioEngine, isAudioReady } = useAudio();
+
+  // Check if audio is actually ready (not just what location.state says)
+  const audioActuallyReady = isAudioReady();
+
   const [snapshot, setSnapshot] = useState<SessionSnapshot>({
     phase: 'idle',
     currentChar: null,
@@ -33,12 +40,15 @@ export function StudyPage() {
   const [revealedChar, setRevealedChar] = useState<string | null>(null);
   const [replayOverlay, setReplayOverlay] = useState<string | null>(null);
   const [feedbackFlash, setFeedbackFlash] = useState<string | null>(null);
-  const [isAudioInitialized, setIsAudioInitialized] = useState(false);
+
+  // Always start in 'waiting' state, we'll auto-advance if needed
+  const [studyPhase, setStudyPhase] = useState<StudyPhase>('waiting');
+  const [countdownNumber, setCountdownNumber] = useState<number>(3);
 
   // Create runtime dependencies
   const clock = useMemo(() => new SystemClock(), []);
   const input = useMemo(() => new SimpleInputBus(), []);
-  const audioEngine = useMemo(() => new AudioEngine(DEFAULT_AUDIO_CONFIG), []);
+  const audioEngine = useMemo(() => getAudioEngine(), [getAudioEngine]);
   const feedback = useMemo(() => createFeedback('flash'), []); // Can be 'buzzer', 'flash', or 'both'
 
   const source = useMemo(() => new RandomCharSource(DEFAULT_SESSION_CONFIG.effectiveAlphabet.join('')), []);
@@ -95,40 +105,61 @@ export function StudyPage() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [input]);
 
-  // Initialize audio context on user interaction
-  const initializeAudio = useCallback(async () => {
-    if (!isAudioInitialized) {
-      try {
-        await audioEngine.initialize();
-        setIsAudioInitialized(true);
-      } catch (error) {
-        console.error('Failed to initialize audio:', error);
-      }
-    }
-  }, [audioEngine, isAudioInitialized]);
-
-  // Start session
-  const startSession = useCallback(async () => {
-    console.log(`[Session] Starting - Mode: ${DEFAULT_SESSION_CONFIG.mode}, WPM: ${DEFAULT_SESSION_CONFIG.wpm}, Speed: ${DEFAULT_SESSION_CONFIG.speedTier}`);
-    await initializeAudio();
-    runner.start(DEFAULT_SESSION_CONFIG);
-  }, [runner, initializeAudio]);
-
   // Stop session and go back
   const stopSession = useCallback(() => {
     runner.stop();
     navigate('/');
   }, [runner, navigate]);
 
-  // Auto-start session on mount
+  // Handle click to start when audio not ready
+  const handleStartClick = async () => {
+    const success = await initializeAudio();
+
+    if (success) {
+      setStudyPhase('countdown');
+    } else {
+      console.error('[StudyPage] Audio initialization failed');
+      // Could show error UI here
+    }
+  };
+
+  // Auto-start countdown if audio is actually initialized
   useEffect(() => {
-    const autoStart = async () => {
-      if (snapshot.phase === 'idle') {
-        await startSession();
+    if (audioActuallyReady && studyPhase === 'waiting') {
+      setStudyPhase('countdown');
+    }
+  }, []); // Only run once on mount
+
+  // Run countdown when phase changes to 'countdown'
+  useEffect(() => {
+    if (studyPhase !== 'countdown') return;
+
+    const runCountdown = async () => {
+      // Audio should already be initialized if we got here
+      if (!isAudioReady()) {
+        console.error('[StudyPage] Audio not ready during countdown - this should not happen');
+        // Don't try to initialize here - no user gesture context
+        return;
       }
+
+      // Countdown from 3 to 1
+      for (let i = 3; i > 0; i--) {
+        setCountdownNumber(i);
+        await new Promise(resolve => setTimeout(resolve, 1000));
+      }
+
+      // Move to session phase
+      setStudyPhase('session');
     };
-    autoStart();
-  }, [snapshot.phase, startSession]);
+
+    runCountdown();
+  }, [studyPhase, isAudioReady, initializeAudio]);
+
+  // Start morse session when phase changes to 'session'
+  useEffect(() => {
+    if (studyPhase !== 'session') return;
+    runner.start(DEFAULT_SESSION_CONFIG);
+  }, [studyPhase, runner]);
 
 
   // Format time display
@@ -166,26 +197,30 @@ export function StudyPage() {
         <div className={`feedback-flash ${feedbackFlash}`} />
       )}
 
-      {/* Audio Initialization */}
-      {!isAudioInitialized && snapshot.phase === 'idle' && (
+      {/* Welcome Screen - waiting for audio initialization */}
+      {studyPhase === 'waiting' && (
         <div className="audio-init-container">
           <div className="audio-init-card">
             <h2 className="audio-init-title">Welcome to CodeBeat</h2>
             <p className="audio-init-text">
-              Click below to initialize audio and start your practice session.
+              Click to start your practice session
             </p>
             <button
-              className="btn btn-primary btn-large"
-              onClick={startSession}
+              className="btn btn-primary btn-large mt-6"
+              onClick={handleStartClick}
             >
-              Start Practice Session
+              Start Session
             </button>
+            <div className="body-small text-muted mt-4">
+              Session will start with a 3-2-1 countdown
+            </div>
           </div>
         </div>
       )}
 
-      {/* Session Header */}
-      <div className="session-header">
+      {/* Session Header - only show during actual session */}
+      {studyPhase === 'session' && (
+        <div className="session-header">
         <div className="session-timer">
           <span className="label">Time Remaining</span>
           <span className="session-timer-value">
@@ -209,10 +244,12 @@ export function StudyPage() {
             <span className="stat-value">{snapshot.previous.length}</span>
           </div>
         </div>
-      </div>
+        </div>
+      )}
 
-      {/* Main Display Area */}
-      <div className="session-display">
+      {/* Main Display Area - show during countdown and session */}
+      {(studyPhase === 'countdown' || studyPhase === 'session') && (
+        <div className="session-display">
         <div className="character-display">
           <div className={`current-character ${DEFAULT_SESSION_CONFIG.mode === 'passive' && !revealedChar ? 'placeholder' : ''}`}>
             {DEFAULT_SESSION_CONFIG.mode === 'active'
@@ -227,9 +264,9 @@ export function StudyPage() {
             </div>
           )}
 
-          {snapshot.phase === 'idle' && !isAudioInitialized && (
+          {studyPhase === 'waiting' && (
             <p className="body-regular text-muted">
-              Click "Start Practice Session" to begin
+              Click the button above to begin
             </p>
           )}
 
@@ -263,10 +300,11 @@ export function StudyPage() {
             ))}
           </div>
         )}
-      </div>
+        </div>
+      )}
 
       {/* Session Stats Bar */}
-      {snapshot.phase !== 'idle' && (
+      {studyPhase === 'session' && snapshot.phase !== 'idle' && (
         <div className="card">
           <div className="flex justify-between">
             <div className="stat-item">
@@ -286,7 +324,8 @@ export function StudyPage() {
       )}
 
       {/* Session Controls */}
-      <div className="session-controls">
+      {studyPhase === 'session' && (
+        <div className="session-controls">
         <button
           className="btn btn-secondary"
           onClick={stopSession}
@@ -301,7 +340,22 @@ export function StudyPage() {
           <span>·</span>
           <span>WPM: {DEFAULT_SESSION_CONFIG.wpm}</span>
         </div>
-      </div>
+        </div>
+      )}
+
+      {/* Countdown Overlay */}
+      {studyPhase === 'countdown' && (
+        <div className="replay-overlay">
+          <div className="replay-content animate-slide-up">
+            <div className="replay-character">
+              {countdownNumber}
+            </div>
+            <div className="replay-label">
+              Get Ready!
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Replay Overlay */}
       {replayOverlay && (
