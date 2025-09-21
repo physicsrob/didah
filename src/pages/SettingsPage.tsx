@@ -33,6 +33,15 @@ export default function SettingsPage() {
     return saved === 'true' // Default false
   })
 
+  // Build effective alphabet based on toggles
+  const buildAlphabet = () => {
+    let alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
+    if (includeNumbers) alphabet += '0123456789'
+    if (includeStdPunct) alphabet += '.,?/='
+    if (includeAdvPunct) alphabet += ':;!@#$%^&*()+-_[]{}|\\<>\'"`~'
+    return alphabet.split('')
+  }
+
   // Save settings to localStorage whenever they change
   useEffect(() => {
     localStorage.setItem('feedback', feedback)
@@ -154,6 +163,12 @@ export default function SettingsPage() {
               />
               <span>Include advanced punctuation (: ; ! @ # $ etc.)</span>
             </label>
+          </div>
+
+          <div className="mt-4 p-3 bg-surface-light rounded" style={{ backgroundColor: 'rgba(0,0,0,0.1)' }}>
+            <p className="body-small text-muted">
+              <strong>Active characters:</strong> {buildAlphabet().join(' ')}
+            </p>
           </div>
         </div>
 

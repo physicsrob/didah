@@ -183,25 +183,18 @@ export function SessionConfigPage() {
         </div>
 
         {/* Settings Info */}
-        <div className="card mb-6 max-w-2xl mx-auto">
-          <div className="p-3 bg-surface-light rounded">
-            <p className="body-small text-muted">
-              <strong>Active characters:</strong> {buildAlphabet().join(' ')}
-            </p>
-            <p className="body-small text-muted mt-2">
-              {mode === 'active' ? (
-                <>
-                  <strong>Active mode settings:</strong> {feedback} feedback, {replay ? 'showing' : 'not showing'} missed characters
-                </>
-              ) : (
-                <strong>Mode:</strong>
-              )} {mode === 'passive' && 'Passive listening mode'}
-            </p>
-            <p className="body-small text-muted mt-2">
-              Configure character sets and active mode settings in the <a href="#" onClick={(e) => { e.preventDefault(); navigate('/settings'); }}>Settings page</a>
-            </p>
+        {mode === 'active' && (
+          <div className="card mb-6 max-w-2xl mx-auto">
+            <div className="p-3 bg-surface-light rounded">
+              <p className="body-small text-muted">
+                <strong>Active mode settings:</strong> {feedback} feedback, {replay ? 'showing' : 'not showing'} missed characters
+              </p>
+              <p className="body-small text-muted mt-2">
+                Configure character sets and feedback settings in the <a href="#" onClick={(e) => { e.preventDefault(); navigate('/settings'); }}>Settings page</a>
+              </p>
+            </div>
           </div>
-        </div>
+        )}
 
         {/* Action Buttons */}
         <div className="flex gap-4 justify-center">
