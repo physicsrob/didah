@@ -236,6 +236,14 @@ export function StudyPage() {
     }
   }, [feedbackFlash]);
 
+  // Cleanup: Stop session when component unmounts or navigates away
+  useEffect(() => {
+    return () => {
+      console.log('[StudyPage] Component unmounting - stopping session');
+      runner.stop();
+    };
+  }, [runner]);
+
   // Early return if no config
   if (!config) {
     return null;
