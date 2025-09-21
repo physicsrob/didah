@@ -9,6 +9,8 @@ import { TestInputBus } from '../inputBus';
 import { TestIO } from './testIO';
 import { calculateCharacterDurationMs } from '../../../../core/morse/timing';
 import { advanceAndFlush, createTestConfig, flushPromises } from './testUtils';
+import { TestTiming, getCharTimeout, getPassiveSequence } from './timingTestHelpers';
+import { createFixture } from './testFixture';
 
 describe('SessionRunner', () => {
   let clock: FakeClock;
@@ -140,7 +142,7 @@ describe('SessionRunner', () => {
 
     // Calculate timings for character 'X'
     const charDuration = calculateCharacterDurationMs('X', config.wpm);
-    const preRevealMs = 180; // 3 dits for slow
+    const preRevealMs = TestTiming.passive.slow.preReveal; // 3 dits for slow
 
     // Advance through audio playback
     await advanceAndFlush(clock, charDuration);
@@ -208,7 +210,7 @@ describe('SessionRunner', () => {
     await flushPromises();
 
     // Advance for inter-character spacing to complete first emission
-    await advanceAndFlush(clock, 180);
+    await advanceAndFlush(clock, TestTiming.interChar);
 
     // Check first character was processed correctly
     let snapshot = runner.getSnapshot();
@@ -216,16 +218,14 @@ describe('SessionRunner', () => {
     expect(snapshot.previous).toContain('A');
 
     // Now let's trigger a timeout for 'B'
-    // Calculate timings for 'B' with new fixed windows
-    const charDurationB = calculateCharacterDurationMs('B', config.wpm);
-    const windowMs = 1000; // Fixed 1000ms for medium
-    const timeoutTime = charDurationB + windowMs;
+    // Calculate timings for 'B' with timing helper
+    const timeoutTime = getCharTimeout('B', 'medium', config.wpm);
 
     // Advance to trigger timeout
     await advanceAndFlush(clock, timeoutTime + 1);
 
     // Advance for inter-character spacing
-    await advanceAndFlush(clock, 180);
+    await advanceAndFlush(clock, TestTiming.interChar);
 
     snapshot = runner.getSnapshot();
     expect(snapshot.stats?.correct).toBe(1);

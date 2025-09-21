@@ -9,6 +9,7 @@ import { TestInputBus } from '../inputBus';
 import { TestIO } from './testIO';
 import { calculateCharacterDurationMs } from '../../../../core/morse/timing';
 import { advanceAndFlush, createTestConfig, flushPromises } from './testUtils';
+import { TestTiming, getCharTimeout, getPassiveSequence } from './timingTestHelpers';
 
 describe('runActiveEmission', () => {
   let clock: FakeClock;
@@ -40,8 +41,8 @@ describe('runActiveEmission', () => {
     input.type('A', clock.now());
     await flushPromises();
 
-    // Advance for inter-character spacing (3 × 60ms = 180ms)
-    await advanceAndFlush(clock, 180);
+    // Advance for inter-character spacing
+    await advanceAndFlush(clock, TestTiming.interChar);
 
     const result = await emissionPromise;
 
@@ -59,7 +60,7 @@ describe('runActiveEmission', () => {
 
   it('returns timeout when no input within window', async () => {
     const config = createTestConfig({
-      speedTier: 'slow' // 2000ms fixed window
+      speedTier: 'slow' // Fixed window from TestTiming.windows.slow
     });
 
     // Start emission
@@ -72,16 +73,14 @@ describe('runActiveEmission', () => {
       signal
     );
 
-    // Calculate actual timings with new fixed windows
-    const charDuration = calculateCharacterDurationMs('B', config.wpm);
-    const windowMs = 2000; // Fixed 2000ms for slow
-    const totalTimeout = charDuration + windowMs;
+    // Calculate actual timings with timing helpers
+    const totalTimeout = getCharTimeout('B', 'slow', config.wpm);
 
     // Advance past timeout
     await advanceAndFlush(clock, totalTimeout + 1);
 
     // Advance for inter-character spacing
-    await advanceAndFlush(clock, 180);
+    await advanceAndFlush(clock, TestTiming.interChar);
 
     const result = await emissionPromise;
 
@@ -140,10 +139,9 @@ describe('runActiveEmission', () => {
       signal
     );
 
-    // Calculate actual timings with new fixed windows
+    // Calculate actual timings with timing helpers
     const charDuration = calculateCharacterDurationMs('D', config.wpm);
-    const windowMs = 500; // Fixed 500ms for fast
-    const totalTimeout = charDuration + windowMs;
+    const totalTimeout = getCharTimeout('D', 'fast', config.wpm);
 
     // Advance to trigger timeout
     await advanceAndFlush(clock, totalTimeout + 1);
@@ -151,8 +149,8 @@ describe('runActiveEmission', () => {
     // Advance for the replay to complete (same as char duration)
     await advanceAndFlush(clock, charDuration);
 
-    // Advance for inter-character spacing (3 × 60ms = 180ms)
-    await advanceAndFlush(clock, 180);
+    // Advance for inter-character spacing
+    await advanceAndFlush(clock, TestTiming.interChar);
 
     const result = await emissionPromise;
 
@@ -182,7 +180,7 @@ describe('runActiveEmission', () => {
     await flushPromises();
 
     // Advance for inter-character spacing after correct input
-    await advanceAndFlush(clock, 180);
+    await advanceAndFlush(clock, TestTiming.interChar);
 
     const result = await emissionPromise;
 
@@ -193,15 +191,13 @@ describe('runActiveEmission', () => {
     // Using slow WPM and long character to test timing
     const config = createTestConfig({
       wpm: 5, // Very slow = 240ms dit
-      speedTier: 'slow' // Fixed 2000ms window
+      speedTier: 'slow' // Fixed window from TestTiming.windows.slow
     });
 
     // Character 'H' = '....' (4 dits + 3 intra-symbol spacing)
     // Expected: audio duration = calculateCharacterDurationMs('H', 5) = 1680ms
-    // Expected timeout: 1680ms audio + 2000ms window = 3680ms
-    const audioDuration = calculateCharacterDurationMs('H', config.wpm);
-    const windowMs = 2000; // Fixed 2000ms for slow
-    const expectedTimeout = audioDuration + windowMs;
+    // Expected timeout: 1680ms audio + TestTiming.windows.slow = 3680ms
+    const expectedTimeout = getCharTimeout('H', 'slow', config.wpm);
 
     const startTime = clock.now();
 
@@ -231,7 +227,7 @@ describe('runActiveEmission', () => {
     expect(feedbackCalls[0].args).toEqual(['timeout', 'H']);
 
     // Advance for inter-character spacing
-    await advanceAndFlush(clock, 180);
+    await advanceAndFlush(clock, TestTiming.interChar);
 
     const result = await emissionPromise;
     expect(result).toBe('timeout');
@@ -258,7 +254,7 @@ describe('runPassiveEmission', () => {
   it('follows passive timing sequence', async () => {
     const config = createTestConfig({
       mode: 'passive',
-      speedTier: 'slow' // 3×dit pre, 3×dit post
+      speedTier: 'slow' // Timings from TestTiming.passive.slow
     });
 
     const startTime = clock.now();
@@ -272,15 +268,13 @@ describe('runPassiveEmission', () => {
       signal
     );
 
-    // Calculate timings
-    const charDuration = calculateCharacterDurationMs('F', config.wpm);
-    const preRevealMs = 180; // 3 × 60ms dit
-    const postRevealMs = 180; // 3 × 60ms dit
+    // Calculate timings using helper
+    const sequence = getPassiveSequence('F', 'slow', config.wpm);
 
     // Advance through complete sequence
-    await advanceAndFlush(clock, charDuration); // Audio playback
-    await advanceAndFlush(clock, preRevealMs); // Pre-reveal delay
-    await advanceAndFlush(clock, postRevealMs); // Post-reveal delay
+    await advanceAndFlush(clock, sequence.playChar); // Audio playback
+    await advanceAndFlush(clock, sequence.preReveal); // Pre-reveal delay
+    await advanceAndFlush(clock, sequence.postReveal); // Post-reveal delay
 
     await emissionPromise;
 
@@ -299,7 +293,7 @@ describe('runPassiveEmission', () => {
     const config = createTestConfig({
       mode: 'passive',
       wpm: 20, // dit = 60ms
-      speedTier: 'fast' // 2×dit pre, 1×dit post
+      speedTier: 'fast' // Timings from TestTiming.passive.fast
     });
 
     const startTime = clock.now();
@@ -313,21 +307,18 @@ describe('runPassiveEmission', () => {
       signal
     );
 
-    // Calculate expected timings
-    const charDuration = calculateCharacterDurationMs('G', config.wpm);
-    const preRevealMs = 120; // 2×dit = 120ms for fast
-    const postRevealMs = 60; // 1×dit = 60ms for fast
+    // Calculate expected timings using helper
+    const sequence = getPassiveSequence('G', 'fast', config.wpm);
 
     // Advance through complete sequence
-    await advanceAndFlush(clock, charDuration);
-    await advanceAndFlush(clock, preRevealMs);
-    await advanceAndFlush(clock, postRevealMs);
+    await advanceAndFlush(clock, sequence.playChar);
+    await advanceAndFlush(clock, sequence.preReveal);
+    await advanceAndFlush(clock, sequence.postReveal);
 
     await emissionPromise;
 
     const totalTime = clock.now() - startTime;
-    const expectedTotal = charDuration + preRevealMs + postRevealMs;
-    expect(totalTime).toBe(expectedTotal);
+    expect(totalTime).toBe(sequence.total);
 
     // Verify the reveal happened
     expect(io.getReveals()).toContain('G');

@@ -8,6 +8,7 @@ import {
   calculateCharacterDurationMs,
   MORSE_SPACING,
 } from '../core/morse/timing';
+import { TestTiming } from '../features/session/runtime/__tests__/timingTestHelpers';
 
 describe('Morse Timing Engine', () => {
   describe('wpmToDitMs', () => {
@@ -44,15 +45,15 @@ describe('Morse Timing Engine', () => {
   describe('getActiveWindowMs', () => {
     it('returns constant window duration regardless of WPM', () => {
       // Windows are now constant, not based on WPM
-      expect(getActiveWindowMs(20, 'slow')).toBe(2000);
-      expect(getActiveWindowMs(20, 'medium')).toBe(1000);
-      expect(getActiveWindowMs(20, 'fast')).toBe(500);
-      expect(getActiveWindowMs(20, 'lightning')).toBe(300);
+      expect(getActiveWindowMs(20, 'slow')).toBe(TestTiming.windows.slow);
+      expect(getActiveWindowMs(20, 'medium')).toBe(TestTiming.windows.medium);
+      expect(getActiveWindowMs(20, 'fast')).toBe(TestTiming.windows.fast);
+      expect(getActiveWindowMs(20, 'lightning')).toBe(TestTiming.windows.lightning);
 
       // Should be the same at different WPMs
-      expect(getActiveWindowMs(5, 'slow')).toBe(2000);
-      expect(getActiveWindowMs(25, 'slow')).toBe(2000);
-      expect(getActiveWindowMs(40, 'slow')).toBe(2000);
+      expect(getActiveWindowMs(5, 'slow')).toBe(TestTiming.windows.slow);
+      expect(getActiveWindowMs(25, 'slow')).toBe(TestTiming.windows.slow);
+      expect(getActiveWindowMs(40, 'slow')).toBe(TestTiming.windows.slow);
     });
   });
 
@@ -149,7 +150,7 @@ describe('Morse Timing Engine', () => {
 
       // Active mode at medium speed should give reasonable recognition window
       const windowMs = getActiveWindowMs(wpm, 'medium');
-      expect(windowMs).toBe(1000); // Constant 1000ms window for medium speed
+      expect(windowMs).toBe(TestTiming.windows.medium); // Constant window for medium speed
 
       // Passive mode timing should flow naturally
       const passiveTiming = getPassiveTimingMs(wpm, 'medium');
