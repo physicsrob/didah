@@ -3,7 +3,7 @@
  */
 
 import type { Clock } from './clock';
-import type { IO, SessionSnapshot, HistoryItem } from './io';
+import type { IO, SessionSnapshot } from './io';
 import type { InputBus } from './inputBus';
 import { runActiveEmission, runPassiveEmission, type SessionConfig } from './charPrograms';
 
@@ -93,10 +93,16 @@ export function createSessionRunner(deps: SessionRunnerDeps): SessionRunner {
 
   // Publish snapshot to all subscribers
   const publish = () => {
+    // Create a new object so React detects the change (deep clone)
+    const snapshotCopy = {
+      ...snapshot,
+      previous: [...snapshot.previous],
+      stats: snapshot.stats ? { ...snapshot.stats } : undefined
+    };
     if (deps.io.snapshot) {
-      deps.io.snapshot(snapshot);
+      deps.io.snapshot(snapshotCopy);
     }
-    subscribers.forEach(fn => fn(snapshot));
+    subscribers.forEach(fn => fn(snapshotCopy));
   };
 
   // Update stats from outcome
@@ -172,7 +178,6 @@ export function createSessionRunner(deps: SessionRunnerDeps): SessionRunner {
 
         try {
           // Run emission based on mode
-          let historyItem: HistoryItem | null = null;
           if (config.mode === 'active') {
             const outcome = await runActiveEmission(
               config,
@@ -184,8 +189,23 @@ export function createSessionRunner(deps: SessionRunnerDeps): SessionRunner {
             );
             updateStats(outcome);
 
-            // Add to history based on outcome
-            historyItem = { char, result: outcome as 'correct' | 'timeout' };
+            // Update history IMMEDIATELY
+            const historyItem = { char, result: outcome as 'correct' | 'incorrect' | 'timeout' };
+            snapshot.previous = [...snapshot.previous, historyItem];
+            snapshot.currentChar = null;
+
+            // Update remaining time
+            const newElapsed = deps.clock.now() - startTime;
+            snapshot.remainingMs = Math.max(0, config.lengthMs - newElapsed);
+
+            // Publish immediately so UI updates right away
+            publish();
+
+            // Handle replay AFTER history update (for incorrect or timeout)
+            if (config.replay && (outcome === 'incorrect' || outcome === 'timeout') && deps.io.replay) {
+              console.log(`[Session] Replaying character '${char}' after ${outcome}`);
+              await deps.io.replay(char, config.wpm);
+            }
           } else {
             await runPassiveEmission(
               config,
@@ -194,21 +214,19 @@ export function createSessionRunner(deps: SessionRunnerDeps): SessionRunner {
               deps.clock,
               signal
             );
-            historyItem = { char, result: 'passive' };
-          }
 
-          // Move character to previous list
-          if (historyItem) {
+            // For passive mode, add to history after emission
+            const historyItem = { char, result: 'passive' as const };
             snapshot.previous = [...snapshot.previous, historyItem];
+            snapshot.currentChar = null;
+
+            // Update remaining time
+            const newElapsed = deps.clock.now() - startTime;
+            snapshot.remainingMs = Math.max(0, config.lengthMs - newElapsed);
+
+            // Publish snapshot
+            publish();
           }
-          snapshot.currentChar = null;
-
-          // Update remaining time
-          const newElapsed = deps.clock.now() - startTime;
-          snapshot.remainingMs = Math.max(0, config.lengthMs - newElapsed);
-
-          // Publish snapshot after all updates
-          publish();
 
           // Add inter-character spacing (only for active mode; passive has its own timing)
           if (config.mode === 'active') {

@@ -18,7 +18,7 @@ export type SessionConfig = {
   replay?: boolean;
 };
 
-export type ActiveOutcome = 'correct' | 'timeout';
+export type ActiveOutcome = 'correct' | 'incorrect' | 'timeout';
 
 /**
  * Check if a key is a valid morse character
@@ -135,21 +135,14 @@ export async function runActiveEmission(
       debug.log(`[Emission] End - Char: '${char}', Outcome: correct`);
       return 'correct';
     } else if (result.value.type === 'incorrect') {
-      // Incorrect key won - treat like timeout
+      // Incorrect key won
       debug.log(`[Input] Incorrect key '${result.value.key}' pressed for '${char}' at ${clock.now()}ms`);
       await io.stopAudio(); // Stop audio early
       io.feedback('incorrect', char);
       debug.log(`[Feedback] Triggering incorrect feedback for '${char}'`);
 
-      // Optional replay on incorrect
-      if (cfg.replay && io.replay) {
-        debug.log(`[Replay] Starting replay for '${char}'`);
-        await io.replay(char, cfg.wpm);
-        debug.log(`[Replay] Complete for '${char}'`);
-      }
-
-      debug.log(`[Emission] End - Char: '${char}', Outcome: incorrect (advanced immediately)`);
-      return 'timeout'; // Return 'timeout' for compatibility
+      debug.log(`[Emission] End - Char: '${char}', Outcome: incorrect`);
+      return 'incorrect';
     } else {
       // Timeout won
       debug.log(`[Input] Timeout at ${clock.now()}ms for '${char}'`);
@@ -160,13 +153,6 @@ export async function runActiveEmission(
         at: clock.now(),
         char
       });
-
-      // Optional replay
-      if (cfg.replay && io.replay) {
-        debug.log(`[Replay] Starting replay for '${char}'`);
-        await io.replay(char, cfg.wpm);
-        debug.log(`[Replay] Complete for '${char}'`);
-      }
 
       debug.log(`[Emission] End - Char: '${char}', Outcome: timeout`);
       return 'timeout';

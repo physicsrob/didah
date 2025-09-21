@@ -112,8 +112,8 @@ describe('runActiveEmission', () => {
 
     const result = await emissionPromise;
 
-    // Should return timeout (fail) immediately on wrong key
-    expect(result).toBe('timeout');
+    // Should return incorrect immediately on wrong key
+    expect(result).toBe('incorrect');
 
     // Check that incorrect key was logged
     expect(io.hasLoggedEvent('incorrect', 'C')).toBe(true);
@@ -123,7 +123,7 @@ describe('runActiveEmission', () => {
     expect(io.getFeedbackFor('C')).toBe('incorrect');
   });
 
-  it('handles replay when enabled and timeout occurs', async () => {
+  it('no longer handles replay (moved to session level)', async () => {
     const config = createTestConfig({
       speedTier: 'fast',
       replay: true
@@ -140,26 +140,19 @@ describe('runActiveEmission', () => {
     );
 
     // Calculate actual timings with timing helpers
-    const charDuration = calculateCharacterDurationMs('D', config.wpm);
+    // Removed charDuration - no longer needed since replay moved to session level
     const totalTimeout = getCharTimeout('D', 'fast', config.wpm);
 
     // Advance to trigger timeout
     await advanceAndFlush(clock, totalTimeout + 1);
 
-    // Advance for the replay to complete (same as char duration)
-    await advanceAndFlush(clock, charDuration);
-
-    // Advance for inter-character spacing
-    await advanceAndFlush(clock, TestTiming.interChar);
-
     const result = await emissionPromise;
 
     expect(result).toBe('timeout');
 
-    // Check that replay was called
+    // Verify replay was NOT called (moved to session level)
     const replayCalls = io.getCalls('replay');
-    expect(replayCalls).toHaveLength(1);
-    expect(replayCalls[0].args).toEqual(['D', 20]);
+    expect(replayCalls).toHaveLength(0);
   });
 
   it('respects case-insensitive input', async () => {
