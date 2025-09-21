@@ -56,20 +56,8 @@ export function StudyPage() {
   // Get config from navigation state
   const config = location.state?.config;
 
-  // Redirect to config page if no config provided
-  useEffect(() => {
-    if (!config) {
-      navigate('/session-config');
-    }
-  }, [config, navigate]);
-
   // Check if audio is actually ready (not just what location.state says)
   const audioActuallyReady = isAudioReady();
-
-  // Early return if no config
-  if (!config) {
-    return null;
-  }
 
   const [snapshot, setSnapshot] = useState<SessionSnapshot>({
     phase: 'idle',
@@ -115,18 +103,20 @@ export function StudyPage() {
       onSnapshot: (snap: SessionSnapshot) => setSnapshot(snap),
       replayDuration: 1500  // Show replay for 1.5 seconds
     });
-  }, [audioEngine, feedback]);
+  }, [audioEngine, feedback, config?.mode, config?.replay]);
 
   // Create session runner
   const runner = useMemo(() => createSessionRunner({ clock, io, input, source }), [clock, io, input, source]);
 
   // Subscribe to session snapshots
   useEffect(() => {
-    const unsub = runner.subscribe((snap) => {
-      setSnapshot(snap);
-    });
-    return () => unsub();
-  }, [runner]);
+    if (config) {
+      const unsub = runner.subscribe((snap) => {
+        setSnapshot(snap);
+      });
+      return () => unsub();
+    }
+  }, [runner, config]);
 
   // Handle keyboard input
   useEffect(() => {
@@ -158,6 +148,13 @@ export function StudyPage() {
       // Could show error UI here
     }
   };
+
+  // Redirect to config page if no config provided
+  useEffect(() => {
+    if (!config) {
+      navigate('/session-config');
+    }
+  }, [config, navigate]);
 
   // Auto-start countdown if audio is actually initialized
   useEffect(() => {
@@ -220,6 +217,10 @@ export function StudyPage() {
     }
   }, [feedbackFlash]);
 
+  // Early return if no config
+  if (!config) {
+    return null;
+  }
 
   return (
     <div className="session-container">

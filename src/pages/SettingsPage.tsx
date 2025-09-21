@@ -1,14 +1,53 @@
 import { useNavigate } from 'react-router-dom'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import '../styles/main.css'
+
+type FeedbackType = 'buzzer' | 'flash' | 'both'
 
 export default function SettingsPage() {
   const navigate = useNavigate()
-  const [wpm, setWpm] = useState(20)
-  const [enableNumbers, setEnableNumbers] = useState(true)
-  const [enablePunctuation, setEnablePunctuation] = useState(true)
+
+  // Load settings from localStorage or use defaults
+  const [feedback, setFeedback] = useState<FeedbackType>(() => {
+    const saved = localStorage.getItem('feedback')
+    return (saved as FeedbackType) || 'both'
+  })
+
+  const [replay, setReplay] = useState(() => {
+    const saved = localStorage.getItem('replay')
+    return saved !== 'false' // Default true
+  })
+
+  const [includeNumbers, setIncludeNumbers] = useState(() => {
+    const saved = localStorage.getItem('includeNumbers')
+    return saved !== 'false' // Default true
+  })
+
+  const [includeStdPunct, setIncludeStdPunct] = useState(() => {
+    const saved = localStorage.getItem('includeStdPunct')
+    return saved !== 'false' // Default true
+  })
+
+  const [includeAdvPunct, setIncludeAdvPunct] = useState(() => {
+    const saved = localStorage.getItem('includeAdvPunct')
+    return saved === 'true' // Default false
+  })
+
+  // Save settings to localStorage whenever they change
+  useEffect(() => {
+    localStorage.setItem('feedback', feedback)
+    localStorage.setItem('replay', String(replay))
+    localStorage.setItem('includeNumbers', String(includeNumbers))
+    localStorage.setItem('includeStdPunct', String(includeStdPunct))
+    localStorage.setItem('includeAdvPunct', String(includeAdvPunct))
+  }, [feedback, replay, includeNumbers, includeStdPunct, includeAdvPunct])
 
   const handleBack = () => {
+    navigate('/')
+  }
+
+  const handleSave = () => {
+    // Settings are auto-saved via useEffect
     navigate('/')
   }
 
@@ -19,71 +58,102 @@ export default function SettingsPage() {
           <h1 className="heading-1">Settings</h1>
         </div>
 
+        {/* Active Mode Settings */}
         <div className="card mb-6">
-          <div className="form-group">
-            <label className="form-label">Character Speed (WPM)</label>
-            <div className="flex items-center gap-4">
-              <input
-                type="range"
-                min="5"
-                max="40"
-                value={wpm}
-                onChange={(e) => setWpm(Number(e.target.value))}
-                className="flex-1"
-                style={{
-                  background: 'var(--color-secondary-gray)',
-                  height: '8px',
-                  borderRadius: '4px',
-                  outline: 'none',
-                }}
-              />
-              <span className="heading-3 min-w-[50px] text-right">{wpm}</span>
+          <h2 className="heading-2 mb-6">Active Mode Settings</h2>
+
+          {/* Feedback Type */}
+          <div className="form-group mb-6">
+            <label className="form-label">Error Feedback</label>
+            <div className="flex gap-3">
+              <button
+                className={`btn btn-small ${feedback === 'buzzer' ? 'btn-primary' : 'btn-secondary'}`}
+                onClick={() => setFeedback('buzzer')}
+              >
+                Buzzer
+              </button>
+              <button
+                className={`btn btn-small ${feedback === 'flash' ? 'btn-primary' : 'btn-secondary'}`}
+                onClick={() => setFeedback('flash')}
+              >
+                Flash
+              </button>
+              <button
+                className={`btn btn-small ${feedback === 'both' ? 'btn-primary' : 'btn-secondary'}`}
+                onClick={() => setFeedback('both')}
+              >
+                Both
+              </button>
             </div>
           </div>
 
-          <div className="divider"></div>
-
+          {/* Replay on Timeout */}
           <div className="form-group">
             <label className="checkbox-label">
               <input
                 type="checkbox"
-                checked={enableNumbers}
-                onChange={(e) => setEnableNumbers(e.target.checked)}
+                checked={replay}
+                onChange={(e) => setReplay(e.target.checked)}
                 style={{
                   width: '20px',
                   height: '20px',
                   accentColor: 'var(--color-blue-primary)',
                 }}
               />
-              <span>Enable Numbers</span>
+              <span>Show missed characters</span>
             </label>
+            <p className="body-small text-muted mt-2">
+              When you timeout in active mode, display the character with its Morse pattern
+            </p>
           </div>
+        </div>
 
-          <div className="form-group">
+        {/* Character Sets */}
+        <div className="card mb-6">
+          <h2 className="heading-2 mb-6">Character Sets</h2>
+
+          <div className="space-y-4">
             <label className="checkbox-label">
               <input
                 type="checkbox"
-                checked={enablePunctuation}
-                onChange={(e) => setEnablePunctuation(e.target.checked)}
+                checked={includeNumbers}
+                onChange={(e) => setIncludeNumbers(e.target.checked)}
                 style={{
                   width: '20px',
                   height: '20px',
                   accentColor: 'var(--color-blue-primary)',
                 }}
               />
-              <span>Enable Punctuation</span>
+              <span>Include numbers (0-9)</span>
             </label>
-          </div>
 
-          <div className="divider"></div>
+            <label className="checkbox-label">
+              <input
+                type="checkbox"
+                checked={includeStdPunct}
+                onChange={(e) => setIncludeStdPunct(e.target.checked)}
+                style={{
+                  width: '20px',
+                  height: '20px',
+                  accentColor: 'var(--color-blue-primary)',
+                }}
+              />
+              <span>Include standard punctuation (. , ? / =)</span>
+            </label>
 
-          <div className="text-center">
-            <p className="caption text-muted">
-              Settings will be saved locally and persist between sessions.
-            </p>
-            <p className="caption text-warning mt-2">
-              Note: Settings persistence coming in next update
-            </p>
+            <label className="checkbox-label">
+              <input
+                type="checkbox"
+                checked={includeAdvPunct}
+                onChange={(e) => setIncludeAdvPunct(e.target.checked)}
+                style={{
+                  width: '20px',
+                  height: '20px',
+                  accentColor: 'var(--color-blue-primary)',
+                }}
+              />
+              <span>Include advanced punctuation (: ; ! @ # $ etc.)</span>
+            </label>
           </div>
         </div>
 
@@ -96,7 +166,7 @@ export default function SettingsPage() {
           </button>
           <button
             className="btn btn-primary flex-1"
-            onClick={handleBack}
+            onClick={handleSave}
           >
             Save Settings
           </button>

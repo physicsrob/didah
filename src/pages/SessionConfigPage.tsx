@@ -4,9 +4,9 @@ import type { SessionConfig } from '../core/types/domain';
 import '../styles/main.css';
 
 type SpeedTier = 'slow' | 'medium' | 'fast' | 'lightning';
-type FeedbackType = 'buzzer' | 'flash' | 'both';
 type SessionMode = 'active' | 'passive';
 type TextSource = 'randomLetters' | 'randomWords' | 'redditHeadlines' | 'hardCharacters';
+type FeedbackType = 'buzzer' | 'flash' | 'both';
 
 export function SessionConfigPage() {
   const navigate = useNavigate();
@@ -18,14 +18,12 @@ export function SessionConfigPage() {
   const [textSource, setTextSource] = useState<TextSource>('randomLetters');
   const [wpm, setWpm] = useState(15);
 
-  // Active mode specific settings
-  const [feedback, setFeedback] = useState<FeedbackType>('both');
-  const [replay, setReplay] = useState(true);
-
-  // Character set toggles
-  const [includeNumbers, setIncludeNumbers] = useState(true);
-  const [includeStdPunct, setIncludeStdPunct] = useState(true);
-  const [includeAdvPunct, setIncludeAdvPunct] = useState(false);
+  // Load settings from localStorage
+  const feedback = (localStorage.getItem('feedback') as FeedbackType) || 'both';
+  const replay = localStorage.getItem('replay') !== 'false';
+  const includeNumbers = localStorage.getItem('includeNumbers') !== 'false';
+  const includeStdPunct = localStorage.getItem('includeStdPunct') !== 'false';
+  const includeAdvPunct = localStorage.getItem('includeAdvPunct') === 'true';
 
   // Build effective alphabet based on toggles
   const buildAlphabet = () => {
@@ -145,8 +143,8 @@ export function SessionConfigPage() {
             </div>
             <p className="body-small text-muted mt-2">
               {mode === 'active'
-                ? `${speedTier === 'slow' ? '5×' : speedTier === 'medium' ? '3×' : speedTier === 'fast' ? '2×' : '1×'} dit length recognition window`
-                : 'Controls timing between character playback and reveal'}
+                ? `Time to recognize each character: ${speedTier === 'slow' ? '5×' : speedTier === 'medium' ? '3×' : speedTier === 'fast' ? '2×' : '1×'} dit length`
+                : `Delay before reveal: ${speedTier === 'slow' ? '3 dits' : speedTier === 'medium' ? '3 dits' : speedTier === 'fast' ? '2 dits' : '2 dits'}`}
             </p>
           </div>
 
@@ -184,93 +182,23 @@ export function SessionConfigPage() {
           </div>
         </div>
 
-        {/* Active Mode Settings */}
-        {mode === 'active' && (
-          <div className="card mb-6 max-w-2xl mx-auto">
-            <h2 className="heading-2 mb-6">Active Mode Settings</h2>
-
-            {/* Feedback Type */}
-            <div className="form-group mb-6">
-              <label className="form-label">Error Feedback</label>
-              <div className="flex gap-3">
-                <button
-                  className={`btn btn-small ${feedback === 'buzzer' ? 'btn-primary' : 'btn-secondary'}`}
-                  onClick={() => setFeedback('buzzer')}
-                >
-                  Buzzer
-                </button>
-                <button
-                  className={`btn btn-small ${feedback === 'flash' ? 'btn-primary' : 'btn-secondary'}`}
-                  onClick={() => setFeedback('flash')}
-                >
-                  Flash
-                </button>
-                <button
-                  className={`btn btn-small ${feedback === 'both' ? 'btn-primary' : 'btn-secondary'}`}
-                  onClick={() => setFeedback('both')}
-                >
-                  Both
-                </button>
-              </div>
-            </div>
-
-            {/* Replay on Timeout */}
-            <div className="form-group">
-              <label className="flex items-center gap-3">
-                <input
-                  type="checkbox"
-                  checked={replay}
-                  onChange={(e) => setReplay(e.target.checked)}
-                  className="form-checkbox"
-                />
-                <span className="form-label mb-0">Show missed characters</span>
-              </label>
-              <p className="body-small text-muted mt-2">
-                When you timeout, display the character with its Morse pattern
-              </p>
-            </div>
-          </div>
-        )}
-
-        {/* Character Sets */}
+        {/* Settings Info */}
         <div className="card mb-6 max-w-2xl mx-auto">
-          <h2 className="heading-2 mb-6">Character Sets</h2>
-
-          <div className="space-y-4">
-            <label className="flex items-center gap-3">
-              <input
-                type="checkbox"
-                checked={includeNumbers}
-                onChange={(e) => setIncludeNumbers(e.target.checked)}
-                className="form-checkbox"
-              />
-              <span>Include numbers (0-9)</span>
-            </label>
-
-            <label className="flex items-center gap-3">
-              <input
-                type="checkbox"
-                checked={includeStdPunct}
-                onChange={(e) => setIncludeStdPunct(e.target.checked)}
-                className="form-checkbox"
-              />
-              <span>Include standard punctuation (. , ? / =)</span>
-            </label>
-
-            <label className="flex items-center gap-3">
-              <input
-                type="checkbox"
-                checked={includeAdvPunct}
-                onChange={(e) => setIncludeAdvPunct(e.target.checked)}
-                className="form-checkbox"
-              />
-              <span>Include advanced punctuation (: ; ! @ # $ etc.)</span>
-            </label>
-          </div>
-
-          <div className="mt-4 p-3 bg-surface-light rounded">
+          <div className="p-3 bg-surface-light rounded">
             <p className="body-small text-muted">
               <strong>Active characters:</strong> {buildAlphabet().join(' ')}
+            </p>
+            <p className="body-small text-muted mt-2">
+              {mode === 'active' ? (
+                <>
+                  <strong>Active mode settings:</strong> {feedback} feedback, {replay ? 'showing' : 'not showing'} missed characters
+                </>
+              ) : (
+                <strong>Mode:</strong>
+              )} {mode === 'passive' && 'Passive listening mode'}
+            </p>
+            <p className="body-small text-muted mt-2">
+              Configure character sets and active mode settings in the <a href="#" onClick={(e) => { e.preventDefault(); navigate('/settings'); }}>Settings page</a>
             </p>
           </div>
         </div>
