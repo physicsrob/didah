@@ -89,9 +89,13 @@ export function createIOAdapter(config: IOAdapterConfig): IO {
         return;
       }
 
-      // Show the character
+      // Show the character immediately
       console.log(`[Replay] Showing character: '${char}'`);
       onReveal(char);
+
+      // Wait 500ms before playing audio
+      console.log(`[Replay] Waiting 500ms before audio`);
+      await new Promise(resolve => setTimeout(resolve, 500));
 
       // Play the audio
       try {
@@ -101,7 +105,7 @@ export function createIOAdapter(config: IOAdapterConfig): IO {
         console.warn(`Failed to replay audio for char: ${char}`, error);
       }
 
-      // Wait a bit for the user to see
+      // Wait a bit for the user to see (after audio completes)
       console.log(`[Replay] Waiting ${replayDuration}ms`);
       await new Promise(resolve => setTimeout(resolve, replayDuration));
 
