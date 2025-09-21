@@ -109,10 +109,16 @@ export function StudyPage() {
     runner.start(DEFAULT_SESSION_CONFIG);
   }, [runner, initializeAudio]);
 
-  // Stop session
-  const stopSession = useCallback(() => {
-    runner.stop();
-  }, [runner]);
+  // Auto-start session on mount
+  useEffect(() => {
+    const autoStart = async () => {
+      if (snapshot.phase === 'idle') {
+        await startSession();
+      }
+    };
+    autoStart();
+  }, [snapshot.phase, startSession]); // Include dependencies
+
 
   // Format time display
   const formatTime = (ms: number) => {
@@ -382,39 +388,6 @@ export function StudyPage() {
         }
       `}</style>
 
-      <h1>Morse Code Practice (New Runtime)</h1>
-
-      <div className="session-controls">
-        <h2>Session Controls</h2>
-        <div className="controls-row">
-          {snapshot.phase === 'idle' || snapshot.phase === 'ended' ? (
-            <button className="start-btn" onClick={startSession}>
-              Start Practice Session
-            </button>
-          ) : (
-            <button className="stop-btn" onClick={stopSession}>
-              Stop Session
-            </button>
-          )}
-
-          <span className={`phase-indicator phase-${snapshot.phase}`}>
-            {snapshot.phase}
-          </span>
-
-          {!isAudioInitialized && (
-            <span style={{ color: '#ff9800', fontSize: '0.9rem' }}>
-              Click Start to initialize audio
-            </span>
-          )}
-        </div>
-
-        <div className="config-info" style={{ marginTop: '1rem' }}>
-          <span>📝 Mode: {DEFAULT_SESSION_CONFIG.mode}</span>
-          <span>⚡ Speed: {DEFAULT_SESSION_CONFIG.speedTier}</span>
-          <span>📡 WPM: {DEFAULT_SESSION_CONFIG.wpm}</span>
-          <span>⏱️ Duration: {DEFAULT_SESSION_CONFIG.lengthMs / 1000}s</span>
-        </div>
-      </div>
 
       <div className="session-display">
         <div className="session-hud">
@@ -485,6 +458,13 @@ export function StudyPage() {
             </div>
           </div>
         )}
+
+        <div className="config-info" style={{ marginTop: '1rem' }}>
+          <span>📝 Mode: {DEFAULT_SESSION_CONFIG.mode}</span>
+          <span>⚡ Speed: {DEFAULT_SESSION_CONFIG.speedTier}</span>
+          <span>📡 WPM: {DEFAULT_SESSION_CONFIG.wpm}</span>
+          <span>⏱️ Duration: {DEFAULT_SESSION_CONFIG.lengthMs / 1000}s</span>
+        </div>
       </div>
 
       {/* Replay overlay */}
