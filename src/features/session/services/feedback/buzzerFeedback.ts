@@ -94,6 +94,6 @@ export class BuzzerFeedback implements Feedback {
  */
 export const DEFAULT_BUZZER_CONFIG: BuzzerConfig = {
   frequency: 200,  // Low frequency for error sound
-  duration: 100,   // Short 100ms buzz
-  volume: 0.2,     // Quieter than main tone
+  duration: 150,   // Slightly longer 150ms buzz
+  volume: 0.15,    // Softer volume
 };

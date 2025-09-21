@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import type { SessionConfig } from '../core/types/domain';
 import { getActiveWindowMs, getPassiveTimingMultipliers } from '../core/morse/timing';
@@ -20,11 +20,30 @@ export function SessionConfigPage() {
   const [wpm, setWpm] = useState(15);
 
   // Load settings from localStorage
-  const feedback = (localStorage.getItem('feedback') as FeedbackType) || 'both';
-  const replay = localStorage.getItem('replay') !== 'false';
-  const includeNumbers = localStorage.getItem('includeNumbers') !== 'false';
-  const includeStdPunct = localStorage.getItem('includeStdPunct') !== 'false';
-  const includeAdvPunct = localStorage.getItem('includeAdvPunct') === 'true';
+  const [feedback, setFeedback] = useState<FeedbackType>(() =>
+    (localStorage.getItem('feedback') as FeedbackType) || 'both'
+  );
+  const [replay, setReplay] = useState(() => localStorage.getItem('replay') !== 'false');
+  const [includeNumbers, setIncludeNumbers] = useState(() => localStorage.getItem('includeNumbers') !== 'false');
+  const [includeStdPunct, setIncludeStdPunct] = useState(() => localStorage.getItem('includeStdPunct') !== 'false');
+  const [includeAdvPunct, setIncludeAdvPunct] = useState(() => localStorage.getItem('includeAdvPunct') === 'true');
+
+  // Re-read localStorage when component mounts/becomes visible
+  useEffect(() => {
+    const updateSettings = () => {
+      setFeedback((localStorage.getItem('feedback') as FeedbackType) || 'both');
+      setReplay(localStorage.getItem('replay') !== 'false');
+      setIncludeNumbers(localStorage.getItem('includeNumbers') !== 'false');
+      setIncludeStdPunct(localStorage.getItem('includeStdPunct') !== 'false');
+      setIncludeAdvPunct(localStorage.getItem('includeAdvPunct') === 'true');
+    };
+
+    updateSettings();
+
+    // Also listen for storage events (if settings changed in another tab)
+    window.addEventListener('storage', updateSettings);
+    return () => window.removeEventListener('storage', updateSettings);
+  }, []);
 
   // Build effective alphabet based on toggles
   const buildAlphabet = () => {

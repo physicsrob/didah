@@ -82,10 +82,20 @@ export function StudyPage() {
 
   // Create feedback and initialize buzzer if needed
   const feedback = useMemo(() => {
-    const fb = createFeedback(config?.feedback || 'flash');
+    console.log('[StudyPage] Creating feedback with type:', config?.feedback || 'flash');
+    // Only create BuzzerFeedback for buzzer or both modes
+    // Flash is handled by onFlash callback in ioAdapter
+    const feedbackType = config?.feedback || 'flash';
+    let fb = null;
+    if (feedbackType === 'buzzer' || feedbackType === 'both') {
+      fb = createFeedback('buzzer');  // Only create buzzer
+      console.log('[StudyPage] Created feedback instance:', fb.constructor.name);
+    } else {
+      console.log('[StudyPage] No feedback instance created (flash handled by overlay)');
+    }
 
     // Initialize buzzer with AudioContext if it has buzzer component
-    if ((config?.feedback === 'buzzer' || config?.feedback === 'both') && audioEngine) {
+    if (fb && audioEngine) {
       // Access AudioContext from audioEngine - it should have this property
       const audioContext = (audioEngine as unknown as { audioContext?: AudioContext }).audioContext;
       if (audioContext && 'initialize' in fb) {
@@ -103,7 +113,8 @@ export function StudyPage() {
   const io = useMemo(() => {
     return createIOAdapter({
       audioEngine,
-      feedback,
+      feedback: feedback || undefined,  // May be null for flash-only mode
+      feedbackType: config?.feedback,  // Pass the feedback type
       onReveal: (char: string) => {
         console.log(`[UI] onReveal called with '${char}'`);
         // Only used for active mode replay overlay
@@ -122,7 +133,7 @@ export function StudyPage() {
       },
       replayDuration: 1500  // Show replay for 1.5 seconds
     });
-  }, [audioEngine, feedback, config?.mode, config?.replay]);
+  }, [audioEngine, feedback, config?.mode, config?.replay, config?.feedback]);
 
   // Create session runner
   const runner = useMemo(() => createSessionRunner({ clock, io, input, source }), [clock, io, input, source]);
