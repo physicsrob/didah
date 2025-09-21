@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import type { SessionConfig } from '../core/types/domain';
+import { getActiveWindowMs, getPassiveTimingMultipliers } from '../core/morse/timing';
 import '../styles/main.css';
 
 type SpeedTier = 'slow' | 'medium' | 'fast' | 'lightning';
@@ -60,11 +61,9 @@ export function SessionConfigPage() {
         <h1 className="brand-title text-center mb-8">Session Configuration</h1>
 
         {/* Main Settings Card */}
-        <div className="card mb-6 max-w-2xl mx-auto">
-          <h2 className="heading-2 mb-6">Basic Settings</h2>
-
+        <div className="card mb-4 max-w-2xl mx-auto">
           {/* Duration */}
-          <div className="form-group mb-6">
+          <div className="form-group mb-4">
             <label className="form-label">Duration</label>
             <div className="flex gap-4">
               <button
@@ -89,7 +88,7 @@ export function SessionConfigPage() {
           </div>
 
           {/* Mode */}
-          <div className="form-group mb-6">
+          <div className="form-group mb-4">
             <label className="form-label">Mode</label>
             <div className="flex gap-4">
               <button
@@ -113,7 +112,7 @@ export function SessionConfigPage() {
           </div>
 
           {/* Speed Tier */}
-          <div className="form-group mb-6">
+          <div className="form-group mb-4">
             <label className="form-label">Recognition Speed</label>
             <div className="flex gap-3">
               <button
@@ -143,13 +142,16 @@ export function SessionConfigPage() {
             </div>
             <p className="body-small text-muted mt-2">
               {mode === 'active'
-                ? `Time to recognize each character: ${speedTier === 'slow' ? '5×' : speedTier === 'medium' ? '3×' : speedTier === 'fast' ? '2×' : '1×'} dit length`
-                : `Delay before reveal: ${speedTier === 'slow' ? '3 dits' : speedTier === 'medium' ? '3 dits' : speedTier === 'fast' ? '2 dits' : '2 dits'}`}
+                ? `Recognition window: ${getActiveWindowMs(wpm, speedTier)}ms`
+                : (() => {
+                    const timing = getPassiveTimingMultipliers(speedTier);
+                    return `${timing.preRevealDits} dits → reveal → ${timing.postRevealDits} dits`;
+                  })()}
             </p>
           </div>
 
           {/* Text Source */}
-          <div className="form-group mb-6">
+          <div className="form-group mb-4">
             <label className="form-label">Text Source</label>
             <select
               className="form-select w-full"
@@ -181,20 +183,6 @@ export function SessionConfigPage() {
             </div>
           </div>
         </div>
-
-        {/* Settings Info */}
-        {mode === 'active' && (
-          <div className="card mb-6 max-w-2xl mx-auto">
-            <div className="p-3 bg-surface-light rounded">
-              <p className="body-small text-muted">
-                <strong>Active mode settings:</strong> {feedback} feedback, {replay ? 'showing' : 'not showing'} missed characters
-              </p>
-              <p className="body-small text-muted mt-2">
-                Configure character sets and feedback settings in the <a href="#" onClick={(e) => { e.preventDefault(); navigate('/settings'); }}>Settings page</a>
-              </p>
-            </div>
-          </div>
-        )}
 
         {/* Action Buttons */}
         <div className="flex gap-4 justify-center">
