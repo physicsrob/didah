@@ -1,5 +1,6 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
 import { StudyPage } from './pages/StudyPage'
+import { SessionConfigPage } from './pages/SessionConfigPage'
 import HomePage from './pages/HomePage'
 import StatisticsPage from './pages/StatisticsPage'
 import SettingsPage from './pages/SettingsPage'
@@ -11,6 +12,7 @@ function App() {
       <Router>
         <Routes>
           <Route path="/" element={<HomePage />} />
+          <Route path="/session-config" element={<SessionConfigPage />} />
           <Route path="/session" element={<StudyPage />} />
           <Route path="/statistics" element={<StatisticsPage />} />
           <Route path="/settings" element={<SettingsPage />} />

@@ -10,8 +10,8 @@ export default function HomePage() {
     // Initialize audio while we have user gesture context
     await initializeAudio()
 
-    // Navigate to session (StudyPage will check if audio is ready)
-    navigate('/session')
+    // Navigate to session configuration page
+    navigate('/session-config')
   }
 
   const handleStatistics = () => {

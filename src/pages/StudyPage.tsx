@@ -5,7 +5,7 @@
  */
 
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { getMorsePattern as getMorsePatternFromAlphabet } from '../core/morse/alphabet.js';
 import { SystemClock } from '../features/session/runtime/clock.js';
 import { SimpleInputBus } from '../features/session/runtime/inputBus.js';
@@ -14,7 +14,6 @@ import type { SessionSnapshot, HistoryItem } from '../features/session/runtime/i
 import { createSessionRunner } from '../features/session/runtime/sessionProgram.js';
 import { RandomCharSource } from '../features/session/runtime/sessionProgram.js';
 import { createFeedback } from '../features/session/services/feedback/index.js';
-import { DEFAULT_SESSION_CONFIG } from '../core/config/defaults.js';
 import { useAudio } from '../contexts/useAudio';
 import '../styles/main.css';
 import '../styles/studyPage.css';
@@ -51,10 +50,26 @@ function CharacterHistory({ items }: { items: HistoryItem[] }) {
 
 export function StudyPage() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { initializeAudio, getAudioEngine, isAudioReady } = useAudio();
+
+  // Get config from navigation state
+  const config = location.state?.config;
+
+  // Redirect to config page if no config provided
+  useEffect(() => {
+    if (!config) {
+      navigate('/session-config');
+    }
+  }, [config, navigate]);
 
   // Check if audio is actually ready (not just what location.state says)
   const audioActuallyReady = isAudioReady();
+
+  // Early return if no config
+  if (!config) {
+    return null;
+  }
 
   const [snapshot, setSnapshot] = useState<SessionSnapshot>({
     phase: 'idle',
@@ -76,9 +91,9 @@ export function StudyPage() {
   const clock = useMemo(() => new SystemClock(), []);
   const input = useMemo(() => new SimpleInputBus(), []);
   const audioEngine = useMemo(() => getAudioEngine(), [getAudioEngine]);
-  const feedback = useMemo(() => createFeedback('flash'), []); // Can be 'buzzer', 'flash', or 'both'
+  const feedback = useMemo(() => createFeedback(config?.feedback || 'flash'), [config?.feedback]);
 
-  const source = useMemo(() => new RandomCharSource(DEFAULT_SESSION_CONFIG.effectiveAlphabet.join('')), []);
+  const source = useMemo(() => new RandomCharSource(config?.effectiveAlphabet?.join('') || 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'), [config?.effectiveAlphabet]);
 
   // Create IO adapter
   const io = useMemo(() => {
@@ -88,7 +103,7 @@ export function StudyPage() {
       onReveal: (char: string) => {
         console.log(`[UI] onReveal called with '${char}'`);
         // Only used for active mode replay overlay
-        if (DEFAULT_SESSION_CONFIG.mode === 'active') {
+        if (config?.mode === 'active' && config?.replay) {
           setReplayOverlay(char);
         }
         // Passive mode reveals are handled through character history in snapshot
@@ -179,9 +194,9 @@ export function StudyPage() {
 
   // Start morse session when phase changes to 'session'
   useEffect(() => {
-    if (studyPhase !== 'session') return;
-    runner.start(DEFAULT_SESSION_CONFIG);
-  }, [studyPhase, runner]);
+    if (studyPhase !== 'session' || !config) return;
+    runner.start(config);
+  }, [studyPhase, runner, config]);
 
 
   // Format time display
@@ -268,13 +283,13 @@ export function StudyPage() {
         <div className="session-display">
           {/* Session Status Messages */}
           <div className="session-status-area">
-            {snapshot.phase === 'running' && DEFAULT_SESSION_CONFIG.mode === 'active' && (
+            {snapshot.phase === 'running' && config?.mode === 'active' && (
               <p className="body-regular text-muted">
                 Type the character you hear
               </p>
             )}
 
-            {snapshot.phase === 'running' && DEFAULT_SESSION_CONFIG.mode === 'passive' && (
+            {snapshot.phase === 'running' && config?.mode === 'passive' && (
               <p className="body-regular text-muted">
                 Listen to the characters
               </p>
@@ -324,11 +339,11 @@ export function StudyPage() {
         </button>
 
         <div className="flex gap-4 text-muted body-small">
-          <span>Mode: {DEFAULT_SESSION_CONFIG.mode}</span>
+          <span>Mode: {config?.mode || 'active'}</span>
           <span>·</span>
-          <span>Speed: {DEFAULT_SESSION_CONFIG.speedTier}</span>
+          <span>Speed: {config?.speedTier || 'slow'}</span>
           <span>·</span>
-          <span>WPM: {DEFAULT_SESSION_CONFIG.wpm}</span>
+          <span>WPM: {config?.wpm || 15}</span>
         </div>
         </div>
       )}
