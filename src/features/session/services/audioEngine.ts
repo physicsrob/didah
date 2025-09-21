@@ -37,8 +37,8 @@ export class AudioEngine {
       // Check if we're in a browser environment
       const AudioContextClass =
         typeof window !== 'undefined'
-          ? (window.AudioContext || (window as any).webkitAudioContext)
-          : globalThis.AudioContext || (globalThis as any).webkitAudioContext;
+          ? (window.AudioContext || (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext)
+          : globalThis.AudioContext || (globalThis as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
 
       if (!AudioContextClass) {
         throw new Error('AudioContext not available in this environment');

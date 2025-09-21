@@ -24,7 +24,7 @@ export type ActiveOutcome = 'correct' | 'timeout';
  * Check if a key is a valid morse character
  */
 function isValidChar(key: string): boolean {
-  return /^[A-Za-z0-9.,\/=\?;:'"\-\+@\(\)\s]$/.test(key);
+  return /^[A-Za-z0-9.,/=?;:'"+@()\s-]$/.test(key);
 }
 
 /**

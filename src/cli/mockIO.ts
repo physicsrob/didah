@@ -110,7 +110,7 @@ export function createMockIO(clock: Clock, clockMode: 'instant' | 'realtime'): I
       }
     },
 
-    snapshot(_snapshot: any): void {
+    snapshot(): void {
       // Not used in CLI
     }
   };

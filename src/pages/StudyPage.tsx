@@ -4,22 +4,50 @@
  * Main interface for Morse code practice sessions using the new SessionRunner runtime.
  */
 
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getMorsePattern as getMorsePatternFromAlphabet } from '../core/morse/alphabet.js';
 import { SystemClock } from '../features/session/runtime/clock.js';
 import { SimpleInputBus } from '../features/session/runtime/inputBus.js';
 import { createIOAdapter } from '../features/session/runtime/ioAdapter.js';
-import type { SessionSnapshot } from '../features/session/runtime/io.js';
+import type { SessionSnapshot, HistoryItem } from '../features/session/runtime/io.js';
 import { createSessionRunner } from '../features/session/runtime/sessionProgram.js';
 import { RandomCharSource } from '../features/session/runtime/sessionProgram.js';
 import { createFeedback } from '../features/session/services/feedback/index.js';
 import { DEFAULT_SESSION_CONFIG } from '../core/config/defaults.js';
-import { useAudio } from '../contexts/AudioContext.tsx';
+import { useAudio } from '../contexts/useAudio';
 import '../styles/main.css';
 import '../styles/studyPage.css';
 
 type StudyPhase = 'waiting' | 'countdown' | 'session';
+
+// Character History component for continuous text display
+function CharacterHistory({ items }: { items: HistoryItem[] }) {
+  const scrollRef = useRef<HTMLDivElement>(null);
+
+  // Auto-scroll to the right when items change
+  useEffect(() => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollLeft = scrollRef.current.scrollWidth;
+    }
+  }, [items]);
+
+  return (
+    <div className="character-history-container">
+      <div className="character-history-text" ref={scrollRef}>
+        {items.length === 0 ? (
+          <span className="history-placeholder">Session started. Characters will appear here...</span>
+        ) : (
+          items.map((item, i) => (
+            <span key={i} className={`char-${item.result}`}>
+              {item.char}
+            </span>
+          ))
+        )}
+      </div>
+    </div>
+  );
+}
 
 export function StudyPage() {
   const navigate = useNavigate();
@@ -121,6 +149,7 @@ export function StudyPage() {
     if (audioActuallyReady && studyPhase === 'waiting') {
       setStudyPhase('countdown');
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // Only run once on mount
 
   // Run countdown when phase changes to 'countdown'
@@ -260,15 +289,7 @@ export function StudyPage() {
           </div>
 
           {/* Character History */}
-          {snapshot.previous.length > 0 && (
-            <div className="character-history">
-              {snapshot.previous.map((char, i) => (
-                <div key={i} className="history-char correct">
-                  {char}
-                </div>
-              ))}
-            </div>
-          )}
+          <CharacterHistory items={snapshot.previous} />
         </div>
       )}
 

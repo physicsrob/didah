@@ -37,13 +37,13 @@ const config: SessionConfig = {
 const io = createMockIO(clock, args.clockMode);
 
 // Setup keyboard input for real-time active mode
-let rl: readline.Interface | null = null;
+const rl: readline.Interface | null = null;
 if (args.clockMode === 'realtime' && args.mode === 'active') {
   if (process.stdin.isTTY) {
     readline.emitKeypressEvents(process.stdin);
     process.stdin.setRawMode(true);
 
-    process.stdin.on('keypress', (str: string, key: any) => {
+    process.stdin.on('keypress', (str: string, key: { ctrl?: boolean; name?: string }) => {
       if (key && key.ctrl && key.name === 'c') {
         cleanup();
         process.exit(0);

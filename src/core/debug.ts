@@ -21,7 +21,7 @@ export const debug = {
   /**
    * Log a debug message (only in debug mode)
    */
-  log(...args: any[]): void {
+  log(...args: unknown[]): void {
     if (DEBUG) {
       console.log(...args);
     }
@@ -30,14 +30,14 @@ export const debug = {
   /**
    * Log an error (always, regardless of debug mode)
    */
-  error(...args: any[]): void {
+  error(...args: unknown[]): void {
     console.error(...args);
   },
 
   /**
    * Log a warning (always, regardless of debug mode)
    */
-  warn(...args: any[]): void {
+  warn(...args: unknown[]): void {
     console.warn(...args);
   }
 };

@@ -8,6 +8,7 @@ import { FakeClock } from '../clock';
 import { TestInputBus } from '../inputBus';
 import { TestIO } from './testIO';
 import { calculateCharacterDurationMs } from '../../../../core/morse/timing';
+import type { SessionSnapshot } from '../io';
 import { advanceAndFlush, createTestConfig, flushPromises } from './testUtils';
 import { TestTiming, getCharTimeout } from './timingTestHelpers';
 
@@ -41,7 +42,7 @@ describe('SessionRunner', () => {
       lengthMs: 5000
     };
 
-    let snapshots: any[] = [];
+    const snapshots: SessionSnapshot[] = [];
     const unsub = runner.subscribe(s => snapshots.push({ ...s }));
 
     runner.start(config);
@@ -92,7 +93,7 @@ describe('SessionRunner', () => {
       lengthMs: 10000
     };
 
-    let snapshots: any[] = [];
+    const snapshots: SessionSnapshot[] = [];
     runner.subscribe(s => snapshots.push({ ...s }));
 
     runner.start(config);
@@ -108,7 +109,7 @@ describe('SessionRunner', () => {
 
     // Check that character moved to previous
     const latestSnapshot = snapshots[snapshots.length - 1];
-    expect(latestSnapshot.previous).toContain('A');
+    expect(latestSnapshot.previous.some(item => item.char === 'A')).toBe(true);
     expect(latestSnapshot.stats?.correct).toBe(1);
 
     runner.stop();
@@ -214,7 +215,7 @@ describe('SessionRunner', () => {
     // Check first character was processed correctly
     let snapshot = runner.getSnapshot();
     expect(snapshot.stats?.correct).toBe(1);
-    expect(snapshot.previous).toContain('A');
+    expect(snapshot.previous.some(item => item.char === 'A' && item.result === 'correct')).toBe(true);
 
     // Now let's trigger a timeout for 'B'
     // Calculate timings for 'B' with timing helper
@@ -229,7 +230,7 @@ describe('SessionRunner', () => {
     snapshot = runner.getSnapshot();
     expect(snapshot.stats?.correct).toBe(1);
     expect(snapshot.stats?.timeout).toBe(1);
-    expect(snapshot.previous).toContain('B');
+    expect(snapshot.previous.some(item => item.char === 'B' && item.result === 'timeout')).toBe(true);
 
     // The accuracy should be 50% (1 correct out of 2)
     const accuracy = snapshot.stats?.accuracy || 0;

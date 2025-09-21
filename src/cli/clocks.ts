@@ -10,7 +10,7 @@ import type { Clock } from '../features/session/runtime/clock';
 export class InstantClock implements Clock {
   currentTime: number = 0;
   private timers: Map<number, { callback: () => void; time: number }> = new Map();
-  private sleepers: Map<number, { resolve: () => void; reject: (err: any) => void; time: number }> = new Map();
+  private sleepers: Map<number, { resolve: () => void; reject: (err: unknown) => void; time: number }> = new Map();
   private nextTimerId: number = 1;
   private nextSleeperId: number = 1;
 

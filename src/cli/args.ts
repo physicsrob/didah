@@ -88,7 +88,7 @@ export function parseArgs(argv: string[]): CliArgs {
   }
 
   // Validate text contains only supported characters
-  const validChars = /^[A-Za-z0-9.,\/=\?;:'"\-\+@\(\)\s]+$/;
+  const validChars = /^[A-Za-z0-9.,/=?;:'"+@()\s-]+$/;
   if (!validChars.test(text)) {
     console.error(`❌ Text contains unsupported characters`);
     console.error(`Supported: letters, numbers, space, and punctuation: .,/=?;:'"-+@()`);

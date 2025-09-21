@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom'
-import { useAudio } from '../contexts/AudioContext.tsx'
+import { useAudio } from '../contexts/useAudio'
 import '../styles/main.css'
 
 export default function HomePage() {
@@ -8,7 +8,7 @@ export default function HomePage() {
 
   const handleStartSession = async () => {
     // Initialize audio while we have user gesture context
-    const audioReady = await initializeAudio()
+    await initializeAudio()
 
     // Navigate to session (StudyPage will check if audio is ready)
     navigate('/session')

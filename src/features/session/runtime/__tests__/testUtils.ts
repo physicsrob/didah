@@ -71,10 +71,10 @@ export async function waitForAsync(
 export function createDeferred<T = void>(): {
   promise: Promise<T>;
   resolve: (value: T) => void;
-  reject: (reason?: any) => void;
+  reject: (reason?: unknown) => void;
 } {
   let resolve!: (value: T) => void;
-  let reject!: (reason?: any) => void;
+  let reject!: (reason?: unknown) => void;
 
   const promise = new Promise<T>((res, rej) => {
     resolve = res;

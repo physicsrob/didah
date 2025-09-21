@@ -30,11 +30,11 @@ export class BuzzerFeedback implements Feedback {
     this.audioContext = audioContext;
   }
 
-  onFail(_char: string): void {
+  onFail(): void {
     this.playBuzzer();
   }
 
-  onCorrect?(_char: string): void {
+  onCorrect?(): void {
     // Optional: could play a different positive sound
   }
 

@@ -3,7 +3,7 @@
  * Focuses on outcomes rather than call counting
  */
 
-import type { IO, LogEvent, SessionSnapshot } from '../io';
+import type { IO, LogEvent } from '../io';
 import type { Clock } from '../clock';
 import { calculateCharacterDurationMs } from '../../../../core/morse/timing';
 
@@ -55,7 +55,7 @@ export class TestIO implements IO {
     this.loggedEvents.push(event);
   }
 
-  snapshot(_snapshot: SessionSnapshot): void {
+  snapshot(): void {
     // Not needed for most tests
   }
 
@@ -162,15 +162,15 @@ export class TestIO implements IO {
    */
   getSummary(): string {
     const correct = Array.from(this.feedbackMap.entries())
-      .filter(([_, type]) => type === 'correct')
+      .filter(([, type]) => type === 'correct')
       .map(([char]) => char);
 
     const timeouts = Array.from(this.feedbackMap.entries())
-      .filter(([_, type]) => type === 'timeout')
+      .filter(([, type]) => type === 'timeout')
       .map(([char]) => char);
 
     const incorrect = Array.from(this.feedbackMap.entries())
-      .filter(([_, type]) => type === 'incorrect')
+      .filter(([, type]) => type === 'incorrect')
       .map(([char]) => char);
 
     return `
@@ -191,9 +191,9 @@ TestIO Summary:
    * Legacy method for backward compatibility
    * @deprecated Use semantic query methods instead
    */
-  getCalls(method?: string): Array<{ method: string; args: any[] }> {
+  getCalls(method?: string): Array<{ method: string; args: unknown[] }> {
     // Build calls array on demand from our semantic tracking
-    const calls: Array<{ method: string; args: any[] }> = [];
+    const calls: Array<{ method: string; args: unknown[] }> = [];
 
     // Add feedback calls
     for (const [char, type] of this.feedbackMap) {

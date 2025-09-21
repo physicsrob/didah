@@ -2,10 +2,15 @@
  * IO port abstraction for all side effects
  */
 
+export interface HistoryItem {
+  char: string;
+  result: 'correct' | 'incorrect' | 'timeout' | 'passive';
+}
+
 export type SessionSnapshot = {
   phase: 'idle' | 'running' | 'ended';
   currentChar: string | null;
-  previous: string[];
+  previous: HistoryItem[];
   startedAt: number | null;
   remainingMs: number;
   stats?: {
@@ -16,8 +21,10 @@ export type SessionSnapshot = {
   };
 };
 
+import type { SessionConfig } from './charPrograms';
+
 export type LogEvent =
-  | { type: 'sessionStart'; at: number; config: any }
+  | { type: 'sessionStart'; at: number; config: SessionConfig }
   | { type: 'sessionEnd'; at: number }
   | { type: 'emission'; at: number; char: string }
   | { type: 'correct'; at: number; char: string; latencyMs: number }

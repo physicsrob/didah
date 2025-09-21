@@ -24,7 +24,7 @@ class MockAudioContext {
       disconnect: () => {},
       start: () => {},
       stop: () => {},
-      onended: null as any,
+      onended: null as (() => void) | null,
     };
 
     // Simulate immediate completion for testing

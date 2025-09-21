@@ -3,7 +3,7 @@
  */
 
 import type { Clock } from './clock';
-import type { IO, SessionSnapshot } from './io';
+import type { IO, SessionSnapshot, HistoryItem } from './io';
 import type { InputBus } from './inputBus';
 import { runActiveEmission, runPassiveEmission, type SessionConfig } from './charPrograms';
 
@@ -74,7 +74,7 @@ export type SessionRunnerDeps = {
  */
 export function createSessionRunner(deps: SessionRunnerDeps): SessionRunner {
   // State
-  let subscribers = new Set<(snapshot: SessionSnapshot) => void>();
+  const subscribers = new Set<(snapshot: SessionSnapshot) => void>();
   let snapshot: SessionSnapshot = {
     phase: 'idle',
     currentChar: null,
@@ -172,6 +172,7 @@ export function createSessionRunner(deps: SessionRunnerDeps): SessionRunner {
 
         try {
           // Run emission based on mode
+          let historyItem: HistoryItem | null = null;
           if (config.mode === 'active') {
             const outcome = await runActiveEmission(
               config,
@@ -182,6 +183,9 @@ export function createSessionRunner(deps: SessionRunnerDeps): SessionRunner {
               signal
             );
             updateStats(outcome);
+
+            // Add to history based on outcome
+            historyItem = { char, result: outcome as 'correct' | 'timeout' };
           } else {
             await runPassiveEmission(
               config,
@@ -190,10 +194,13 @@ export function createSessionRunner(deps: SessionRunnerDeps): SessionRunner {
               deps.clock,
               signal
             );
+            historyItem = { char, result: 'passive' };
           }
 
           // Move character to previous list
-          snapshot.previous = [...snapshot.previous, char];
+          if (historyItem) {
+            snapshot.previous = [...snapshot.previous, historyItem];
+          }
           snapshot.currentChar = null;
 
           // Update remaining time

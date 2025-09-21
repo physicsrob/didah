@@ -1,14 +1,7 @@
-import React, { createContext, useContext, useRef, useCallback } from 'react';
+import React, { useRef, useCallback } from 'react';
 import { AudioEngine } from '../features/session/services/audioEngine';
 import { DEFAULT_AUDIO_CONFIG } from '../core/config/defaults';
-
-interface AudioContextValue {
-  initializeAudio: () => Promise<boolean>;
-  getAudioEngine: () => AudioEngine;
-  isAudioReady: () => boolean;
-}
-
-const AudioContext = createContext<AudioContextValue | null>(null);
+import { AudioContext } from './AudioContextType';
 
 export function AudioProvider({ children }: { children: React.ReactNode }) {
   const audioEngineRef = useRef<AudioEngine | null>(null);
@@ -46,12 +39,4 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
       {children}
     </AudioContext.Provider>
   );
-}
-
-export function useAudio() {
-  const context = useContext(AudioContext);
-  if (!context) {
-    throw new Error('useAudio must be used within AudioProvider');
-  }
-  return context;
 }
