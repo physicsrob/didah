@@ -1,20 +1,23 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import type { SessionConfig } from '../core/types/domain';
 import { getActiveWindowMs, getPassiveTimingMultipliers } from '../core/morse/timing';
 import '../styles/main.css';
 
 type SpeedTier = 'slow' | 'medium' | 'fast' | 'lightning';
-type SessionMode = 'active' | 'passive';
+type SessionMode = 'practice' | 'listen' | 'live-copy';
 type TextSource = 'randomLetters' | 'randomWords' | 'redditHeadlines' | 'hardCharacters';
 type FeedbackType = 'buzzer' | 'flash' | 'both';
 
 export function SessionConfigPage() {
   const navigate = useNavigate();
+  const location = useLocation();
+
+  // Get mode from navigation state (set by HomePage)
+  const mode: SessionMode = (location.state as any)?.mode || 'practice';
 
   // Session configuration state
   const [duration, setDuration] = useState<1 | 2 | 5>(1);
-  const [mode, setMode] = useState<SessionMode>('active');
   const [speedTier, setSpeedTier] = useState<SpeedTier>('slow');
   const [textSource, setTextSource] = useState<TextSource>('randomLetters');
   const [wpm, setWpm] = useState(15);
@@ -27,6 +30,9 @@ export function SessionConfigPage() {
   const [includeNumbers, setIncludeNumbers] = useState(() => localStorage.getItem('includeNumbers') !== 'false');
   const [includeStdPunct, setIncludeStdPunct] = useState(() => localStorage.getItem('includeStdPunct') !== 'false');
   const [includeAdvPunct, setIncludeAdvPunct] = useState(() => localStorage.getItem('includeAdvPunct') === 'true');
+
+  // Live Copy specific settings
+  const [liveCopyFeedback, setLiveCopyFeedback] = useState<'end' | 'immediate'>('end');
 
   // Re-read localStorage when component mounts/becomes visible
   useEffect(() => {
@@ -64,6 +70,7 @@ export function SessionConfigPage() {
       feedback,
       replay,
       effectiveAlphabet: buildAlphabet(),
+      ...(mode === 'live-copy' && { liveCopyFeedback }),
     };
 
     // Navigate to session with config
@@ -106,28 +113,17 @@ export function SessionConfigPage() {
             </div>
           </div>
 
-          {/* Mode */}
+          {/* Mode Display */}
           <div className="form-group mb-4">
             <label className="form-label">Mode</label>
-            <div className="flex gap-4">
-              <button
-                className={`btn ${mode === 'active' ? 'btn-primary' : 'btn-secondary'}`}
-                onClick={() => setMode('active')}
-              >
-                Active
-              </button>
-              <button
-                className={`btn ${mode === 'passive' ? 'btn-primary' : 'btn-secondary'}`}
-                onClick={() => setMode('passive')}
-              >
-                Passive
-              </button>
+            <div className="p-3 bg-gray-100 rounded border">
+              <h3 className="font-semibold text-lg capitalize">{mode.replace('-', ' ')}</h3>
+              <p className="body-small text-muted mt-1">
+                {mode === 'practice' && 'Type what you hear - immediate feedback on correctness'}
+                {mode === 'listen' && 'Listen to characters - they will be revealed after playing'}
+                {mode === 'live-copy' && 'Real-time copying - continuous transmission like real CW'}
+              </p>
             </div>
-            <p className="body-small text-muted mt-2">
-              {mode === 'active'
-                ? 'Type what you hear - immediate feedback on correctness'
-                : 'Listen to characters - they will be revealed after playing'}
-            </p>
           </div>
 
           {/* Speed Tier */}
@@ -160,12 +156,12 @@ export function SessionConfigPage() {
               </button>
             </div>
             <p className="body-small text-muted mt-2">
-              {mode === 'active'
-                ? `Recognition window: ${getActiveWindowMs(wpm, speedTier)}ms`
-                : (() => {
-                    const timing = getPassiveTimingMultipliers(speedTier);
-                    return `${timing.preRevealDits} dits → reveal → ${timing.postRevealDits} dits`;
-                  })()}
+              {mode === 'practice' && `Recognition window: ${getActiveWindowMs(wpm, speedTier)}ms`}
+              {mode === 'listen' && (() => {
+                const timing = getPassiveTimingMultipliers(speedTier);
+                return `${timing.preRevealDits} dits → reveal → ${timing.postRevealDits} dits`;
+              })()}
+              {mode === 'live-copy' && 'Continuous transmission - standard 3 dit spacing between characters'}
             </p>
           </div>
 
@@ -183,6 +179,34 @@ export function SessionConfigPage() {
               <option value="hardCharacters" disabled>Hard Characters (Coming Soon)</option>
             </select>
           </div>
+
+          {/* Live Copy Feedback Mode */}
+          {mode === 'live-copy' && (
+            <div className="form-group mb-4">
+              <label className="form-label">Feedback Mode</label>
+              <div className="flex gap-3">
+                <button
+                  type="button"
+                  className={`btn ${liveCopyFeedback === 'end' ? 'btn-primary' : 'btn-secondary'}`}
+                  onClick={() => setLiveCopyFeedback('end')}
+                >
+                  End of Session
+                </button>
+                <button
+                  type="button"
+                  className={`btn ${liveCopyFeedback === 'immediate' ? 'btn-primary' : 'btn-secondary'}`}
+                  onClick={() => setLiveCopyFeedback('immediate')}
+                >
+                  Live Corrections
+                </button>
+              </div>
+              <p className="body-small text-muted mt-2">
+                {liveCopyFeedback === 'end'
+                  ? 'Grade your copy at the end of the session'
+                  : 'See corrections in red as you type'}
+              </p>
+            </div>
+          )}
 
           {/* WPM */}
           <div className="form-group">

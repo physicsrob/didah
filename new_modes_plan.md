@@ -206,6 +206,29 @@ switch(config.mode) {
 ### Phase 3: Implement Real Live Copy Behavior
 **Goal**: Replace the temporary Live Copy implementation with the actual continuous transmission mode
 
+## Refined Architecture (Updated)
+
+### Core Insight
+Live Copy is architecturally similar to Listen mode - both are transmission modes with fixed timing. The key difference is Live Copy collects parallel user input.
+
+**Design Principle**: Treat Live Copy as a transmission mode (like Listen) with parallel input collection, NOT as an interactive mode (like Practice).
+
+### Architecture Overview
+
+1. **Runtime Layer**: Handles only transmission (like Listen mode)
+   - Plays audio on schedule
+   - Logs transmitted characters
+   - No input handling or scoring
+
+2. **UI Layer**: Handles all interaction
+   - Multi-line textarea for user input
+   - Real-time corrections (Mode 2)
+   - Final grading (Mode 1)
+
+3. **Two Sub-Modes**:
+   - **Mode 1**: Grade at end of session only
+   - **Mode 2**: Live corrections - replace wrong characters with correct ones in red
+
 #### Phase 3.1: Create Live Copy Emission Function
 **File**: `src/features/session/runtime/charPrograms.ts`
 
@@ -216,44 +239,158 @@ export async function runLiveCopyEmission(
   cfg: SessionConfig,
   char: string,
   io: IO,
-  input: InputBus,
   clock: Clock,
   sessionSignal: AbortSignal
-): Promise<LiveCopyOutcome> {
-  // Implementation details:
-  // 1. Start audio playback (non-blocking)
-  // 2. Calculate input window (audio duration + buffer)
-  // 3. Collect all input during window
-  // 4. Score based on what was typed
-  // 5. Return outcome for statistics
+): Promise<void> {
+  // Simple transmission-only logic (similar to Listen mode)
+  // 1. Play audio (await completion)
+  await io.playChar(char, cfg.wpm);
+
+  // 2. Log transmitted character for UI tracking
+  io.log({ type: 'transmitted', at: clock.now(), char });
+
+  // 3. Add standard inter-character spacing (3 dits)
+  const ditMs = wpmToDitMs(cfg.wpm);
+  await clock.sleep(ditMs * 3, sessionSignal);
+
+  // No input handling, no scoring - UI owns that
 }
 ```
 
-#### Phase 3.2: Wire Up Live Copy in Session Orchestrator
+#### Phase 3.2: Update SessionSnapshot Type
+**File**: `src/features/session/runtime/io.ts`
+
+Add transmitted characters tracking:
+```typescript
+export type SessionSnapshot = {
+  // ... existing fields ...
+  transmittedChars?: string[]; // For Live Copy mode
+}
+```
+
+#### Phase 3.3: Wire Up Live Copy in Session Orchestrator
 **File**: `src/features/session/runtime/sessionProgram.ts`
 
 **Changes**:
 1. Import `runLiveCopyEmission`
 2. Replace the temporary live-copy case:
 ```typescript
-case 'live-copy':
-  const outcome = await runLiveCopyEmission(...);
-  // handle outcome properly
-  break;
-```
-3. Adjust inter-character spacing for live-copy (always 3 dits)
-4. Update history tracking to handle live-copy outcomes
+case 'live-copy': {
+  await runLiveCopyEmission(config, char, deps.io, deps.clock, signal);
 
-#### Phase 3.3: Add Tests for Live Copy
+  // Track transmitted character in snapshot
+  snapshot.transmittedChars = [...(snapshot.transmittedChars || []), char];
+
+  // Update remaining time
+  const newElapsed = deps.clock.now() - startTime;
+  snapshot.remainingMs = Math.max(0, config.lengthMs - newElapsed);
+
+  publish();
+  break;
+}
+```
+Note: Inter-character spacing is handled inside `runLiveCopyEmission`
+
+#### Phase 3.4: Update StudyPage UI for Live Copy
+**File**: `src/pages/StudyPage.tsx`
+
+**Changes**:
+1. Add state for user input and correction display
+```typescript
+const [userInput, setUserInput] = useState('');
+const [showCorrections, setShowCorrections] = useState(false);
+```
+
+2. Replace character history with textarea for Live Copy mode:
+```tsx
+{config?.mode === 'live-copy' ? (
+  <div className="live-copy-container">
+    {/* Show transmitted characters as reference */}
+    <div className="transmitted-chars">
+      {snapshot.transmittedChars?.join('') || ''}
+    </div>
+
+    {/* Multi-line textarea for user input */}
+    <textarea
+      className="live-copy-input"
+      value={userInput}
+      onChange={(e) => setUserInput(e.target.value)}
+      disabled={snapshot.phase === 'ended'}
+      placeholder="Type what you hear..."
+      rows={4}
+      autoFocus
+    />
+  </div>
+) : (
+  <CharacterHistory items={snapshot.previous} />
+)}
+```
+
+3. Implement Mode 2 correction logic:
+```typescript
+// For immediate feedback mode
+useEffect(() => {
+  if (config?.mode === 'live-copy' && config?.liveCopyFeedback === 'immediate') {
+    const transmitted = snapshot.transmittedChars?.join('') || '';
+    const userLen = userInput.length;
+    const transLen = transmitted.length;
+
+    // Apply corrections when user is behind
+    if (userLen < transLen) {
+      const corrected = userInput.padEnd(transLen, ' ');
+      const correctedArray = corrected.split('');
+
+      // Replace incorrect characters with correct ones
+      for (let i = userLen; i < transLen; i++) {
+        if (correctedArray[i] !== transmitted[i]) {
+          // In real implementation, mark these as red
+          correctedArray[i] = transmitted[i];
+        }
+      }
+
+      setUserInput(correctedArray.join(''));
+    }
+  }
+}, [snapshot.transmittedChars]);
+```
+
+#### Phase 3.5: Add Configuration for Live Copy Sub-Modes
+**File**: `src/pages/SessionConfigPage.tsx`
+
+Add feedback mode selector for Live Copy:
+```tsx
+{mode === 'live-copy' && (
+  <div className="form-group mb-4">
+    <label className="form-label">Feedback Mode</label>
+    <div className="flex gap-3">
+      <button
+        className={`btn ${liveCopyFeedback === 'end' ? 'btn-primary' : 'btn-secondary'}`}
+        onClick={() => setLiveCopyFeedback('end')}
+      >
+        End of Session
+      </button>
+      <button
+        className={`btn ${liveCopyFeedback === 'immediate' ? 'btn-primary' : 'btn-secondary'}`}
+        onClick={() => setLiveCopyFeedback('immediate')}
+      >
+        Live Corrections
+      </button>
+    </div>
+  </div>
+)}
+```
+
+#### Phase 3.6: Add Tests for Live Copy
 **Goal**: Ensure live-copy mode is properly tested
 
 **New test files**:
-- `src/features/session/runtime/__tests__/liveCopyEmission.test.ts`
+- `src/features/session/runtime/__tests__/liveCopyEmission.test.ts` - Test transmission timing
 - Integration tests for full live-copy sessions
 
 **Updates to existing tests**:
 - Add live-copy cases to session orchestrator tests
-- Verify timing behavior specific to live-copy
+- Verify that Live Copy doesn't handle input in runtime
+- Test UI textarea behavior separately
 
 ### Phase 4: Final Polish
 **Goal**: Clean up any remaining issues
@@ -288,26 +425,40 @@ case 'live-copy':
 - [ ] Statistics track all three modes correctly
 - [ ] Settings persist between sessions
 
-## Considerations & Open Questions
+## Architectural Decisions (Finalized)
 
-### Live Copy Scoring
-How should we score partial or delayed responses?
-- **Option A**: Binary - full credit only for complete, timely response
-- **Option B**: Partial credit based on characters typed
-- **Option C**: Sliding scale based on delay
+### Key Design Decisions
 
-### Live Copy Timing
-What's the input window after audio completes?
-- Suggested: 1 dit length after audio ends
-- This gives users a small buffer for processing
+1. **Live Copy = Transmission Mode**: Architecturally similar to Listen mode, not Practice mode
+2. **Runtime Simplicity**: Runtime only handles transmission, no input processing
+3. **UI Owns Input**: All user input handling and grading happens in the UI layer
+4. **Multi-line Textarea**: Better UX for continuous typing with backspace support
+5. **Two Feedback Modes**:
+   - **End of Session**: Grade and show results after completion
+   - **Live Corrections**: Replace wrong characters with correct ones in red as you go
 
-### Statistics
-Should live-copy statistics be tracked separately?
-- Different accuracy expectations
-- May want to show "keeping up %" as a metric
+### Scoring (Deferred)
+- Initially: Exact position matching only
+- Future: Can add tolerance/fuzzy matching
+- Statistics and detailed scoring to be implemented later
 
-### Inter-character Spacing
-Live Copy should use standard Morse spacing (3 dits) regardless of speed tier, since it simulates real transmission.
+### Implementation Benefits
+
+1. **Clean Separation of Concerns**
+   - Runtime: Audio transmission and timing
+   - UI: Input collection and feedback
+
+2. **Reuses Existing Patterns**
+   - Live Copy emission ≈ Listen emission
+   - No new complex state machines
+
+3. **Testable**
+   - Runtime remains pure and deterministic
+   - UI logic can be tested separately
+
+4. **Extensible**
+   - Easy to add scoring algorithms later
+   - Can experiment with different feedback styles in UI
 
 ## Success Criteria
 

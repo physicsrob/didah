@@ -17,7 +17,7 @@ export const DEFAULT_WPM = 15;
  * Default session configuration used when starting a new practice session
  */
 export const DEFAULT_SESSION_CONFIG: SessionConfig = {
-  mode: 'active',
+  mode: 'practice',
   speedTier: 'slow',
   sourceId: 'randomLetters',
   feedback: 'both',

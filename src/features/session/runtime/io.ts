@@ -4,7 +4,7 @@
 
 export interface HistoryItem {
   char: string;
-  result: 'correct' | 'incorrect' | 'timeout' | 'passive';
+  result: 'correct' | 'incorrect' | 'timeout' | 'listen';
 }
 
 export type SessionSnapshot = {
@@ -13,6 +13,7 @@ export type SessionSnapshot = {
   previous: HistoryItem[];
   startedAt: number | null;
   remainingMs: number;
+  transmittedChars?: string[]; // For Live Copy mode - tracks what's been sent
   stats?: {
     correct: number;
     incorrect: number;

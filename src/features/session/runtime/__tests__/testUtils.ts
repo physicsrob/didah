@@ -126,14 +126,14 @@ export async function advanceInSteps(
  * Reduces boilerplate in tests
  */
 export function createTestConfig(overrides?: Partial<{
-  mode: 'active' | 'passive';
+  mode: 'practice' | 'listen';
   wpm: number;
   speedTier: 'slow' | 'medium' | 'fast' | 'lightning';
   lengthMs: number;
   replay?: boolean;
 }>) {
   return {
-    mode: 'active' as const,
+    mode: 'practice' as const,
     wpm: 20,
     speedTier: 'medium' as const,
     lengthMs: 60000,

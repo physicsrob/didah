@@ -4,7 +4,7 @@
 
 export type CliArgs = {
   text: string;
-  mode: 'active' | 'passive';
+  mode: 'practice' | 'listen';
   wpm: number;
   speed: 'slow' | 'medium' | 'fast' | 'lightning';
   clockMode: 'instant' | 'realtime';
@@ -14,7 +14,7 @@ export function parseArgs(argv: string[]): CliArgs {
   // Default values
   const defaults: CliArgs = {
     text: '',
-    mode: 'passive',
+    mode: 'listen',
     wpm: 20,
     speed: 'medium',
     clockMode: 'instant'
@@ -50,11 +50,11 @@ export function parseArgs(argv: string[]): CliArgs {
   for (let i = 0; i < argv.length; i++) {
     if (argv[i] === '--mode' && argv[i + 1]) {
       const mode = argv[i + 1];
-      if (mode === 'active' || mode === 'passive') {
+      if (mode === 'practice' || mode === 'listen') {
         result.mode = mode;
         i++;
       } else {
-        console.error(`❌ Invalid mode: ${mode}. Must be 'active' or 'passive'`);
+        console.error(`❌ Invalid mode: ${mode}. Must be 'practice' or 'listen'`);
         process.exit(1);
       }
     } else if (argv[i] === '--wpm' && argv[i + 1]) {
