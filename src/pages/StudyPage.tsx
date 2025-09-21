@@ -6,6 +6,7 @@
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { getMorsePattern as getMorsePatternFromAlphabet } from '../core/morse/alphabet.js';
 import { SystemClock } from '../features/session/runtime/clock.js';
 import { SimpleInputBus } from '../features/session/runtime/inputBus.js';
 import { createIOAdapter } from '../features/session/runtime/ioAdapter.js';
@@ -14,7 +15,6 @@ import { createSessionRunner } from '../features/session/runtime/sessionProgram.
 import { RandomCharSource } from '../features/session/runtime/sessionProgram.js';
 import { createFeedback } from '../features/session/services/feedback/index.js';
 import { DEFAULT_SESSION_CONFIG } from '../core/config/defaults.js';
-import { getMorsePattern as getMorsePatternFromAlphabet } from '../core/morse/alphabet.js';
 import { useAudio } from '../contexts/AudioContext.tsx';
 import '../styles/main.css';
 import '../styles/studyPage.css';
@@ -37,7 +37,6 @@ export function StudyPage() {
     stats: { correct: 0, incorrect: 0, timeout: 0, accuracy: 0 },
   });
 
-  const [revealedChar, setRevealedChar] = useState<string | null>(null);
   const [replayOverlay, setReplayOverlay] = useState<string | null>(null);
   const [feedbackFlash, setFeedbackFlash] = useState<string | null>(null);
 
@@ -60,21 +59,15 @@ export function StudyPage() {
       feedback,
       onReveal: (char: string) => {
         console.log(`[UI] onReveal called with '${char}'`);
+        // Only used for active mode replay overlay
         if (DEFAULT_SESSION_CONFIG.mode === 'active') {
-          // In active mode, use this for replay overlay
           setReplayOverlay(char);
-        } else {
-          // In passive mode, use this for normal reveal
-          setRevealedChar(char);
         }
+        // Passive mode reveals are handled through character history in snapshot
       },
       onHide: () => {
         console.log(`[UI] onHide called`);
-        if (DEFAULT_SESSION_CONFIG.mode === 'active') {
-          setReplayOverlay(null);
-        } else {
-          setRevealedChar(null);
-        }
+        setReplayOverlay(null);
       },
       onSnapshot: (snap: SessionSnapshot) => setSnapshot(snap),
       replayDuration: 1500  // Show replay for 1.5 seconds
@@ -183,12 +176,6 @@ export function StudyPage() {
     }
   }, [feedbackFlash]);
 
-  // Get morse pattern for current character
-  const getMorsePattern = (char: string | null) => {
-    if (!char) return '';
-    const pattern = getMorsePatternFromAlphabet(char);
-    return pattern ? pattern.join('') : '';
-  };
 
   return (
     <div className="session-container">
@@ -250,56 +237,38 @@ export function StudyPage() {
       {/* Main Display Area - show during countdown and session */}
       {(studyPhase === 'countdown' || studyPhase === 'session') && (
         <div className="session-display">
-        <div className="character-display">
-          <div className={`current-character ${DEFAULT_SESSION_CONFIG.mode === 'passive' && !revealedChar ? 'placeholder' : ''}`}>
-            {DEFAULT_SESSION_CONFIG.mode === 'active'
-              ? (snapshot.currentChar ? '·' : '')
-              : (revealedChar || (snapshot.currentChar ? '?' : '·'))
-            }
-          </div>
+          {/* Session Status Messages */}
+          <div className="session-status-area">
+            {snapshot.phase === 'running' && DEFAULT_SESSION_CONFIG.mode === 'active' && (
+              <p className="body-regular text-muted">
+                Type the character you hear
+              </p>
+            )}
 
-          {snapshot.currentChar && (
-            <div className="morse-pattern">
-              {getMorsePattern(snapshot.currentChar)}
-            </div>
-          )}
+            {snapshot.phase === 'running' && DEFAULT_SESSION_CONFIG.mode === 'passive' && (
+              <p className="body-regular text-muted">
+                Listen to the characters
+              </p>
+            )}
 
-          {studyPhase === 'waiting' && (
-            <p className="body-regular text-muted">
-              Click the button above to begin
-            </p>
-          )}
-
-          {snapshot.phase === 'running' && DEFAULT_SESSION_CONFIG.mode === 'active' && (
-            <p className="body-regular text-muted">
-              Type the character you hear
-            </p>
-          )}
-
-          {snapshot.phase === 'running' && DEFAULT_SESSION_CONFIG.mode === 'passive' && (
-            <p className="body-regular text-muted">
-              Listen and watch for the character reveal
-            </p>
-          )}
-
-          {snapshot.phase === 'ended' && (
-            <div className="text-center">
-              <h2 className="heading-2 mb-4">Session Complete!</h2>
-              <p className="body-large text-success">{accuracy}% accuracy</p>
-            </div>
-          )}
-        </div>
-
-        {/* Character History */}
-        {snapshot.previous.length > 0 && (
-          <div className="character-history">
-            {snapshot.previous.map((char, i) => (
-              <div key={i} className="history-char correct">
-                {char}
+            {snapshot.phase === 'ended' && (
+              <div className="text-center">
+                <h2 className="heading-2 mb-4">Session Complete!</h2>
+                <p className="body-large text-success">{accuracy}% accuracy</p>
               </div>
-            ))}
+            )}
           </div>
-        )}
+
+          {/* Character History */}
+          {snapshot.previous.length > 0 && (
+            <div className="character-history">
+              {snapshot.previous.map((char, i) => (
+                <div key={i} className="history-char correct">
+                  {char}
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
 
@@ -365,7 +334,7 @@ export function StudyPage() {
               {replayOverlay}
             </div>
             <div className="morse-pattern" style={{ fontSize: '32px', marginBottom: '16px' }}>
-              {getMorsePattern(replayOverlay)}
+              {getMorsePatternFromAlphabet(replayOverlay)?.join('') || ''}
             </div>
             <div className="replay-label">
               Missed Character
