@@ -99,7 +99,92 @@ Currently ~32 tests passing.
 - **Styling**: Inline styles (tech debt - should be CSS modules)
 - **Audio**: WebAudio API
 - **Testing**: Vitest
-- **Future**: Vercel for hosting + serverless functions
+- **Serverless**: Vercel Functions
+
+## Deployment
+
+The entire app (frontend + API) is deployed together on Vercel at:
+**https://morse-serverless.vercel.app**
+
+### Full Deployment Process
+
+```bash
+# 1. Build and test locally
+npm run build           # Build frontend
+npx vercel dev          # Test everything locally (frontend + API)
+
+# 2. Deploy to preview (gets unique URL for testing)
+npx vercel
+
+# 3. Deploy to production
+npx vercel --prod
+```
+
+That's it! One command deploys both:
+- **Frontend**: https://morse-serverless.vercel.app
+- **API**: https://morse-serverless.vercel.app/api/*
+
+### Local Development
+
+```bash
+# Run frontend only (Vite dev server)
+npm run dev             # http://localhost:5173
+
+# Run frontend + API together (Vercel dev)
+npx vercel dev          # http://localhost:3000
+
+# Run API only on custom port
+npx vercel dev --listen 3001
+```
+
+### API Endpoints
+
+#### GET `/api/sources`
+Returns list of all available text sources.
+
+```json
+{
+  "sources": [
+    {"id": "random_letters", "name": "Random Letters", "type": "generated"},
+    {"id": "common_words", "name": "Common Words", "type": "generated"},
+    {"id": "reddit_popular", "name": "Reddit Popular", "type": "rss"},
+    ...
+  ],
+  "total": 9
+}
+```
+
+#### GET `/api/sources/[id]`
+Returns text content from a specific source.
+
+```json
+// Example: /api/sources/common_words
+{
+  "id": "common_words",
+  "items": ["the be to of and a in that have i ..."]
+}
+
+// Example: /api/sources/reddit_popular
+{
+  "id": "reddit_popular",
+  "items": [
+    "First headline from Reddit",
+    "Second headline from Reddit",
+    ...
+  ]
+}
+```
+
+**Available Sources:**
+- `random_letters` - Random A-Z characters
+- `common_words` - Frequency-weighted English words
+- `common_words_easy` - Short common words only
+- `reddit_popular` - Headlines from r/popular
+- `reddit_news` - Headlines from r/news
+- `reddit_amateurradio` - Amateur radio discussions
+- `reddit_aitah` - AITA story titles
+- `hackernews` - Hacker News headlines
+- `bbc_news` - BBC News headlines
 
 ## Contributing
 
