@@ -334,6 +334,12 @@ export function StudyPage() {
               </p>
             )}
 
+            {snapshot.phase === 'running' && config?.mode === 'live-copy' && (
+              <p className="body-regular text-muted">
+                Copy the continuous transmission
+              </p>
+            )}
+
             {snapshot.phase === 'ended' && (
               <div className="text-center">
                 <h2 className="heading-2 mb-4">Session Complete!</h2>
@@ -378,7 +384,7 @@ export function StudyPage() {
         </button>
 
         <div className="flex gap-4 text-muted body-small">
-          <span>Mode: {config?.mode || 'practice'}</span>
+          <span>Mode: {config?.mode?.replace('-', ' ') || 'practice'}</span>
           <span>·</span>
           <span>Speed: {config?.speedTier || 'slow'}</span>
           <span>·</span>

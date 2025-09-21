@@ -11,7 +11,7 @@ import { debug } from '../../../core/debug';
 
 // Session config type - simplified for now
 export type SessionConfig = {
-  mode: 'practice' | 'listen';
+  mode: 'practice' | 'listen' | 'live-copy';
   wpm: number;
   speedTier: 'slow' | 'medium' | 'fast' | 'lightning';
   lengthMs: number;

@@ -1,20 +1,23 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import type { SessionConfig } from '../core/types/domain';
 import { getActiveWindowMs, getPassiveTimingMultipliers } from '../core/morse/timing';
 import '../styles/main.css';
 
 type SpeedTier = 'slow' | 'medium' | 'fast' | 'lightning';
-type SessionMode = 'practice' | 'listen';
+type SessionMode = 'practice' | 'listen' | 'live-copy';
 type TextSource = 'randomLetters' | 'randomWords' | 'redditHeadlines' | 'hardCharacters';
 type FeedbackType = 'buzzer' | 'flash' | 'both';
 
 export function SessionConfigPage() {
   const navigate = useNavigate();
+  const location = useLocation();
+
+  // Get mode from navigation state (set by HomePage)
+  const mode: SessionMode = (location.state as any)?.mode || 'practice';
 
   // Session configuration state
   const [duration, setDuration] = useState<1 | 2 | 5>(1);
-  const [mode, setMode] = useState<SessionMode>('practice');
   const [speedTier, setSpeedTier] = useState<SpeedTier>('slow');
   const [textSource, setTextSource] = useState<TextSource>('randomLetters');
   const [wpm, setWpm] = useState(15);
@@ -106,28 +109,17 @@ export function SessionConfigPage() {
             </div>
           </div>
 
-          {/* Mode */}
+          {/* Mode Display */}
           <div className="form-group mb-4">
             <label className="form-label">Mode</label>
-            <div className="flex gap-4">
-              <button
-                className={`btn ${mode === 'practice' ? 'btn-primary' : 'btn-secondary'}`}
-                onClick={() => setMode('practice')}
-              >
-                Practice
-              </button>
-              <button
-                className={`btn ${mode === 'listen' ? 'btn-primary' : 'btn-secondary'}`}
-                onClick={() => setMode('listen')}
-              >
-                Listen
-              </button>
+            <div className="p-3 bg-gray-100 rounded border">
+              <h3 className="font-semibold text-lg capitalize">{mode.replace('-', ' ')}</h3>
+              <p className="body-small text-muted mt-1">
+                {mode === 'practice' && 'Type what you hear - immediate feedback on correctness'}
+                {mode === 'listen' && 'Listen to characters - they will be revealed after playing'}
+                {mode === 'live-copy' && 'Real-time copying - continuous transmission like real CW'}
+              </p>
             </div>
-            <p className="body-small text-muted mt-2">
-              {mode === 'practice'
-                ? 'Type what you hear - immediate feedback on correctness'
-                : 'Listen to characters - they will be revealed after playing'}
-            </p>
           </div>
 
           {/* Speed Tier */}
@@ -160,12 +152,12 @@ export function SessionConfigPage() {
               </button>
             </div>
             <p className="body-small text-muted mt-2">
-              {mode === 'practice'
-                ? `Recognition window: ${getActiveWindowMs(wpm, speedTier)}ms`
-                : (() => {
-                    const timing = getPassiveTimingMultipliers(speedTier);
-                    return `${timing.preRevealDits} dits → reveal → ${timing.postRevealDits} dits`;
-                  })()}
+              {mode === 'practice' && `Recognition window: ${getActiveWindowMs(wpm, speedTier)}ms`}
+              {mode === 'listen' && (() => {
+                const timing = getPassiveTimingMultipliers(speedTier);
+                return `${timing.preRevealDits} dits → reveal → ${timing.postRevealDits} dits`;
+              })()}
+              {mode === 'live-copy' && 'Continuous transmission - standard 3 dit spacing between characters'}
             </p>
           </div>
 

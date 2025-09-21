@@ -6,12 +6,12 @@ export default function HomePage() {
   const navigate = useNavigate()
   const { initializeAudio } = useAudio()
 
-  const handleStartSession = async () => {
+  const handleModeSelect = async (mode: 'practice' | 'listen' | 'live-copy') => {
     // Initialize audio while we have user gesture context
     await initializeAudio()
 
-    // Navigate to session configuration page
-    navigate('/session-config')
+    // Navigate to session configuration page with pre-selected mode
+    navigate('/session-config', { state: { mode } })
   }
 
   const handleStatistics = () => {
@@ -30,12 +30,35 @@ export default function HomePage() {
         </h1>
 
         <div className="flex flex-col gap-5 items-center">
-          <button
-            className="btn btn-primary btn-large w-full"
-            onClick={handleStartSession}
-          >
-            Start Session
-          </button>
+          <div className="w-full space-y-6 mb-6">
+            <div className="text-center">
+              <button
+                className="btn btn-primary btn-large w-full mb-2"
+                onClick={() => handleModeSelect('practice')}
+              >
+                Practice
+              </button>
+              <p className="text-sm text-muted">Interactive mode - type what you hear</p>
+            </div>
+            <div className="text-center">
+              <button
+                className="btn btn-primary btn-large w-full mb-2"
+                onClick={() => handleModeSelect('listen')}
+              >
+                Listen
+              </button>
+              <p className="text-sm text-muted">Pure listening - characters revealed after playing</p>
+            </div>
+            <div className="text-center">
+              <button
+                className="btn btn-primary btn-large w-full mb-2"
+                onClick={() => handleModeSelect('live-copy')}
+              >
+                Live Copy
+              </button>
+              <p className="text-sm text-muted">Real-time copying - continuous transmission</p>
+            </div>
+          </div>
           <button
             className="btn btn-secondary btn-large w-full"
             onClick={handleStatistics}
