@@ -5,7 +5,7 @@ import { getActiveWindowMs, getPassiveTimingMultipliers } from '../core/morse/ti
 import '../styles/main.css';
 
 type SpeedTier = 'slow' | 'medium' | 'fast' | 'lightning';
-type SessionMode = 'active' | 'passive';
+type SessionMode = 'practice' | 'listen';
 type TextSource = 'randomLetters' | 'randomWords' | 'redditHeadlines' | 'hardCharacters';
 type FeedbackType = 'buzzer' | 'flash' | 'both';
 
@@ -14,7 +14,7 @@ export function SessionConfigPage() {
 
   // Session configuration state
   const [duration, setDuration] = useState<1 | 2 | 5>(1);
-  const [mode, setMode] = useState<SessionMode>('active');
+  const [mode, setMode] = useState<SessionMode>('practice');
   const [speedTier, setSpeedTier] = useState<SpeedTier>('slow');
   const [textSource, setTextSource] = useState<TextSource>('randomLetters');
   const [wpm, setWpm] = useState(15);
@@ -111,20 +111,20 @@ export function SessionConfigPage() {
             <label className="form-label">Mode</label>
             <div className="flex gap-4">
               <button
-                className={`btn ${mode === 'active' ? 'btn-primary' : 'btn-secondary'}`}
-                onClick={() => setMode('active')}
+                className={`btn ${mode === 'practice' ? 'btn-primary' : 'btn-secondary'}`}
+                onClick={() => setMode('practice')}
               >
-                Active
+                Practice
               </button>
               <button
-                className={`btn ${mode === 'passive' ? 'btn-primary' : 'btn-secondary'}`}
-                onClick={() => setMode('passive')}
+                className={`btn ${mode === 'listen' ? 'btn-primary' : 'btn-secondary'}`}
+                onClick={() => setMode('listen')}
               >
-                Passive
+                Listen
               </button>
             </div>
             <p className="body-small text-muted mt-2">
-              {mode === 'active'
+              {mode === 'practice'
                 ? 'Type what you hear - immediate feedback on correctness'
                 : 'Listen to characters - they will be revealed after playing'}
             </p>
@@ -160,7 +160,7 @@ export function SessionConfigPage() {
               </button>
             </div>
             <p className="body-small text-muted mt-2">
-              {mode === 'active'
+              {mode === 'practice'
                 ? `Recognition window: ${getActiveWindowMs(wpm, speedTier)}ms`
                 : (() => {
                     const timing = getPassiveTimingMultipliers(speedTier);

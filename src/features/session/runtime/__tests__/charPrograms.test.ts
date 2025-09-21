@@ -3,7 +3,7 @@
  */
 
 import { describe, it, expect, beforeEach } from 'vitest';
-import { runActiveEmission, runPassiveEmission } from '../charPrograms';
+import { runPracticeEmission, runListenEmission } from '../charPrograms';
 import { FakeClock } from '../clock';
 import { TestInputBus } from '../inputBus';
 import { TestIO } from './testIO';
@@ -11,7 +11,7 @@ import { calculateCharacterDurationMs } from '../../../../core/morse/timing';
 import { advanceAndFlush, createTestConfig, flushPromises } from './testUtils';
 import { TestTiming, getCharTimeout, getPassiveSequence } from './timingTestHelpers';
 
-describe('runActiveEmission', () => {
+describe('runPracticeEmission', () => {
   let clock: FakeClock;
   let io: TestIO;
   let input: TestInputBus;
@@ -28,7 +28,7 @@ describe('runActiveEmission', () => {
     const config = createTestConfig({ speedTier: 'medium' });
 
     // Start emission
-    const emissionPromise = runActiveEmission(
+    const emissionPromise = runPracticeEmission(
       config,
       'A',
       io,
@@ -64,7 +64,7 @@ describe('runActiveEmission', () => {
     });
 
     // Start emission
-    const emissionPromise = runActiveEmission(
+    const emissionPromise = runPracticeEmission(
       config,
       'B',
       io,
@@ -97,7 +97,7 @@ describe('runActiveEmission', () => {
     const config = createTestConfig({ speedTier: 'medium' });
 
     // Start emission
-    const emissionPromise = runActiveEmission(
+    const emissionPromise = runPracticeEmission(
       config,
       'C',
       io,
@@ -130,7 +130,7 @@ describe('runActiveEmission', () => {
     });
 
     // Start emission
-    const emissionPromise = runActiveEmission(
+    const emissionPromise = runPracticeEmission(
       config,
       'D',
       io,
@@ -159,7 +159,7 @@ describe('runActiveEmission', () => {
     const config = createTestConfig({ speedTier: 'medium' });
 
     // Start emission for uppercase character
-    const emissionPromise = runActiveEmission(
+    const emissionPromise = runPracticeEmission(
       config,
       'E',
       io,
@@ -195,7 +195,7 @@ describe('runActiveEmission', () => {
     const startTime = clock.now();
 
     // Start emission
-    const emissionPromise = runActiveEmission(
+    const emissionPromise = runPracticeEmission(
       config,
       'H',
       io,
@@ -236,7 +236,7 @@ describe('runActiveEmission', () => {
   });
 });
 
-describe('runPassiveEmission', () => {
+describe('runListenEmission', () => {
   let clock: FakeClock;
   let io: TestIO;
   let signal: AbortSignal;
@@ -249,13 +249,13 @@ describe('runPassiveEmission', () => {
 
   it('follows passive timing sequence', async () => {
     const config = createTestConfig({
-      mode: 'passive',
+      mode: 'listen',
       speedTier: 'slow' // Timings from TestTiming.passive.slow
     });
 
 
     // Start emission
-    const emissionPromise = runPassiveEmission(
+    const emissionPromise = runListenEmission(
       config,
       'F',
       io,
@@ -286,7 +286,7 @@ describe('runPassiveEmission', () => {
 
   it('respects speed tier timings', async () => {
     const config = createTestConfig({
-      mode: 'passive',
+      mode: 'listen',
       wpm: 20, // dit = 60ms
       speedTier: 'fast' // Timings from TestTiming.passive.fast
     });
@@ -294,7 +294,7 @@ describe('runPassiveEmission', () => {
     const startTime = clock.now();
 
     // Start emission
-    const emissionPromise = runPassiveEmission(
+    const emissionPromise = runListenEmission(
       config,
       'G',
       io,
@@ -321,14 +321,14 @@ describe('runPassiveEmission', () => {
 
   it('handles abort signal', async () => {
     const config = createTestConfig({
-      mode: 'passive',
+      mode: 'listen',
       speedTier: 'medium'
     });
 
     const controller = new AbortController();
 
     // Start emission
-    const emissionPromise = runPassiveEmission(
+    const emissionPromise = runListenEmission(
       config,
       'H',
       io,

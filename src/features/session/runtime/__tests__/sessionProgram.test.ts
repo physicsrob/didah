@@ -36,7 +36,7 @@ describe('SessionRunner', () => {
 
   it('transitions to running when started', async () => {
     const config = {
-      mode: 'active' as const,
+      mode: 'practice' as const,
       wpm: 20,
       speedTier: 'medium' as const,
       lengthMs: 5000
@@ -59,7 +59,7 @@ describe('SessionRunner', () => {
 
   it('logs session start and end', async () => {
     const config = {
-      mode: 'active' as const,
+      mode: 'practice' as const,
       wpm: 20,
       speedTier: 'fast' as const,
       lengthMs: 1000
@@ -87,7 +87,7 @@ describe('SessionRunner', () => {
     source.next = () => chars[charIndex++ % chars.length];
 
     const config = {
-      mode: 'active' as const,
+      mode: 'practice' as const,
       wpm: 20,
       speedTier: 'medium' as const,
       lengthMs: 10000
@@ -122,7 +122,7 @@ describe('SessionRunner', () => {
     source.next = () => chars[charIndex++ % chars.length];
 
     const config = createTestConfig({
-      mode: 'passive',
+      mode: 'listen',
       speedTier: 'slow',
       lengthMs: 2000
     });
@@ -161,7 +161,7 @@ describe('SessionRunner', () => {
 
   it('can be stopped mid-session', async () => {
     const config = {
-      mode: 'active' as const,
+      mode: 'practice' as const,
       wpm: 20,
       speedTier: 'medium' as const,
       lengthMs: 60000
@@ -248,7 +248,7 @@ describe('SessionRunner', () => {
     const unsub2 = runner.subscribe(() => count2++);
 
     runner.start({
-      mode: 'active' as const,
+      mode: 'practice' as const,
       wpm: 20,
       speedTier: 'medium' as const,
       lengthMs: 1000

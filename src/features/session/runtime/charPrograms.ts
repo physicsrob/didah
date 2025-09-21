@@ -1,5 +1,5 @@
 /**
- * Character emission programs for Active and Passive modes
+ * Character emission programs for Practice and Listen modes
  */
 
 import type { Clock } from './clock';
@@ -11,14 +11,14 @@ import { debug } from '../../../core/debug';
 
 // Session config type - simplified for now
 export type SessionConfig = {
-  mode: 'active' | 'passive';
+  mode: 'practice' | 'listen';
   wpm: number;
   speedTier: 'slow' | 'medium' | 'fast' | 'lightning';
   lengthMs: number;
   replay?: boolean;
 };
 
-export type ActiveOutcome = 'correct' | 'incorrect' | 'timeout';
+export type PracticeOutcome = 'correct' | 'incorrect' | 'timeout';
 
 /**
  * Check if a key is a valid morse character
@@ -28,20 +28,20 @@ function isValidChar(key: string): boolean {
 }
 
 /**
- * Run an Active mode emission
+ * Run a Practice mode emission
  * - Start audio (don't wait)
  * - Race: first correct key vs timeout
  * - Log incorrect keys during window
  * - Handle feedback and optional replay
  */
-export async function runActiveEmission(
+export async function runPracticeEmission(
   cfg: SessionConfig,
   char: string,
   io: IO,
   input: InputBus,
   clock: Clock,
   sessionSignal: AbortSignal
-): Promise<ActiveOutcome> {
+): Promise<PracticeOutcome> {
   const emissionStart = clock.now();
   debug.log(`[Emission] Start - Char: '${char}', Time: ${emissionStart}ms`);
 
@@ -164,13 +164,13 @@ export async function runActiveEmission(
 }
 
 /**
- * Run a Passive mode emission
+ * Run a Listen mode emission
  * - Play audio (wait for completion)
  * - Wait pre-reveal delay
  * - Reveal character
  * - Wait post-reveal delay
  */
-export async function runPassiveEmission(
+export async function runListenEmission(
   cfg: SessionConfig,
   char: string,
   io: IO,

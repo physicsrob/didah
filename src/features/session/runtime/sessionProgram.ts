@@ -5,7 +5,7 @@
 import type { Clock } from './clock';
 import type { IO, SessionSnapshot } from './io';
 import type { InputBus } from './inputBus';
-import { runActiveEmission, runPassiveEmission, type SessionConfig } from './charPrograms';
+import { runPracticeEmission, runListenEmission, type SessionConfig } from './charPrograms';
 
 /**
  * Character source interface
@@ -178,8 +178,8 @@ export function createSessionRunner(deps: SessionRunnerDeps): SessionRunner {
 
         try {
           // Run emission based on mode
-          if (config.mode === 'active') {
-            const outcome = await runActiveEmission(
+          if (config.mode === 'practice') {
+            const outcome = await runPracticeEmission(
               config,
               char,
               deps.io,
@@ -207,7 +207,7 @@ export function createSessionRunner(deps: SessionRunnerDeps): SessionRunner {
               await deps.io.replay(char, config.wpm);
             }
           } else {
-            await runPassiveEmission(
+            await runListenEmission(
               config,
               char,
               deps.io,
@@ -216,7 +216,7 @@ export function createSessionRunner(deps: SessionRunnerDeps): SessionRunner {
             );
 
             // For passive mode, add to history after emission
-            const historyItem = { char, result: 'passive' as const };
+            const historyItem = { char, result: 'listen' as const };
             snapshot.previous = [...snapshot.previous, historyItem];
             snapshot.currentChar = null;
 
@@ -229,7 +229,7 @@ export function createSessionRunner(deps: SessionRunnerDeps): SessionRunner {
           }
 
           // Add inter-character spacing (only for active mode; passive has its own timing)
-          if (config.mode === 'active') {
+          if (config.mode === 'practice') {
             const ditMs = 1200 / config.wpm;
             const interCharSpacingMs = ditMs * 3; // 3 dits per Morse standard
             console.log(`[Spacing] Adding inter-character spacing: ${interCharSpacingMs}ms (3 dits)`);

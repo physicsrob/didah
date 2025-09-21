@@ -118,7 +118,7 @@ export function StudyPage() {
       onReveal: (char: string) => {
         console.log(`[UI] onReveal called with '${char}'`);
         // Only used for active mode replay overlay
-        if (config?.mode === 'active' && config?.replay) {
+        if (config?.mode === 'practice' && config?.replay) {
           setReplayOverlay(char);
         }
         // Passive mode reveals are handled through character history in snapshot
@@ -322,13 +322,13 @@ export function StudyPage() {
         <div className="session-display">
           {/* Session Status Messages */}
           <div className="session-status-area">
-            {snapshot.phase === 'running' && config?.mode === 'active' && (
+            {snapshot.phase === 'running' && config?.mode === 'practice' && (
               <p className="body-regular text-muted">
                 Type the character you hear
               </p>
             )}
 
-            {snapshot.phase === 'running' && config?.mode === 'passive' && (
+            {snapshot.phase === 'running' && config?.mode === 'listen' && (
               <p className="body-regular text-muted">
                 Listen to the characters
               </p>
@@ -378,7 +378,7 @@ export function StudyPage() {
         </button>
 
         <div className="flex gap-4 text-muted body-small">
-          <span>Mode: {config?.mode || 'active'}</span>
+          <span>Mode: {config?.mode || 'practice'}</span>
           <span>·</span>
           <span>Speed: {config?.speedTier || 'slow'}</span>
           <span>·</span>

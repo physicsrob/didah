@@ -10,7 +10,7 @@ import { parseArgs } from './args';
 import { createMockIO } from './mockIO';
 import { InstantClock, RealtimeClock } from './clocks';
 import { SimpleInputBus } from '../features/session/runtime/inputBus';
-import { runActiveEmission, runPassiveEmission } from '../features/session/runtime/charPrograms';
+import { runPracticeEmission, runListenEmission } from '../features/session/runtime/charPrograms';
 import type { SessionConfig } from '../features/session/runtime/charPrograms';
 
 // Parse command line arguments
@@ -30,7 +30,7 @@ const config: SessionConfig = {
   wpm: args.wpm,
   speedTier: args.speed,
   lengthMs: 60000, // Not used for CLI simulation
-  replay: args.mode === 'active'
+  replay: args.mode === 'practice'
 };
 
 // Create mock IO
@@ -38,7 +38,7 @@ const io = createMockIO(clock, args.clockMode);
 
 // Setup keyboard input for real-time active mode
 const rl: readline.Interface | null = null;
-if (args.clockMode === 'realtime' && args.mode === 'active') {
+if (args.clockMode === 'realtime' && args.mode === 'practice') {
   if (process.stdin.isTTY) {
     readline.emitKeypressEvents(process.stdin);
     process.stdin.setRawMode(true);
@@ -113,8 +113,8 @@ async function run() {
         continue;
       }
 
-      if (args.mode === 'active') {
-        await runActiveEmission(
+      if (args.mode === 'practice') {
+        await runPracticeEmission(
           config,
           char,
           io,
@@ -123,7 +123,7 @@ async function run() {
           abortController.signal
         );
       } else {
-        await runPassiveEmission(
+        await runListenEmission(
           config,
           char,
           io,

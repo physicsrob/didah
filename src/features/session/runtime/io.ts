@@ -4,7 +4,7 @@
 
 export interface HistoryItem {
   char: string;
-  result: 'correct' | 'incorrect' | 'timeout' | 'passive';
+  result: 'correct' | 'incorrect' | 'timeout' | 'listen';
 }
 
 export type SessionSnapshot = {

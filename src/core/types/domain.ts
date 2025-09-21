@@ -6,7 +6,7 @@ export type UserConfig = {
   includeAdvPunct: boolean;
   sessionDefaults: {
     lengthSec: 60 | 120 | 300;
-    mode: "active" | "passive";
+    mode: "practice" | "listen";
     speedTier: "slow" | "medium" | "fast" | "lightning";
     feedback: "buzzer" | "flash" | "both";
     replay: boolean;
@@ -16,7 +16,7 @@ export type UserConfig = {
 
 // Session lifecycle
 export type SessionConfig = {
-  mode: "active" | "passive";
+  mode: "practice" | "listen";
   lengthMs: number;
   wpm: number;
   speedTier: "slow" | "medium" | "fast" | "lightning";
