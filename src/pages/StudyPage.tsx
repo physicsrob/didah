@@ -5,6 +5,7 @@
  */
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { SystemClock } from '../features/session/runtime/clock.js';
 import { SimpleInputBus } from '../features/session/runtime/inputBus.js';
 import { createIOAdapter } from '../features/session/runtime/ioAdapter.js';
@@ -14,8 +15,12 @@ import { RandomCharSource } from '../features/session/runtime/sessionProgram.js'
 import { AudioEngine } from '../features/session/services/audioEngine.js';
 import { createFeedback } from '../features/session/services/feedback/index.js';
 import { DEFAULT_SESSION_CONFIG, DEFAULT_AUDIO_CONFIG } from '../core/config/defaults.js';
+import { getMorsePattern as getMorsePatternFromAlphabet } from '../core/morse/alphabet.js';
+import '../styles/main.css';
+import '../styles/studyPage.css';
 
 export function StudyPage() {
+  const navigate = useNavigate();
   const [snapshot, setSnapshot] = useState<SessionSnapshot>({
     phase: 'idle',
     currentChar: null,
@@ -109,6 +114,12 @@ export function StudyPage() {
     runner.start(DEFAULT_SESSION_CONFIG);
   }, [runner, initializeAudio]);
 
+  // Stop session and go back
+  const stopSession = useCallback(() => {
+    runner.stop();
+    navigate('/');
+  }, [runner, navigate]);
+
   // Auto-start session on mount
   useEffect(() => {
     const autoStart = async () => {
@@ -117,7 +128,7 @@ export function StudyPage() {
       }
     };
     autoStart();
-  }, [snapshot.phase, startSession]); // Include dependencies
+  }, [snapshot.phase, startSession]);
 
 
   // Format time display
@@ -141,336 +152,171 @@ export function StudyPage() {
     }
   }, [feedbackFlash]);
 
+  // Get morse pattern for current character
+  const getMorsePattern = (char: string | null) => {
+    if (!char) return '';
+    const pattern = getMorsePatternFromAlphabet(char);
+    return pattern ? pattern.join('') : '';
+  };
+
   return (
-    <div className={`study-page ${feedbackFlash ? `morse-flash-${feedbackFlash}` : ''}`}>
-      <style>{`
-        .study-page {
-          max-width: 800px;
-          margin: 0 auto;
-          padding: 2rem;
-          font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-          min-height: 100vh;
-          transition: background-color 0.15s ease-out;
-        }
+    <div className="session-container">
+      {/* Feedback Flash Overlay */}
+      {feedbackFlash && (
+        <div className={`feedback-flash ${feedbackFlash}`} />
+      )}
 
-        .session-controls {
-          background: #f5f5f5;
-          padding: 1rem;
-          border-radius: 8px;
-          margin-bottom: 2rem;
-        }
-
-        .session-controls h2 {
-          margin: 0 0 1rem 0;
-          color: #333;
-        }
-
-        .controls-row {
-          display: flex;
-          gap: 1rem;
-          align-items: center;
-        }
-
-        button {
-          padding: 0.5rem 1rem;
-          border: none;
-          border-radius: 4px;
-          cursor: pointer;
-          font-size: 1rem;
-        }
-
-        .start-btn {
-          background: #4CAF50;
-          color: white;
-        }
-
-        .start-btn:hover {
-          background: #45a049;
-        }
-
-        .stop-btn {
-          background: #f44336;
-          color: white;
-        }
-
-        .stop-btn:hover {
-          background: #da190b;
-        }
-
-        .session-display {
-          background: #1a1a1a;
-          color: #fff;
-          padding: 2rem;
-          border-radius: 8px;
-          margin-bottom: 2rem;
-          min-height: 300px;
-          position: relative;
-        }
-
-        .session-hud {
-          display: flex;
-          justify-content: space-between;
-          margin-bottom: 1rem;
-          font-size: 0.9rem;
-          color: #ccc;
-        }
-
-        .hud-item {
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-        }
-
-        .hud-label {
-          font-size: 0.8rem;
-          opacity: 0.8;
-        }
-
-        .hud-value {
-          font-size: 1.1rem;
-          font-weight: bold;
-        }
-
-        .character-display {
-          text-align: center;
-          margin: 2rem 0;
-        }
-
-        .current-character {
-          font-size: 5rem;
-          font-weight: bold;
-          font-family: 'Courier New', monospace;
-          margin-bottom: 1rem;
-          min-height: 120px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-        }
-
-        .current-character.hidden {
-          color: #555;
-        }
-
-        .previous-characters {
-          font-family: 'Courier New', monospace;
-          font-size: 1.2rem;
-          background: #333;
-          padding: 1rem;
-          border-radius: 4px;
-          min-height: 60px;
-          overflow-wrap: break-word;
-          letter-spacing: 0.2em;
-        }
-
-        .instructions {
-          text-align: center;
-          color: #999;
-          font-style: italic;
-          margin-top: 1rem;
-        }
-
-        .phase-indicator {
-          display: inline-block;
-          padding: 0.25rem 0.5rem;
-          border-radius: 4px;
-          font-size: 0.8rem;
-          font-weight: bold;
-          text-transform: uppercase;
-        }
-
-        .phase-idle { background: #666; color: white; }
-        .phase-running { background: #2196F3; color: white; }
-        .phase-ended { background: #4CAF50; color: white; }
-
-        .stats-bar {
-          display: flex;
-          gap: 2rem;
-          justify-content: center;
-          margin-top: 1rem;
-          padding-top: 1rem;
-          border-top: 1px solid #444;
-        }
-
-        .stat-item {
-          display: flex;
-          align-items: center;
-          gap: 0.5rem;
-        }
-
-        .stat-label {
-          color: #999;
-          font-size: 0.9rem;
-        }
-
-        .stat-value {
-          font-weight: bold;
-          font-size: 1.1rem;
-        }
-
-        .stat-value.correct { color: #4CAF50; }
-        .stat-value.incorrect { color: #f44336; }
-        .stat-value.timeout { color: #ff9800; }
-
-        /* Flash feedback styles - matching the new FlashFeedback class names */
-        .morse-flash-error-subtle {
-          background-color: rgba(255, 67, 54, 0.1) !important;
-          transition: background-color 0.05s ease-out;
-        }
-
-        .morse-flash-error-medium {
-          background-color: rgba(255, 67, 54, 0.3) !important;
-          transition: background-color 0.05s ease-out;
-        }
-
-        .morse-flash-error-strong {
-          background-color: rgba(255, 67, 54, 0.5) !important;
-          transition: background-color 0.05s ease-out;
-        }
-
-        .morse-flash-success-subtle {
-          background-color: rgba(76, 175, 80, 0.1) !important;
-          transition: background-color 0.05s ease-out;
-        }
-
-        .morse-flash-success-medium {
-          background-color: rgba(76, 175, 80, 0.3) !important;
-          transition: background-color 0.05s ease-out;
-        }
-
-        .morse-flash-success-strong {
-          background-color: rgba(76, 175, 80, 0.5) !important;
-          transition: background-color 0.05s ease-out;
-        }
-
-        /* Replay overlay */
-        .replay-overlay {
-          position: fixed;
-          top: 50%;
-          left: 50%;
-          transform: translate(-50%, -50%);
-          background: rgba(255, 0, 0, 0.95);
-          color: white;
-          font-size: 12rem;
-          font-weight: bold;
-          padding: 3rem 5rem;
-          border-radius: 20px;
-          z-index: 10000;
-          font-family: 'Courier New', monospace;
-          box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8);
-          border: 4px solid rgba(255, 255, 255, 0.3);
-          animation: fadeInPulse 0.3s ease-out;
-        }
-
-        @keyframes fadeInPulse {
-          0% {
-            opacity: 0;
-            transform: translate(-50%, -50%) scale(0.5);
-          }
-          50% {
-            transform: translate(-50%, -50%) scale(1.05);
-          }
-          100% {
-            opacity: 1;
-            transform: translate(-50%, -50%) scale(1);
-          }
-        }
-
-        .config-info {
-          background: #2a2a2a;
-          padding: 0.5rem 1rem;
-          border-radius: 4px;
-          font-size: 0.9rem;
-          color: #aaa;
-        }
-
-        .config-info span {
-          margin: 0 0.5rem;
-        }
-      `}</style>
-
-
-      <div className="session-display">
-        <div className="session-hud">
-          <div className="hud-item">
-            <span className="hud-label">Time Remaining</span>
-            <span className="hud-value">{formatTime(snapshot.remainingMs)}</span>
-          </div>
-          <div className="hud-item">
-            <span className="hud-label">Accuracy</span>
-            <span className="hud-value">{accuracy}%</span>
-          </div>
-          <div className="hud-item">
-            <span className="hud-label">Characters</span>
-            <span className="hud-value">{snapshot.previous.length}</span>
+      {/* Audio Initialization */}
+      {!isAudioInitialized && snapshot.phase === 'idle' && (
+        <div className="audio-init-container">
+          <div className="audio-init-card">
+            <h2 className="audio-init-title">Welcome to CodeBeat</h2>
+            <p className="audio-init-text">
+              Click below to initialize audio and start your practice session.
+            </p>
+            <button
+              className="btn btn-primary btn-large"
+              onClick={startSession}
+            >
+              Start Practice Session
+            </button>
           </div>
         </div>
+      )}
 
+      {/* Session Header */}
+      <div className="session-header">
+        <div className="session-timer">
+          <span className="label">Time Remaining</span>
+          <span className="session-timer-value">
+            {formatTime(snapshot.remainingMs)}
+          </span>
+        </div>
+
+        <div className={`session-status status-${snapshot.phase}`}>
+          <span className="phase-indicator">
+            {snapshot.phase}
+          </span>
+        </div>
+
+        <div className="session-stats">
+          <div className="stat-item">
+            <span className="stat-label">Accuracy</span>
+            <span className="stat-value">{accuracy}%</span>
+          </div>
+          <div className="stat-item">
+            <span className="stat-label">Characters</span>
+            <span className="stat-value">{snapshot.previous.length}</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Main Display Area */}
+      <div className="session-display">
         <div className="character-display">
-          <div className={`current-character ${DEFAULT_SESSION_CONFIG.mode === 'passive' && !revealedChar ? 'hidden' : ''}`}>
+          <div className={`current-character ${DEFAULT_SESSION_CONFIG.mode === 'passive' && !revealedChar ? 'placeholder' : ''}`}>
             {DEFAULT_SESSION_CONFIG.mode === 'active'
-              ? '·'  // Never show character in active mode during normal play
+              ? (snapshot.currentChar ? '·' : '')
               : (revealedChar || (snapshot.currentChar ? '?' : '·'))
             }
           </div>
 
-          {snapshot.phase === 'idle' && (
-            <div className="instructions">
-              Click "Start Practice Session" to begin
+          {snapshot.currentChar && (
+            <div className="morse-pattern">
+              {getMorsePattern(snapshot.currentChar)}
             </div>
+          )}
+
+          {snapshot.phase === 'idle' && !isAudioInitialized && (
+            <p className="body-regular text-muted">
+              Click "Start Practice Session" to begin
+            </p>
           )}
 
           {snapshot.phase === 'running' && DEFAULT_SESSION_CONFIG.mode === 'active' && (
-            <div className="instructions">
+            <p className="body-regular text-muted">
               Type the character you hear
-            </div>
+            </p>
           )}
 
           {snapshot.phase === 'running' && DEFAULT_SESSION_CONFIG.mode === 'passive' && (
-            <div className="instructions">
+            <p className="body-regular text-muted">
               Listen and watch for the character reveal
-            </div>
+            </p>
           )}
 
           {snapshot.phase === 'ended' && (
-            <div className="instructions">
-              Session complete! {accuracy}% accuracy
+            <div className="text-center">
+              <h2 className="heading-2 mb-4">Session Complete!</h2>
+              <p className="body-large text-success">{accuracy}% accuracy</p>
             </div>
           )}
         </div>
 
-        <div className="previous-characters">
-          {snapshot.previous.length > 0 ? snapshot.previous.join('') : 'Previous characters will appear here'}
-        </div>
-
-        {snapshot.phase !== 'idle' && (
-          <div className="stats-bar">
-            <div className="stat-item">
-              <span className="stat-label">Correct:</span>
-              <span className="stat-value correct">{snapshot.stats?.correct ?? 0}</span>
-            </div>
-            <div className="stat-item">
-              <span className="stat-label">Incorrect:</span>
-              <span className="stat-value incorrect">{snapshot.stats?.incorrect ?? 0}</span>
-            </div>
-            <div className="stat-item">
-              <span className="stat-label">Timeout:</span>
-              <span className="stat-value timeout">{snapshot.stats?.timeout ?? 0}</span>
-            </div>
+        {/* Character History */}
+        {snapshot.previous.length > 0 && (
+          <div className="character-history">
+            {snapshot.previous.map((char, i) => (
+              <div key={i} className="history-char correct">
+                {char}
+              </div>
+            ))}
           </div>
         )}
+      </div>
 
-        <div className="config-info" style={{ marginTop: '1rem' }}>
-          <span>📝 Mode: {DEFAULT_SESSION_CONFIG.mode}</span>
-          <span>⚡ Speed: {DEFAULT_SESSION_CONFIG.speedTier}</span>
-          <span>📡 WPM: {DEFAULT_SESSION_CONFIG.wpm}</span>
-          <span>⏱️ Duration: {DEFAULT_SESSION_CONFIG.lengthMs / 1000}s</span>
+      {/* Session Stats Bar */}
+      {snapshot.phase !== 'idle' && (
+        <div className="card">
+          <div className="flex justify-between">
+            <div className="stat-item">
+              <span className="stat-label">Correct</span>
+              <span className="stat-value text-success">{snapshot.stats?.correct ?? 0}</span>
+            </div>
+            <div className="stat-item">
+              <span className="stat-label">Incorrect</span>
+              <span className="stat-value text-error">{snapshot.stats?.incorrect ?? 0}</span>
+            </div>
+            <div className="stat-item">
+              <span className="stat-label">Timeout</span>
+              <span className="stat-value text-warning">{snapshot.stats?.timeout ?? 0}</span>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Session Controls */}
+      <div className="session-controls">
+        <button
+          className="btn btn-secondary"
+          onClick={stopSession}
+        >
+          End Session
+        </button>
+
+        <div className="flex gap-4 text-muted body-small">
+          <span>Mode: {DEFAULT_SESSION_CONFIG.mode}</span>
+          <span>·</span>
+          <span>Speed: {DEFAULT_SESSION_CONFIG.speedTier}</span>
+          <span>·</span>
+          <span>WPM: {DEFAULT_SESSION_CONFIG.wpm}</span>
         </div>
       </div>
 
-      {/* Replay overlay */}
+      {/* Replay Overlay */}
       {replayOverlay && (
         <div className="replay-overlay">
-          {replayOverlay}
+          <div className="replay-content animate-slide-up">
+            <div className="replay-character">
+              {replayOverlay}
+            </div>
+            <div className="morse-pattern" style={{ fontSize: '32px', marginBottom: '16px' }}>
+              {getMorsePattern(replayOverlay)}
+            </div>
+            <div className="replay-label">
+              Missed Character
+            </div>
+          </div>
         </div>
       )}
     </div>

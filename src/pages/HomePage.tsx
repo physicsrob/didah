@@ -1,4 +1,5 @@
 import { useNavigate } from 'react-router-dom'
+import '../styles/main.css'
 
 export default function HomePage() {
   const navigate = useNavigate()
@@ -7,49 +8,42 @@ export default function HomePage() {
     navigate('/session')
   }
 
-  return (
-    <div style={{
-      display: 'flex',
-      flexDirection: 'column',
-      alignItems: 'center',
-      justifyContent: 'center',
-      minHeight: '100vh',
-      backgroundColor: '#1a1a1a',
-      color: 'white',
-      fontFamily: 'monospace'
-    }}>
-      <h1 style={{
-        fontSize: '4rem',
-        marginBottom: '2rem',
-        fontWeight: 'bold',
-        letterSpacing: '0.1em'
-      }}>
-        CodeBeat
-      </h1>
+  const handleStatistics = () => {
+    navigate('/statistics')
+  }
 
-      <button
-        onClick={handleStartSession}
-        style={{
-          fontSize: '1.5rem',
-          padding: '1rem 2rem',
-          backgroundColor: '#4CAF50',
-          color: 'white',
-          border: 'none',
-          borderRadius: '8px',
-          cursor: 'pointer',
-          fontFamily: 'monospace',
-          letterSpacing: '0.05em',
-          transition: 'background-color 0.2s'
-        }}
-        onMouseOver={(e) => {
-          e.currentTarget.style.backgroundColor = '#45a049'
-        }}
-        onMouseOut={(e) => {
-          e.currentTarget.style.backgroundColor = '#4CAF50'
-        }}
-      >
-        Start Session
-      </button>
+  const handleSettings = () => {
+    navigate('/settings')
+  }
+
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-gradient">
+      <div className="max-w-sm w-full px-6 py-10">
+        <h1 className="brand-title text-center mb-16" style={{ fontSize: '48px' }}>
+          CodeBeat
+        </h1>
+
+        <div className="flex flex-col gap-5 items-center">
+          <button
+            className="btn btn-primary btn-large w-full"
+            onClick={handleStartSession}
+          >
+            Start Session
+          </button>
+          <button
+            className="btn btn-secondary btn-large w-full"
+            onClick={handleStatistics}
+          >
+            Statistics
+          </button>
+          <button
+            className="btn btn-secondary btn-large w-full"
+            onClick={handleSettings}
+          >
+            Settings
+          </button>
+        </div>
+      </div>
     </div>
   )
 }

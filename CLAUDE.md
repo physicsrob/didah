@@ -90,3 +90,4 @@ When working on this project:
 3. **Follow the implementation order** outlined in STATUS.md and arch.md
 4. **Run tests** after implementing core logic (`npm test`)
 5. **Commit frequently** with descriptive messages including 🤖 Generated with [Claude Code]
+6. **Read brand.md before modifying HTML/CSS** to ensure consistent styling and branding
