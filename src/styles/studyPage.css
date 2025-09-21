@@ -2,12 +2,14 @@
 
 /* Session Container */
 .session-container {
-    max-width: 1200px;
+    width: 100%;
+    max-width: 900px;
     margin: 0 auto;
     padding: 20px;
     min-height: 100vh;
     display: flex;
     flex-direction: column;
+    position: relative;
 }
 
 /* Session Header */
@@ -69,6 +71,7 @@
     justify-content: center;
     align-items: center;
     padding: 40px 20px;
+    width: 100%;
 }
 
 .session-status-area {
@@ -92,7 +95,7 @@
 /* Character History - Continuous Text Display */
 .character-history-container {
     width: 100%;
-    max-width: 100%;
+    min-width: 600px;
     height: 80px;
     background: var(--bg-secondary);
     border: 1px solid var(--border-primary);
@@ -136,6 +139,7 @@
     color: var(--text-muted);
     font-style: italic;
     font-size: 18px;
+    white-space: nowrap;
 }
 
 /* Character result colors */
@@ -389,6 +393,9 @@
         justify-content: space-around;
     }
 
+    .character-history-container {
+        min-width: 100%;
+    }
 
     .replay-character {
         font-size: 120px;

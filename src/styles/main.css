@@ -33,6 +33,15 @@
     --color-blue-light: #93c5fd;
     --color-blue-dark: #1e40af;
 
+    /* Colors - Background */
+    --bg-primary: var(--color-primary-black);
+    --bg-secondary: var(--color-secondary-gray);
+    --bg-tertiary: var(--color-tertiary-gray);
+
+    /* Colors - Border */
+    --border-primary: var(--color-tertiary-gray);
+    --border-secondary: #404040;
+
     /* Typography */
     --font-primary: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     --font-mono: 'Source Code Pro', 'SF Mono', monospace;
@@ -48,6 +57,11 @@
 }
 
 /* Base Styles */
+html, body {
+    width: 100%;
+    min-height: 100vh;
+}
+
 body {
     font-family: var(--font-primary);
     background: var(--color-primary-black);
@@ -55,6 +69,11 @@ body {
     line-height: 1.6;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+}
+
+#root {
+    width: 100%;
+    min-height: 100vh;
 }
 
 /* Typography Classes */
