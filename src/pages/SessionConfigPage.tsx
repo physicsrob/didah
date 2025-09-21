@@ -31,6 +31,9 @@ export function SessionConfigPage() {
   const [includeStdPunct, setIncludeStdPunct] = useState(() => localStorage.getItem('includeStdPunct') !== 'false');
   const [includeAdvPunct, setIncludeAdvPunct] = useState(() => localStorage.getItem('includeAdvPunct') === 'true');
 
+  // Live Copy specific settings
+  const [liveCopyFeedback, setLiveCopyFeedback] = useState<'end' | 'immediate'>('end');
+
   // Re-read localStorage when component mounts/becomes visible
   useEffect(() => {
     const updateSettings = () => {
@@ -67,6 +70,7 @@ export function SessionConfigPage() {
       feedback,
       replay,
       effectiveAlphabet: buildAlphabet(),
+      ...(mode === 'live-copy' && { liveCopyFeedback }),
     };
 
     // Navigate to session with config
@@ -175,6 +179,34 @@ export function SessionConfigPage() {
               <option value="hardCharacters" disabled>Hard Characters (Coming Soon)</option>
             </select>
           </div>
+
+          {/* Live Copy Feedback Mode */}
+          {mode === 'live-copy' && (
+            <div className="form-group mb-4">
+              <label className="form-label">Feedback Mode</label>
+              <div className="flex gap-3">
+                <button
+                  type="button"
+                  className={`btn ${liveCopyFeedback === 'end' ? 'btn-primary' : 'btn-secondary'}`}
+                  onClick={() => setLiveCopyFeedback('end')}
+                >
+                  End of Session
+                </button>
+                <button
+                  type="button"
+                  className={`btn ${liveCopyFeedback === 'immediate' ? 'btn-primary' : 'btn-secondary'}`}
+                  onClick={() => setLiveCopyFeedback('immediate')}
+                >
+                  Live Corrections
+                </button>
+              </div>
+              <p className="body-small text-muted mt-2">
+                {liveCopyFeedback === 'end'
+                  ? 'Grade your copy at the end of the session'
+                  : 'See corrections in red as you type'}
+              </p>
+            </div>
+          )}
 
           {/* WPM */}
           <div className="form-group">

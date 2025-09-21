@@ -13,6 +13,7 @@ export type SessionSnapshot = {
   previous: HistoryItem[];
   startedAt: number | null;
   remainingMs: number;
+  transmittedChars?: string[]; // For Live Copy mode - tracks what's been sent
   stats?: {
     correct: number;
     incorrect: number;

@@ -15,6 +15,7 @@ import { createSessionRunner } from '../features/session/runtime/sessionProgram.
 import { RandomCharSource } from '../features/session/runtime/sessionProgram.js';
 import { createFeedback } from '../features/session/services/feedback/index.js';
 import { useAudio } from '../contexts/useAudio';
+import { useLiveCopyInput, LiveCopyDisplay } from '../components/LiveCopy';
 import '../styles/main.css';
 import '../styles/studyPage.css';
 
@@ -74,6 +75,10 @@ export function StudyPage() {
   // Always start in 'waiting' state, we'll auto-advance if needed
   const [studyPhase, setStudyPhase] = useState<StudyPhase>('waiting');
   const [countdownNumber, setCountdownNumber] = useState<number>(3);
+
+  // Live Copy mode - use the new hook (must be after studyPhase declaration)
+  const isLiveCopyActive = config?.mode === 'live-copy' && studyPhase === 'session' && snapshot.phase === 'running';
+  const { typedChars, reset: resetLiveCopyInput } = useLiveCopyInput(isLiveCopyActive);
 
   // Create runtime dependencies
   const clock = useMemo(() => new SystemClock(), []);
@@ -148,8 +153,11 @@ export function StudyPage() {
     }
   }, [runner, config]);
 
-  // Handle keyboard input
+  // Handle keyboard input for Practice mode only
   useEffect(() => {
+    // Don't capture keyboard for Live Copy mode - it has its own handler
+    if (config?.mode === 'live-copy') return;
+
     const handleKeyDown = (e: KeyboardEvent) => {
       // Only capture alphanumeric and punctuation keys
       if (e.key.length === 1) {
@@ -159,7 +167,7 @@ export function StudyPage() {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [input]);
+  }, [input, config?.mode]);
 
   // Stop session and go back
   const stopSession = useCallback(() => {
@@ -214,6 +222,9 @@ export function StudyPage() {
 
       // Move to session phase
       setStudyPhase('session');
+
+      // Reset Live Copy input for new session
+      resetLiveCopyInput();
     };
 
     runCountdown();
@@ -348,8 +359,17 @@ export function StudyPage() {
             )}
           </div>
 
-          {/* Character History */}
-          <CharacterHistory items={snapshot.previous} />
+          {/* Character Display - depends on mode */}
+          {config?.mode === 'live-copy' ? (
+            <LiveCopyDisplay
+              phase={snapshot.phase}
+              transmittedChars={snapshot.transmittedChars || []}
+              typedChars={typedChars}
+              feedbackMode={config.liveCopyFeedback}
+            />
+          ) : (
+            <CharacterHistory items={snapshot.previous} />
+          )}
         </div>
       )}
 

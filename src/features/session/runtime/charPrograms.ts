@@ -16,6 +16,7 @@ export type SessionConfig = {
   speedTier: 'slow' | 'medium' | 'fast' | 'lightning';
   lengthMs: number;
   replay?: boolean;
+  liveCopyFeedback?: 'end' | 'immediate'; // For Live Copy mode
 };
 
 export type PracticeOutcome = 'correct' | 'incorrect' | 'timeout';
@@ -203,4 +204,39 @@ export async function runListenEmission(
 
   // Post-reveal delay
   await clock.sleep(postRevealMs, sessionSignal);
+}
+
+/**
+ * Run a Live Copy mode emission
+ * - Play audio (wait for completion)
+ * - Log transmitted character
+ * - Add standard inter-character spacing
+ * - No input handling (UI owns that)
+ */
+export async function runLiveCopyEmission(
+  cfg: SessionConfig,
+  char: string,
+  io: IO,
+  clock: Clock,
+  sessionSignal: AbortSignal
+): Promise<void> {
+  const emissionStart = clock.now();
+
+  // Log emission start
+  io.log({ type: 'emission', at: emissionStart, char });
+
+  // Play audio and wait for completion (similar to Listen mode)
+  try {
+    await io.playChar(char, cfg.wpm);
+  } catch (error) {
+    debug.warn(`Audio failed for char: ${char}`, error);
+  }
+
+  // Note: Inter-character spacing (3 dits) is standard for Live Copy
+  // This simulates real Morse transmission timing
+  const ditMs = wpmToDitMs(cfg.wpm);
+  const interCharSpacingMs = ditMs * 3;
+
+  // Add inter-character spacing
+  await clock.sleep(interCharSpacingMs, sessionSignal);
 }
