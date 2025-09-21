@@ -16,6 +16,7 @@ export type IOAdapterConfig = {
   onHide?: () => void;
   onLog?: (event: LogEvent) => void;
   onSnapshot?: (snapshot: SessionSnapshot) => void;
+  onFlash?: (type: 'error' | 'warning' | 'success') => void; // Flash callback
   replayDuration?: number; // ms to show replay overlay
 };
 
@@ -30,6 +31,7 @@ export function createIOAdapter(config: IOAdapterConfig): IO {
     onHide,
     onLog,
     onSnapshot,
+    onFlash,
     replayDuration = 1000
   } = config;
 
@@ -64,6 +66,17 @@ export function createIOAdapter(config: IOAdapterConfig): IO {
 
     feedback(kind: 'correct' | 'incorrect' | 'timeout', char: string): void {
       console.log(`[Feedback] ${kind} for '${char}'`);
+
+      // Trigger visual flash if callback provided
+      if (onFlash) {
+        if (kind === 'correct') {
+          onFlash('success');
+        } else if (kind === 'incorrect' || kind === 'timeout') {
+          onFlash('error');
+        }
+      }
+
+      // Trigger audio feedback if configured
       if (!feedback) {
         console.log(`[Feedback] No feedback handler configured`);
         return;

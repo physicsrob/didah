@@ -79,7 +79,23 @@ export function StudyPage() {
   const clock = useMemo(() => new SystemClock(), []);
   const input = useMemo(() => new SimpleInputBus(), []);
   const audioEngine = useMemo(() => getAudioEngine(), [getAudioEngine]);
-  const feedback = useMemo(() => createFeedback(config?.feedback || 'flash'), [config?.feedback]);
+
+  // Create feedback and initialize buzzer if needed
+  const feedback = useMemo(() => {
+    const fb = createFeedback(config?.feedback || 'flash');
+
+    // Initialize buzzer with AudioContext if it has buzzer component
+    if ((config?.feedback === 'buzzer' || config?.feedback === 'both') && audioEngine) {
+      // Access AudioContext from audioEngine - it should have this property
+      const audioContext = (audioEngine as unknown as { audioContext?: AudioContext }).audioContext;
+      if (audioContext && 'initialize' in fb) {
+        (fb as { initialize: (ctx: AudioContext) => void }).initialize(audioContext);
+        console.log('[StudyPage] Initialized buzzer with AudioContext');
+      }
+    }
+
+    return fb;
+  }, [config?.feedback, audioEngine]);
 
   const source = useMemo(() => new RandomCharSource(config?.effectiveAlphabet?.join('') || 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'), [config?.effectiveAlphabet]);
 
@@ -101,6 +117,9 @@ export function StudyPage() {
         setReplayOverlay(null);
       },
       onSnapshot: (snap: SessionSnapshot) => setSnapshot(snap),
+      onFlash: (type: 'error' | 'warning' | 'success') => {
+        setFeedbackFlash(type);
+      },
       replayDuration: 1500  // Show replay for 1.5 seconds
     });
   }, [audioEngine, feedback, config?.mode, config?.replay]);
