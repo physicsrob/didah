@@ -323,9 +323,7 @@ export function ActiveSessionPage() {
   }
 
   const getSourceDisplay = () => {
-    // Use the source name from sourceContent if available
-    if (sourceContent?.name) return sourceContent.name;
-    // Fallback to sourceId formatting
+    // Format the sourceId for display
     return config?.sourceId?.replace(/_/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase()) || 'Unknown';
   };
 

@@ -423,6 +423,19 @@ body {
     gap: 32px;
 }
 
+/* Flexbox Utilities */
+.flex-1 {
+    flex: 1;
+}
+
+.flex-auto {
+    flex: auto;
+}
+
+.flex-none {
+    flex: none;
+}
+
 /* Margin Utilities */
 .m-0 {
     margin: 0;
@@ -539,6 +552,36 @@ body {
     padding-bottom: 24px;
 }
 
+.py-10 {
+    padding-top: 40px;
+    padding-bottom: 40px;
+}
+
+/* Spacing Utilities for Child Elements */
+.space-y-2 > * + * {
+    margin-top: 8px;
+}
+
+.space-y-3 > * + * {
+    margin-top: 12px;
+}
+
+.space-y-4 > * + * {
+    margin-top: 16px;
+}
+
+.space-y-6 > * + * {
+    margin-top: 24px;
+}
+
+.space-x-2 > * + * {
+    margin-left: 8px;
+}
+
+.space-x-4 > * + * {
+    margin-left: 16px;
+}
+
 /* Width Utilities */
 .w-full {
     width: 100%;
@@ -592,6 +635,48 @@ body {
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
 }
 
+/* Text Size Utilities */
+.text-xs {
+    font-size: 12px;
+}
+
+.text-sm {
+    font-size: 14px;
+}
+
+.text-base {
+    font-size: 16px;
+}
+
+.text-lg {
+    font-size: 18px;
+}
+
+.text-xl {
+    font-size: 20px;
+}
+
+.text-2xl {
+    font-size: 24px;
+}
+
+/* Font Weight Utilities */
+.font-normal {
+    font-weight: 400;
+}
+
+.font-medium {
+    font-weight: 500;
+}
+
+.font-semibold {
+    font-weight: 600;
+}
+
+.font-bold {
+    font-weight: 700;
+}
+
 /* State Classes */
 .text-success {
     color: var(--color-success);
@@ -611,6 +696,14 @@ body {
 
 .text-muted {
     color: var(--text-muted);
+}
+
+.text-gray-600 {
+    color: #666666;
+}
+
+.text-gray-700 {
+    color: #4a4a4a;
 }
 
 .bg-success {
