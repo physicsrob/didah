@@ -155,6 +155,14 @@
     color: var(--color-warning);
 }
 
+.char-pending {
+    color: var(--text-muted);
+}
+
+.char-listen {
+    color: var(--text-primary);
+}
+
 .char-passive {
     color: var(--text-primary);
 }

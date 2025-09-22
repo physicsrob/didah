@@ -209,7 +209,6 @@ export async function runListenEmission(
 /**
  * Run a Live Copy mode emission
  * - Play audio (wait for completion)
- * - Log transmitted character
  * - Add standard inter-character spacing
  * - No input handling (UI owns that)
  */
@@ -220,11 +219,6 @@ export async function runLiveCopyEmission(
   clock: Clock,
   sessionSignal: AbortSignal
 ): Promise<void> {
-  const emissionStart = clock.now();
-
-  // Log emission start
-  io.log({ type: 'emission', at: emissionStart, char });
-
   // Play audio and wait for completion (similar to Listen mode)
   try {
     await io.playChar(char, cfg.wpm);

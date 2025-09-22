@@ -4,50 +4,26 @@
  * Main interface for Morse code practice sessions using the new SessionRunner runtime.
  */
 
-import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { getMorsePattern as getMorsePatternFromAlphabet } from '../core/morse/alphabet.js';
 import { SystemClock } from '../features/session/runtime/clock.js';
 import { SimpleInputBus } from '../features/session/runtime/inputBus.js';
 import { createIOAdapter } from '../features/session/runtime/ioAdapter.js';
-import type { SessionSnapshot, HistoryItem } from '../features/session/runtime/io.js';
+import type { SessionSnapshot } from '../features/session/runtime/io.js';
 import { createSessionRunner } from '../features/session/runtime/sessionProgram.js';
 import { RandomCharSource } from '../features/session/runtime/sessionProgram.js';
 import { createFeedback } from '../features/session/services/feedback/index.js';
 import { useAudio } from '../contexts/useAudio';
-import { useLiveCopyInput, LiveCopyDisplay } from '../components/LiveCopy';
+import { CharacterDisplay } from '../components/CharacterDisplay';
+import { historyToDisplay, liveCopyToDisplay } from '../components/CharacterDisplay.transformations';
+import { useLiveCopy } from '../features/session/livecopy/useLiveCopy';
+import { evaluateLiveCopy } from '../features/session/livecopy/evaluator';
+import { LiveCopyResults } from '../components/LiveCopyResults';
 import '../styles/main.css';
 import '../styles/studyPage.css';
 
 type StudyPhase = 'waiting' | 'countdown' | 'session';
-
-// Character History component for continuous text display
-function CharacterHistory({ items }: { items: HistoryItem[] }) {
-  const scrollRef = useRef<HTMLDivElement>(null);
-
-  // Auto-scroll to the right when items change
-  useEffect(() => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollLeft = scrollRef.current.scrollWidth;
-    }
-  }, [items]);
-
-  return (
-    <div className="character-history-container">
-      <div className="character-history-text" ref={scrollRef}>
-        {items.length === 0 ? (
-          <span className="history-placeholder">Session started. Characters will appear here...</span>
-        ) : (
-          items.map((item, i) => (
-            <span key={i} className={`char-${item.result}`}>
-              {item.char}
-            </span>
-          ))
-        )}
-      </div>
-    </div>
-  );
-}
 
 export function StudyPage() {
   const navigate = useNavigate();
@@ -66,6 +42,7 @@ export function StudyPage() {
     previous: [],
     startedAt: null,
     remainingMs: 0,
+    emissions: [],
     stats: { correct: 0, incorrect: 0, timeout: 0, accuracy: 0 },
   });
 
@@ -78,7 +55,12 @@ export function StudyPage() {
 
   // Live Copy mode - use the new hook (must be after studyPhase declaration)
   const isLiveCopyActive = config?.mode === 'live-copy' && studyPhase === 'session' && snapshot.phase === 'running';
-  const { typedChars, reset: resetLiveCopyInput } = useLiveCopyInput(isLiveCopyActive);
+  const {
+    events: liveCopyEvents,
+    currentTime: liveCopyTime,
+    addTransmitEvent,
+    reset: resetLiveCopy
+  } = useLiveCopy(isLiveCopyActive);
 
   // Create runtime dependencies
   const clock = useMemo(() => new SystemClock(), []);
@@ -143,15 +125,24 @@ export function StudyPage() {
   // Create session runner
   const runner = useMemo(() => createSessionRunner({ clock, io, input, source }), [clock, io, input, source]);
 
-  // Subscribe to session snapshots
+  // Subscribe to session snapshots and collect Live Copy transmission events
   useEffect(() => {
     if (config) {
       const unsub = runner.subscribe((snap) => {
         setSnapshot(snap);
+
+        // For Live Copy mode, sync emissions to the event collector
+        if (config.mode === 'live-copy' && snap.emissions.length > liveCopyEvents.filter(e => e.type === 'transmitted').length) {
+          // Get the latest emission that hasn't been added yet
+          const newEmissions = snap.emissions.slice(liveCopyEvents.filter(e => e.type === 'transmitted').length);
+          newEmissions.forEach(emission => {
+            addTransmitEvent(emission.char, emission.startTime, emission.duration);
+          });
+        }
       });
       return () => unsub();
     }
-  }, [runner, config]);
+  }, [runner, config, addTransmitEvent, liveCopyEvents]);
 
   // Handle keyboard input for Practice mode only
   useEffect(() => {
@@ -224,7 +215,7 @@ export function StudyPage() {
       setStudyPhase('session');
 
       // Reset Live Copy input for new session
-      resetLiveCopyInput();
+      resetLiveCopy();
     };
 
     runCountdown();
@@ -265,6 +256,21 @@ export function StudyPage() {
       runner.stop();
     };
   }, [runner]);
+
+  // Evaluate Live Copy state (computed regardless of mode to avoid conditional hook)
+  const liveCopyState = useMemo(
+    () => config?.mode === 'live-copy'
+      ? evaluateLiveCopy(
+          liveCopyEvents,
+          liveCopyTime,
+          {
+            offset: 100, // 100ms after char starts
+            feedbackMode: config.liveCopyFeedback || 'immediate'
+          }
+        )
+      : null,
+    [liveCopyEvents, liveCopyTime, config?.mode, config?.liveCopyFeedback]
+  );
 
   // Early return if no config
   if (!config) {
@@ -351,7 +357,7 @@ export function StudyPage() {
               </p>
             )}
 
-            {snapshot.phase === 'ended' && (
+            {snapshot.phase === 'ended' && config?.mode !== 'live-copy' && (
               <div className="text-center">
                 <h2 className="heading-2 mb-4">Session Complete!</h2>
                 <p className="body-large text-success">{accuracy}% accuracy</p>
@@ -359,16 +365,22 @@ export function StudyPage() {
             )}
           </div>
 
-          {/* Character Display - depends on mode */}
-          {config?.mode === 'live-copy' ? (
-            <LiveCopyDisplay
-              phase={snapshot.phase}
-              transmittedChars={snapshot.transmittedChars || []}
-              typedChars={typedChars}
-              feedbackMode={config.liveCopyFeedback}
-            />
+          {/* Show Live Copy results when session ends, otherwise show character display */}
+          {snapshot.phase === 'ended' && config?.mode === 'live-copy' && liveCopyState ? (
+            <LiveCopyResults state={liveCopyState} />
           ) : (
-            <CharacterHistory items={snapshot.previous} />
+            <CharacterDisplay
+              characters={
+                config?.mode === 'live-copy' && liveCopyState
+                  ? liveCopyToDisplay(liveCopyState.display)
+                  : historyToDisplay(snapshot.previous)
+              }
+              placeholder={
+                config?.mode === 'live-copy'
+                  ? 'Waiting for transmission...'
+                  : 'Session started. Characters will appear here...'
+              }
+            />
           )}
         </div>
       )}

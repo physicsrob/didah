@@ -6,6 +6,7 @@ import type { Clock } from './clock';
 import type { IO, SessionSnapshot } from './io';
 import type { InputBus } from './inputBus';
 import { runPracticeEmission, runListenEmission, runLiveCopyEmission, type SessionConfig } from './charPrograms';
+import { wpmToDitMs, calculateCharacterDurationMs } from '../../../core/morse/timing';
 
 /**
  * Character source interface
@@ -81,6 +82,7 @@ export function createSessionRunner(deps: SessionRunnerDeps): SessionRunner {
     previous: [],
     startedAt: null,
     remainingMs: 0,
+    emissions: [],
     stats: {
       correct: 0,
       incorrect: 0,
@@ -97,6 +99,7 @@ export function createSessionRunner(deps: SessionRunnerDeps): SessionRunner {
     const snapshotCopy = {
       ...snapshot,
       previous: [...snapshot.previous],
+      emissions: [...snapshot.emissions],
       stats: snapshot.stats ? { ...snapshot.stats } : undefined
     };
     if (deps.io.snapshot) {
@@ -139,6 +142,7 @@ export function createSessionRunner(deps: SessionRunnerDeps): SessionRunner {
         previous: [],
         startedAt: startTime,
         remainingMs: config.lengthMs,
+        emissions: [],
         stats: {
           correct: 0,
           incorrect: 0,
@@ -174,6 +178,22 @@ export function createSessionRunner(deps: SessionRunnerDeps): SessionRunner {
         // Get next character
         const char = deps.source.next();
         snapshot.currentChar = char;
+
+        // Record emission timing (for all modes)
+        const emissionStartTime = deps.clock.now();
+
+        // Calculate total emission duration: character audio + inter-character spacing
+        const charAudioDurationMs = calculateCharacterDurationMs(char, config.wpm);
+        const ditMs = wpmToDitMs(config.wpm);
+        const interCharSpacingMs = ditMs * 3; // Standard Morse inter-character spacing
+        const totalEmissionDurationMs = charAudioDurationMs + interCharSpacingMs;
+
+        snapshot.emissions.push({
+          char,
+          startTime: emissionStartTime,
+          duration: totalEmissionDurationMs
+        });
+
         publish();
 
         try {
@@ -243,8 +263,7 @@ export function createSessionRunner(deps: SessionRunnerDeps): SessionRunner {
                 signal
               );
 
-              // Track transmitted character for UI
-              snapshot.transmittedChars = [...(snapshot.transmittedChars || []), char];
+              // Clear current character after emission
               snapshot.currentChar = null;
 
               // Update remaining time

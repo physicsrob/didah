@@ -13,7 +13,11 @@ export type SessionSnapshot = {
   previous: HistoryItem[];
   startedAt: number | null;
   remainingMs: number;
-  transmittedChars?: string[]; // For Live Copy mode - tracks what's been sent
+  emissions: Array<{
+    char: string;
+    startTime: number;
+    duration: number; // Total emission duration (character audio + inter-character spacing)
+  }>; // Track all emitted characters with timing
   stats?: {
     correct: number;
     incorrect: number;
