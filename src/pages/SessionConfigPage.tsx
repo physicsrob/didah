@@ -216,7 +216,7 @@ export function SessionConfigPage() {
           {/* Text Source */}
           <div className="form-group mb-4">
             <label className="form-label">Text Source</label>
-            <div className="relative">
+            <div style={{ position: 'relative' }}>
               <select
                 className="form-select w-full"
                 value={selectedSourceId}
@@ -234,8 +234,13 @@ export function SessionConfigPage() {
                 )}
               </select>
               {loadingSource && (
-                <div className="absolute right-2 top-1/2 transform -translate-y-1/2">
-                  <span className="text-sm text-muted">Loading...</span>
+                <div style={{
+                  position: 'absolute',
+                  right: '8px',
+                  top: '50%',
+                  transform: 'translateY(-50%)'
+                }}>
+                  <span className="caption text-muted">Loading...</span>
                 </div>
               )}
             </div>

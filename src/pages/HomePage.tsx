@@ -23,54 +23,61 @@ export default function HomePage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient">
-      <div className="max-w-sm w-full px-6 py-10">
-        <h1 className="brand-title text-center mb-16" style={{ fontSize: '48px' }}>
+    <div className="min-h-screen flex items-center justify-center bg-gradient-primary">
+      {/* Placeholder top navigation */}
+      <nav style={{ position: 'fixed', top: '24px', right: '24px', zIndex: 10 }}>
+        <div className="flex gap-5">
+          <span className="nav-link-placeholder">About</span>
+          <span className="nav-link-placeholder">Login</span>
+        </div>
+      </nav>
+
+      <div className="w-full px-6 py-10" style={{ maxWidth: '500px', position: 'relative', zIndex: 1 }}>
+        <h1 className="brand-title text-center mb-4" style={{ fontSize: '48px' }}>
           MorseAcademy
         </h1>
+        <p className="text-muted text-center text-lg mb-16">
+          Flow state learning for morse code mastery
+        </p>
 
-        <div className="flex flex-col gap-5 items-center">
-          <div className="w-full space-y-6 mb-6">
-            <div className="text-center">
-              <button
-                className="btn btn-primary btn-large w-full mb-2"
-                onClick={() => handleModeSelect('practice')}
-              >
-                Practice
-              </button>
-              <p className="text-sm text-muted">Interactive mode - type what you hear</p>
-            </div>
-            <div className="text-center">
-              <button
-                className="btn btn-primary btn-large w-full mb-2"
-                onClick={() => handleModeSelect('listen')}
-              >
-                Listen
-              </button>
-              <p className="text-sm text-muted">Pure listening - characters revealed after playing</p>
-            </div>
-            <div className="text-center">
-              <button
-                className="btn btn-primary btn-large w-full mb-2"
-                onClick={() => handleModeSelect('live-copy')}
-              >
-                Live Copy
-              </button>
-              <p className="text-sm text-muted">Real-time copying - continuous transmission</p>
-            </div>
+        <div className="flex flex-col gap-8 items-center">
+          {/* Practice modes */}
+          <div className="flex flex-col gap-4 w-full">
+            <button
+              className="btn btn-primary btn-large w-full"
+              onClick={() => handleModeSelect('practice')}
+            >
+              Practice
+            </button>
+            <button
+              className="btn btn-secondary btn-large w-full"
+              onClick={() => handleModeSelect('listen')}
+            >
+              Listen
+            </button>
+            <button
+              className="btn btn-secondary btn-large w-full"
+              onClick={() => handleModeSelect('live-copy')}
+            >
+              Live Copy
+            </button>
           </div>
-          <button
-            className="btn btn-secondary btn-large w-full"
-            onClick={handleStatistics}
-          >
-            Statistics
-          </button>
-          <button
-            className="btn btn-secondary btn-large w-full"
-            onClick={handleSettings}
-          >
-            Settings
-          </button>
+
+          {/* Utility buttons */}
+          <div className="flex gap-5 w-full">
+            <button
+              className="btn btn-utility flex-1"
+              onClick={handleStatistics}
+            >
+              Statistics
+            </button>
+            <button
+              className="btn btn-utility flex-1"
+              onClick={handleSettings}
+            >
+              Settings
+            </button>
+          </div>
         </div>
       </div>
     </div>

@@ -42,6 +42,15 @@
     --border-primary: var(--color-tertiary-gray);
     --border-secondary: #404040;
 
+    /* Colors - Gradient backgrounds */
+    --gradient-dark-start: #0f171a;
+    --gradient-dark-end: #1e293b;
+
+    /* Colors - Shadows and overlays */
+    --shadow-primary: rgba(77, 171, 247, 0.3);
+    --overlay-primary-subtle: rgba(77, 171, 247, 0.08);
+    --overlay-primary-light: rgba(77, 171, 247, 0.05);
+
     /* Typography */
     --font-primary: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     --font-mono: 'Source Code Pro', 'SF Mono', monospace;
@@ -60,6 +69,38 @@
 html, body {
     width: 100%;
     min-height: 100vh;
+}
+
+/* Background Gradients */
+.bg-gradient-primary {
+    background: linear-gradient(60deg, var(--gradient-dark-start) 0%, var(--gradient-dark-end) 100%);
+    position: relative;
+    isolation: isolate; /* Create a new stacking context */
+}
+
+.bg-gradient-primary::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background:
+        radial-gradient(circle at 20% 80%, var(--overlay-primary-subtle) 0%, transparent 50%),
+        radial-gradient(circle at 80% 20%, var(--overlay-primary-light) 0%, transparent 50%);
+    pointer-events: none;
+    z-index: -1; /* Behind content but within the stacking context */
+}
+
+/* Placeholder navigation - very subtle, non-functional */
+.nav-link-placeholder {
+    color: var(--text-muted);
+    opacity: 0.2;
+    font-size: 12px;
+    font-weight: 500;
+    pointer-events: none;
+    cursor: default;
+    user-select: none;
 }
 
 body {
@@ -188,17 +229,22 @@ body {
 .btn-primary {
     background: var(--color-blue-primary);
     color: var(--color-primary-black);
+    font-size: 20px;
+    padding: 18px 44px;
+    font-weight: 600;
 }
 
 .btn-primary:hover {
     background: var(--color-blue-light);
-    transform: translateY(-1px);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px var(--shadow-primary);
 }
 
 .btn-primary:active {
     background: var(--color-blue-dark);
     color: var(--color-white);
     transform: translateY(0);
+    box-shadow: none;
 }
 
 .btn-primary:disabled {
@@ -212,12 +258,44 @@ body {
     background: transparent;
     color: var(--color-blue-primary);
     border: 2px solid var(--color-blue-primary);
+    font-size: 18px;
+    padding: 16px 40px;
 }
 
 .btn-secondary:hover {
     background: var(--color-blue-primary);
     color: var(--color-primary-black);
     transform: translateY(-1px);
+}
+
+.btn-secondary:active {
+    background: var(--color-blue-dark);
+    border-color: var(--color-blue-dark);
+    color: var(--color-white);
+    transform: translateY(0);
+}
+
+/* Utility buttons - smaller, side-by-side */
+.btn-utility {
+    background: transparent;
+    color: var(--color-blue-primary);
+    border: 2px solid var(--color-blue-primary);
+    font-size: 16px;
+    padding: 12px 24px;
+    min-width: 140px;
+}
+
+.btn-utility:hover {
+    background: var(--color-blue-primary);
+    color: var(--color-primary-black);
+    transform: translateY(-1px);
+}
+
+.btn-utility:active {
+    background: var(--color-blue-dark);
+    border-color: var(--color-blue-dark);
+    color: var(--color-white);
+    transform: translateY(0);
 }
 
 .btn-secondary:active {
