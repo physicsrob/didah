@@ -9,14 +9,16 @@
 .character-history-container {
     width: 100%;
     max-width: 800px;
-    height: 80px;
+    height: 200px;
     background: var(--bg-secondary);
-    border: 1px solid var(--border-primary);
-    border-radius: 8px;
-    padding: 20px 24px;
+    border: 2px solid var(--border-primary);
+    border-radius: 16px;
+    padding: 40px 50px;
     margin-top: 20px;
     position: relative;
     overflow: hidden;
+    display: flex;
+    align-items: center;
 }
 
 .character-history-container::before {
@@ -25,7 +27,7 @@
     left: 0;
     top: 0;
     bottom: 0;
-    width: 60px;
+    width: 80px;
     background: linear-gradient(to right, var(--bg-secondary), transparent);
     z-index: 1;
     pointer-events: none;
@@ -33,8 +35,8 @@
 
 .character-history-text {
     font-family: var(--font-mono);
-    font-size: 28px;
-    line-height: 1.5;
+    font-size: 36px;
+    line-height: 1.2;
     letter-spacing: 0.05em;
     overflow-x: auto;
     overflow-y: hidden;
@@ -42,6 +44,7 @@
     scrollbar-width: none; /* Firefox */
     -ms-overflow-style: none; /* IE/Edge */
     scroll-behavior: smooth;
+    width: 100%;
 }
 
 .character-history-text::-webkit-scrollbar {
@@ -51,7 +54,8 @@
 .history-placeholder {
     color: var(--text-muted);
     font-style: italic;
-    font-size: 18px;
+    font-size: 28px;
+    opacity: 0.4;
     white-space: nowrap;
 }
 
@@ -80,6 +84,37 @@
     color: var(--text-primary);
 }
 
+/* Current character with cursor */
+.char-current {
+    position: relative;
+}
+
+.char-current::after {
+    content: '';
+    position: absolute;
+    right: -3px;
+    top: 0;
+    bottom: 0;
+    width: 3px;
+    background: var(--color-blue-primary);
+    animation: blink 1.5s infinite;
+}
+
+/* Standalone blinking cursor when no characters */
+.blinking-cursor {
+    display: inline-block;
+    width: 3px;
+    height: 1.2em;
+    background: var(--color-blue-primary);
+    animation: blink 1.5s infinite;
+    vertical-align: middle;
+}
+
+@keyframes blink {
+    0%, 50% { opacity: 1; }
+    51%, 100% { opacity: 0; }
+}
+
 /* Animation for new characters */
 @keyframes char-appear {
     from {
@@ -103,15 +138,26 @@
 @media (max-width: 768px) {
     .character-history-container {
         min-width: 100%;
+        height: 160px;
+        padding: 30px 35px;
+    }
+
+    .character-history-text {
+        font-size: 28px;
     }
 }
 
 @media (max-width: 480px) {
+    .character-history-container {
+        height: 140px;
+        padding: 25px 30px;
+    }
+
     .character-history-text {
-        font-size: 20px;
+        font-size: 24px;
     }
 
     .history-placeholder {
-        font-size: 14px;
+        font-size: 20px;
     }
 }

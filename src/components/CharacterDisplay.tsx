@@ -71,7 +71,7 @@ function getStatusClass(status: CharacterStatus): string {
  */
 export function CharacterDisplay({
   characters,
-  placeholder = 'Waiting for input...',
+  placeholder = '',
   className = '',
   autoScroll = true
 }: CharacterDisplayProps) {
@@ -88,12 +88,15 @@ export function CharacterDisplay({
     <div className={`character-history-container ${className}`}>
       <div className="character-history-text" ref={scrollRef}>
         {characters.length === 0 ? (
-          <span className="history-placeholder">{placeholder}</span>
+          <>
+            {placeholder && <span className="history-placeholder">{placeholder}</span>}
+            <span className="blinking-cursor" />
+          </>
         ) : (
           characters.map((char, i) => (
             <span
               key={char.key ?? i}
-              className={getStatusClass(char.status)}
+              className={`${getStatusClass(char.status)} ${i === characters.length - 1 ? 'char-current' : ''}`}
             >
               {char.text}
             </span>

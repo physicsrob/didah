@@ -372,11 +372,6 @@ export function ActiveSessionPage() {
                 ? liveCopyToDisplay(liveCopyState.display)
                 : historyToDisplay(snapshot.previous)
             }
-            placeholder={
-              config?.mode === 'live-copy'
-                ? 'Waiting for transmission...'
-                : 'Session started. Characters will appear here...'
-            }
           />
         </div>
       )}

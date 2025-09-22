@@ -7,7 +7,7 @@
   max-width: 1000px;
   margin: 0 auto;
   padding: 24px;
-  background: var(--color-background);
+  background: var(--bg-primary);
 }
 
 /* Session Header */
@@ -16,8 +16,8 @@
   justify-content: space-between;
   align-items: center;
   padding: 16px 24px;
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-primary);
   border-radius: 12px;
   margin-bottom: 32px;
 }
@@ -30,8 +30,8 @@
 
 .pause-button {
   background: transparent;
-  border: 1px solid var(--color-border);
-  color: var(--color-text-muted);
+  border: 1px solid var(--border-primary);
+  color: var(--text-muted);
   padding: 8px 16px;
   border-radius: 6px;
   font-size: 13px;
@@ -41,26 +41,26 @@
 }
 
 .pause-button:hover {
-  border-color: var(--color-primary);
-  color: var(--color-primary);
+  border-color: var(--color-blue-primary);
+  color: var(--color-blue-primary);
 }
 
 .header-info {
   display: flex;
   align-items: center;
   gap: 24px;
-  color: var(--color-text-muted);
+  color: var(--text-muted);
   font-size: 14px;
 }
 
 .info-wpm {
   font-family: var(--font-mono);
-  color: var(--color-text-secondary);
+  color: var(--text-secondary);
   font-weight: 500;
 }
 
 .info-source {
-  color: var(--color-text-secondary);
+  color: var(--text-secondary);
   font-weight: 500;
 }
 
@@ -68,7 +68,7 @@
   font-family: var(--font-mono);
   font-size: 16px;
   font-weight: 600;
-  color: var(--color-primary);
+  color: var(--color-blue-primary);
 }
 
 /* Session Display Area - centers the CharacterDisplay */
@@ -90,8 +90,8 @@
 }
 
 .welcome-card {
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-primary);
   border-radius: 16px;
   padding: 48px;
   text-align: center;
@@ -102,20 +102,20 @@
 .welcome-title {
   font-size: 32px;
   font-weight: 600;
-  color: var(--color-primary);
+  color: var(--color-blue-primary);
   margin-bottom: 16px;
 }
 
 .welcome-text {
   font-size: 16px;
-  color: var(--color-text-secondary);
+  color: var(--text-secondary);
   margin-bottom: 32px;
 }
 
 .welcome-hint {
   margin-top: 24px;
   font-size: 14px;
-  color: var(--color-text-muted);
+  color: var(--text-muted);
 }
 
 /* Overlays */
@@ -142,13 +142,13 @@
 .countdown-number {
   font-size: 72px;
   font-weight: 600;
-  color: var(--color-primary);
+  color: var(--color-blue-primary);
   margin-bottom: 16px;
 }
 
 .countdown-label {
   font-size: 24px;
-  color: var(--color-text-secondary);
+  color: var(--text-secondary);
 }
 
 /* Pause Modal */
@@ -163,7 +163,7 @@
 .pause-title {
   font-size: 28px;
   font-weight: 600;
-  color: var(--color-text-primary);
+  color: var(--text-primary);
   margin-bottom: 32px;
 }
 
@@ -186,12 +186,12 @@
   font-size: 32px;
   margin-bottom: 16px;
   font-family: var(--font-mono);
-  color: var(--color-text-secondary);
+  color: var(--text-secondary);
 }
 
 .replay-label {
   font-size: 18px;
-  color: var(--color-text-muted);
+  color: var(--text-muted);
 }
 
 /* Feedback Flash */
