@@ -5,6 +5,7 @@
  */
 
 import { useNavigate, useLocation } from 'react-router-dom';
+import { fetchSourceContent } from '../features/sources';
 import { LiveCopyResults } from '../components/LiveCopyResults';
 import '../styles/main.css';
 import '../styles/sessionComplete.css';
@@ -38,12 +39,24 @@ export function SessionCompletePage() {
     navigate('/');
   };
 
-  const handlePracticeAgain = () => {
-    // Go back to ActiveSession with the same config
+  const handlePracticeAgain = async () => {
+    // Refetch source content to get fresh data (e.g., new Reddit headlines)
+    let freshSourceContent = null;
+    if (config?.sourceId && config.sourceId !== 'random_letters') {
+      try {
+        freshSourceContent = await fetchSourceContent(config.sourceId);
+      } catch (error) {
+        console.error('Failed to refetch source content:', error);
+        // Fallback to cached content if refetch fails
+        freshSourceContent = location.state?.sourceContent;
+      }
+    }
+
+    // Go back to ActiveSession with fresh source content
     navigate('/session', {
       state: {
         config,
-        sourceContent: location.state?.sourceContent
+        sourceContent: freshSourceContent
       }
     });
   };
