@@ -1,6 +1,8 @@
-# CodeBeat
+# Morse Academy
 
 A modern web application for learning Morse code with real-time feedback and instant character recognition.
+
+**Live App:** https://morseacademy.pages.dev
 
 ## Documentation
 
@@ -58,7 +60,8 @@ See [arch.md](arch.md) for detailed architecture documentation.
 
 ```bash
 # Development
-npm run dev          # Start dev server on http://localhost:5173
+npm run dev          # Start Cloudflare dev server (app + API) on http://localhost:3000
+npm run dev:vite    # Start Vite only (no API) on http://localhost:5173
 npm test            # Run tests in watch mode
 npm run test:ui     # Interactive test UI
 npm run build       # Build for production
@@ -68,6 +71,9 @@ npm run check       # TypeScript, ESLint, and tests
 npm run check:fix   # Same but auto-fix lint issues
 npm run typecheck   # TypeScript only
 npm run lint        # ESLint only
+
+# Deployment
+npm run deploy      # Deploy to Cloudflare Pages
 ```
 
 ### Project Structure
@@ -95,47 +101,45 @@ Currently ~32 tests passing.
 
 ## Tech Stack
 
-- **Frontend**: React 18 + TypeScript + Vite
+- **Frontend**: React 19 + TypeScript + Vite
 - **Styling**: Inline styles (tech debt - should be CSS modules)
 - **Audio**: WebAudio API
 - **Testing**: Vitest
-- **Serverless**: Vercel Functions
+- **Hosting**: Cloudflare Pages
+- **API**: Cloudflare Pages Functions
 
 ## Deployment
 
-The entire app (frontend + API) is deployed together on Vercel at:
-**https://morse-serverless.vercel.app**
+The entire app (frontend + API) is deployed on Cloudflare Pages at:
+**https://morseacademy.pages.dev**
 
-### Full Deployment Process
+### Deployment Process
 
 ```bash
-# 1. Build and test locally
-npm run build           # Build frontend
-npx vercel dev          # Test everything locally (frontend + API)
+# Build and deploy to Cloudflare Pages
+npm run deploy
 
-# 2. Deploy to preview (gets unique URL for testing)
-npx vercel
-
-# 3. Deploy to production
-npx vercel --prod
+# Or manually:
+npm run build                          # Build frontend
+npx wrangler pages deploy ./dist       # Deploy to Cloudflare
 ```
-
-That's it! One command deploys both:
-- **Frontend**: https://morse-serverless.vercel.app
-- **API**: https://morse-serverless.vercel.app/api/*
 
 ### Local Development
 
 ```bash
+# Run everything (frontend + API) - RECOMMENDED
+npm run dev             # http://localhost:3000
+
 # Run frontend only (Vite dev server)
-npm run dev             # http://localhost:5173
-
-# Run frontend + API together (Vercel dev)
-npx vercel dev          # http://localhost:3000
-
-# Run API only on custom port
-npx vercel dev --listen 3001
+npm run dev:vite        # http://localhost:5173
 ```
+
+### Cloudflare Configuration
+
+- **Project**: morseacademy
+- **Functions**: Located in `/functions/api/`
+- **Build Output**: `./dist`
+- **Config File**: `wrangler.toml`
 
 ### API Endpoints
 

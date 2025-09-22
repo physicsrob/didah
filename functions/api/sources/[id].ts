@@ -1,4 +1,3 @@
-import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { SOURCES } from '../sources';
 
 // Build RSS feed map from sources
@@ -112,18 +111,12 @@ async function fetchRSS(feedUrl: string): Promise<string[]> {
   return extractTitles(text);
 }
 
-export default async function handler(
-  req: VercelRequest,
-  res: VercelResponse
-) {
-  if (req.method !== 'GET') {
-    return res.status(405).json({ error: 'Method not allowed' });
-  }
+// Cloudflare Pages Function
+export async function onRequestGet(context: any) {
+  const { id } = context.params;
 
-  const { id } = req.query;
-
-  if (!id || typeof id !== 'string') {
-    return res.status(400).json({ error: 'Source ID required' });
+  if (!id) {
+    return Response.json({ error: 'Source ID required' }, { status: 400 });
   }
 
   try {
@@ -148,20 +141,20 @@ export default async function handler(
           const titles = await fetchRSS(RSS_FEEDS[id]);
           items = titles.length > 0 ? titles : ['No items found in feed'];
         } else {
-          return res.status(404).json({ error: 'Source not found' });
+          return Response.json({ error: 'Source not found' }, { status: 404 });
         }
     }
 
-    return res.status(200).json({
+    return Response.json({
       id,
       items
     });
 
   } catch (error: any) {
     console.error(`Error fetching source ${id}:`, error);
-    return res.status(500).json({
+    return Response.json({
       error: 'Failed to fetch source',
       details: error.message
-    });
+    }, { status: 500 });
   }
 }

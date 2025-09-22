@@ -1,16 +1,19 @@
 # Claude Code Configuration
 
-This file contains configuration and context for working with CodeBeat using Claude Code.
+This file contains configuration and context for working with Morse Academy using Claude Code.
 
 ## Project Overview
 
-A modern web application for learning Morse code with real-time feedback, statistics tracking, and multiple study modes. Built with React + TypeScript + Vite.
+A modern web application for learning Morse code with real-time feedback, statistics tracking, and multiple study modes. Built with React + TypeScript + Vite, deployed on Cloudflare Pages.
+
+**Live App:** https://morseacademy.pages.dev
 
 ## Development Commands
 
 ```bash
 # Development
-npm run dev          # Start development server
+npm run dev          # Start Cloudflare dev server (app + API on localhost:3000)
+npm run dev:vite    # Start Vite only (no API on localhost:5173)
 npm test            # Run all tests (watch mode)
 npm run test:ui     # Interactive test UI
 npm run build       # Build for production
@@ -20,6 +23,9 @@ npm run check       # Run ALL checks: TypeScript, ESLint, and tests
 npm run check:fix   # Same as check but auto-fix lint issues
 npm run typecheck   # TypeScript type checking only
 npm run lint        # ESLint only
+
+# Deployment
+npm run deploy      # Deploy to Cloudflare Pages
 ```
 
 ## Architecture
@@ -30,6 +36,7 @@ The app uses a runtime-based approach (NOT state machines) - see `arch.md` for d
 - **Runtime System**: `src/features/session/runtime/` - Session orchestration
 - **Services**: `src/features/session/services/` - Audio, feedback
 - **Pages**: `src/pages/` - React components
+- **API Functions**: `functions/api/` - Cloudflare Pages Functions
 
 ## Key Files
 
@@ -45,8 +52,10 @@ The app uses a runtime-based approach (NOT state machines) - see `arch.md` for d
 ✅ Runtime session orchestration
 ✅ Audio engine (WebAudio)
 ✅ Basic UI with Active/Passive modes
+✅ API with multiple text sources (random, words, RSS feeds)
+✅ Deployed on Cloudflare Pages
 ❌ No persistence/statistics
-❌ Limited text sources (random only)
+❌ No user settings management
 
 ## Implementation Priority
 
@@ -89,5 +98,7 @@ When working on this project:
 2. **Update STATUS.md** when completing tasks or making significant progress
 3. **Follow the implementation order** outlined in STATUS.md and arch.md
 4. **Run tests** after implementing core logic (`npm test`)
-5. **Commit frequently** with descriptive messages including 🤖 Generated with [Claude Code]
-6. **Read brand.md before modifying HTML/CSS** to ensure consistent styling and branding
+5. **Run quality checks** before committing (`npm run check`)
+6. **Deploy with** `npm run deploy` to push changes to production
+7. **Commit frequently** with descriptive messages including 🤖 Generated with [Claude Code]
+8. **Read brand.md before modifying HTML/CSS** to ensure consistent styling and branding

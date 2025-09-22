@@ -1,5 +1,3 @@
-import type { VercelRequest, VercelResponse } from '@vercel/node'
-
 // Shared source configuration
 export const SOURCES = [
   { id: 'random_letters', name: 'Random Letters', type: 'generated' },
@@ -13,16 +11,10 @@ export const SOURCES = [
   { id: 'bbc_news', name: 'BBC News', type: 'rss', url: 'http://feeds.bbci.co.uk/news/rss.xml' },
 ];
 
-export default function handler(
-  req: VercelRequest,
-  res: VercelResponse
-) {
-  if (req.method !== 'GET') {
-    return res.status(405).json({ error: 'Method not allowed' });
-  }
-
+// Cloudflare Pages Function
+export async function onRequestGet(context: any) {
   // Return list of all available sources
-  return res.status(200).json({
+  return Response.json({
     sources: SOURCES,
     total: SOURCES.length
   });
