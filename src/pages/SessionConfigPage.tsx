@@ -2,11 +2,12 @@ import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import type { SessionConfig } from '../core/types/domain';
 import { getActiveWindowMs, getPassiveTimingMultipliers } from '../core/morse/timing';
+import { fetchSources, fetchSourceContent } from '../features/sources';
+import type { TextSource as ApiTextSource, SourceContent } from '../features/sources';
 import '../styles/main.css';
 
 type SpeedTier = 'slow' | 'medium' | 'fast' | 'lightning';
 type SessionMode = 'practice' | 'listen' | 'live-copy';
-type TextSource = 'randomLetters' | 'randomWords' | 'redditHeadlines' | 'hardCharacters';
 type FeedbackType = 'buzzer' | 'flash' | 'both';
 
 export function SessionConfigPage() {
@@ -19,8 +20,14 @@ export function SessionConfigPage() {
   // Session configuration state
   const [duration, setDuration] = useState<1 | 2 | 5>(1);
   const [speedTier, setSpeedTier] = useState<SpeedTier>('slow');
-  const [textSource, setTextSource] = useState<TextSource>('randomLetters');
+  const [selectedSourceId, setSelectedSourceId] = useState<string>('random_letters');
   const [wpm, setWpm] = useState(15);
+
+  // Text source state
+  const [availableSources, setAvailableSources] = useState<ApiTextSource[]>([]);
+  const [sourceContent, setSourceContent] = useState<SourceContent | null>(null);
+  const [loadingSource, setLoadingSource] = useState(false);
+  const [sourcesLoading, setSourcesLoading] = useState(true);
 
   // Load settings from localStorage
   const [feedback, setFeedback] = useState<FeedbackType>(() =>
@@ -33,6 +40,32 @@ export function SessionConfigPage() {
 
   // Live Copy specific settings
   const [liveCopyFeedback, setLiveCopyFeedback] = useState<'end' | 'immediate'>('end');
+
+  // Fetch available sources on mount
+  useEffect(() => {
+    setSourcesLoading(true);
+    fetchSources()
+      .then(sources => {
+        setAvailableSources(sources);
+        // Pre-fetch content for default source
+        if (selectedSourceId) {
+          return fetchSourceContent(selectedSourceId);
+        }
+      })
+      .then(content => {
+        if (content) {
+          setSourceContent(content);
+        }
+      })
+      .catch(error => {
+        console.error('Failed to fetch sources:', error);
+        // Fallback to local source
+        setAvailableSources([{ id: 'random_letters', name: 'Random Letters', type: 'generated' }]);
+      })
+      .finally(() => {
+        setSourcesLoading(false);
+      });
+  }, []);
 
   // Re-read localStorage when component mounts/becomes visible
   useEffect(() => {
@@ -51,6 +84,21 @@ export function SessionConfigPage() {
     return () => window.removeEventListener('storage', updateSettings);
   }, []);
 
+  // Handle source selection
+  const handleSourceChange = async (sourceId: string) => {
+    setSelectedSourceId(sourceId);
+    setLoadingSource(true);
+    try {
+      const content = await fetchSourceContent(sourceId);
+      setSourceContent(content);
+    } catch (error) {
+      console.error(`Failed to fetch source ${sourceId}:`, error);
+      setSourceContent(null); // Will fallback to local random
+    } finally {
+      setLoadingSource(false);
+    }
+  };
+
   // Build effective alphabet based on toggles
   const buildAlphabet = () => {
     let alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
@@ -66,15 +114,15 @@ export function SessionConfigPage() {
       lengthMs: duration * 60 * 1000,
       wpm,
       speedTier,
-      sourceId: textSource,
+      sourceId: selectedSourceId,
       feedback,
       replay,
       effectiveAlphabet: buildAlphabet(),
       ...(mode === 'live-copy' && { liveCopyFeedback }),
     };
 
-    // Navigate to session with config
-    navigate('/session', { state: { config } });
+    // Navigate to session with config and pre-fetched content
+    navigate('/session', { state: { config, sourceContent } });
   };
 
   const handleCancel = () => {
@@ -168,16 +216,29 @@ export function SessionConfigPage() {
           {/* Text Source */}
           <div className="form-group mb-4">
             <label className="form-label">Text Source</label>
-            <select
-              className="form-select w-full"
-              value={textSource}
-              onChange={(e) => setTextSource(e.target.value as TextSource)}
-            >
-              <option value="randomLetters">Random Letters</option>
-              <option value="randomWords" disabled>Random Words (Coming Soon)</option>
-              <option value="redditHeadlines" disabled>Reddit Headlines (Coming Soon)</option>
-              <option value="hardCharacters" disabled>Hard Characters (Coming Soon)</option>
-            </select>
+            <div className="relative">
+              <select
+                className="form-select w-full"
+                value={selectedSourceId}
+                onChange={(e) => handleSourceChange(e.target.value)}
+                disabled={sourcesLoading || loadingSource}
+              >
+                {sourcesLoading ? (
+                  <option>Loading sources...</option>
+                ) : (
+                  availableSources.map(source => (
+                    <option key={source.id} value={source.id}>
+                      {source.name}
+                    </option>
+                  ))
+                )}
+              </select>
+              {loadingSource && (
+                <div className="absolute right-2 top-1/2 transform -translate-y-1/2">
+                  <span className="text-sm text-muted">Loading...</span>
+                </div>
+              )}
+            </div>
           </div>
 
           {/* Live Copy Feedback Mode */}
