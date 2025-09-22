@@ -121,8 +121,11 @@ export function SessionConfigPage() {
       ...(mode === 'live-copy' && { liveCopyFeedback }),
     };
 
-    // Navigate to session with config and pre-fetched content
-    navigate('/session', { state: { config, sourceContent } });
+    // Find the source name from availableSources
+    const sourceName = availableSources.find(s => s.id === selectedSourceId)?.name || 'Unknown';
+
+    // Navigate to session with config, pre-fetched content, and source name
+    navigate('/session', { state: { config, sourceContent, sourceName } });
   };
 
   const handleCancel = () => {
@@ -130,12 +133,12 @@ export function SessionConfigPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient">
-      <div className="container mx-auto px-4 py-8">
+    <div className="min-h-screen bg-gradient-primary">
+      <div className="container" style={{ margin: '0 auto', padding: '32px 16px' }}>
         <h1 className="brand-title text-center mb-8">Session Configuration</h1>
 
         {/* Main Settings Card */}
-        <div className="card mb-4 max-w-2xl mx-auto">
+        <div className="card mb-4" style={{ maxWidth: '672px', margin: '0 auto' }}>
           {/* Duration */}
           <div className="form-group mb-4">
             <label className="form-label">Duration</label>

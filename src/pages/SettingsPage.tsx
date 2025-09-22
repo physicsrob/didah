@@ -61,8 +61,8 @@ export default function SettingsPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient">
-      <div className="max-w-md w-full px-6 py-10">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-primary">
+      <div className="w-full px-6 py-10" style={{ maxWidth: '448px' }}>
         <div className="text-center mb-8">
           <h1 className="heading-1">Settings</h1>
         </div>

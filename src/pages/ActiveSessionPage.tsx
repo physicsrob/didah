@@ -32,9 +32,10 @@ export function ActiveSessionPage() {
   const location = useLocation();
   const { initializeAudio, getAudioEngine, isAudioReady } = useAudio();
 
-  // Get config and source content from navigation state
+  // Get config, source content, and source name from navigation state
   const config = location.state?.config;
   const sourceContent = location.state?.sourceContent as SourceContent | null;
+  const sourceName = location.state?.sourceName as string | undefined;
 
   // Check if audio is actually ready
   const audioActuallyReady = isAudioReady();
@@ -151,6 +152,7 @@ export function ActiveSessionPage() {
               state: {
                 config,
                 sourceContent,
+                sourceName,
                 stats: snap.stats,
                 emissions: snap.emissions,
                 duration: Date.now() - (snap.startedAt || Date.now()),
@@ -218,6 +220,7 @@ export function ActiveSessionPage() {
       state: {
         config,
         sourceContent,
+        sourceName,
         stats: snapshot.stats,
         emissions: snapshot.emissions,
         duration: Date.now() - (snapshot.startedAt || Date.now()),
@@ -323,12 +326,12 @@ export function ActiveSessionPage() {
   }
 
   const getSourceDisplay = () => {
-    // Format the sourceId for display
-    return config?.sourceId?.replace(/_/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase()) || 'Unknown';
+    // Use the source name passed from SessionConfigPage
+    return sourceName || 'Unknown';
   };
 
   return (
-    <div className="active-session-container">
+    <div className="active-session-container bg-gradient-primary">
       {/* Feedback Flash Overlay */}
       {feedbackFlash && (
         <div className={`feedback-flash ${feedbackFlash}`} />

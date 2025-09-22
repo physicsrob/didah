@@ -9,8 +9,8 @@ export default function StatisticsPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient">
-      <div className="max-w-md w-full px-6 py-10">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-primary">
+      <div className="w-full px-6 py-10" style={{ maxWidth: '448px' }}>
         <div className="text-center">
           <h1 className="heading-1 mb-6">Statistics</h1>
 

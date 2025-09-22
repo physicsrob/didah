@@ -17,7 +17,7 @@ export function SessionCompletePage() {
   // Get session data from navigation state
   const config = location.state?.config;
   const stats = location.state?.stats;
-  const sourceContent = location.state?.sourceContent;
+  const sourceName = location.state?.sourceName as string | undefined;
   const liveCopyState = location.state?.liveCopyState;
 
   // Calculate accuracy
@@ -28,10 +28,8 @@ export function SessionCompletePage() {
 
   // Get source display name
   const getSourceDisplay = () => {
-    // Use the source name from sourceContent if available
-    if (sourceContent?.name) return sourceContent.name;
-    // Fallback to sourceId formatting
-    return config?.sourceId?.replace(/_/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase()) || 'Unknown';
+    // Use the source name passed from ActiveSessionPage
+    return sourceName || 'Unknown';
   };
 
   // Navigation handlers
@@ -52,11 +50,12 @@ export function SessionCompletePage() {
       }
     }
 
-    // Go back to ActiveSession with fresh source content
+    // Go back to ActiveSession with fresh source content and source name
     navigate('/session', {
       state: {
         config,
-        sourceContent: freshSourceContent
+        sourceContent: freshSourceContent,
+        sourceName
       }
     });
   };
@@ -64,7 +63,7 @@ export function SessionCompletePage() {
   // Handle missing data (shouldn't happen but good to be safe)
   if (!config || !stats) {
     return (
-      <div className="completion-container">
+      <div className="completion-container bg-gradient-primary">
         <div className="content-area">
           <div className="error-message">
             <h2>Session data not found</h2>
@@ -78,7 +77,7 @@ export function SessionCompletePage() {
   }
 
   return (
-    <div className="completion-container">
+    <div className="completion-container bg-gradient-primary">
       {/* Top branding */}
       <div className="brand-header">
         <h1 className="brand-title" onClick={handleBackToMenu}>
