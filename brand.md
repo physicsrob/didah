@@ -1,7 +1,7 @@
-# CodeBeat Brand Guide
+# MorseAcademy Brand Guide
 
 ## Overview
-CodeBeat is a morse code learning app focused on creating flow state experiences for optimal learning. The brand emphasizes focused energy, technical precision, and approachable expertise.
+MorseAcademy is a morse code learning app focused on creating flow state experiences for optimal learning. The brand emphasizes focused energy, technical precision, and approachable expertise.
 
 ---
 
@@ -156,11 +156,11 @@ CodeBeat is a morse code learning app focused on creating flow state experiences
 
 ## Logo/Brand Treatment
 
-CodeBeat uses clean typography treatment rather than a graphical logo:
+MorseAcademy uses clean typography treatment rather than a graphical logo:
 - Brand name in Inter, 600 weight, #4dabf7 color
 - Can be used at various sizes maintaining consistent letter-spacing
 - No additional graphical elements needed
 
 ---
 
-*This guide provides the foundation for all CodeBeat visual design decisions. When in doubt, prioritize clarity, consistency, and the user's ability to focus on learning.*
+*This guide provides the foundation for all MorseAcademy visual design decisions. When in doubt, prioritize clarity, consistency, and the user's ability to focus on learning.*

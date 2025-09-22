@@ -300,7 +300,7 @@ export function StudyPage() {
       {studyPhase === 'waiting' && (
         <div className="audio-init-container">
           <div className="audio-init-card">
-            <h2 className="audio-init-title">Welcome to CodeBeat</h2>
+            <h2 className="audio-init-title">Welcome to MorseAcademy</h2>
             <p className="audio-init-text">
               Click to start your practice session
             </p>

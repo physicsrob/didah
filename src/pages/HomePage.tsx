@@ -26,7 +26,7 @@ export default function HomePage() {
     <div className="min-h-screen flex items-center justify-center bg-gradient">
       <div className="max-w-sm w-full px-6 py-10">
         <h1 className="brand-title text-center mb-16" style={{ fontSize: '48px' }}>
-          CodeBeat
+          MorseAcademy
         </h1>
 
         <div className="flex flex-col gap-5 items-center">

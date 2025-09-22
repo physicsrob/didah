@@ -2,7 +2,7 @@
 
 ## Executive Summary
 
-We're restructuring CodeBeat's study modes to provide three distinct learning experiences:
+We're restructuring MorseAcademy's study modes to provide three distinct learning experiences:
 1. **Practice** (formerly Active) - Interactive mode where the system waits for user input
 2. **Listen** (formerly Passive) - Pure listening mode with timed character reveals
 3. **Live Copy** (new) - Real-world simulation where code plays continuously

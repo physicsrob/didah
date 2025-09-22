@@ -1,4 +1,4 @@
-# CodeBeat Implementation Status
+# MorseAcademy Implementation Status
 
 ## Current State
 
