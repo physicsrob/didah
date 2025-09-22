@@ -7,7 +7,6 @@
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-  background: var(--color-background);
 }
 
 /* Brand Header */
@@ -18,10 +17,11 @@
 .brand-title {
   font-size: 24px;
   font-weight: 600;
-  color: var(--color-primary);
+  color: var(--color-blue-primary);
   letter-spacing: 0.5px;
   cursor: pointer;
   transition: opacity 0.2s ease;
+  margin: 0;
 }
 
 .brand-title:hover {
@@ -45,45 +45,55 @@
   margin-bottom: 32px;
 }
 
-/* Results Section */
-.results-section {
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
+/* Card Styles - shared by results, settings, and live copy containers */
+.results-section,
+.settings-section,
+.live-copy-results-container {
+  background: var(--color-secondary-gray);
+  border: 1px solid var(--color-tertiary-gray);
   border-radius: 16px;
   padding: 32px;
+}
+
+.live-copy-results-container {
+  margin-bottom: 32px;
 }
 
 .section-title {
   font-size: 18px;
   font-weight: 600;
-  color: var(--color-text-primary);
+  color: var(--text-primary);
   margin-bottom: 24px;
+  margin-top: 0;
 }
 
 .completion-message {
   font-size: 28px;
   font-weight: 600;
-  color: var(--color-text-primary);
+  color: var(--text-primary);
   margin-bottom: 24px;
 }
 
-.stat-item {
+/* List Item Styles - shared by stat and setting items */
+.stat-item,
+.setting-item {
   display: flex;
   justify-content: space-between;
   align-items: center;
   margin-bottom: 16px;
   padding: 12px 0;
-  border-bottom: 1px solid var(--color-border);
+  border-bottom: 1px solid var(--color-tertiary-gray);
 }
 
-.stat-item:last-child {
+.stat-item:last-child,
+.setting-item:last-child {
   border-bottom: none;
   margin-bottom: 0;
 }
 
 .stat-label {
   font-size: 16px;
-  color: var(--color-text-secondary);
+  color: var(--text-secondary);
   font-weight: 500;
 }
 
@@ -91,7 +101,7 @@
   font-family: var(--font-mono);
   font-size: 20px;
   font-weight: 600;
-  color: var(--color-text-primary);
+  color: var(--text-primary);
 }
 
 .stat-value.accuracy {
@@ -99,73 +109,11 @@
   font-size: 24px;
 }
 
-/* Stat Breakdown */
-.stat-breakdown {
-  margin-top: 24px;
-  padding-top: 24px;
-  border-top: 1px solid var(--color-border);
-  display: flex;
-  justify-content: space-around;
-}
-
-.breakdown-item {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 8px;
-}
-
-.breakdown-label {
-  font-size: 12px;
-  text-transform: uppercase;
-  color: var(--color-text-muted);
-  font-weight: 500;
-  letter-spacing: 0.5px;
-}
-
-.breakdown-value {
-  font-family: var(--font-mono);
-  font-size: 24px;
-  font-weight: 600;
-}
-
-.breakdown-value.correct {
-  color: var(--color-success);
-}
-
-.breakdown-value.incorrect {
-  color: var(--color-error);
-}
-
-.breakdown-value.timeout {
-  color: var(--color-warning);
-}
 
 /* Settings Section */
-.settings-section {
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: 16px;
-  padding: 32px;
-}
-
-.setting-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 16px;
-  padding: 12px 0;
-  border-bottom: 1px solid var(--color-border);
-}
-
-.setting-item:last-child {
-  border-bottom: none;
-  margin-bottom: 0;
-}
-
 .setting-label {
   font-size: 14px;
-  color: var(--color-text-muted);
+  color: var(--text-muted);
   text-transform: uppercase;
   letter-spacing: 0.5px;
   font-weight: 500;
@@ -173,7 +121,7 @@
 
 .setting-value {
   font-size: 16px;
-  color: var(--color-text-secondary);
+  color: var(--text-secondary);
   font-weight: 500;
 }
 
@@ -185,13 +133,36 @@
   margin-top: 24px;
 }
 
-/* Live Copy Results Container */
-.live-copy-results-container {
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: 16px;
-  padding: 32px;
-  margin-bottom: 32px;
+.action-buttons .btn {
+  min-width: 160px;
+  padding: 14px 32px;
+  font-size: 16px;
+  font-weight: 500;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+}
+
+.action-buttons .btn-primary {
+  background: var(--color-blue-primary);
+  color: var(--color-primary-black);
+  border: none;
+}
+
+.action-buttons .btn-primary:hover {
+  background: var(--color-blue-light);
+  transform: translateY(-1px);
+}
+
+.action-buttons .btn-secondary {
+  background: transparent;
+  color: var(--color-blue-primary);
+  border: 2px solid var(--color-blue-primary);
+}
+
+.action-buttons .btn-secondary:hover {
+  background: var(--color-blue-primary);
+  color: var(--color-primary-black);
+  transform: translateY(-1px);
 }
 
 /* Error Message */
@@ -202,7 +173,7 @@
 
 .error-message h2 {
   font-size: 24px;
-  color: var(--color-text-primary);
+  color: var(--text-primary);
   margin-bottom: 24px;
 }
 
@@ -258,18 +229,4 @@
     font-size: 20px;
   }
 
-  .breakdown-value {
-    font-size: 20px;
-  }
-
-  .stat-breakdown {
-    flex-direction: column;
-    gap: 16px;
-  }
-
-  .breakdown-item {
-    flex-direction: row;
-    justify-content: space-between;
-    width: 100%;
-  }
 }
