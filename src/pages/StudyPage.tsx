@@ -13,6 +13,8 @@ import { createIOAdapter } from '../features/session/runtime/ioAdapter.js';
 import type { SessionSnapshot, HistoryItem } from '../features/session/runtime/io.js';
 import { createSessionRunner } from '../features/session/runtime/sessionProgram.js';
 import { RandomCharSource } from '../features/session/runtime/sessionProgram.js';
+import { createCharacterSource } from '../features/sources';
+import type { SourceContent } from '../features/sources';
 import { createFeedback } from '../features/session/services/feedback/index.js';
 import { useAudio } from '../contexts/useAudio';
 import { useLiveCopyInput, LiveCopyDisplay } from '../components/LiveCopy';
@@ -54,8 +56,9 @@ export function StudyPage() {
   const location = useLocation();
   const { initializeAudio, getAudioEngine, isAudioReady } = useAudio();
 
-  // Get config from navigation state
+  // Get config and source content from navigation state
   const config = location.state?.config;
+  const sourceContent = location.state?.sourceContent as SourceContent | null;
 
   // Check if audio is actually ready (not just what location.state says)
   const audioActuallyReady = isAudioReady();
@@ -112,7 +115,16 @@ export function StudyPage() {
     return fb;
   }, [config?.feedback, audioEngine]);
 
-  const source = useMemo(() => new RandomCharSource(config?.effectiveAlphabet?.join('') || 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'), [config?.effectiveAlphabet]);
+  // Create character source - use fetched content or fallback to random
+  const source = useMemo(() => {
+    if (sourceContent) {
+      console.log('[StudyPage] Using fetched source:', sourceContent.id);
+      return createCharacterSource(sourceContent, config?.effectiveAlphabet);
+    } else {
+      console.log('[StudyPage] Falling back to RandomCharSource');
+      return new RandomCharSource(config?.effectiveAlphabet?.join('') || 'ABCDEFGHIJKLMNOPQRSTUVWXYZ');
+    }
+  }, [sourceContent, config?.effectiveAlphabet]);
 
   // Create IO adapter
   const io = useMemo(() => {
