@@ -6,7 +6,7 @@ import type { CharacterSource } from '../session/runtime/sessionProgram';
 
 /**
  * Source that cycles through an array of text items (e.g., headlines)
- * Adds "=" separator between items
+ * Preserves spaces within items, adds "=" separator between items
  */
 export class ArraySource implements CharacterSource {
   private items: string[];
@@ -32,15 +32,21 @@ export class ArraySource implements CharacterSource {
     }
 
     // Get next character from current item
-    const char = this.currentText[this.currentCharIndex].toUpperCase();
+    const char = this.currentText[this.currentCharIndex];
     this.currentCharIndex++;
 
-    // Skip non-alphanumeric characters
-    if (!/[A-Z0-9]/.test(char)) {
+    // Handle spaces
+    if (char === ' ' || /\s/.test(char)) {
+      return ' ';
+    }
+
+    // Skip non-alphanumeric/non-space characters
+    const upperChar = char.toUpperCase();
+    if (!/[A-Z0-9]/.test(upperChar)) {
       return this.next(); // Recursively get next valid character
     }
 
-    return char;
+    return upperChar;
   }
 
   reset(): void {
@@ -74,7 +80,7 @@ export class ContinuousTextSource implements CharacterSource {
       this.currentWord = this.words[this.currentWordIndex] || '';
       this.currentCharIndex = 0;
 
-      // Return space between words (rendered as pause in morse)
+      // Return space between words
       return ' ';
     }
 
@@ -82,7 +88,7 @@ export class ContinuousTextSource implements CharacterSource {
     const char = this.currentWord[this.currentCharIndex].toUpperCase();
     this.currentCharIndex++;
 
-    // Skip non-alphanumeric characters
+    // Skip non-alphanumeric characters (but preserve spaces)
     if (!/[A-Z0-9]/.test(char)) {
       return this.next(); // Recursively get next valid character
     }

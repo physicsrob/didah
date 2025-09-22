@@ -106,6 +106,12 @@ export function getSpacingMs(wpm: number) {
  * Includes the time for all dits/dahs plus intra-symbol spacing
  */
 export function calculateCharacterDurationMs(char: string, wpm: number): number {
+  // Handle space character (4 dits of silence)
+  if (char === ' ') {
+    const ditMs = wpmToDitMs(wpm);
+    return ditMs * 4;
+  }
+
   const pattern = getMorsePattern(char);
   if (!pattern) {
     return 0; // Unknown characters have no duration
