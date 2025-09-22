@@ -161,7 +161,7 @@ export function ActiveSessionPage() {
       });
       return () => unsub();
     }
-  }, [runner, config, navigate, addTransmitEvent, liveCopyEvents, liveCopyTime]);
+  }, [runner, config, navigate, addTransmitEvent, liveCopyEvents, liveCopyTime, sourceContent]);
 
   // Handle keyboard input for Practice mode
   useEffect(() => {
@@ -198,9 +198,28 @@ export function ActiveSessionPage() {
   }, [runner]);
 
   const handleEndSession = useCallback(() => {
+    // Stop the runner
     runner.stop();
-    // The snapshot subscription will handle navigation to completion page
-  }, [runner]);
+
+    // Navigate immediately to completion page
+    navigate('/session-complete', {
+      state: {
+        config,
+        sourceContent,
+        stats: snapshot.stats,
+        emissions: snapshot.emissions,
+        duration: Date.now() - (snapshot.startedAt || Date.now()),
+        liveCopyState: config.mode === 'live-copy' ? evaluateLiveCopy(
+          liveCopyEvents,
+          liveCopyTime,
+          {
+            offset: 100,
+            feedbackMode: config.liveCopyFeedback || 'immediate'
+          }
+        ) : null
+      }
+    });
+  }, [runner, snapshot, navigate, config, sourceContent, liveCopyEvents, liveCopyTime]);
 
   // Handle click to start when audio not ready
   const handleStartClick = async () => {
