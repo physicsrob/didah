@@ -318,12 +318,10 @@ export function ActiveSessionPage() {
   }
 
   const getSourceDisplay = () => {
-    // sourceContent doesn't have a name property, use the source type from config
-    if (config.sourceType === 'random') return 'Random Letters';
-    if (config.sourceType === 'words') return 'English Words';
-    if (config.sourceType === 'reddit') return 'Reddit';
-    if (config.sourceType === 'rss') return 'RSS Feed';
-    return config.sourceType || 'Unknown';
+    // Use the source name from sourceContent if available
+    if (sourceContent?.name) return sourceContent.name;
+    // Fallback to sourceId formatting
+    return config?.sourceId?.replace(/_/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase()) || 'Unknown';
   };
 
   return (
