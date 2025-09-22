@@ -105,16 +105,16 @@ describe('Live Copy Display Timing', () => {
 
     // Verify specific expected states
     const at100 = snapshots.find(s => s.time === 100);
-    expect(at100?.display).toBe('_', 'At 100ms should show single underscore for pending H');
+    expect(at100?.display).toBe('_'); // At 100ms should show single underscore for pending H
 
     const at600 = snapshots.find(s => s.time === 600);
-    expect(at600?.display).toBe('H_', 'At 600ms should show H (missed) and underscore for pending E');
+    expect(at600?.display).toBe('H_'); // At 600ms should show H (missed) and underscore for pending E
 
     const at1100 = snapshots.find(s => s.time === 1100);
-    expect(at1100?.display).toBe('HE_', 'At 1100ms should show HE and underscore for pending L');
+    expect(at1100?.display).toBe('HE_'); // At 1100ms should show HE and underscore for pending L
 
     const at2600 = snapshots.find(s => s.time === 2600);
-    expect(at2600?.display).toBe('HELLO', 'At 2600ms should show complete HELLO');
+    expect(at2600?.display).toBe('HELLO'); // At 2600ms should show complete HELLO
   });
 
   it('should handle the last character without flickering', () => {
@@ -163,8 +163,7 @@ describe('Live Copy Display Timing', () => {
       if (displays[i] !== displays[i-1]) {
         // Once changed, shouldn't go back
         for (let j = i + 1; j < displays.length; j++) {
-          expect(displays[j]).not.toBe(displays[i-1],
-            `Display reverted from "${displays[i]}" back to "${displays[i-1]}" at index ${j}`);
+          expect(displays[j]).not.toBe(displays[i-1]); // Display shouldn't revert back
         }
       }
     }
@@ -185,8 +184,7 @@ describe('Live Copy Display Timing', () => {
 
       const underscoreCount = (displayText.match(/_/g) || []).length;
 
-      expect(underscoreCount).toBeLessThanOrEqual(1,
-        `At ${time}ms, found ${underscoreCount} underscores in "${displayText}"`);
+      expect(underscoreCount).toBeLessThanOrEqual(1); // Should only have at most one underscore
     }
   });
 });

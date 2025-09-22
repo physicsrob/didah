@@ -46,6 +46,25 @@ export async function runPracticeEmission(
   const emissionStart = clock.now();
   debug.log(`[Emission] Start - Char: '${char}', Time: ${emissionStart}ms`);
 
+  // Handle spaces specially - they auto-advance with no user input required
+  if (char === ' ') {
+    debug.log(`[Emission] Space character - auto-advancing`);
+
+    // Play the space timing (4 dits of silence)
+    await io.playChar(' ', cfg.wpm);
+
+    // Log as automatically correct
+    io.log({
+      type: 'correct',
+      at: clock.now(),
+      char: ' ',
+      latencyMs: 0
+    });
+
+    debug.log(`[Emission] End - Char: ' ', Outcome: correct (auto)`);
+    return 'correct';
+  }
+
   // Start audio but don't await - we accept input during audio
   io.playChar(char, cfg.wpm).catch(() => {
     // Audio errors shouldn't crash the emission

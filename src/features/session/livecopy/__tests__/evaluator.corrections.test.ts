@@ -5,7 +5,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { evaluateLiveCopy, type LiveCopyEvent, type LiveCopyConfig } from '../evaluator';
+import { evaluateLiveCopy, type LiveCopyEvent, type LiveCopyConfig, type TransmitEvent } from '../evaluator';
 import { liveCopyToDisplay } from '../../../../components/CharacterDisplay.transformations';
 
 describe('Live Copy Corrections Display', () => {
@@ -93,10 +93,10 @@ describe('Live Copy Corrections Display', () => {
         const transmitted = state.display[i];
         if (transmitted) {
           // Calculate window timing for this character
-          const tx = events.find(e => e.type === 'transmitted' && e.char === transmitted.char);
+          const tx = events.find((e): e is TransmitEvent => e.type === 'transmitted' && e.char === transmitted.char);
           if (tx) {
             const windowStart = tx.startTime + config.offset;
-            const nextTx = events.find(e => e.type === 'transmitted' && e.startTime > tx.startTime);
+            const nextTx = events.find((e): e is TransmitEvent => e.type === 'transmitted' && e.startTime > tx.startTime);
             const windowEnd = nextTx ? nextTx.startTime + config.offset : windowStart + 200;
             console.log(`    [${i}] char:${d.char} status:${d.status} typed:${d.typed} revealed:${d.revealed} window:(${windowStart}-${windowEnd}ms)`);
           } else {
@@ -222,16 +222,16 @@ describe('Live Copy Corrections Display', () => {
       const aChar = state.display[0];
 
       // Calculate expected window timing
-      const windowStart = 100; // 0 + 100 offset
+      // const windowStart = 100; // 0 + 100 offset - unused variable
       const windowEnd = 600;   // 0 + 500 duration + 100 offset
       const expectedStatus = time < windowEnd ? 'pending' : (time >= windowEnd ? 'wrong' : 'pending');
 
       console.log(`${time}ms: status=${aChar?.status} expected=${expectedStatus} windowEnd=${windowEnd} inWindow=${time < windowEnd}`);
 
       if (time < windowEnd) {
-        expect(aChar?.status).toBe('pending', `At ${time}ms, window should still be open (closes at ${windowEnd}ms)`);
+        expect(aChar?.status).toBe('pending'); // Window should still be open
       } else {
-        expect(aChar?.status).toBe('wrong', `At ${time}ms, window should be closed and status determined`);
+        expect(aChar?.status).toBe('wrong'); // Window should be closed and status determined
       }
     });
   });

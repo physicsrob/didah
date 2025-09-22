@@ -70,6 +70,15 @@ export class AudioEngine {
       throw new Error('Audio context not initialized');
     }
 
+    // Handle space character as a silent pause (4 dits)
+    // This adds to the standard 3-dit inter-character spacing for 7 total
+    if (char === ' ') {
+      const ditMs = wpmToDitMs(wpm);
+      await this.stop(); // Stop any current playback
+      this.playbackPromise = this.silence(ditMs * 4);
+      return this.playbackPromise;
+    }
+
     const pattern = getMorsePattern(char);
     if (!pattern) {
       throw new Error(`No Morse pattern found for character: ${char}`);
