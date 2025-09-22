@@ -23,7 +23,6 @@ import { historyToDisplay, liveCopyToDisplay } from '../components/CharacterDisp
 import { useLiveCopy } from '../features/session/livecopy/useLiveCopy';
 import { evaluateLiveCopy } from '../features/session/livecopy/evaluator';
 import '../styles/main.css';
-import '../styles/studyPage.css';  // Need this for CharacterDisplay styles
 import '../styles/activeSession.css';
 
 type SessionPhase = 'waiting' | 'countdown' | 'active' | 'paused';
@@ -143,6 +142,7 @@ export function ActiveSessionPage() {
             navigate('/session-complete', {
               state: {
                 config,
+                sourceContent,
                 stats: snap.stats,
                 emissions: snap.emissions,
                 duration: Date.now() - (snap.startedAt || Date.now()),

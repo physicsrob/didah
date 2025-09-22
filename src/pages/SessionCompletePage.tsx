@@ -16,6 +16,7 @@ export function SessionCompletePage() {
   // Get session data from navigation state
   const config = location.state?.config;
   const stats = location.state?.stats;
+  const sourceContent = location.state?.sourceContent;
   const liveCopyState = location.state?.liveCopyState;
 
   // Calculate accuracy
@@ -26,11 +27,10 @@ export function SessionCompletePage() {
 
   // Get source display name
   const getSourceDisplay = () => {
-    if (config?.sourceType === 'random') return 'Random Letters';
-    if (config?.sourceType === 'words') return 'English Words';
-    if (config?.sourceType === 'reddit') return 'Reddit';
-    if (config?.sourceType === 'rss') return 'RSS Feed';
-    return config?.sourceType || 'Unknown';
+    // Use the source name from sourceContent if available
+    if (sourceContent?.name) return sourceContent.name;
+    // Fallback to sourceId formatting
+    return config?.sourceId?.replace(/_/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase()) || 'Unknown';
   };
 
   // Navigation handlers
@@ -126,10 +126,10 @@ export function SessionCompletePage() {
                 <div className="setting-item">
                   <span className="setting-label">Duration</span>
                   <span className="setting-value">
-                    {config.duration === 60 ? '1 minute' :
-                     config.duration === 120 ? '2 minutes' :
-                     config.duration === 300 ? '5 minutes' :
-                     `${config.duration} seconds`}
+                    {config.lengthMs === 60000 ? '1 minute' :
+                     config.lengthMs === 120000 ? '2 minutes' :
+                     config.lengthMs === 300000 ? '5 minutes' :
+                     `${Math.round(config.lengthMs / 1000)} seconds`}
                   </span>
                 </div>
 

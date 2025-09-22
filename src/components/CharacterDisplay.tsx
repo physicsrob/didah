@@ -6,6 +6,7 @@
  */
 
 import { useRef, useEffect } from 'react';
+import './CharacterDisplay.css';
 
 /**
  * Visual status for a displayed character

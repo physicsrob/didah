@@ -1,0 +1,117 @@
+/**
+ * Character Display Component Styles
+ *
+ * Styles for the generic character display used across multiple modes
+ * (Practice, Listen, Live Copy) with color-coded status indicators
+ */
+
+/* Character History - Continuous Text Display */
+.character-history-container {
+    width: 100%;
+    max-width: 800px;
+    height: 80px;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-primary);
+    border-radius: 8px;
+    padding: 20px 24px;
+    margin-top: 20px;
+    position: relative;
+    overflow: hidden;
+}
+
+.character-history-container::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 60px;
+    background: linear-gradient(to right, var(--bg-secondary), transparent);
+    z-index: 1;
+    pointer-events: none;
+}
+
+.character-history-text {
+    font-family: var(--font-mono);
+    font-size: 28px;
+    line-height: 1.5;
+    letter-spacing: 0.05em;
+    overflow-x: auto;
+    overflow-y: hidden;
+    white-space: nowrap;
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none; /* IE/Edge */
+    scroll-behavior: smooth;
+}
+
+.character-history-text::-webkit-scrollbar {
+    display: none; /* Chrome, Safari, Opera */
+}
+
+.history-placeholder {
+    color: var(--text-muted);
+    font-style: italic;
+    font-size: 18px;
+    white-space: nowrap;
+}
+
+/* Character result colors */
+.char-correct {
+    color: var(--color-success);
+}
+
+.char-incorrect {
+    color: var(--color-error);
+}
+
+.char-timeout {
+    color: var(--color-warning);
+}
+
+.char-pending {
+    color: var(--text-muted);
+}
+
+.char-listen {
+    color: var(--text-primary);
+}
+
+.char-passive {
+    color: var(--text-primary);
+}
+
+/* Animation for new characters */
+@keyframes char-appear {
+    from {
+        opacity: 0;
+        transform: scale(1.2);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+.char-correct:last-child,
+.char-incorrect:last-child,
+.char-timeout:last-child,
+.char-passive:last-child {
+    animation: char-appear 0.2s ease-out;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .character-history-container {
+        min-width: 100%;
+    }
+}
+
+@media (max-width: 480px) {
+    .character-history-text {
+        font-size: 20px;
+    }
+
+    .history-placeholder {
+        font-size: 14px;
+    }
+}
