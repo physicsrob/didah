@@ -64,10 +64,65 @@ function getStatusClass(status: CharacterStatus): string {
 }
 
 /**
+ * Group characters into words for wrapping
+ * Words are separated by spaces, and each word maintains its character styling
+ */
+function groupIntoWords(characters: DisplayCharacter[]): Array<{
+  chars: DisplayCharacter[];
+  indices: number[];
+  isSpace: boolean;
+}> {
+  const words: Array<{
+    chars: DisplayCharacter[];
+    indices: number[];
+    isSpace: boolean;
+  }> = [];
+
+  let currentWord: DisplayCharacter[] = [];
+  let currentIndices: number[] = [];
+
+  characters.forEach((char, index) => {
+    if (char.text === ' ') {
+      // Flush current word if any
+      if (currentWord.length > 0) {
+        words.push({
+          chars: currentWord,
+          indices: currentIndices,
+          isSpace: false
+        });
+        currentWord = [];
+        currentIndices = [];
+      }
+      // Add space as its own "word"
+      words.push({
+        chars: [char],
+        indices: [index],
+        isSpace: true
+      });
+    } else {
+      // Add to current word
+      currentWord.push(char);
+      currentIndices.push(index);
+    }
+  });
+
+  // Flush final word if any
+  if (currentWord.length > 0) {
+    words.push({
+      chars: currentWord,
+      indices: currentIndices,
+      isSpace: false
+    });
+  }
+
+  return words;
+}
+
+/**
  * Generic character display component
  *
- * Displays a horizontal sequence of characters with color-coded status.
- * Automatically scrolls to show the latest characters as they're added.
+ * Displays characters with color-coded status in a multi-line format.
+ * Wraps at word boundaries and automatically scrolls to show the latest line.
  */
 export function CharacterDisplay({
   characters,
@@ -77,12 +132,16 @@ export function CharacterDisplay({
 }: CharacterDisplayProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  // Auto-scroll to the right when characters change
+  // Auto-scroll to the bottom when characters change
   useEffect(() => {
     if (autoScroll && scrollRef.current) {
-      scrollRef.current.scrollLeft = scrollRef.current.scrollWidth;
+      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
   }, [characters, autoScroll]);
+
+  // Group characters into words for proper wrapping
+  const words = groupIntoWords(characters);
+  const lastCharIndex = characters.length - 1;
 
   return (
     <div className={`character-history-container ${className}`}>
@@ -93,14 +152,27 @@ export function CharacterDisplay({
             <span className="blinking-cursor" />
           </>
         ) : (
-          characters.map((char, i) => (
-            <span
-              key={char.key ?? i}
-              className={`${getStatusClass(char.status)} ${i === characters.length - 1 ? 'char-current' : ''}`}
-            >
-              {char.text}
-            </span>
-          ))
+          <div className="character-words-wrapper">
+            {words.map((word, wordIndex) => (
+              <span
+                key={wordIndex}
+                className={`character-word ${word.isSpace ? 'word-space' : ''}`}
+              >
+                {word.chars.map((char, charIndex) => {
+                  const globalIndex = word.indices[charIndex];
+                  const isLast = globalIndex === lastCharIndex;
+                  return (
+                    <span
+                      key={char.key ?? globalIndex}
+                      className={`${getStatusClass(char.status)} ${isLast ? 'char-current' : ''}`}
+                    >
+                      {char.text}
+                    </span>
+                  );
+                })}
+              </span>
+            ))}
+          </div>
         )}
       </div>
     </div>
