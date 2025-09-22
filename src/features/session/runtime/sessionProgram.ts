@@ -50,6 +50,16 @@ export interface SessionRunner {
   stop(): void;
 
   /**
+   * Pause the current session (between emissions only)
+   */
+  pause(): void;
+
+  /**
+   * Resume a paused session
+   */
+  resume(): void;
+
+  /**
    * Subscribe to session state updates
    */
   subscribe(fn: (snapshot: SessionSnapshot) => void): () => void;
@@ -93,6 +103,12 @@ export function createSessionRunner(deps: SessionRunnerDeps): SessionRunner {
   let abortController: AbortController | null = null;
   let sessionPromise: Promise<void> | null = null;
 
+  // Pause state
+  let isPaused = false;
+  let pausedAt: number | null = null;
+  let totalPausedMs = 0;
+  let pauseResolver: (() => void) | null = null;
+
   // Publish snapshot to all subscribers
   const publish = () => {
     // Create a new object so React detects the change (deep clone)
@@ -134,6 +150,12 @@ export function createSessionRunner(deps: SessionRunnerDeps): SessionRunner {
   async function run(config: SessionConfig, signal: AbortSignal): Promise<void> {
     const startTime = deps.clock.now();
 
+    // Reset pause state at session start
+    isPaused = false;
+    pausedAt = null;
+    totalPausedMs = 0;
+    pauseResolver = null;
+
     try {
       // Initialize session state
       snapshot = {
@@ -164,8 +186,25 @@ export function createSessionRunner(deps: SessionRunnerDeps): SessionRunner {
 
       // Main session loop
       while (!signal.aborted) {
-        // Check time budget before starting new emission
-        const elapsed = deps.clock.now() - startTime;
+        // Check if paused and wait for resume
+        if (isPaused) {
+          snapshot.phase = 'paused';
+          publish();
+
+          // Wait for resume
+          await new Promise<void>(resolve => {
+            pauseResolver = resolve;
+          });
+
+          // Clear resolver after resume
+          pauseResolver = null;
+
+          // Session might have been stopped while paused
+          if (signal.aborted) break;
+        }
+
+        // Check time budget before starting new emission (accounting for paused time)
+        const elapsed = (deps.clock.now() - startTime) - totalPausedMs;
         const remaining = config.lengthMs - elapsed;
 
         if (remaining <= 0) {
@@ -215,8 +254,8 @@ export function createSessionRunner(deps: SessionRunnerDeps): SessionRunner {
               snapshot.previous = [...snapshot.previous, historyItem];
               snapshot.currentChar = null;
 
-              // Update remaining time
-              const newElapsed = deps.clock.now() - startTime;
+              // Update remaining time (accounting for paused time)
+              const newElapsed = (deps.clock.now() - startTime) - totalPausedMs;
               snapshot.remainingMs = Math.max(0, config.lengthMs - newElapsed);
 
               // Publish immediately so UI updates right away
@@ -244,8 +283,8 @@ export function createSessionRunner(deps: SessionRunnerDeps): SessionRunner {
               snapshot.previous = [...snapshot.previous, historyItem];
               snapshot.currentChar = null;
 
-              // Update remaining time
-              const newElapsed = deps.clock.now() - startTime;
+              // Update remaining time (accounting for paused time)
+              const newElapsed = (deps.clock.now() - startTime) - totalPausedMs;
               snapshot.remainingMs = Math.max(0, config.lengthMs - newElapsed);
 
               // Publish snapshot
@@ -266,8 +305,8 @@ export function createSessionRunner(deps: SessionRunnerDeps): SessionRunner {
               // Clear current character after emission
               snapshot.currentChar = null;
 
-              // Update remaining time
-              const newElapsed = deps.clock.now() - startTime;
+              // Update remaining time (accounting for paused time)
+              const newElapsed = (deps.clock.now() - startTime) - totalPausedMs;
               snapshot.remainingMs = Math.max(0, config.lengthMs - newElapsed);
 
               // Publish immediately so UI can update
@@ -331,6 +370,11 @@ export function createSessionRunner(deps: SessionRunnerDeps): SessionRunner {
     },
 
     async stop(): Promise<void> {
+      // Reset pause state when stopping
+      isPaused = false;
+      pausedAt = null;
+      totalPausedMs = 0;
+
       if (abortController) {
         abortController.abort();
         abortController = null;
@@ -338,6 +382,35 @@ export function createSessionRunner(deps: SessionRunnerDeps): SessionRunner {
       // Wait for the session to actually end
       if (sessionPromise) {
         await sessionPromise;
+      }
+    },
+
+    pause(): void {
+      // Only pause if running
+      if (!isPaused && snapshot.phase === 'running') {
+        isPaused = true;
+        pausedAt = deps.clock.now();
+        console.log('[Session] Paused at', pausedAt);
+      }
+    },
+
+    resume(): void {
+      // Only resume if paused
+      if (isPaused && pausedAt !== null) {
+        const pauseDuration = deps.clock.now() - pausedAt;
+        totalPausedMs += pauseDuration;
+        console.log('[Session] Resumed after', pauseDuration, 'ms pause. Total paused:', totalPausedMs, 'ms');
+
+        isPaused = false;
+        pausedAt = null;
+        snapshot.phase = 'running';
+
+        // Unblock the session loop
+        if (pauseResolver) {
+          pauseResolver();
+        }
+
+        publish();
       }
     },
 

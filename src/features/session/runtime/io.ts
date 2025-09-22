@@ -8,7 +8,7 @@ export interface HistoryItem {
 }
 
 export type SessionSnapshot = {
-  phase: 'idle' | 'running' | 'ended';
+  phase: 'idle' | 'running' | 'paused' | 'ended';
   currentChar: string | null;
   previous: HistoryItem[];
   startedAt: number | null;

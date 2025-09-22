@@ -95,7 +95,7 @@
 /* Character History - Continuous Text Display */
 .character-history-container {
     width: 100%;
-    min-width: 600px;
+    max-width: 800px;  /* Match the new design */
     height: 80px;
     background: var(--bg-secondary);
     border: 1px solid var(--border-primary);
