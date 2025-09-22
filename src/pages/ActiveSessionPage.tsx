@@ -5,7 +5,7 @@
  * Handles the actual Morse code session with just a header and character display.
  */
 
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { getMorsePattern as getMorsePatternFromAlphabet } from '../core/morse/alphabet.js';
 import { SystemClock } from '../features/session/runtime/clock.js';
@@ -54,6 +54,7 @@ export function ActiveSessionPage() {
   const [sessionPhase, setSessionPhase] = useState<SessionPhase>('waiting');
   const [countdownNumber, setCountdownNumber] = useState<number>(3);
   const [isPaused, setIsPaused] = useState(false);
+  const isPausedRef = useRef(false);  // Use ref to avoid recreating IO adapter
 
   // Live Copy mode
   const isLiveCopyActive = config?.mode === 'live-copy' && sessionPhase === 'active' && snapshot.phase === 'running';
@@ -103,7 +104,8 @@ export function ActiveSessionPage() {
       feedback: feedback || undefined,
       feedbackType: config?.feedback,
       onReveal: (char: string) => {
-        if (config?.mode === 'practice' && config?.replay) {
+        // Don't show replays when paused
+        if (config?.mode === 'practice' && config?.replay && !isPausedRef.current) {
           setReplayOverlay(char);
         }
       },
@@ -114,7 +116,8 @@ export function ActiveSessionPage() {
       onFlash: (type: 'error' | 'warning' | 'success') => {
         setFeedbackFlash(type);
       },
-      replayDuration: 1500
+      replayDuration: 1500,
+      isPaused: () => isPausedRef.current  // Pass pause state checker
     });
   }, [audioEngine, feedback, config?.mode, config?.replay, config?.feedback]);
 
@@ -190,11 +193,15 @@ export function ActiveSessionPage() {
   const handlePause = useCallback(() => {
     runner.pause();
     setIsPaused(true);
+    isPausedRef.current = true;
+    // Hide any active replay overlay when pausing
+    setReplayOverlay(null);
   }, [runner]);
 
   const handleResume = useCallback(() => {
     runner.resume();
     setIsPaused(false);
+    isPausedRef.current = false;
   }, [runner]);
 
   const handleEndSession = useCallback(() => {

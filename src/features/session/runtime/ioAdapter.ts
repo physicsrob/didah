@@ -19,6 +19,7 @@ export type IOAdapterConfig = {
   onSnapshot?: (snapshot: SessionSnapshot) => void;
   onFlash?: (type: 'error' | 'warning' | 'success') => void; // Flash callback
   replayDuration?: number; // ms to show replay overlay
+  isPaused?: () => boolean; // Check if session is paused
 };
 
 /**
@@ -34,7 +35,8 @@ export function createIOAdapter(config: IOAdapterConfig): IO {
     onLog,
     onSnapshot,
     onFlash,
-    replayDuration = 1000
+    replayDuration = 1000,
+    isPaused
   } = config;
 
   return {
@@ -98,6 +100,12 @@ export function createIOAdapter(config: IOAdapterConfig): IO {
     },
 
     async replay(char: string, wpm: number): Promise<void> {
+      // Don't replay if paused
+      if (isPaused && isPaused()) {
+        console.log(`[Replay] Skipping replay for '${char}' - session is paused`);
+        return;
+      }
+
       console.log(`[Replay] Starting replay for '${char}' at ${wpm} WPM`);
       if (!onReveal || !audioEngine) {
         console.log(`[Replay] Missing dependencies - onReveal: ${!!onReveal}, audioEngine: ${!!audioEngine}`);
@@ -111,6 +119,13 @@ export function createIOAdapter(config: IOAdapterConfig): IO {
       // Wait 500ms before playing audio
       console.log(`[Replay] Waiting 500ms before audio`);
       await new Promise(resolve => setTimeout(resolve, 500));
+
+      // Check again if paused before playing audio
+      if (isPaused && isPaused()) {
+        console.log(`[Replay] Session paused during wait - skipping audio`);
+        onHide?.();
+        return;
+      }
 
       // Play the audio
       try {
