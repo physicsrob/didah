@@ -44,7 +44,8 @@ The app uses a runtime-based approach (NOT state machines) - see `arch.md` for d
 - `src/core/morse/alphabet.ts` - Character to Morse pattern mappings
 - `src/features/session/runtime/sessionProgram.ts` - Main session orchestrator
 - `src/features/session/runtime/charPrograms.ts` - Active/Passive mode logic
-- `src/pages/StudyPage.tsx` - Main UI component
+- `src/pages/ActiveSessionPage.tsx` - Active practice session UI
+- `src/pages/SessionConfigPage.tsx` - Session configuration UI
 
 ## Current Status
 

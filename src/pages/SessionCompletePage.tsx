@@ -16,7 +16,6 @@ export function SessionCompletePage() {
   // Get session data from navigation state
   const config = location.state?.config;
   const stats = location.state?.stats;
-  const duration = location.state?.duration || 0;
   const liveCopyState = location.state?.liveCopyState;
 
   // Calculate accuracy
@@ -24,14 +23,6 @@ export function SessionCompletePage() {
   const accuracy = totalChars > 0
     ? Math.round((stats.correct / totalChars) * 100)
     : 0;
-
-  // Format duration
-  const formatDuration = (ms: number) => {
-    const seconds = Math.floor(ms / 1000);
-    const minutes = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${minutes}:${secs.toString().padStart(2, '0')}`;
-  };
 
   // Get source display name
   const getSourceDisplay = () => {
@@ -117,25 +108,6 @@ export function SessionCompletePage() {
                   <span className="stat-value">{totalChars}</span>
                 </div>
 
-                <div className="stat-item">
-                  <span className="stat-label">Session Duration</span>
-                  <span className="stat-value">{formatDuration(duration)}</span>
-                </div>
-
-                <div className="stat-breakdown">
-                  <div className="breakdown-item">
-                    <span className="breakdown-label">Correct</span>
-                    <span className="breakdown-value correct">{stats.correct || 0}</span>
-                  </div>
-                  <div className="breakdown-item">
-                    <span className="breakdown-label">Incorrect</span>
-                    <span className="breakdown-value incorrect">{stats.incorrect || 0}</span>
-                  </div>
-                  <div className="breakdown-item">
-                    <span className="breakdown-label">Timeout</span>
-                    <span className="breakdown-value timeout">{stats.timeout || 0}</span>
-                  </div>
-                </div>
               </div>
 
               {/* Settings section */}
@@ -167,40 +139,10 @@ export function SessionCompletePage() {
                 </div>
 
                 <div className="setting-item">
-                  <span className="setting-label">Recognition Window</span>
-                  <span className="setting-value">
-                    {config.speedTier === 'slow' ? 'Slow (5× dit)' :
-                     config.speedTier === 'medium' ? 'Medium (3× dit)' :
-                     config.speedTier === 'fast' ? 'Fast (2× dit)' :
-                     config.speedTier === 'lightning' ? 'Lightning (1× dit)' :
-                     config.speedTier}
-                  </span>
-                </div>
-
-                <div className="setting-item">
                   <span className="setting-label">Text Source</span>
                   <span className="setting-value">{getSourceDisplay()}</span>
                 </div>
 
-                {config.mode === 'practice' && (
-                  <>
-                    <div className="setting-item">
-                      <span className="setting-label">Feedback</span>
-                      <span className="setting-value">
-                        {config.feedback === 'buzzer' ? 'Buzzer' :
-                         config.feedback === 'flash' ? 'Flash' :
-                         config.feedback === 'both' ? 'Both' : 'None'}
-                      </span>
-                    </div>
-
-                    {config.replay && (
-                      <div className="setting-item">
-                        <span className="setting-label">Replay</span>
-                        <span className="setting-value">Enabled</span>
-                      </div>
-                    )}
-                  </>
-                )}
               </div>
             </div>
 

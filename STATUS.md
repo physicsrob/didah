@@ -43,8 +43,13 @@ The actual session orchestration implementation:
 - **Text sources**: Only RandomCharSource implemented, others missing
 
 ### ✅ UI Components
-- **StudyPage.tsx**: Main practice interface (uses runtime system)
-- **App.tsx**: Minimal app wrapper
+- **App.tsx**: Main app with routing
+- **HomePage.tsx**: Landing page
+- **SessionConfigPage.tsx**: Session configuration
+- **ActiveSessionPage.tsx**: Active practice session
+- **SessionCompletePage.tsx**: Session completion summary
+- **StatisticsPage.tsx**: Statistics view
+- **SettingsPage.tsx**: User settings
 
 ### ✅ Test Coverage
 - `/src/tests/timing.test.ts`: Timing calculations (9 tests)
@@ -103,7 +108,7 @@ See `tech_debt.md` for detailed analysis. Key issues:
 3. **CLI code mixed into main source** (/src/cli should be moved)
 4. **Hardcoded audio configuration** (should be user-configurable)
 5. **Dead code**: BrowserIOAdapter class unused
-6. **350+ lines of inline CSS** in StudyPage
+6. **Inline CSS** in various components
 7. **Inconsistent error handling** patterns
 8. **Documentation out of sync** (arch.md describes old approach)
 
@@ -183,7 +188,12 @@ See `tech_debt.md` for detailed analysis. Key issues:
         randomLetters.ts   ✅ Only this implemented
 
   /pages
-    StudyPage.tsx    ✅ Main UI
+    HomePage.tsx           ✅ Landing page
+    SessionConfigPage.tsx  ✅ Session setup
+    ActiveSessionPage.tsx  ✅ Practice session
+    SessionCompletePage.tsx ✅ Session results
+    StatisticsPage.tsx     ✅ Statistics view
+    SettingsPage.tsx       ✅ User settings
 
   /cli              🔧 Should be moved
 
