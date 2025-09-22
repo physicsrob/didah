@@ -6,17 +6,22 @@ import type { CharacterSource } from '../session/runtime/sessionProgram';
 
 /**
  * Source that cycles through an array of text items (e.g., headlines)
- * Preserves spaces within items, adds "=" separator between items
+ * Preserves spaces within items, adds " = " separator between items
  */
 export class ArraySource implements CharacterSource {
   private items: string[];
   private currentItemIndex: number = 0;
   private currentCharIndex: number = 0;
   private currentText: string;
+  private allowedChars: Set<string>;
 
-  constructor(items: string[]) {
-    this.items = items;
+  constructor(items: string[], allowedChars: string) {
+    // Add " = " separator to each item (so it's part of the text)
+    this.items = items.map(item => item + ' = ');
     this.currentText = this.items[0] || '';
+
+    // Build set of allowed characters - ensure space and = are always included
+    this.allowedChars = new Set((allowedChars + ' =').toUpperCase());
   }
 
   next(): string {
@@ -26,23 +31,22 @@ export class ArraySource implements CharacterSource {
       this.currentItemIndex = (this.currentItemIndex + 1) % this.items.length;
       this.currentText = this.items[this.currentItemIndex] || '';
       this.currentCharIndex = 0;
-
-      // Return separator between items
-      return '=';
+      // Note: separator is already part of the text, so no need to return it here
+      return this.next(); // Get first char of next item
     }
 
     // Get next character from current item
     const char = this.currentText[this.currentCharIndex];
     this.currentCharIndex++;
 
-    // Handle spaces
+    // Handle whitespace
     if (char === ' ' || /\s/.test(char)) {
       return ' ';
     }
 
-    // Skip non-alphanumeric/non-space characters
+    // Check if character is allowed
     const upperChar = char.toUpperCase();
-    if (!/[A-Z0-9]/.test(upperChar)) {
+    if (!this.allowedChars.has(upperChar)) {
       return this.next(); // Recursively get next valid character
     }
 

@@ -90,10 +90,15 @@ export function ActiveSessionPage() {
 
   // Create character source
   const source = useMemo(() => {
+    // If no config, return a dummy source (component will redirect anyway)
+    if (!config?.effectiveAlphabet) {
+      return new RandomCharSource('ABCDEFGHIJKLMNOPQRSTUVWXYZ');
+    }
+
     if (sourceContent) {
-      return createCharacterSource(sourceContent, config?.effectiveAlphabet);
+      return createCharacterSource(sourceContent, config.effectiveAlphabet);
     } else {
-      return new RandomCharSource(config?.effectiveAlphabet?.join('') || 'ABCDEFGHIJKLMNOPQRSTUVWXYZ');
+      return new RandomCharSource(config.effectiveAlphabet.join(''));
     }
   }, [sourceContent, config?.effectiveAlphabet]);
 

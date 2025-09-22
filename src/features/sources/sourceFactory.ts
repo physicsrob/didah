@@ -11,11 +11,11 @@ import { ArraySource, ContinuousTextSource, LocalRandomSource } from './characte
  */
 export function createCharacterSource(
   content: SourceContent | null,
-  effectiveAlphabet?: string[]
+  effectiveAlphabet: string[]
 ): CharacterSource {
   // Fallback to local random source if no content
   if (!content || !content.items || content.items.length === 0) {
-    const alphabet = effectiveAlphabet?.join('') || 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    const alphabet = effectiveAlphabet.join('');
     return new LocalRandomSource(alphabet);
   }
 
@@ -32,12 +32,14 @@ export function createCharacterSource(
 
   // RSS/headline sources come as array of separate items
   if (id.includes('reddit') || id.includes('news') || id.includes('hackernews')) {
-    return new ArraySource(items);
+    const alphabet = effectiveAlphabet.join('');
+    return new ArraySource(items, alphabet);
   }
 
   // Default: if multiple items, use array source; if single, use continuous
   if (items.length > 1) {
-    return new ArraySource(items);
+    const alphabet = effectiveAlphabet.join('');
+    return new ArraySource(items, alphabet);
   } else {
     return new ContinuousTextSource(items[0]);
   }
