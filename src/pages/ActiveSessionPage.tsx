@@ -11,7 +11,7 @@ import { getMorsePattern as getMorsePatternFromAlphabet } from '../core/morse/al
 import { SystemClock } from '../features/session/runtime/clock.js';
 import { SimpleInputBus } from '../features/session/runtime/inputBus.js';
 import { createIOAdapter } from '../features/session/runtime/ioAdapter.js';
-import type { SessionSnapshot } from '../features/session/runtime/io.js';
+import type { SessionSnapshot, LogEvent } from '../features/session/runtime/io.js';
 import { createSessionRunner } from '../features/session/runtime/sessionProgram.js';
 import { RandomCharSource } from '../features/session/runtime/sessionProgram.js';
 import { createCharacterSource } from '../features/sources';
@@ -22,6 +22,7 @@ import { CharacterDisplay } from '../components/CharacterDisplay';
 import { historyToDisplay, liveCopyToDisplay } from '../components/CharacterDisplay.transformations';
 import { useLiveCopy } from '../features/session/livecopy/useLiveCopy';
 import { evaluateLiveCopy } from '../features/session/livecopy/evaluator';
+import { SessionStatsCalculator } from '../features/statistics/sessionStatsCalculator';
 import '../styles/main.css';
 import '../styles/activeSession.css';
 
@@ -56,6 +57,7 @@ export function ActiveSessionPage() {
   const [countdownNumber, setCountdownNumber] = useState<number>(3);
   const [isPaused, setIsPaused] = useState(false);
   const isPausedRef = useRef(false);  // Use ref to avoid recreating IO adapter
+  const eventCollector = useRef<LogEvent[]>([]);  // Collect events for statistics
 
   // Live Copy mode
   const isLiveCopyActive = config?.mode === 'live-copy' && sessionPhase === 'active' && snapshot.phase === 'running';
@@ -122,6 +124,9 @@ export function ActiveSessionPage() {
       onFlash: (type: 'error' | 'warning' | 'success') => {
         setFeedbackFlash(type);
       },
+      onLog: (event: LogEvent) => {
+        eventCollector.current.push(event);  // Collect events for statistics
+      },
       replayDuration: 1500,
       isPaused: () => isPausedRef.current  // Pass pause state checker
     });
@@ -146,6 +151,11 @@ export function ActiveSessionPage() {
 
         // Navigate to completion page when session ends
         if (snap.phase === 'ended') {
+          // Calculate comprehensive statistics (but don't use them yet)
+          const calculator = new SessionStatsCalculator();
+          const fullStatistics = calculator.calculateStats(eventCollector.current, config);
+          console.log('Session statistics calculated:', fullStatistics);
+
           // Wait a moment for the last stats to be visible
           setTimeout(() => {
             navigate('/session-complete', {
@@ -153,7 +163,7 @@ export function ActiveSessionPage() {
                 config,
                 sourceContent,
                 sourceName,
-                stats: snap.stats,
+                stats: snap.stats,  // Still use existing snapshot stats
                 emissions: snap.emissions,
                 duration: Date.now() - (snap.startedAt || Date.now()),
                 liveCopyState: config.mode === 'live-copy' ? evaluateLiveCopy(
@@ -215,13 +225,18 @@ export function ActiveSessionPage() {
     // Stop the runner
     runner.stop();
 
+    // Calculate comprehensive statistics (but don't use them yet)
+    const calculator = new SessionStatsCalculator();
+    const fullStatistics = calculator.calculateStats(eventCollector.current, config);
+    console.log('Session statistics calculated (manual end):', fullStatistics);
+
     // Navigate immediately to completion page
     navigate('/session-complete', {
       state: {
         config,
         sourceContent,
         sourceName,
-        stats: snapshot.stats,
+        stats: snapshot.stats,  // Still use existing snapshot stats
         emissions: snapshot.emissions,
         duration: Date.now() - (snapshot.startedAt || Date.now()),
         liveCopyState: config.mode === 'live-copy' ? evaluateLiveCopy(
