@@ -19,6 +19,7 @@
     "morse-sim": "tsx src/cli/morse-sim.ts"
   },
   "dependencies": {
+    "@types/google-one-tap": "^1.2.6",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
     "react-router-dom": "^7.9.1"

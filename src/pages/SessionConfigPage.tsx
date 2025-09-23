@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import type { SessionConfig } from '../core/types/domain';
-import { getActiveWindowMs, getPassiveTimingMultipliers } from '../core/morse/timing';
 import { fetchSources, fetchSourceContent } from '../features/sources';
 import type { TextSource as ApiTextSource, SourceContent } from '../features/sources';
 import '../styles/main.css';

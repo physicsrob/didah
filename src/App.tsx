@@ -6,11 +6,13 @@ import HomePage from './pages/HomePage'
 import StatisticsPage from './pages/StatisticsPage'
 import SettingsPage from './pages/SettingsPage'
 import { AudioProvider } from './contexts/AudioContext.tsx'
+import { AuthProvider } from './contexts/AuthContext.tsx'
 
 function App() {
   return (
-    <AudioProvider>
-      <Router>
+    <AuthProvider>
+      <AudioProvider>
+        <Router>
         <Routes>
           <Route path="/" element={<HomePage />} />
           <Route path="/session-config" element={<SessionConfigPage />} />
@@ -19,8 +21,9 @@ function App() {
           <Route path="/statistics" element={<StatisticsPage />} />
           <Route path="/settings" element={<SettingsPage />} />
         </Routes>
-      </Router>
-    </AudioProvider>
+        </Router>
+      </AudioProvider>
+    </AuthProvider>
   )
 }
 

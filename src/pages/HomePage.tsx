@@ -1,10 +1,14 @@
 import { useNavigate } from 'react-router-dom'
 import { useAudio } from '../contexts/useAudio'
+import { useAuth } from '../contexts/AuthContext'
+import GoogleSignInButton from '../components/GoogleSignInButton'
+import { UserDropdown } from '../components/UserDropdown'
 import '../styles/main.css'
 
 export default function HomePage() {
   const navigate = useNavigate()
   const { initializeAudio } = useAudio()
+  const { user, handleCredentialResponse, error } = useAuth()
 
   const handleModeSelect = async (mode: 'practice' | 'listen' | 'live-copy') => {
     // Initialize audio while we have user gesture context
@@ -24,11 +28,18 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-primary">
-      {/* Placeholder top navigation */}
+      {/* Top navigation */}
       <nav style={{ position: 'fixed', top: '24px', right: '24px', zIndex: 10 }}>
-        <div className="flex gap-5">
-          <span className="nav-link-placeholder">About</span>
-          <span className="nav-link-placeholder">Login</span>
+        <div style={{ display: 'flex', gap: '20px', alignItems: 'center' }}>
+          {user ? (
+            <UserDropdown />
+          ) : error ? (
+            <span className="text-error text-xs" title={error}>
+              Auth Error
+            </span>
+          ) : (
+            <GoogleSignInButton onCredentialResponse={handleCredentialResponse} />
+          )}
         </div>
       </nav>
 
@@ -39,6 +50,13 @@ export default function HomePage() {
         <p className="text-muted text-center text-lg mb-16">
           Flow state learning for morse code mastery
         </p>
+
+        {/* Show error banner if there's a critical auth error */}
+        {error && (
+          <div className="bg-error text-white p-3 rounded-lg mb-6 text-sm">
+            <strong>Authentication Error:</strong> {error}
+          </div>
+        )}
 
         <div className="flex flex-col gap-8 items-center">
           {/* Practice modes */}
