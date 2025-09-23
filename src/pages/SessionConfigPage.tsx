@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import type { SessionConfig } from '../core/types/domain';
 import { fetchSources, fetchSourceContent } from '../features/sources';
 import type { TextSource as ApiTextSource, SourceContent } from '../features/sources';
+import { useSettings } from '../features/settings/hooks/useSettings';
 import '../styles/main.css';
 
 type SpeedTier = 'slow' | 'medium' | 'fast' | 'lightning';
@@ -32,21 +33,23 @@ export function SessionConfigPage() {
     }
   };
 
-  // Session configuration state - load from localStorage
+  // Use centralized settings
+  const { settings, updateSetting, isLoading: settingsLoading } = useSettings();
+
+  // Session configuration state - initialize from settings
   const [duration, setDuration] = useState<1 | 2 | 5>(() => {
-    const saved = localStorage.getItem('duration');
-    return saved ? (Number(saved) as 1 | 2 | 5) : 1;
+    if (!settings) return 1;
+    // Convert settings duration (60/120/300) to minutes (1/2/5)
+    return (settings.defaultDuration / 60) as 1 | 2 | 5;
   });
   const [speedTier, setSpeedTier] = useState<SpeedTier>(() => {
-    const saved = localStorage.getItem('speedTier');
-    return (saved as SpeedTier) || 'slow';
+    return settings?.defaultSpeedTier || 'slow';
   });
   const [selectedSourceId, setSelectedSourceId] = useState<string>(() => {
-    return localStorage.getItem('selectedSourceId') || 'random_letters';
+    return settings?.defaultSourceId || 'random_letters';
   });
   const [wpm, setWpm] = useState(() => {
-    const saved = localStorage.getItem('wpm');
-    return saved ? Number(saved) : 15;
+    return settings?.wpm || 15;
   });
 
   // Text source state
@@ -55,11 +58,11 @@ export function SessionConfigPage() {
   const [loadingSource, setLoadingSource] = useState(false);
   const [sourcesLoading, setSourcesLoading] = useState(true);
 
-  // Load settings from localStorage
+  // Load settings from centralized store
   const [feedback, setFeedback] = useState<FeedbackType>(() =>
-    (localStorage.getItem('feedback') as FeedbackType) || 'both'
+    settings?.feedback || 'both'
   );
-  const [replay, setReplay] = useState(() => localStorage.getItem('replay') !== 'false');
+  const [replay, setReplay] = useState(() => settings?.replay ?? true);
 
   // Feedback mode state for UI
   const [feedbackMode, setFeedbackMode] = useState<'flash' | 'buzzer' | 'replay' | 'off'>(() => {
@@ -69,15 +72,14 @@ export function SessionConfigPage() {
     if (feedback === 'buzzer') return 'buzzer';
     return 'flash'; // default
   });
-  // Character options - these setters are currently unused but the values are used
-  const [includeNumbers, ] = useState(() => localStorage.getItem('includeNumbers') !== 'false');
-  const [includeStdPunct, ] = useState(() => localStorage.getItem('includeStdPunct') !== 'false');
-  const [includeAdvPunct, ] = useState(() => localStorage.getItem('includeAdvPunct') === 'true');
+  // Character options from settings
+  const includeNumbers = settings?.includeNumbers ?? true;
+  const includeStdPunct = settings?.includeStdPunct ?? true;
+  const includeAdvPunct = settings?.includeAdvPunct ?? false;
 
   // Live Copy specific settings
   const [liveCopyFeedback, setLiveCopyFeedback] = useState<'end' | 'immediate'>(() => {
-    const saved = localStorage.getItem('liveCopyFeedback');
-    return (saved as 'end' | 'immediate') || 'end';
+    return settings?.liveCopyFeedback || 'end';
   });
 
   // Fetch available sources on mount
@@ -106,46 +108,52 @@ export function SessionConfigPage() {
       });
   }, [selectedSourceId]);
 
-  // Save settings to localStorage when they change
+  // Save settings to centralized store when they change
   useEffect(() => {
-    localStorage.setItem('duration', duration.toString());
-  }, [duration]);
+    if (settings) {
+      // Convert minutes (1/2/5) back to seconds (60/120/300)
+      const durationInSeconds = (duration * 60) as 60 | 120 | 300;
+      if (settings.defaultDuration !== durationInSeconds) {
+        updateSetting('defaultDuration', durationInSeconds);
+      }
+    }
+  }, [duration, settings, updateSetting]);
 
   useEffect(() => {
-    localStorage.setItem('speedTier', speedTier);
-  }, [speedTier]);
+    if (settings && settings.defaultSpeedTier !== speedTier) {
+      updateSetting('defaultSpeedTier', speedTier);
+    }
+  }, [speedTier, settings, updateSetting]);
 
   useEffect(() => {
-    localStorage.setItem('selectedSourceId', selectedSourceId);
-  }, [selectedSourceId]);
+    if (settings && settings.defaultSourceId !== selectedSourceId) {
+      updateSetting('defaultSourceId', selectedSourceId);
+    }
+  }, [selectedSourceId, settings, updateSetting]);
 
   useEffect(() => {
-    localStorage.setItem('wpm', wpm.toString());
-  }, [wpm]);
+    if (settings && settings.wpm !== wpm) {
+      updateSetting('wpm', wpm);
+    }
+  }, [wpm, settings, updateSetting]);
 
   useEffect(() => {
-    localStorage.setItem('feedback', feedback);
-  }, [feedback]);
+    if (settings && feedback !== 'none' && settings.feedback !== feedback) {
+      updateSetting('feedback', feedback as 'buzzer' | 'flash' | 'both');
+    }
+  }, [feedback, settings, updateSetting]);
 
   useEffect(() => {
-    localStorage.setItem('replay', replay.toString());
-  }, [replay]);
+    if (settings && settings.replay !== replay) {
+      updateSetting('replay', replay);
+    }
+  }, [replay, settings, updateSetting]);
 
   useEffect(() => {
-    localStorage.setItem('liveCopyFeedback', liveCopyFeedback);
-  }, [liveCopyFeedback]);
-
-  useEffect(() => {
-    localStorage.setItem('includeNumbers', includeNumbers.toString());
-  }, [includeNumbers]);
-
-  useEffect(() => {
-    localStorage.setItem('includeStdPunct', includeStdPunct.toString());
-  }, [includeStdPunct]);
-
-  useEffect(() => {
-    localStorage.setItem('includeAdvPunct', includeAdvPunct.toString());
-  }, [includeAdvPunct]);
+    if (settings && settings.liveCopyFeedback !== liveCopyFeedback) {
+      updateSetting('liveCopyFeedback', liveCopyFeedback);
+    }
+  }, [liveCopyFeedback, settings, updateSetting]);
 
   // Handle source selection
   const handleSourceChange = async (sourceId: string) => {
@@ -194,6 +202,17 @@ export function SessionConfigPage() {
   const handleCancel = () => {
     navigate('/');
   };
+
+  // Show loading state while settings are loading
+  if (settingsLoading || !settings) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-primary">
+        <div className="text-center">
+          <h2 className="heading-2">Loading settings...</h2>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-primary">

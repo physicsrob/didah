@@ -1,63 +1,38 @@
 import { useNavigate } from 'react-router-dom'
-import { useState, useEffect } from 'react'
+import { useSettings } from '../features/settings/hooks/useSettings'
 import '../styles/main.css'
-
-type FeedbackType = 'buzzer' | 'flash' | 'both'
 
 export default function SettingsPage() {
   const navigate = useNavigate()
-
-  // Load settings from localStorage or use defaults
-  const [feedback, setFeedback] = useState<FeedbackType>(() => {
-    const saved = localStorage.getItem('feedback')
-    return (saved as FeedbackType) || 'both'
-  })
-
-  const [replay, setReplay] = useState(() => {
-    const saved = localStorage.getItem('replay')
-    return saved !== 'false' // Default true
-  })
-
-  const [includeNumbers, setIncludeNumbers] = useState(() => {
-    const saved = localStorage.getItem('includeNumbers')
-    return saved !== 'false' // Default true
-  })
-
-  const [includeStdPunct, setIncludeStdPunct] = useState(() => {
-    const saved = localStorage.getItem('includeStdPunct')
-    return saved !== 'false' // Default true
-  })
-
-  const [includeAdvPunct, setIncludeAdvPunct] = useState(() => {
-    const saved = localStorage.getItem('includeAdvPunct')
-    return saved === 'true' // Default false
-  })
+  const { settings, updateSetting, isLoading } = useSettings()
 
   // Build effective alphabet based on toggles
   const buildAlphabet = () => {
+    if (!settings) return []
     let alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
-    if (includeNumbers) alphabet += '0123456789'
-    if (includeStdPunct) alphabet += '.,?/='
-    if (includeAdvPunct) alphabet += ':;!@#$%^&*()+-_[]{}|\\<>\'"`~'
+    if (settings.includeNumbers) alphabet += '0123456789'
+    if (settings.includeStdPunct) alphabet += '.,?/='
+    if (settings.includeAdvPunct) alphabet += ':;!@#$%^&*()+-_[]{}|\\<>\'"`~'
     return alphabet.split('')
   }
-
-  // Save settings to localStorage whenever they change
-  useEffect(() => {
-    localStorage.setItem('feedback', feedback)
-    localStorage.setItem('replay', String(replay))
-    localStorage.setItem('includeNumbers', String(includeNumbers))
-    localStorage.setItem('includeStdPunct', String(includeStdPunct))
-    localStorage.setItem('includeAdvPunct', String(includeAdvPunct))
-  }, [feedback, replay, includeNumbers, includeStdPunct, includeAdvPunct])
 
   const handleBack = () => {
     navigate('/')
   }
 
   const handleSave = () => {
-    // Settings are auto-saved via useEffect
+    // Settings are auto-saved via the store
     navigate('/')
+  }
+
+  if (isLoading || !settings) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-primary">
+        <div className="text-center">
+          <h2 className="heading-2">Loading settings...</h2>
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -76,20 +51,20 @@ export default function SettingsPage() {
             <label className="form-label">Error Feedback</label>
             <div className="flex gap-3">
               <button
-                className={`btn btn-small ${feedback === 'buzzer' ? 'btn-primary' : 'btn-secondary'}`}
-                onClick={() => setFeedback('buzzer')}
+                className={`btn btn-small ${settings.feedback === 'buzzer' ? 'btn-primary' : 'btn-secondary'}`}
+                onClick={() => updateSetting('feedback', 'buzzer')}
               >
                 Buzzer
               </button>
               <button
-                className={`btn btn-small ${feedback === 'flash' ? 'btn-primary' : 'btn-secondary'}`}
-                onClick={() => setFeedback('flash')}
+                className={`btn btn-small ${settings.feedback === 'flash' ? 'btn-primary' : 'btn-secondary'}`}
+                onClick={() => updateSetting('feedback', 'flash')}
               >
                 Flash
               </button>
               <button
-                className={`btn btn-small ${feedback === 'both' ? 'btn-primary' : 'btn-secondary'}`}
-                onClick={() => setFeedback('both')}
+                className={`btn btn-small ${settings.feedback === 'both' ? 'btn-primary' : 'btn-secondary'}`}
+                onClick={() => updateSetting('feedback', 'both')}
               >
                 Both
               </button>
@@ -101,8 +76,8 @@ export default function SettingsPage() {
             <label className="checkbox-label">
               <input
                 type="checkbox"
-                checked={replay}
-                onChange={(e) => setReplay(e.target.checked)}
+                checked={settings.replay}
+                onChange={(e) => updateSetting('replay', e.target.checked)}
                 style={{
                   width: '20px',
                   height: '20px',
@@ -125,8 +100,8 @@ export default function SettingsPage() {
             <label className="checkbox-label">
               <input
                 type="checkbox"
-                checked={includeNumbers}
-                onChange={(e) => setIncludeNumbers(e.target.checked)}
+                checked={settings.includeNumbers}
+                onChange={(e) => updateSetting('includeNumbers', e.target.checked)}
                 style={{
                   width: '20px',
                   height: '20px',
@@ -139,8 +114,8 @@ export default function SettingsPage() {
             <label className="checkbox-label">
               <input
                 type="checkbox"
-                checked={includeStdPunct}
-                onChange={(e) => setIncludeStdPunct(e.target.checked)}
+                checked={settings.includeStdPunct}
+                onChange={(e) => updateSetting('includeStdPunct', e.target.checked)}
                 style={{
                   width: '20px',
                   height: '20px',
@@ -153,8 +128,8 @@ export default function SettingsPage() {
             <label className="checkbox-label">
               <input
                 type="checkbox"
-                checked={includeAdvPunct}
-                onChange={(e) => setIncludeAdvPunct(e.target.checked)}
+                checked={settings.includeAdvPunct}
+                onChange={(e) => updateSetting('includeAdvPunct', e.target.checked)}
                 style={{
                   width: '20px',
                   height: '20px',
