@@ -24,10 +24,8 @@ Copying experience that more closely simulates real morse code copy -- no contro
 ## Documentation
 
 - **[spec.md](spec.md)** - Product requirements and feature specifications
-- **[arch.md](arch.md)** - Technical architecture and implementation details
-- **[STATUS.md](STATUS.md)** - Current implementation status and next steps
-- **[tech_debt.md](tech_debt.md)** - Known technical debt and cleanup needed
 - **[CLAUDE.md](CLAUDE.md)** - Claude Code configuration and AI assistant context
+- **[brand.md](brand.md)** - Brand guide describing styling 
 
 ## Quick Start
 
@@ -58,10 +56,6 @@ npm run check
 ### Not Yet Implemented ❌
 - Statistics persistence and history
 - User settings and configuration
-
-## Architecture
-
-See [arch.md](arch.md) for detailed architecture documentation.
 
 ## Development
 
@@ -198,12 +192,6 @@ Returns text content from a specific source.
 - `hackernews` - Hacker News headlines
 - `bbc_news` - BBC News headlines
 
-## Contributing
-
-1. Read [STATUS.md](STATUS.md) to understand current state
-2. Check [tech_debt.md](tech_debt.md) for cleanup opportunities
-3. Follow the runtime architecture patterns in [arch.md](arch.md)
-4. Run `npm run check` before committing
 
 ## License
 
