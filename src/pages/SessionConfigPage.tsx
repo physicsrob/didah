@@ -446,38 +446,40 @@ export function SessionConfigPage() {
             </div>
           )}
 
-          {/* Timeout Speed */}
-          <div className="settings-row">
-            <div className="settings-label">Timeout Speed</div>
-            <div className="settings-control">
-              <div className="segmented-control">
-                <button
-                  className={`segmented-btn ${speedTier === 'slow' ? 'active' : ''}`}
-                  onClick={() => setSpeedTier('slow')}
-                >
-                  Slow
-                </button>
-                <button
-                  className={`segmented-btn ${speedTier === 'medium' ? 'active' : ''}`}
-                  onClick={() => setSpeedTier('medium')}
-                >
-                  Medium
-                </button>
-                <button
-                  className={`segmented-btn ${speedTier === 'fast' ? 'active' : ''}`}
-                  onClick={() => setSpeedTier('fast')}
-                >
-                  Fast
-                </button>
-                <button
-                  className={`segmented-btn ${speedTier === 'lightning' ? 'active' : ''}`}
-                  onClick={() => setSpeedTier('lightning')}
-                >
-                  Lightning
-                </button>
+          {/* Timeout Speed - Only show for practice and live-copy modes */}
+          {mode !== 'listen' && (
+            <div className="settings-row">
+              <div className="settings-label">Timeout Speed</div>
+              <div className="settings-control">
+                <div className="segmented-control">
+                  <button
+                    className={`segmented-btn ${speedTier === 'slow' ? 'active' : ''}`}
+                    onClick={() => setSpeedTier('slow')}
+                  >
+                    Slow
+                  </button>
+                  <button
+                    className={`segmented-btn ${speedTier === 'medium' ? 'active' : ''}`}
+                    onClick={() => setSpeedTier('medium')}
+                  >
+                    Medium
+                  </button>
+                  <button
+                    className={`segmented-btn ${speedTier === 'fast' ? 'active' : ''}`}
+                    onClick={() => setSpeedTier('fast')}
+                  >
+                    Fast
+                  </button>
+                  <button
+                    className={`segmented-btn ${speedTier === 'lightning' ? 'active' : ''}`}
+                    onClick={() => setSpeedTier('lightning')}
+                  >
+                    Lightning
+                  </button>
+                </div>
               </div>
             </div>
-          </div>
+          )}
         </div>
 
         {/* Start Button */}
