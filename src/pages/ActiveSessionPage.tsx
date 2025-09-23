@@ -142,6 +142,37 @@ export function ActiveSessionPage() {
   // Create session runner
   const runner = useMemo(() => createSessionRunner({ clock, io, input, source }), [clock, io, input, source]);
 
+  // Navigate to completion page with full statistics
+  const navigateToCompletion = useCallback((delay: number = 0) => {
+    // Calculate comprehensive statistics
+    const calculator = new SessionStatsCalculator();
+    const fullStatistics = calculator.calculateStats(eventCollector.current, config);
+    console.log('Session statistics calculated:', fullStatistics);
+
+    const doNavigate = () => {
+      navigate('/session-complete', {
+        state: {
+          fullStatistics,
+          sourceName,
+          liveCopyState: config.mode === 'live-copy' ? evaluateLiveCopy(
+            liveCopyEvents,
+            liveCopyTime,
+            {
+              offset: 100,
+              feedbackMode: config.liveCopyFeedback || 'immediate'
+            }
+          ) : null
+        }
+      });
+    };
+
+    if (delay > 0) {
+      setTimeout(doNavigate, delay);
+    } else {
+      doNavigate();
+    }
+  }, [navigate, config, liveCopyEvents, liveCopyTime, sourceName]);
+
   // Subscribe to session snapshots
   useEffect(() => {
     if (config) {
@@ -158,37 +189,13 @@ export function ActiveSessionPage() {
 
         // Navigate to completion page when session ends
         if (snap.phase === 'ended') {
-          // Calculate comprehensive statistics (but don't use them yet)
-          const calculator = new SessionStatsCalculator();
-          const fullStatistics = calculator.calculateStats(eventCollector.current, config);
-          console.log('Session statistics calculated:', fullStatistics);
-
           // Wait a moment for the last stats to be visible
-          setTimeout(() => {
-            navigate('/session-complete', {
-              state: {
-                config,
-                sourceContent,
-                sourceName,
-                stats: snap.stats,  // Still use existing snapshot stats
-                emissions: snap.emissions,
-                duration: Date.now() - (snap.startedAt || Date.now()),
-                liveCopyState: config.mode === 'live-copy' ? evaluateLiveCopy(
-                  liveCopyEvents,
-                  liveCopyTime,
-                  {
-                    offset: 100,
-                    feedbackMode: config.liveCopyFeedback || 'immediate'
-                  }
-                ) : null
-              }
-            });
-          }, 500);
+          navigateToCompletion(500);
         }
       });
       return () => unsub();
     }
-  }, [runner, config, navigate, addTransmitEvent, liveCopyEvents, liveCopyTime, sourceContent, sourceName]);
+  }, [runner, config, addTransmitEvent, liveCopyEvents, navigateToCompletion]);
 
   // Handle pause/resume
   const handlePause = useCallback(() => {
@@ -231,32 +238,9 @@ export function ActiveSessionPage() {
   const handleEndSession = useCallback(() => {
     // Stop the runner
     runner.stop();
-
-    // Calculate comprehensive statistics (but don't use them yet)
-    const calculator = new SessionStatsCalculator();
-    const fullStatistics = calculator.calculateStats(eventCollector.current, config);
-    console.log('Session statistics calculated (manual end):', fullStatistics);
-
     // Navigate immediately to completion page
-    navigate('/session-complete', {
-      state: {
-        config,
-        sourceContent,
-        sourceName,
-        stats: snapshot.stats,  // Still use existing snapshot stats
-        emissions: snapshot.emissions,
-        duration: Date.now() - (snapshot.startedAt || Date.now()),
-        liveCopyState: config.mode === 'live-copy' ? evaluateLiveCopy(
-          liveCopyEvents,
-          liveCopyTime,
-          {
-            offset: 100,
-            feedbackMode: config.liveCopyFeedback || 'immediate'
-          }
-        ) : null
-      }
-    });
-  }, [runner, snapshot, navigate, config, sourceContent, liveCopyEvents, liveCopyTime, sourceName]);
+    navigateToCompletion();
+  }, [runner, navigateToCompletion]);
 
   // Handle click to start when audio not ready
   const handleStartClick = async () => {

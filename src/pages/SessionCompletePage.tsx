@@ -4,27 +4,43 @@
  * Post-session overview showing results and settings with options to continue.
  */
 
+import { useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { fetchSourceContent } from '../features/sources';
 import { LiveCopyResults } from '../components/LiveCopyResults';
+import type { SessionStatistics } from '../core/types/statistics';
+import { useStatsAPI } from '../features/statistics/useStatsAPI';
 import '../styles/main.css';
 import '../styles/sessionComplete.css';
 
 export function SessionCompletePage() {
   const navigate = useNavigate();
   const location = useLocation();
+  const { saveSessionStats, isAuthenticated } = useStatsAPI();
 
   // Get session data from navigation state
-  const config = location.state?.config;
-  const stats = location.state?.stats;
+  const fullStatistics = location.state?.fullStatistics as SessionStatistics | undefined;
   const sourceName = location.state?.sourceName as string | undefined;
   const liveCopyState = location.state?.liveCopyState;
 
-  // Calculate accuracy
-  const totalChars = (stats?.correct || 0) + (stats?.incorrect || 0) + (stats?.timeout || 0);
-  const accuracy = totalChars > 0
-    ? Math.round((stats.correct / totalChars) * 100)
-    : 0;
+  // Extract what we need from fullStatistics
+  const accuracy = fullStatistics?.overallAccuracy || 0;
+  const totalChars = fullStatistics?.totalCharacters || 0;
+
+  // Save statistics when the component mounts
+  useEffect(() => {
+    if (fullStatistics && isAuthenticated) {
+      saveSessionStats(fullStatistics)
+        .then(() => {
+          console.log('Session statistics saved successfully');
+        })
+        .catch(err => {
+          console.error('Failed to save session statistics:', err);
+        });
+    } else if (!isAuthenticated && fullStatistics) {
+      console.log('Statistics not saved - user not authenticated');
+    }
+  }, [fullStatistics, isAuthenticated, saveSessionStats]);
 
   // Get source display name
   const getSourceDisplay = () => {
@@ -38,22 +54,35 @@ export function SessionCompletePage() {
   };
 
   const handlePracticeAgain = async () => {
+    if (!fullStatistics) return;
+
+    // Reconstruct the full config from statistics
+    const fullConfig = {
+      mode: fullStatistics.config.mode,
+      lengthMs: fullStatistics.config.lengthMs,
+      wpm: fullStatistics.config.wpm,
+      speedTier: fullStatistics.config.speedTier,
+      sourceId: fullStatistics.config.sourceId,
+      replay: fullStatistics.config.replay,
+      feedback: fullStatistics.config.feedback,
+      effectiveAlphabet: fullStatistics.config.effectiveAlphabet,
+      liveCopyFeedback: fullStatistics.config.liveCopyFeedback,
+    };
+
     // Refetch source content to get fresh data (e.g., new Reddit headlines)
     let freshSourceContent = null;
-    if (config?.sourceId && config.sourceId !== 'random_letters') {
+    if (fullStatistics.config.sourceId !== 'random_letters') {
       try {
-        freshSourceContent = await fetchSourceContent(config.sourceId);
+        freshSourceContent = await fetchSourceContent(fullStatistics.config.sourceId);
       } catch (error) {
         console.error('Failed to refetch source content:', error);
-        // Fallback to cached content if refetch fails
-        freshSourceContent = location.state?.sourceContent;
       }
     }
 
-    // Go back to ActiveSession with fresh source content and source name
+    // Go back to ActiveSession with config and source name
     navigate('/session', {
       state: {
-        config,
+        config: fullConfig,
         sourceContent: freshSourceContent,
         sourceName
       }
@@ -61,7 +90,7 @@ export function SessionCompletePage() {
   };
 
   // Handle missing data (shouldn't happen but good to be safe)
-  if (!config || !stats) {
+  if (!fullStatistics) {
     return (
       <div className="completion-container bg-gradient-primary">
         <div className="content-area">
@@ -88,7 +117,7 @@ export function SessionCompletePage() {
       {/* Main content */}
       <div className="content-area">
         {/* Special handling for Live Copy mode */}
-        {config.mode === 'live-copy' && liveCopyState ? (
+        {fullStatistics.config.mode === 'live-copy' && liveCopyState ? (
           <div className="live-copy-results-container">
             <h2 className="section-title">Live Copy Results</h2>
             <LiveCopyResults state={liveCopyState} />
@@ -106,14 +135,14 @@ export function SessionCompletePage() {
             {/* Two column summary - hide results for listen mode */}
             <div className="session-summary">
               {/* Results section - only show for practice and live-copy modes */}
-              {config.mode !== 'listen' && (
+              {fullStatistics.config.mode !== 'listen' && (
                 <div className="results-section">
                   <h2 className="section-title">Session Results</h2>
                   <div className="completion-message">Session Complete!</div>
 
                   <div className="stat-item">
                     <span className="stat-label">Overall Accuracy</span>
-                    <span className="stat-value accuracy">{accuracy}%</span>
+                    <span className="stat-value accuracy">{Math.round(accuracy)}%</span>
                   </div>
 
                   <div className="stat-item">
@@ -125,31 +154,31 @@ export function SessionCompletePage() {
               )}
 
               {/* Settings section - adjust width for listen mode */}
-              <div className={`settings-section ${config.mode === 'listen' ? 'settings-full-width' : ''}`}>
+              <div className={`settings-section ${fullStatistics.config.mode === 'listen' ? 'settings-full-width' : ''}`}>
                 <h2 className="section-title">Session Settings</h2>
 
                 <div className="setting-item">
                   <span className="setting-label">Mode</span>
                   <span className="setting-value">
-                    {config.mode === 'practice' ? 'Active Practice' :
-                     config.mode === 'listen' ? 'Passive Listening' :
-                     config.mode === 'live-copy' ? 'Live Copy' : config.mode}
+                    {fullStatistics.config.mode === 'practice' ? 'Active Practice' :
+                     fullStatistics.config.mode === 'listen' ? 'Passive Listening' :
+                     fullStatistics.config.mode === 'live-copy' ? 'Live Copy' : fullStatistics.config.mode}
                   </span>
                 </div>
 
                 <div className="setting-item">
                   <span className="setting-label">Duration</span>
                   <span className="setting-value">
-                    {config.lengthMs === 60000 ? '1 minute' :
-                     config.lengthMs === 120000 ? '2 minutes' :
-                     config.lengthMs === 300000 ? '5 minutes' :
-                     `${Math.round(config.lengthMs / 1000)} seconds`}
+                    {fullStatistics.config.lengthMs === 60000 ? '1 minute' :
+                     fullStatistics.config.lengthMs === 120000 ? '2 minutes' :
+                     fullStatistics.config.lengthMs === 300000 ? '5 minutes' :
+                     `${Math.round(fullStatistics.config.lengthMs / 1000)} seconds`}
                   </span>
                 </div>
 
                 <div className="setting-item">
                   <span className="setting-label">Speed</span>
-                  <span className="setting-value">{config.wpm} WPM</span>
+                  <span className="setting-value">{fullStatistics.config.wpm} WPM</span>
                 </div>
 
                 <div className="setting-item">

@@ -139,32 +139,25 @@ class StatsStore {
   }
 
   async addSessionStats(stats: SessionStats): Promise<void> {
-    const today = this.getCurrentDateKey()
+    // Use the date from the stats object itself
+    const date = stats.date
 
-    // Check if day rolled over
-    if (today !== this.todayKey) {
-      this.todayKey = today
-      this.todayStats = this.loadFromCache(today) || []
-
-      // If authenticated, fetch today's existing stats
-      if (this.api) {
-        try {
-          const remote = await this.api.fetchDayStats(today)
-          this.todayStats = remote
-        } catch {
-          // Continue with cached/empty
-        }
-      }
-    }
+    // Load existing stats for this date
+    const existingStats = this.loadFromCache(date) || []
 
     // Append new stats
-    this.todayStats.push(stats)
-    this.saveToCache(today, this.todayStats)
-    this.notifyListeners()
+    const updatedStats = [...existingStats, stats]
+    this.saveToCache(date, updatedStats)
+
+    // Update today's stats if it's today
+    if (date === this.todayKey) {
+      this.todayStats = updatedStats
+      this.notifyListeners()
+    }
 
     // Sync to backend if authenticated
     if (this.api) {
-      this.queueSync(today)
+      this.queueSync(date)
     }
   }
 
@@ -408,7 +401,7 @@ user:123:stats:2024-01-14    # User 123's stats for Jan 14
 
 1. **No Batching**: Stats sync immediately when added, maintaining data consistency
 2. **Simple Merge**: Last write wins for entire day array (no complex merging)
-3. **Day Rollover**: Automatically handled when adding stats
+3. **Date from Stats**: Use the date field from SessionStats object (no rollover detection)
 4. **Anonymous Support**: Full functionality without authentication
 5. **Retry Logic**: Same exponential backoff as settings (1s, 2s, 4s)
 6. **No Migration**: Anonymous stats remain local (simplicity over features)

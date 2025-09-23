@@ -17,11 +17,14 @@ export type SessionStatistics = {
   durationMs: number;
   config: {
     mode: "practice" | "listen" | "live-copy";
+    lengthMs: number;               // Configured session length
     wpm: number;
     speedTier: SpeedTier;
     sourceId: string;
     replay: boolean;
     feedback: "buzzer" | "flash" | "both" | "none";
+    effectiveAlphabet: string[];    // Characters practiced
+    liveCopyFeedback?: "end" | "immediate";  // For live-copy mode
   };
 
   // Overall Metrics

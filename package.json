@@ -20,6 +20,7 @@
     "prepare": "husky"
   },
   "dependencies": {
+    "@tsndr/cloudflare-worker-jwt": "^3.2.0",
     "@types/google-one-tap": "^1.2.6",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
