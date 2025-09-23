@@ -76,6 +76,13 @@ export function ActiveSessionPage() {
   // Create feedback
   const feedback = useMemo(() => {
     const feedbackType = config?.feedback || 'flash';
+
+    // Don't create any feedback for 'none' or when only using flash
+    if (feedbackType === 'none' || feedbackType === 'flash') {
+      return null;
+    }
+
+    // Create buzzer feedback for 'buzzer' or 'both'
     let fb = null;
     if (feedbackType === 'buzzer' || feedbackType === 'both') {
       fb = createFeedback('buzzer');

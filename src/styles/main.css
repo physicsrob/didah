@@ -994,6 +994,58 @@ body {
     }
 }
 
+/* Session Config Page */
+.session-header {
+    display: flex;
+    align-items: center;
+    gap: 24px;
+    padding: 20px 24px;
+    margin-bottom: 32px;
+}
+
+.btn-back {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: transparent;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 8px;
+    padding: 8px 16px;
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 15px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-back:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: #ffffff;
+}
+
+.btn-back-arrow {
+    font-size: 18px;
+    line-height: 1;
+}
+
+.btn-start-session {
+    background: var(--color-blue-primary);
+    color: var(--color-primary-black);
+    font-size: 20px;
+    font-weight: 600;
+    padding: 16px 64px;
+    border-radius: 12px;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s;
+    min-width: 300px;
+}
+
+.btn-start-session:hover {
+    background: var(--color-blue-light);
+    transform: translateY(-2px);
+}
+
 /* Utility Classes */
 .hidden {
     display: none;

@@ -1,4 +1,6 @@
 // Configuration
+export type FeedbackMode = 'flash' | 'buzzer' | 'replay' | 'off';
+
 export type UserConfig = {
   wpm: number;                  // character speed in WPM
   includeNumbers: boolean;
@@ -21,7 +23,7 @@ export type SessionConfig = {
   wpm: number;
   speedTier: "slow" | "medium" | "fast" | "lightning";
   sourceId: string;
-  feedback: "buzzer" | "flash" | "both";
+  feedback: "buzzer" | "flash" | "both" | "none";
   replay: boolean;
   effectiveAlphabet: string[]; // based on toggles
   liveCopyFeedback?: "end" | "immediate"; // For Live Copy mode only

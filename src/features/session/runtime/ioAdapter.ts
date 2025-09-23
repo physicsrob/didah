@@ -12,7 +12,7 @@ import type { Feedback } from '../services/feedback/feedbackInterface';
 export type IOAdapterConfig = {
   audioEngine: AudioEngine;
   feedback?: Feedback;
-  feedbackType?: 'buzzer' | 'flash' | 'both'; // Track the feedback type
+  feedbackType?: 'buzzer' | 'flash' | 'both' | 'none'; // Track the feedback type
   onReveal?: (char: string) => void;
   onHide?: () => void;
   onLog?: (event: LogEvent) => void;
@@ -70,6 +70,11 @@ export function createIOAdapter(config: IOAdapterConfig): IO {
 
     feedback(kind: 'correct' | 'incorrect' | 'timeout', char: string): void {
       console.log(`[Feedback] ${kind} for '${char}'`);
+
+      // Skip all feedback if feedbackType is 'none'
+      if (feedbackType === 'none') {
+        return;
+      }
 
       // Trigger visual flash if flash feedback is enabled
       if (onFlash && (feedbackType === 'flash' || feedbackType === 'both')) {

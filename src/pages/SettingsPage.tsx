@@ -46,48 +46,40 @@ export default function SettingsPage() {
         <div className="card mb-6">
           <h2 className="heading-2 mb-6">Active Mode Settings</h2>
 
-          {/* Feedback Type */}
+          {/* Feedback Mode */}
           <div className="form-group mb-6">
             <label className="form-label">Error Feedback</label>
             <div className="flex gap-3">
               <button
-                className={`btn btn-small ${settings.feedback === 'buzzer' ? 'btn-primary' : 'btn-secondary'}`}
-                onClick={() => updateSetting('feedback', 'buzzer')}
-              >
-                Buzzer
-              </button>
-              <button
-                className={`btn btn-small ${settings.feedback === 'flash' ? 'btn-primary' : 'btn-secondary'}`}
-                onClick={() => updateSetting('feedback', 'flash')}
+                className={`btn btn-small ${settings.feedbackMode === 'flash' ? 'btn-primary' : 'btn-secondary'}`}
+                onClick={() => updateSetting('feedbackMode', 'flash')}
               >
                 Flash
               </button>
               <button
-                className={`btn btn-small ${settings.feedback === 'both' ? 'btn-primary' : 'btn-secondary'}`}
-                onClick={() => updateSetting('feedback', 'both')}
+                className={`btn btn-small ${settings.feedbackMode === 'buzzer' ? 'btn-primary' : 'btn-secondary'}`}
+                onClick={() => updateSetting('feedbackMode', 'buzzer')}
               >
-                Both
+                Buzzer
+              </button>
+              <button
+                className={`btn btn-small ${settings.feedbackMode === 'replay' ? 'btn-primary' : 'btn-secondary'}`}
+                onClick={() => updateSetting('feedbackMode', 'replay')}
+              >
+                Replay
+              </button>
+              <button
+                className={`btn btn-small ${settings.feedbackMode === 'off' ? 'btn-primary' : 'btn-secondary'}`}
+                onClick={() => updateSetting('feedbackMode', 'off')}
+              >
+                Off
               </button>
             </div>
-          </div>
-
-          {/* Replay on Timeout */}
-          <div className="form-group">
-            <label className="checkbox-label">
-              <input
-                type="checkbox"
-                checked={settings.replay}
-                onChange={(e) => updateSetting('replay', e.target.checked)}
-                style={{
-                  width: '20px',
-                  height: '20px',
-                  accentColor: 'var(--color-blue-primary)',
-                }}
-              />
-              <span>Show missed characters</span>
-            </label>
             <p className="body-small text-muted mt-2">
-              When you timeout in active mode, display the character with its Morse pattern
+              Flash: Visual feedback only<br />
+              Buzzer: Audio feedback only<br />
+              Replay: Both flash and buzzer, plus shows the missed character<br />
+              Off: No feedback on errors
             </p>
           </div>
         </div>

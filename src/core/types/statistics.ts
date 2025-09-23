@@ -21,7 +21,7 @@ export type SessionStatistics = {
     speedTier: SpeedTier;
     sourceId: string;
     replay: boolean;
-    feedback: "buzzer" | "flash" | "both";
+    feedback: "buzzer" | "flash" | "both" | "none";
   };
 
   // Overall Metrics

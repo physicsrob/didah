@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import type { SessionConfig } from '../core/types/domain';
+import type { SessionConfig, FeedbackMode } from '../core/types/domain';
 import { fetchSources, fetchSourceContent } from '../features/sources';
 import type { TextSource as ApiTextSource, SourceContent } from '../features/sources';
 import { useSettings } from '../features/settings/hooks/useSettings';
@@ -8,7 +8,6 @@ import '../styles/main.css';
 
 type SpeedTier = 'slow' | 'medium' | 'fast' | 'lightning';
 type SessionMode = 'practice' | 'listen' | 'live-copy';
-type FeedbackType = 'buzzer' | 'flash' | 'both' | 'none';
 
 export function SessionConfigPage() {
   const navigate = useNavigate();
@@ -36,21 +35,11 @@ export function SessionConfigPage() {
   // Use centralized settings
   const { settings, updateSetting, isLoading: settingsLoading } = useSettings();
 
-  // Session configuration state - initialize from settings
-  const [duration, setDuration] = useState<1 | 2 | 5>(() => {
-    if (!settings) return 1;
-    // Convert settings duration (60/120/300) to minutes (1/2/5)
-    return (settings.defaultDuration / 60) as 1 | 2 | 5;
-  });
-  const [speedTier, setSpeedTier] = useState<SpeedTier>(() => {
-    return settings?.defaultSpeedTier || 'slow';
-  });
-  const [selectedSourceId, setSelectedSourceId] = useState<string>(() => {
-    return settings?.defaultSourceId || 'random_letters';
-  });
-  const [wpm, setWpm] = useState(() => {
-    return settings?.wpm || 15;
-  });
+  // Session configuration state - default values before settings load
+  const [duration, setDuration] = useState<1 | 2 | 5>(1);
+  const [speedTier, setSpeedTier] = useState<SpeedTier>('slow');
+  const [selectedSourceId, setSelectedSourceId] = useState<string>('random_letters');
+  const [wpm, setWpm] = useState(15);
 
   // Text source state
   const [availableSources, setAvailableSources] = useState<ApiTextSource[]>([]);
@@ -58,29 +47,46 @@ export function SessionConfigPage() {
   const [loadingSource, setLoadingSource] = useState(false);
   const [sourcesLoading, setSourcesLoading] = useState(true);
 
-  // Load settings from centralized store
-  const [feedback, setFeedback] = useState<FeedbackType>(() =>
-    settings?.feedback || 'both'
-  );
-  const [replay, setReplay] = useState(() => settings?.replay ?? true);
+  // Single source of truth for feedback configuration
+  const [feedbackMode, setFeedbackMode] = useState<FeedbackMode>('flash');
 
-  // Feedback mode state for UI
-  const [feedbackMode, setFeedbackMode] = useState<'flash' | 'buzzer' | 'replay' | 'off'>(() => {
-    if (feedback === 'none') return 'off';
-    if (replay) return 'replay';
-    if (feedback === 'flash') return 'flash';
-    if (feedback === 'buzzer') return 'buzzer';
-    return 'flash'; // default
-  });
+  // Helper to derive feedback and replay from feedbackMode
+  const getFeedbackConfig = (): { feedback: 'buzzer' | 'flash' | 'both' | 'none', replay: boolean } => {
+    switch (feedbackMode) {
+      case 'off':
+        return { feedback: 'none', replay: false };
+      case 'flash':
+        return { feedback: 'flash', replay: false };
+      case 'buzzer':
+        return { feedback: 'buzzer', replay: false };
+      case 'replay':
+        return { feedback: 'both', replay: true };  // 'both' means flash + buzzer, plus replay=true
+      default:
+        return { feedback: 'flash', replay: false };
+    }
+  };
   // Character options from settings
   const includeNumbers = settings?.includeNumbers ?? true;
   const includeStdPunct = settings?.includeStdPunct ?? true;
   const includeAdvPunct = settings?.includeAdvPunct ?? false;
 
   // Live Copy specific settings
-  const [liveCopyFeedback, setLiveCopyFeedback] = useState<'end' | 'immediate'>(() => {
-    return settings?.liveCopyFeedback || 'end';
-  });
+  const [liveCopyFeedback, setLiveCopyFeedback] = useState<'end' | 'immediate'>('end');
+
+  // Load settings into local state when they become available
+  useEffect(() => {
+    if (settings && !settingsLoading) {
+      // Convert settings duration (60/120/300) to minutes (1/2/5)
+      setDuration((settings.defaultDuration / 60) as 1 | 2 | 5);
+      setSpeedTier(settings.defaultSpeedTier || 'slow');
+      setSelectedSourceId(settings.defaultSourceId || 'random_letters');
+      setWpm(settings.wpm || 15);
+      setLiveCopyFeedback(settings.liveCopyFeedback || 'end');
+
+      // Direct assignment - feedbackMode is stored as-is now
+      setFeedbackMode(settings.feedbackMode || 'flash');
+    }
+  }, [settings, settingsLoading]);
 
   // Fetch available sources on mount
   useEffect(() => {
@@ -110,50 +116,46 @@ export function SessionConfigPage() {
 
   // Save settings to centralized store when they change
   useEffect(() => {
-    if (settings) {
-      // Convert minutes (1/2/5) back to seconds (60/120/300)
+    if (!settings || settingsLoading) return;
+
+    // Create a debounce timer to batch updates
+    const timer = setTimeout(() => {
       const durationInSeconds = (duration * 60) as 60 | 120 | 300;
-      if (settings.defaultDuration !== durationInSeconds) {
-        updateSetting('defaultDuration', durationInSeconds);
+
+      // Check what needs updating
+      const needsUpdate =
+        settings.defaultDuration !== durationInSeconds ||
+        settings.defaultSpeedTier !== speedTier ||
+        settings.defaultSourceId !== selectedSourceId ||
+        settings.wpm !== wpm ||
+        settings.feedbackMode !== feedbackMode ||
+        settings.liveCopyFeedback !== liveCopyFeedback;
+
+      if (needsUpdate) {
+        // Update all settings at once
+        if (settings.defaultDuration !== durationInSeconds) {
+          updateSetting('defaultDuration', durationInSeconds);
+        }
+        if (settings.defaultSpeedTier !== speedTier) {
+          updateSetting('defaultSpeedTier', speedTier);
+        }
+        if (settings.defaultSourceId !== selectedSourceId) {
+          updateSetting('defaultSourceId', selectedSourceId);
+        }
+        if (settings.wpm !== wpm) {
+          updateSetting('wpm', wpm);
+        }
+        if (settings.feedbackMode !== feedbackMode) {
+          updateSetting('feedbackMode', feedbackMode);
+        }
+        if (settings.liveCopyFeedback !== liveCopyFeedback) {
+          updateSetting('liveCopyFeedback', liveCopyFeedback);
+        }
       }
-    }
-  }, [duration, settings, updateSetting]);
+    }, 300); // 300ms debounce
 
-  useEffect(() => {
-    if (settings && settings.defaultSpeedTier !== speedTier) {
-      updateSetting('defaultSpeedTier', speedTier);
-    }
-  }, [speedTier, settings, updateSetting]);
-
-  useEffect(() => {
-    if (settings && settings.defaultSourceId !== selectedSourceId) {
-      updateSetting('defaultSourceId', selectedSourceId);
-    }
-  }, [selectedSourceId, settings, updateSetting]);
-
-  useEffect(() => {
-    if (settings && settings.wpm !== wpm) {
-      updateSetting('wpm', wpm);
-    }
-  }, [wpm, settings, updateSetting]);
-
-  useEffect(() => {
-    if (settings && feedback !== 'none' && settings.feedback !== feedback) {
-      updateSetting('feedback', feedback as 'buzzer' | 'flash' | 'both');
-    }
-  }, [feedback, settings, updateSetting]);
-
-  useEffect(() => {
-    if (settings && settings.replay !== replay) {
-      updateSetting('replay', replay);
-    }
-  }, [replay, settings, updateSetting]);
-
-  useEffect(() => {
-    if (settings && settings.liveCopyFeedback !== liveCopyFeedback) {
-      updateSetting('liveCopyFeedback', liveCopyFeedback);
-    }
-  }, [liveCopyFeedback, settings, updateSetting]);
+    return () => clearTimeout(timer);
+  }, [duration, speedTier, selectedSourceId, wpm, feedbackMode, liveCopyFeedback, settings, settingsLoading, updateSetting]);
 
   // Handle source selection
   const handleSourceChange = async (sourceId: string) => {
@@ -180,13 +182,14 @@ export function SessionConfigPage() {
   };
 
   const handleStartSession = () => {
+    const { feedback, replay } = getFeedbackConfig();
     const config: SessionConfig = {
       mode,
       lengthMs: duration * 60 * 1000,
       wpm,
       speedTier,
       sourceId: selectedSourceId,
-      feedback: feedback === 'none' ? 'both' : feedback, // Default to 'both' if 'none'
+      feedback,
       replay,
       effectiveAlphabet: buildAlphabet(),
       ...(mode === 'live-copy' && { liveCopyFeedback }),
@@ -217,39 +220,12 @@ export function SessionConfigPage() {
   return (
     <div className="min-h-screen bg-gradient-primary">
       {/* Header with Back button and MorseAcademy branding */}
-      <header style={{
-        display: 'flex',
-        alignItems: 'center',
-        gap: '24px',
-        padding: '20px 24px',
-        marginBottom: '32px'
-      }}>
+      <header className="session-header">
         <button
           onClick={handleCancel}
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px',
-            background: 'transparent',
-            border: '1px solid rgba(255, 255, 255, 0.2)',
-            borderRadius: '8px',
-            padding: '8px 16px',
-            color: 'rgba(255, 255, 255, 0.7)',
-            fontSize: '15px',
-            fontWeight: '500',
-            cursor: 'pointer',
-            transition: 'all 0.2s'
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)';
-            e.currentTarget.style.color = '#ffffff';
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.background = 'transparent';
-            e.currentTarget.style.color = 'rgba(255, 255, 255, 0.7)';
-          }}
+          className="btn-back"
         >
-          <span style={{ fontSize: '18px', lineHeight: 1 }}>←</span>
+          <span className="btn-back-arrow">←</span>
           Back
         </button>
         <h1
@@ -422,41 +398,25 @@ export function SessionConfigPage() {
                 <div className="segmented-control">
                   <button
                     className={`segmented-btn ${feedbackMode === 'flash' ? 'active' : ''}`}
-                    onClick={() => {
-                      setFeedbackMode('flash');
-                      setFeedback('flash');
-                      setReplay(false);
-                    }}
+                    onClick={() => setFeedbackMode('flash')}
                   >
                     Flash
                   </button>
                   <button
                     className={`segmented-btn ${feedbackMode === 'buzzer' ? 'active' : ''}`}
-                    onClick={() => {
-                      setFeedbackMode('buzzer');
-                      setFeedback('buzzer');
-                      setReplay(false);
-                    }}
+                    onClick={() => setFeedbackMode('buzzer')}
                   >
                     Buzzer
                   </button>
                   <button
                     className={`segmented-btn ${feedbackMode === 'replay' ? 'active' : ''}`}
-                    onClick={() => {
-                      setFeedbackMode('replay');
-                      setFeedback('both');
-                      setReplay(true);
-                    }}
+                    onClick={() => setFeedbackMode('replay')}
                   >
                     Replay
                   </button>
                   <button
                     className={`segmented-btn ${feedbackMode === 'off' ? 'active' : ''}`}
-                    onClick={() => {
-                      setFeedbackMode('off');
-                      setFeedback('none');
-                      setReplay(false);
-                    }}
+                    onClick={() => setFeedbackMode('off')}
                   >
                     Off
                   </button>
@@ -505,26 +465,7 @@ export function SessionConfigPage() {
         <div className="flex justify-center" style={{ marginTop: '48px' }}>
           <button
             onClick={handleStartSession}
-            style={{
-              background: '#4dabf7',
-              color: '#1a1a1a',
-              fontSize: '20px',
-              fontWeight: '600',
-              padding: '16px 64px',
-              borderRadius: '12px',
-              border: 'none',
-              cursor: 'pointer',
-              transition: 'all 0.2s',
-              minWidth: '300px'
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.background = '#74bbf8';
-              e.currentTarget.style.transform = 'translateY(-2px)';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.background = '#4dabf7';
-              e.currentTarget.style.transform = 'translateY(0)';
-            }}
+            className="btn-start-session"
           >
             Start {modeConfig[mode].title.replace(' Mode', '')}
           </button>

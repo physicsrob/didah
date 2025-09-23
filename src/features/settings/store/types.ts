@@ -1,3 +1,5 @@
+import type { FeedbackMode } from '../../../core/types/domain'
+
 export type UserSettings = {
   // Core settings
   wpm: number
@@ -12,8 +14,7 @@ export type UserSettings = {
   defaultSourceId: string
 
   // Active mode settings
-  feedback: 'buzzer' | 'flash' | 'both'
-  replay: boolean
+  feedbackMode: FeedbackMode
 
   // Live copy settings
   liveCopyFeedback: 'end' | 'immediate'
@@ -28,7 +29,6 @@ export const DEFAULT_USER_SETTINGS: UserSettings = {
   defaultMode: 'practice',
   defaultSpeedTier: 'slow',
   defaultSourceId: 'random_letters',
-  feedback: 'both',
-  replay: true,
+  feedbackMode: 'replay',  // Default to replay (both + replay)
   liveCopyFeedback: 'end'
 }
