@@ -6,7 +6,7 @@ import type { Clock } from './clock';
 import type { IO, SessionSnapshot } from './io';
 import type { InputBus } from './inputBus';
 import { runPracticeEmission, runListenEmission, runLiveCopyEmission, type SessionConfig } from './charPrograms';
-import { wpmToDitMs, calculateCharacterDurationMs } from '../../../core/morse/timing';
+import { calculateCharacterDurationMs, getInterCharacterSpacingMs } from '../../../core/morse/timing';
 
 /**
  * Character source interface
@@ -223,8 +223,7 @@ export function createSessionRunner(deps: SessionRunnerDeps): SessionRunner {
 
         // Calculate total emission duration: character audio + inter-character spacing
         const charAudioDurationMs = calculateCharacterDurationMs(char, config.wpm);
-        const ditMs = wpmToDitMs(config.wpm);
-        const interCharSpacingMs = ditMs * 3; // Standard Morse inter-character spacing
+        const interCharSpacingMs = getInterCharacterSpacingMs(config.wpm);
         const totalEmissionDurationMs = charAudioDurationMs + interCharSpacingMs;
 
         snapshot.emissions.push({
@@ -315,10 +314,11 @@ export function createSessionRunner(deps: SessionRunnerDeps): SessionRunner {
             }
           }
 
-          // Add inter-character spacing (for practice mode only; listen and live-copy have their own timing)
+          // Add inter-character spacing for practice mode
+          // This provides a pause between practice attempts, giving users a moment before the next character
+          // Listen and Live Copy modes handle their spacing internally within their emission functions
           if (config.mode === 'practice') {
-            const ditMs = 1200 / config.wpm;
-            const interCharSpacingMs = ditMs * 3; // 3 dits per Morse standard
+            const interCharSpacingMs = getInterCharacterSpacingMs(config.wpm);
             console.log(`[Spacing] Adding inter-character spacing: ${interCharSpacingMs}ms (3 dits)`);
             await deps.clock.sleep(interCharSpacingMs, signal);
           }

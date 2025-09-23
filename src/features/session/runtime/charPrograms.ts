@@ -6,7 +6,7 @@ import type { Clock } from './clock';
 import type { IO } from './io';
 import type { InputBus, KeyEvent } from './inputBus';
 import { select, waitForEvent, clockTimeout } from './select';
-import { getActiveWindowMs, getPassiveTimingMs, wpmToDitMs, calculateCharacterDurationMs } from '../../../core/morse/timing';
+import { getActiveWindowMs, getListenModeTimingMs, wpmToDitMs, calculateCharacterDurationMs, getInterCharacterSpacingMs } from '../../../core/morse/timing';
 import { debug } from '../../../core/debug';
 
 // Session config type - simplified for now
@@ -74,7 +74,7 @@ export async function runPracticeEmission(
   // Calculate recognition window and character audio duration
   const ditMs = wpmToDitMs(cfg.wpm);
   const windowMs = Math.max(
-    getActiveWindowMs(cfg.wpm, cfg.speedTier),
+    getActiveWindowMs(cfg.speedTier),
     Math.max(60, ditMs) // Minimum 60ms or 1 dit
   );
   const charDurationMs = calculateCharacterDurationMs(char, cfg.wpm);
@@ -186,9 +186,9 @@ export async function runPracticeEmission(
 /**
  * Run a Listen mode emission
  * - Play audio (wait for completion)
- * - Wait pre-reveal delay
+ * - Wait standard spacing before reveal
  * - Reveal character
- * - Wait post-reveal delay
+ * - Wait standard spacing after reveal
  */
 export async function runListenEmission(
   cfg: SessionConfig,
@@ -212,17 +212,17 @@ export async function runListenEmission(
     debug.warn(`Audio failed for char: ${char}`, error);
   }
 
-  // Get passive timing parameters
-  const { preRevealMs, postRevealMs } = getPassiveTimingMs(cfg.wpm, cfg.speedTier);
+  // Get standard listen mode timing (3 dits before and after reveal)
+  const { preRevealDelayMs, postRevealDelayMs } = getListenModeTimingMs(cfg.wpm);
 
-  // Pre-reveal delay
-  await clock.sleep(preRevealMs, sessionSignal);
+  // Wait before revealing character
+  await clock.sleep(preRevealDelayMs, sessionSignal);
 
   // Reveal character
   io.reveal(char);
 
-  // Post-reveal delay
-  await clock.sleep(postRevealMs, sessionSignal);
+  // Wait after revealing character
+  await clock.sleep(postRevealDelayMs, sessionSignal);
 }
 
 /**
@@ -245,11 +245,8 @@ export async function runLiveCopyEmission(
     debug.warn(`Audio failed for char: ${char}`, error);
   }
 
-  // Note: Inter-character spacing (3 dits) is standard for Live Copy
+  // Add standard inter-character spacing for Live Copy mode
   // This simulates real Morse transmission timing
-  const ditMs = wpmToDitMs(cfg.wpm);
-  const interCharSpacingMs = ditMs * 3;
-
-  // Add inter-character spacing
+  const interCharSpacingMs = getInterCharacterSpacingMs(cfg.wpm);
   await clock.sleep(interCharSpacingMs, sessionSignal);
 }

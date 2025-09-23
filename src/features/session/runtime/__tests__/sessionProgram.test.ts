@@ -7,10 +7,9 @@ import { createSessionRunner, RandomCharSource } from '../sessionProgram';
 import { FakeClock } from '../clock';
 import { TestInputBus } from '../inputBus';
 import { TestIO } from './testIO';
-import { calculateCharacterDurationMs } from '../../../../core/morse/timing';
 import type { SessionSnapshot } from '../io';
 import { advanceAndFlush, createTestConfig, flushPromises } from './testUtils';
-import { TestTiming, getCharTimeout } from './timingTestHelpers';
+import { TestTiming, getCharTimeout, getListenSequence } from './timingTestHelpers';
 
 describe('SessionRunner', () => {
   let clock: FakeClock;
@@ -140,15 +139,14 @@ describe('SessionRunner', () => {
     // Let session start
     await flushPromises();
 
-    // Calculate timings for character 'X'
-    const charDuration = calculateCharacterDurationMs('X', config.wpm);
-    const preRevealMs = TestTiming.passive.slow.preReveal;
+    // Calculate timings for character 'X' using the new Listen mode helper
+    const sequence = getListenSequence('X', config.wpm);
 
     // Advance through audio playback
-    await advanceAndFlush(clock, charDuration);
+    await advanceAndFlush(clock, sequence.playChar);
 
     // Advance through pre-reveal delay
-    await advanceAndFlush(clock, preRevealMs);
+    await advanceAndFlush(clock, sequence.preReveal);
 
     // Check that reveal was called
     expect(reveals).toContain('X');

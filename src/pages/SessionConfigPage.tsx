@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import type { SessionConfig } from '../core/types/domain';
-import { getActiveWindowMs, getPassiveTimingMultipliers } from '../core/morse/timing';
 import { fetchSources, fetchSourceContent } from '../features/sources';
 import type { TextSource as ApiTextSource, SourceContent } from '../features/sources';
 import '../styles/main.css';
@@ -70,9 +69,10 @@ export function SessionConfigPage() {
     if (feedback === 'buzzer') return 'buzzer';
     return 'flash'; // default
   });
-  const [includeNumbers, setIncludeNumbers] = useState(() => localStorage.getItem('includeNumbers') !== 'false');
-  const [includeStdPunct, setIncludeStdPunct] = useState(() => localStorage.getItem('includeStdPunct') !== 'false');
-  const [includeAdvPunct, setIncludeAdvPunct] = useState(() => localStorage.getItem('includeAdvPunct') === 'true');
+  // Character options - these setters are currently unused but the values are used
+  const [includeNumbers, ] = useState(() => localStorage.getItem('includeNumbers') !== 'false');
+  const [includeStdPunct, ] = useState(() => localStorage.getItem('includeStdPunct') !== 'false');
+  const [includeAdvPunct, ] = useState(() => localStorage.getItem('includeAdvPunct') === 'true');
 
   // Live Copy specific settings
   const [liveCopyFeedback, setLiveCopyFeedback] = useState<'end' | 'immediate'>(() => {
@@ -178,7 +178,7 @@ export function SessionConfigPage() {
       wpm,
       speedTier,
       sourceId: selectedSourceId,
-      feedback,
+      feedback: feedback === 'none' ? 'both' : feedback, // Default to 'both' if 'none'
       replay,
       effectiveAlphabet: buildAlphabet(),
       ...(mode === 'live-copy' && { liveCopyFeedback }),
