@@ -216,7 +216,7 @@ export function SessionConfigPage() {
   return (
     <div className="min-h-screen bg-gradient-primary">
       {/* Header with Back button and MorseAcademy branding */}
-      <header className="session-header">
+      <header className="config-header">
         <button
           onClick={handleCancel}
           className="btn-back"

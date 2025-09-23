@@ -995,7 +995,7 @@ body {
 }
 
 /* Session Config Page */
-.session-header {
+.config-header {
     display: flex;
     align-items: center;
     gap: 24px;
@@ -1003,7 +1003,7 @@ body {
     margin-bottom: 32px;
 }
 
-.session-header .brand-title {
+.config-header .brand-title {
     margin: 0;
     cursor: pointer;
 }
