@@ -43,6 +43,23 @@ class SettingsStore {
     }
   }
 
+  initializeAnonymous(): void {
+    // For anonymous users, just use localStorage
+    this.api = null
+    this.isInitialized = true
+
+    // Load from cache or use defaults
+    const cached = this.loadFromCache()
+    this.settings = cached || DEFAULT_USER_SETTINGS
+
+    // Save defaults to cache if nothing was cached
+    if (!cached) {
+      this.saveToCache(this.settings)
+    }
+
+    this.notifyListeners()
+  }
+
   async updateSetting<K extends keyof UserSettings>(
     key: K,
     value: UserSettings[K]

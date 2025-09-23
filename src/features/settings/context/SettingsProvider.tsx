@@ -17,8 +17,8 @@ export function SettingsProvider({ children }: SettingsProviderProps) {
     const token = user ? localStorage.getItem('google_token') : null
 
     if (!token) {
-      // User is not authenticated, clear settings
-      settingsStore.clear()
+      // User is not authenticated, use localStorage-only mode
+      settingsStore.initializeAnonymous()
       setInitialized(true)
       return
     }
