@@ -146,172 +146,238 @@ export function createSessionRunner(deps: SessionRunnerDeps): SessionRunner {
     snapshot.stats.accuracy = total > 0 ? (snapshot.stats.correct / total) * 100 : 0;
   };
 
-  // Main conductor function
-  async function run(config: SessionConfig, signal: AbortSignal): Promise<void> {
-    const startTime = deps.clock.now();
-
+  // Initialize session state and reset pause tracking
+  function initializeSession(startTime: number, config: SessionConfig): void {
     // Reset pause state at session start
     isPaused = false;
     pausedAt = null;
     totalPausedMs = 0;
     pauseResolver = null;
 
+    // Initialize session state
+    snapshot = {
+      phase: 'running',
+      currentChar: null,
+      previous: [],
+      startedAt: startTime,
+      remainingMs: config.lengthMs,
+      emissions: [],
+      stats: {
+        correct: 0,
+        incorrect: 0,
+        timeout: 0,
+        accuracy: 0
+      }
+    };
+    publish();
+
+    // Log session start
+    deps.io.log({
+      type: 'sessionStart',
+      at: startTime,
+      config
+    });
+
+    // Reset the character source
+    deps.source.reset();
+  }
+
+  // Wait for session to be resumed if paused
+  async function waitForResume(signal: AbortSignal): Promise<void> {
+    if (!isPaused) return;
+
+    snapshot.phase = 'paused';
+    publish();
+
+    // Wait for resume
+    await new Promise<void>(resolve => {
+      pauseResolver = resolve;
+    });
+
+    // Clear resolver after resume
+    pauseResolver = null;
+  }
+
+  // Check if session still has time remaining and update the remaining time in snapshot.
+  // Returns true if session should continue, false if time is up.
+  // Accounts for paused time so the session timer effectively pauses when session is paused.
+  function checkSessionTime(startTime: number, config: SessionConfig): boolean {
+    const elapsed = (deps.clock.now() - startTime) - totalPausedMs;
+    const remaining = config.lengthMs - elapsed;
+
+    // Update remaining time in snapshot
+    snapshot.remainingMs = Math.max(0, remaining);
+
+    return remaining > 0;
+  }
+
+  // Prepare for a new character emission by updating snapshot with character and timing info.
+  // Records the character, start time, and calculated duration for statistics tracking.
+  function prepareEmission(char: string, config: SessionConfig): void {
+    snapshot.currentChar = char;
+
+    // Record emission timing (for all modes)
+    const emissionStartTime = deps.clock.now();
+
+    // Calculate total emission duration: character audio + inter-character spacing
+    const charAudioDurationMs = calculateCharacterDurationMs(char, config.wpm);
+    const interCharSpacingMs = getInterCharacterSpacingMs(config.wpm);
+    const totalEmissionDurationMs = charAudioDurationMs + interCharSpacingMs;
+
+    snapshot.emissions.push({
+      char,
+      startTime: emissionStartTime,
+      duration: totalEmissionDurationMs
+    });
+
+    publish();
+  }
+
+  // Update remaining time after an emission completes.
+  // Accounts for paused time to ensure timer effectively pauses when session is paused.
+  function updateRemainingTime(startTime: number, config: SessionConfig): void {
+    const newElapsed = (deps.clock.now() - startTime) - totalPausedMs;
+    snapshot.remainingMs = Math.max(0, config.lengthMs - newElapsed);
+  }
+
+  // Handle practice mode emission - user types what they hear
+  async function handlePracticeMode(
+    config: SessionConfig,
+    char: string,
+    startTime: number,
+    signal: AbortSignal
+  ): Promise<void> {
+    const outcome = await runPracticeEmission(
+      config,
+      char,
+      deps.io,
+      deps.input,
+      deps.clock,
+      signal
+    );
+    updateStats(outcome);
+
+    // Update history IMMEDIATELY
+    const historyItem = { char, result: outcome as 'correct' | 'incorrect' | 'timeout' };
+    snapshot.previous = [...snapshot.previous, historyItem];
+    snapshot.currentChar = null;
+
+    // Update remaining time
+    updateRemainingTime(startTime, config);
+
+    // Publish immediately so UI updates right away
+    publish();
+
+    // Handle replay AFTER history update (for incorrect or timeout)
+    if (config.replay && (outcome === 'incorrect' || outcome === 'timeout') && deps.io.replay) {
+      console.log(`[Session] Replaying character '${char}' after ${outcome}`);
+      await deps.io.replay(char, config.wpm);
+    }
+  }
+
+  // Handle listen mode emission - play Morse then reveal character
+  async function handleListenMode(
+    config: SessionConfig,
+    char: string,
+    startTime: number,
+    signal: AbortSignal
+  ): Promise<void> {
+    await runListenEmission(
+      config,
+      char,
+      deps.io,
+      deps.clock,
+      signal
+    );
+
+    // For listen mode, add to history after emission
+    const historyItem = { char, result: 'listen' as const };
+    snapshot.previous = [...snapshot.previous, historyItem];
+    snapshot.currentChar = null;
+
+    // Update remaining time
+    updateRemainingTime(startTime, config);
+
+    // Publish snapshot
+    publish();
+  }
+
+  // Handle live-copy mode emission - transmission only, no input handling
+  async function handleLiveCopyMode(
+    config: SessionConfig,
+    char: string,
+    startTime: number,
+    signal: AbortSignal
+  ): Promise<void> {
+    await runLiveCopyEmission(
+      config,
+      char,
+      deps.io,
+      deps.clock,
+      signal
+    );
+
+    // Clear current character after emission
+    snapshot.currentChar = null;
+
+    // Update remaining time
+    updateRemainingTime(startTime, config);
+
+    // Publish immediately so UI can update
+    publish();
+  }
+
+  // Perform session cleanup when session ends
+  function cleanupSession(): void {
+    snapshot.phase = 'ended';
+    snapshot.currentChar = null;
+    publish();
+
+    // Log session end
+    deps.io.log({
+      type: 'sessionEnd',
+      at: deps.clock.now()
+    });
+  }
+
+  // Main conductor function
+  async function run(config: SessionConfig, signal: AbortSignal): Promise<void> {
+    const startTime = deps.clock.now();
+    initializeSession(startTime, config);
+
     try {
-      // Initialize session state
-      snapshot = {
-        phase: 'running',
-        currentChar: null,
-        previous: [],
-        startedAt: startTime,
-        remainingMs: config.lengthMs,
-        emissions: [],
-        stats: {
-          correct: 0,
-          incorrect: 0,
-          timeout: 0,
-          accuracy: 0
-        }
-      };
-      publish();
-
-      // Log session start
-      deps.io.log({
-        type: 'sessionStart',
-        at: startTime,
-        config
-      });
-
-      // Reset the character source
-      deps.source.reset();
 
       // Main session loop
       while (!signal.aborted) {
         // Check if paused and wait for resume
-        if (isPaused) {
-          snapshot.phase = 'paused';
-          publish();
+        await waitForResume(signal);
 
-          // Wait for resume
-          await new Promise<void>(resolve => {
-            pauseResolver = resolve;
-          });
+        // Session might have been stopped while paused
+        if (signal.aborted) break;
 
-          // Clear resolver after resume
-          pauseResolver = null;
-
-          // Session might have been stopped while paused
-          if (signal.aborted) break;
-        }
-
-        // Check time budget before starting new emission (accounting for paused time)
-        const elapsed = (deps.clock.now() - startTime) - totalPausedMs;
-        const remaining = config.lengthMs - elapsed;
-
-        if (remaining <= 0) {
+        // Check time budget before starting new emission
+        if (!checkSessionTime(startTime, config)) {
           break; // Time's up
         }
 
-        // Update remaining time
-        snapshot.remainingMs = Math.max(0, remaining);
-
-        // Get next character
+        // Get next character and prepare emission
         const char = deps.source.next();
-        snapshot.currentChar = char;
-
-        // Record emission timing (for all modes)
-        const emissionStartTime = deps.clock.now();
-
-        // Calculate total emission duration: character audio + inter-character spacing
-        const charAudioDurationMs = calculateCharacterDurationMs(char, config.wpm);
-        const interCharSpacingMs = getInterCharacterSpacingMs(config.wpm);
-        const totalEmissionDurationMs = charAudioDurationMs + interCharSpacingMs;
-
-        snapshot.emissions.push({
-          char,
-          startTime: emissionStartTime,
-          duration: totalEmissionDurationMs
-        });
-
-        publish();
+        prepareEmission(char, config);
 
         try {
           // Run emission based on mode
           switch (config.mode) {
-            case 'practice': {
-              const outcome = await runPracticeEmission(
-                config,
-                char,
-                deps.io,
-                deps.input,
-                deps.clock,
-                signal
-              );
-              updateStats(outcome);
-
-              // Update history IMMEDIATELY
-              const historyItem = { char, result: outcome as 'correct' | 'incorrect' | 'timeout' };
-              snapshot.previous = [...snapshot.previous, historyItem];
-              snapshot.currentChar = null;
-
-              // Update remaining time (accounting for paused time)
-              const newElapsed = (deps.clock.now() - startTime) - totalPausedMs;
-              snapshot.remainingMs = Math.max(0, config.lengthMs - newElapsed);
-
-              // Publish immediately so UI updates right away
-              publish();
-
-              // Handle replay AFTER history update (for incorrect or timeout)
-              if (config.replay && (outcome === 'incorrect' || outcome === 'timeout') && deps.io.replay) {
-                console.log(`[Session] Replaying character '${char}' after ${outcome}`);
-                await deps.io.replay(char, config.wpm);
-              }
+            case 'practice':
+              await handlePracticeMode(config, char, startTime, signal);
               break;
-            }
 
-            case 'listen': {
-              await runListenEmission(
-                config,
-                char,
-                deps.io,
-                deps.clock,
-                signal
-              );
-
-              // For listen mode, add to history after emission
-              const historyItem = { char, result: 'listen' as const };
-              snapshot.previous = [...snapshot.previous, historyItem];
-              snapshot.currentChar = null;
-
-              // Update remaining time (accounting for paused time)
-              const newElapsed = (deps.clock.now() - startTime) - totalPausedMs;
-              snapshot.remainingMs = Math.max(0, config.lengthMs - newElapsed);
-
-              // Publish snapshot
-              publish();
+            case 'listen':
+              await handleListenMode(config, char, startTime, signal);
               break;
-            }
 
-            case 'live-copy': {
-              // Live Copy mode - transmission only, no input handling
-              await runLiveCopyEmission(
-                config,
-                char,
-                deps.io,
-                deps.clock,
-                signal
-              );
-
-              // Clear current character after emission
-              snapshot.currentChar = null;
-
-              // Update remaining time (accounting for paused time)
-              const newElapsed = (deps.clock.now() - startTime) - totalPausedMs;
-              snapshot.remainingMs = Math.max(0, config.lengthMs - newElapsed);
-
-              // Publish immediately so UI can update
-              publish();
+            case 'live-copy':
+              await handleLiveCopyMode(config, char, startTime, signal);
               break;
-            }
           }
 
           // Add inter-character spacing for practice mode
@@ -333,16 +399,7 @@ export function createSessionRunner(deps: SessionRunnerDeps): SessionRunner {
         }
       }
     } finally {
-      // Session ended - always run cleanup
-      snapshot.phase = 'ended';
-      snapshot.currentChar = null;
-      publish();
-
-      // Log session end
-      deps.io.log({
-        type: 'sessionEnd',
-        at: deps.clock.now()
-      });
+      cleanupSession();
     }
   }
 
