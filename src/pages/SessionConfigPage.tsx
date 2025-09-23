@@ -104,7 +104,7 @@ export function SessionConfigPage() {
       .finally(() => {
         setSourcesLoading(false);
       });
-  }, []);
+  }, [selectedSourceId]);
 
   // Save settings to localStorage when they change
   useEffect(() => {

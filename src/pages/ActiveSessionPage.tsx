@@ -171,7 +171,22 @@ export function ActiveSessionPage() {
       });
       return () => unsub();
     }
-  }, [runner, config, navigate, addTransmitEvent, liveCopyEvents, liveCopyTime, sourceContent]);
+  }, [runner, config, navigate, addTransmitEvent, liveCopyEvents, liveCopyTime, sourceContent, sourceName]);
+
+  // Handle pause/resume
+  const handlePause = useCallback(() => {
+    runner.pause();
+    setIsPaused(true);
+    isPausedRef.current = true;
+    // Hide any active replay overlay when pausing
+    setReplayOverlay(null);
+  }, [runner]);
+
+  const handleResume = useCallback(() => {
+    runner.resume();
+    setIsPaused(false);
+    isPausedRef.current = false;
+  }, [runner]);
 
   // Handle keyboard input for Practice mode
   useEffect(() => {
@@ -194,22 +209,7 @@ export function ActiveSessionPage() {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [input, config?.mode, sessionPhase, isPaused, snapshot.phase]);
-
-  // Handle pause/resume
-  const handlePause = useCallback(() => {
-    runner.pause();
-    setIsPaused(true);
-    isPausedRef.current = true;
-    // Hide any active replay overlay when pausing
-    setReplayOverlay(null);
-  }, [runner]);
-
-  const handleResume = useCallback(() => {
-    runner.resume();
-    setIsPaused(false);
-    isPausedRef.current = false;
-  }, [runner]);
+  }, [input, config?.mode, sessionPhase, isPaused, snapshot.phase, handlePause]);
 
   const handleEndSession = useCallback(() => {
     // Stop the runner
@@ -234,7 +234,7 @@ export function ActiveSessionPage() {
         ) : null
       }
     });
-  }, [runner, snapshot, navigate, config, sourceContent, liveCopyEvents, liveCopyTime]);
+  }, [runner, snapshot, navigate, config, sourceContent, liveCopyEvents, liveCopyTime, sourceName]);
 
   // Handle click to start when audio not ready
   const handleStartClick = async () => {
@@ -256,7 +256,7 @@ export function ActiveSessionPage() {
     if (audioActuallyReady && sessionPhase === 'waiting') {
       setSessionPhase('countdown');
     }
-  }, []);
+  }, [audioActuallyReady, sessionPhase]);
 
   // Run countdown
   useEffect(() => {

@@ -1,6 +1,6 @@
-import React, { createContext, useContext, useState, useEffect } from 'react'
+import React, { createContext, useState, useEffect } from 'react'
 
-export interface User {
+interface User {
   id: string
   email: string
   name: string
@@ -16,14 +16,7 @@ interface AuthContextType {
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
-
-export const useAuth = () => {
-  const context = useContext(AuthContext)
-  if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider')
-  }
-  return context
-}
+export { AuthContext }
 
 interface AuthProviderProps {
   children: React.ReactNode
@@ -43,7 +36,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           picture: payload.picture,
         }
       }
-    } catch {}
+    } catch {
+      // Ignore parsing errors
+    }
     return null
   })
   const [isLoading, setIsLoading] = useState(true)

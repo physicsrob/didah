@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router-dom'
 import { useAudio } from '../contexts/useAudio'
-import { useAuth } from '../contexts/AuthContext'
+import { useAuth } from '../hooks/useAuth'
 import GoogleSignInButton from '../components/GoogleSignInButton'
 import { UserDropdown } from '../components/UserDropdown'
 import '../styles/main.css'
