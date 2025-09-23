@@ -232,80 +232,13 @@ export function SessionConfigPage() {
             </p>
           </div>
 
-          {/* Duration */}
-          <div className="settings-row">
-            <div className="settings-label">Duration</div>
-            <div className="settings-control">
-              <input
-                type="range"
-                min="1"
-                max="5"
-                step="1"
-                value={duration}
-                onChange={(e) => setDuration(Number(e.target.value) as 1 | 2 | 5)}
-                style={{
-                  flex: 1,
-                  maxWidth: '200px',
-                  height: '4px',
-                  background: 'rgba(255, 255, 255, 0.2)',
-                  borderRadius: '2px',
-                  outline: 'none',
-                  WebkitAppearance: 'none',
-                  appearance: 'none'
-                }}
-              />
-              <span style={{
-                color: '#4dabf7',
-                fontSize: '16px',
-                fontWeight: '500',
-                minWidth: '60px',
-                textAlign: 'right'
-              }}>
-                {duration} min
-              </span>
-            </div>
-          </div>
-
-          {/* Timeout Speed */}
-          <div className="settings-row">
-            <div className="settings-label">Timeout Speed</div>
-            <div className="settings-control">
-              <div className="segmented-control">
-                <button
-                  className={`segmented-btn ${speedTier === 'slow' ? 'active' : ''}`}
-                  onClick={() => setSpeedTier('slow')}
-                >
-                  Slow
-                </button>
-                <button
-                  className={`segmented-btn ${speedTier === 'medium' ? 'active' : ''}`}
-                  onClick={() => setSpeedTier('medium')}
-                >
-                  Medium
-                </button>
-                <button
-                  className={`segmented-btn ${speedTier === 'fast' ? 'active' : ''}`}
-                  onClick={() => setSpeedTier('fast')}
-                >
-                  Fast
-                </button>
-                <button
-                  className={`segmented-btn ${speedTier === 'lightning' ? 'active' : ''}`}
-                  onClick={() => setSpeedTier('lightning')}
-                >
-                  Lightning
-                </button>
-              </div>
-            </div>
-          </div>
-
           {/* Text Source */}
           <div className="settings-row">
             <div className="settings-label">Text Source</div>
             <div className="settings-control">
               <select
                 style={{
-                  width: '280px',
+                  width: '100%',
                   padding: '10px 16px',
                   fontSize: '15px',
                   background: 'rgba(42, 42, 42, 0.8)',
@@ -328,6 +261,71 @@ export function SessionConfigPage() {
                   ))
                 )}
               </select>
+            </div>
+          </div>
+
+          {/* Duration */}
+          <div className="settings-row">
+            <div className="settings-label">Duration</div>
+            <div className="settings-control">
+              <input
+                type="range"
+                min="1"
+                max="5"
+                step="1"
+                value={duration}
+                onChange={(e) => setDuration(Number(e.target.value) as 1 | 2 | 5)}
+                style={{
+                  flex: 1,
+                  height: '4px',
+                  background: 'rgba(255, 255, 255, 0.2)',
+                  borderRadius: '2px',
+                  outline: 'none',
+                  WebkitAppearance: 'none',
+                  appearance: 'none'
+                }}
+              />
+              <span style={{
+                color: '#4dabf7',
+                fontSize: '16px',
+                fontWeight: '500',
+                minWidth: '60px',
+                textAlign: 'right'
+              }}>
+                {duration} min
+              </span>
+            </div>
+          </div>
+
+          {/* Character Speed */}
+          <div className="settings-row">
+            <div className="settings-label">Character Speed</div>
+            <div className="settings-control">
+              <input
+                type="range"
+                min="5"
+                max="40"
+                value={wpm}
+                onChange={(e) => setWpm(Number(e.target.value))}
+                style={{
+                  flex: 1,
+                  height: '4px',
+                  background: 'rgba(255, 255, 255, 0.2)',
+                  borderRadius: '2px',
+                  outline: 'none',
+                  WebkitAppearance: 'none',
+                  appearance: 'none'
+                }}
+              />
+              <span style={{
+                color: '#4dabf7',
+                fontSize: '16px',
+                fontWeight: '500',
+                minWidth: '80px',
+                textAlign: 'right'
+              }}>
+                {wpm} WPM
+              </span>
             </div>
           </div>
 
@@ -358,39 +356,6 @@ export function SessionConfigPage() {
               </p>
             </div>
           )}
-
-          {/* Character Speed */}
-          <div className="settings-row">
-            <div className="settings-label">Character Speed</div>
-            <div className="settings-control">
-              <input
-                type="range"
-                min="5"
-                max="40"
-                value={wpm}
-                onChange={(e) => setWpm(Number(e.target.value))}
-                style={{
-                  flex: 1,
-                  maxWidth: '200px',
-                  height: '4px',
-                  background: 'rgba(255, 255, 255, 0.2)',
-                  borderRadius: '2px',
-                  outline: 'none',
-                  WebkitAppearance: 'none',
-                  appearance: 'none'
-                }}
-              />
-              <span style={{
-                color: '#4dabf7',
-                fontSize: '16px',
-                fontWeight: '500',
-                minWidth: '80px',
-                textAlign: 'right'
-              }}>
-                {wpm} WPM
-              </span>
-            </div>
-          </div>
 
           {/* Feedback - Only show for practice mode */}
           {mode === 'practice' && (
@@ -442,6 +407,39 @@ export function SessionConfigPage() {
               </div>
             </div>
           )}
+
+          {/* Timeout Speed */}
+          <div className="settings-row">
+            <div className="settings-label">Timeout Speed</div>
+            <div className="settings-control">
+              <div className="segmented-control">
+                <button
+                  className={`segmented-btn ${speedTier === 'slow' ? 'active' : ''}`}
+                  onClick={() => setSpeedTier('slow')}
+                >
+                  Slow
+                </button>
+                <button
+                  className={`segmented-btn ${speedTier === 'medium' ? 'active' : ''}`}
+                  onClick={() => setSpeedTier('medium')}
+                >
+                  Medium
+                </button>
+                <button
+                  className={`segmented-btn ${speedTier === 'fast' ? 'active' : ''}`}
+                  onClick={() => setSpeedTier('fast')}
+                >
+                  Fast
+                </button>
+                <button
+                  className={`segmented-btn ${speedTier === 'lightning' ? 'active' : ''}`}
+                  onClick={() => setSpeedTier('lightning')}
+                >
+                  Lightning
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
 
         {/* Start Button */}

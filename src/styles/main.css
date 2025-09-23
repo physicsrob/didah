@@ -1106,7 +1106,7 @@ body {
 }
 
 .settings-control {
-    flex: 1;
+    width: 350px;
     display: flex;
     align-items: center;
     justify-content: flex-end;
@@ -1115,16 +1115,19 @@ body {
 
 /* Segmented Control */
 .segmented-control {
-    display: inline-flex;
+    display: flex;
+    width: 100%;
     background: transparent;
     border-radius: 8px;
     padding: 2px;
-    gap: 2px;
+    gap: 6px;
+    justify-content: space-between;
 }
 
 .segmented-btn {
-    padding: 8px 20px;
-    font-size: 15px;
+    flex: 1;
+    padding: 6px 14px;
+    font-size: 13px;
     font-weight: 500;
     background: transparent;
     color: rgba(255, 255, 255, 0.6);
@@ -1133,6 +1136,7 @@ body {
     cursor: pointer;
     transition: all 0.2s;
     white-space: nowrap;
+    text-align: center;
 }
 
 .segmented-btn:hover {
