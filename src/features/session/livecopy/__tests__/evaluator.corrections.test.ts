@@ -63,7 +63,17 @@ describe('Live Copy Corrections Display', () => {
     ];
 
     // Test at various times
-    const snapshots: Array<{ time: number; display: string; details: any }> = [];
+    interface Snapshot {
+      time: number;
+      display: string;
+      details: Array<{
+        char: string;
+        status: 'correct' | 'wrong' | 'missed' | 'pending';
+        typed?: string;
+        revealed?: boolean;
+      }>;
+    }
+    const snapshots: Snapshot[] = [];
 
     for (let time = 100; time <= 700; time += 50) {
       const state = evaluateLiveCopy(events, time, config);
@@ -88,7 +98,7 @@ describe('Live Copy Corrections Display', () => {
     console.log('Windows: A (100-600ms), C (600ms+)');
     snapshots.forEach(({ time, display, details }) => {
       console.log(`  ${time}ms: "${display}"`);
-      details.forEach((d: any, i: number) => {
+      details.forEach((d, i) => {
         const state = evaluateLiveCopy(events, time, config);
         const transmitted = state.display[i];
         if (transmitted) {

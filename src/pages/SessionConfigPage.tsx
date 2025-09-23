@@ -14,7 +14,7 @@ export function SessionConfigPage() {
   const location = useLocation();
 
   // Get mode from navigation state (set by HomePage)
-  const mode: SessionMode = (location.state as any)?.mode || 'practice';
+  const mode: SessionMode = (location.state as { mode?: SessionMode })?.mode || 'practice';
 
   // Mode-specific configuration
   const modeConfig = {

@@ -183,7 +183,7 @@ export function createSessionRunner(deps: SessionRunnerDeps): SessionRunner {
   }
 
   // Wait for session to be resumed if paused
-  async function waitForResume(signal: AbortSignal): Promise<void> {
+  async function waitForResume(): Promise<void> {
     if (!isPaused) return;
 
     snapshot.phase = 'paused';
@@ -350,7 +350,7 @@ export function createSessionRunner(deps: SessionRunnerDeps): SessionRunner {
       // Main session loop
       while (!signal.aborted) {
         // Check if paused and wait for resume
-        await waitForResume(signal);
+        await waitForResume();
 
         // Session might have been stopped while paused
         if (signal.aborted) break;

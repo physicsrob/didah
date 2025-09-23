@@ -112,7 +112,13 @@ async function fetchRSS(feedUrl: string): Promise<string[]> {
 }
 
 // Cloudflare Pages Function
-export async function onRequestGet(context: any) {
+interface CloudflareContext {
+  params: {
+    id: string;
+  };
+}
+
+export async function onRequestGet(context: CloudflareContext) {
   const { id } = context.params;
 
   if (!id) {
@@ -150,11 +156,11 @@ export async function onRequestGet(context: any) {
       items
     });
 
-  } catch (error: any) {
+  } catch (error) {
     console.error(`Error fetching source ${id}:`, error);
     return Response.json({
       error: 'Failed to fetch source',
-      details: error.message
+      details: error instanceof Error ? error.message : 'Unknown error'
     }, { status: 500 });
   }
 }
