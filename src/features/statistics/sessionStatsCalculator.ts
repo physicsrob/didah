@@ -184,7 +184,7 @@ export class SessionStatsCalculator {
     }
 
     // For practice mode, factor in recognition speed
-    const expectedTimeMs = getActiveWindowMs(speedTier as any);
+    const expectedTimeMs = getActiveWindowMs(speedTier as 'slow' | 'medium' | 'fast' | 'lightning');
 
     // Time efficiency factor (capped at 1.0 for faster than expected)
     // If no successful recognitions, use 0 efficiency

@@ -1,2 +1,7 @@
 name = "morseacademy"
 compatibility_date = "2024-01-01"
+
+[[kv_namespaces]]
+binding = "KV"
+id = "04dedd993bbf47a2974a3f52083155a4"
+preview_id = "3278f9e99cc845e9ad224c6fb2366ecb"
