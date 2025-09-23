@@ -17,6 +17,22 @@ export function SessionConfigPage() {
   // Get mode from navigation state (set by HomePage)
   const mode: SessionMode = (location.state as any)?.mode || 'practice';
 
+  // Mode-specific configuration
+  const modeConfig = {
+    'practice': {
+      title: 'Practice Mode',
+      description: 'Interactive training where you type what you hear in real-time, but you do have some control of the pacing. Try to go as fast as possible!'
+    },
+    'listen': {
+      title: 'Listen Mode',
+      description: 'Passive listening where characters are revealed after playing. Perfect for learning new characters without pressure.'
+    },
+    'live-copy': {
+      title: 'Live Copy Mode',
+      description: 'Real-time continuous copying like actual CW. Characters stream at a constant rate - keep up or fall behind!'
+    }
+  };
+
   // Session configuration state
   const [duration, setDuration] = useState<1 | 2 | 5>(1);
   const [speedTier, setSpeedTier] = useState<SpeedTier>('slow');
@@ -134,11 +150,79 @@ export function SessionConfigPage() {
 
   return (
     <div className="min-h-screen bg-gradient-primary">
-      <div className="container" style={{ margin: '0 auto', padding: '32px 16px' }}>
-        <h1 className="brand-title text-center mb-8">Session Configuration</h1>
+      {/* Header with Back button and MorseAcademy branding */}
+      <header style={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: '24px',
+        padding: '20px 24px',
+        marginBottom: '32px'
+      }}>
+        <button
+          onClick={handleCancel}
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+            background: 'transparent',
+            border: '1px solid rgba(255, 255, 255, 0.2)',
+            borderRadius: '8px',
+            padding: '8px 16px',
+            color: 'rgba(255, 255, 255, 0.7)',
+            fontSize: '15px',
+            fontWeight: '500',
+            cursor: 'pointer',
+            transition: 'all 0.2s'
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)';
+            e.currentTarget.style.color = '#ffffff';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.background = 'transparent';
+            e.currentTarget.style.color = 'rgba(255, 255, 255, 0.7)';
+          }}
+        >
+          <span style={{ fontSize: '18px', lineHeight: 1 }}>←</span>
+          Back
+        </button>
+        <h1
+          className="brand-title"
+          style={{ cursor: 'pointer' }}
+          onClick={() => navigate('/')}
+        >
+          MorseAcademy
+        </h1>
+      </header>
 
+      <div className="container" style={{ margin: '0 auto', padding: '0 16px' }}>
         {/* Main Settings Card */}
-        <div className="card mb-4" style={{ maxWidth: '672px', margin: '0 auto' }}>
+        <div className="card mb-4" style={{
+          maxWidth: '672px',
+          margin: '0 auto',
+          background: 'rgba(26, 26, 26, 0.8)',
+          backdropFilter: 'blur(10px)',
+          border: '1px solid rgba(255, 255, 255, 0.1)',
+          padding: '32px'
+        }}>
+          {/* Mode Title and Description */}
+          <div style={{ marginBottom: '40px' }}>
+            <h1 className="heading-1" style={{
+              color: '#ffffff',
+              fontSize: '32px',
+              marginBottom: '12px'
+            }}>
+              {modeConfig[mode].title}
+            </h1>
+            <p className="body-regular" style={{
+              color: 'rgba(255, 255, 255, 0.7)',
+              fontSize: '16px',
+              lineHeight: '1.5'
+            }}>
+              {modeConfig[mode].description}
+            </p>
+          </div>
+
           {/* Duration */}
           <div className="form-group mb-4">
             <label className="form-label">Duration</label>
