@@ -44,7 +44,6 @@ export function SessionConfigPage() {
   // Text source state
   const [availableSources, setAvailableSources] = useState<ApiTextSource[]>([]);
   const [sourceContent, setSourceContent] = useState<SourceContent | null>(null);
-  const [loadingSource, setLoadingSource] = useState(false);
   const [sourcesLoading, setSourcesLoading] = useState(true);
 
   // Single source of truth for feedback configuration
@@ -160,15 +159,12 @@ export function SessionConfigPage() {
   // Handle source selection
   const handleSourceChange = async (sourceId: string) => {
     setSelectedSourceId(sourceId);
-    setLoadingSource(true);
     try {
       const content = await fetchSourceContent(sourceId);
       setSourceContent(content);
     } catch (error) {
       console.error(`Failed to fetch source ${sourceId}:`, error);
       setSourceContent(null); // Will fallback to local random
-    } finally {
-      setLoadingSource(false);
     }
   };
 
@@ -230,7 +226,6 @@ export function SessionConfigPage() {
         </button>
         <h1
           className="brand-title"
-          style={{ cursor: 'pointer' }}
           onClick={() => navigate('/')}
         >
           MorseAcademy
@@ -282,7 +277,7 @@ export function SessionConfigPage() {
                 }}
                 value={selectedSourceId}
                 onChange={(e) => handleSourceChange(e.target.value)}
-                disabled={sourcesLoading || loadingSource}
+                disabled={sourcesLoading}
               >
                 {sourcesLoading ? (
                   <option>Loading sources...</option>
