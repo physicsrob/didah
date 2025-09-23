@@ -1084,6 +1084,73 @@ body {
     background: var(--text-disabled);
 }
 
+/* Settings Row Layout */
+.settings-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 20px;
+    min-height: 40px;
+}
+
+.settings-row:last-child {
+    margin-bottom: 0;
+}
+
+.settings-label {
+    font-size: 16px;
+    font-weight: 500;
+    color: rgba(255, 255, 255, 0.8);
+    min-width: 140px;
+    flex-shrink: 0;
+}
+
+.settings-control {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 12px;
+}
+
+/* Segmented Control */
+.segmented-control {
+    display: inline-flex;
+    background: transparent;
+    border-radius: 8px;
+    padding: 2px;
+    gap: 2px;
+}
+
+.segmented-btn {
+    padding: 8px 20px;
+    font-size: 15px;
+    font-weight: 500;
+    background: transparent;
+    color: rgba(255, 255, 255, 0.6);
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+}
+
+.segmented-btn:hover {
+    color: rgba(255, 255, 255, 0.9);
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.segmented-btn.active {
+    background: #4dabf7;
+    color: #1a1a1a;
+    font-weight: 600;
+}
+
+.segmented-btn.active:hover {
+    background: #74bbf8;
+    color: #1a1a1a;
+}
+
 /* Focus Visible */
 *:focus-visible {
     outline: 2px solid var(--color-blue-primary);

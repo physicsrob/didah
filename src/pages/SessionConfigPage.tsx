@@ -8,7 +8,7 @@ import '../styles/main.css';
 
 type SpeedTier = 'slow' | 'medium' | 'fast' | 'lightning';
 type SessionMode = 'practice' | 'listen' | 'live-copy';
-type FeedbackType = 'buzzer' | 'flash' | 'both';
+type FeedbackType = 'buzzer' | 'flash' | 'both' | 'none';
 
 export function SessionConfigPage() {
   const navigate = useNavigate();
@@ -50,6 +50,15 @@ export function SessionConfigPage() {
     (localStorage.getItem('feedback') as FeedbackType) || 'both'
   );
   const [replay, setReplay] = useState(() => localStorage.getItem('replay') !== 'false');
+
+  // Feedback mode state for UI
+  const [feedbackMode, setFeedbackMode] = useState<'flash' | 'buzzer' | 'replay' | 'off'>(() => {
+    if (feedback === 'none') return 'off';
+    if (replay) return 'replay';
+    if (feedback === 'flash') return 'flash';
+    if (feedback === 'buzzer') return 'buzzer';
+    return 'flash'; // default
+  });
   const [includeNumbers, setIncludeNumbers] = useState(() => localStorage.getItem('includeNumbers') !== 'false');
   const [includeStdPunct, setIncludeStdPunct] = useState(() => localStorage.getItem('includeStdPunct') !== 'false');
   const [includeAdvPunct, setIncludeAdvPunct] = useState(() => localStorage.getItem('includeAdvPunct') === 'true');
@@ -224,88 +233,87 @@ export function SessionConfigPage() {
           </div>
 
           {/* Duration */}
-          <div className="form-group mb-4">
-            <label className="form-label">Duration</label>
-            <div className="flex gap-4">
-              <button
-                className={`btn ${duration === 1 ? 'btn-primary' : 'btn-secondary'}`}
-                onClick={() => setDuration(1)}
-              >
-                1 minute
-              </button>
-              <button
-                className={`btn ${duration === 2 ? 'btn-primary' : 'btn-secondary'}`}
-                onClick={() => setDuration(2)}
-              >
-                2 minutes
-              </button>
-              <button
-                className={`btn ${duration === 5 ? 'btn-primary' : 'btn-secondary'}`}
-                onClick={() => setDuration(5)}
-              >
-                5 minutes
-              </button>
+          <div className="settings-row">
+            <div className="settings-label">Duration</div>
+            <div className="settings-control">
+              <input
+                type="range"
+                min="1"
+                max="5"
+                step="1"
+                value={duration}
+                onChange={(e) => setDuration(Number(e.target.value) as 1 | 2 | 5)}
+                style={{
+                  flex: 1,
+                  maxWidth: '200px',
+                  height: '4px',
+                  background: 'rgba(255, 255, 255, 0.2)',
+                  borderRadius: '2px',
+                  outline: 'none',
+                  WebkitAppearance: 'none',
+                  appearance: 'none'
+                }}
+              />
+              <span style={{
+                color: '#4dabf7',
+                fontSize: '16px',
+                fontWeight: '500',
+                minWidth: '60px',
+                textAlign: 'right'
+              }}>
+                {duration} min
+              </span>
             </div>
           </div>
 
-          {/* Mode Display */}
-          <div className="form-group mb-4">
-            <label className="form-label">Mode</label>
-            <div className="p-3 bg-gray-100 rounded border">
-              <h3 className="font-semibold text-lg capitalize">{mode.replace('-', ' ')}</h3>
-              <p className="body-small text-muted mt-1">
-                {mode === 'practice' && 'Type what you hear - immediate feedback on correctness'}
-                {mode === 'listen' && 'Listen to characters - they will be revealed after playing'}
-                {mode === 'live-copy' && 'Real-time copying - continuous transmission like real CW'}
-              </p>
+          {/* Timeout Speed */}
+          <div className="settings-row">
+            <div className="settings-label">Timeout Speed</div>
+            <div className="settings-control">
+              <div className="segmented-control">
+                <button
+                  className={`segmented-btn ${speedTier === 'slow' ? 'active' : ''}`}
+                  onClick={() => setSpeedTier('slow')}
+                >
+                  Slow
+                </button>
+                <button
+                  className={`segmented-btn ${speedTier === 'medium' ? 'active' : ''}`}
+                  onClick={() => setSpeedTier('medium')}
+                >
+                  Medium
+                </button>
+                <button
+                  className={`segmented-btn ${speedTier === 'fast' ? 'active' : ''}`}
+                  onClick={() => setSpeedTier('fast')}
+                >
+                  Fast
+                </button>
+                <button
+                  className={`segmented-btn ${speedTier === 'lightning' ? 'active' : ''}`}
+                  onClick={() => setSpeedTier('lightning')}
+                >
+                  Lightning
+                </button>
+              </div>
             </div>
-          </div>
-
-          {/* Speed Tier */}
-          <div className="form-group mb-4">
-            <label className="form-label">Recognition Speed</label>
-            <div className="flex gap-3">
-              <button
-                className={`btn btn-small ${speedTier === 'slow' ? 'btn-primary' : 'btn-secondary'}`}
-                onClick={() => setSpeedTier('slow')}
-              >
-                Slow
-              </button>
-              <button
-                className={`btn btn-small ${speedTier === 'medium' ? 'btn-primary' : 'btn-secondary'}`}
-                onClick={() => setSpeedTier('medium')}
-              >
-                Medium
-              </button>
-              <button
-                className={`btn btn-small ${speedTier === 'fast' ? 'btn-primary' : 'btn-secondary'}`}
-                onClick={() => setSpeedTier('fast')}
-              >
-                Fast
-              </button>
-              <button
-                className={`btn btn-small ${speedTier === 'lightning' ? 'btn-primary' : 'btn-secondary'}`}
-                onClick={() => setSpeedTier('lightning')}
-              >
-                Lightning
-              </button>
-            </div>
-            <p className="body-small text-muted mt-2">
-              {mode === 'practice' && `Recognition window: ${getActiveWindowMs(wpm, speedTier)}ms`}
-              {mode === 'listen' && (() => {
-                const timing = getPassiveTimingMultipliers(speedTier);
-                return `${timing.preRevealDits} dits → reveal → ${timing.postRevealDits} dits`;
-              })()}
-              {mode === 'live-copy' && 'Continuous transmission - standard 3 dit spacing between characters'}
-            </p>
           </div>
 
           {/* Text Source */}
-          <div className="form-group mb-4">
-            <label className="form-label">Text Source</label>
-            <div style={{ position: 'relative' }}>
+          <div className="settings-row">
+            <div className="settings-label">Text Source</div>
+            <div className="settings-control">
               <select
-                className="form-select w-full"
+                style={{
+                  width: '280px',
+                  padding: '10px 16px',
+                  fontSize: '15px',
+                  background: 'rgba(42, 42, 42, 0.8)',
+                  color: '#ffffff',
+                  border: '1px solid rgba(255, 255, 255, 0.2)',
+                  borderRadius: '6px',
+                  cursor: 'pointer'
+                }}
                 value={selectedSourceId}
                 onChange={(e) => handleSourceChange(e.target.value)}
                 disabled={sourcesLoading || loadingSource}
@@ -320,16 +328,6 @@ export function SessionConfigPage() {
                   ))
                 )}
               </select>
-              {loadingSource && (
-                <div style={{
-                  position: 'absolute',
-                  right: '8px',
-                  top: '50%',
-                  transform: 'translateY(-50%)'
-                }}>
-                  <span className="caption text-muted">Loading...</span>
-                </div>
-              )}
             </div>
           </div>
 
@@ -361,38 +359,117 @@ export function SessionConfigPage() {
             </div>
           )}
 
-          {/* WPM */}
-          <div className="form-group">
-            <label className="form-label">Character Speed (WPM)</label>
-            <div className="flex items-center gap-4">
+          {/* Character Speed */}
+          <div className="settings-row">
+            <div className="settings-label">Character Speed</div>
+            <div className="settings-control">
               <input
                 type="range"
                 min="5"
                 max="40"
                 value={wpm}
                 onChange={(e) => setWpm(Number(e.target.value))}
-                className="flex-1"
+                style={{
+                  flex: 1,
+                  maxWidth: '200px',
+                  height: '4px',
+                  background: 'rgba(255, 255, 255, 0.2)',
+                  borderRadius: '2px',
+                  outline: 'none',
+                  WebkitAppearance: 'none',
+                  appearance: 'none'
+                }}
               />
-              <span className="body-large" style={{ minWidth: '60px', textAlign: 'right' }}>
+              <span style={{
+                color: '#4dabf7',
+                fontSize: '16px',
+                fontWeight: '500',
+                minWidth: '80px',
+                textAlign: 'right'
+              }}>
                 {wpm} WPM
               </span>
             </div>
           </div>
+
+          {/* Feedback - Only show for practice mode */}
+          {mode === 'practice' && (
+            <div className="settings-row">
+              <div className="settings-label">Feedback</div>
+              <div className="settings-control">
+                <div className="segmented-control">
+                  <button
+                    className={`segmented-btn ${feedbackMode === 'flash' ? 'active' : ''}`}
+                    onClick={() => {
+                      setFeedbackMode('flash');
+                      setFeedback('flash');
+                      setReplay(false);
+                    }}
+                  >
+                    Flash
+                  </button>
+                  <button
+                    className={`segmented-btn ${feedbackMode === 'buzzer' ? 'active' : ''}`}
+                    onClick={() => {
+                      setFeedbackMode('buzzer');
+                      setFeedback('buzzer');
+                      setReplay(false);
+                    }}
+                  >
+                    Buzzer
+                  </button>
+                  <button
+                    className={`segmented-btn ${feedbackMode === 'replay' ? 'active' : ''}`}
+                    onClick={() => {
+                      setFeedbackMode('replay');
+                      setFeedback('both');
+                      setReplay(true);
+                    }}
+                  >
+                    Replay
+                  </button>
+                  <button
+                    className={`segmented-btn ${feedbackMode === 'off' ? 'active' : ''}`}
+                    onClick={() => {
+                      setFeedbackMode('off');
+                      setFeedback('none');
+                      setReplay(false);
+                    }}
+                  >
+                    Off
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
 
-        {/* Action Buttons */}
-        <div className="flex gap-4 justify-center">
+        {/* Start Button */}
+        <div className="flex justify-center" style={{ marginTop: '48px' }}>
           <button
-            className="btn btn-secondary btn-large"
-            onClick={handleCancel}
-          >
-            Cancel
-          </button>
-          <button
-            className="btn btn-primary btn-large"
             onClick={handleStartSession}
+            style={{
+              background: '#4dabf7',
+              color: '#1a1a1a',
+              fontSize: '20px',
+              fontWeight: '600',
+              padding: '16px 64px',
+              borderRadius: '12px',
+              border: 'none',
+              cursor: 'pointer',
+              transition: 'all 0.2s',
+              minWidth: '300px'
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = '#74bbf8';
+              e.currentTarget.style.transform = 'translateY(-2px)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = '#4dabf7';
+              e.currentTarget.style.transform = 'translateY(0)';
+            }}
           >
-            Start Session
+            Start {modeConfig[mode].title.replace(' Mode', '')}
           </button>
         </div>
       </div>
