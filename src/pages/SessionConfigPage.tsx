@@ -33,11 +33,22 @@ export function SessionConfigPage() {
     }
   };
 
-  // Session configuration state
-  const [duration, setDuration] = useState<1 | 2 | 5>(1);
-  const [speedTier, setSpeedTier] = useState<SpeedTier>('slow');
-  const [selectedSourceId, setSelectedSourceId] = useState<string>('random_letters');
-  const [wpm, setWpm] = useState(15);
+  // Session configuration state - load from localStorage
+  const [duration, setDuration] = useState<1 | 2 | 5>(() => {
+    const saved = localStorage.getItem('duration');
+    return saved ? (Number(saved) as 1 | 2 | 5) : 1;
+  });
+  const [speedTier, setSpeedTier] = useState<SpeedTier>(() => {
+    const saved = localStorage.getItem('speedTier');
+    return (saved as SpeedTier) || 'slow';
+  });
+  const [selectedSourceId, setSelectedSourceId] = useState<string>(() => {
+    return localStorage.getItem('selectedSourceId') || 'random_letters';
+  });
+  const [wpm, setWpm] = useState(() => {
+    const saved = localStorage.getItem('wpm');
+    return saved ? Number(saved) : 15;
+  });
 
   // Text source state
   const [availableSources, setAvailableSources] = useState<ApiTextSource[]>([]);
@@ -64,7 +75,10 @@ export function SessionConfigPage() {
   const [includeAdvPunct, setIncludeAdvPunct] = useState(() => localStorage.getItem('includeAdvPunct') === 'true');
 
   // Live Copy specific settings
-  const [liveCopyFeedback, setLiveCopyFeedback] = useState<'end' | 'immediate'>('end');
+  const [liveCopyFeedback, setLiveCopyFeedback] = useState<'end' | 'immediate'>(() => {
+    const saved = localStorage.getItem('liveCopyFeedback');
+    return (saved as 'end' | 'immediate') || 'end';
+  });
 
   // Fetch available sources on mount
   useEffect(() => {
@@ -92,22 +106,46 @@ export function SessionConfigPage() {
       });
   }, []);
 
-  // Re-read localStorage when component mounts/becomes visible
+  // Save settings to localStorage when they change
   useEffect(() => {
-    const updateSettings = () => {
-      setFeedback((localStorage.getItem('feedback') as FeedbackType) || 'both');
-      setReplay(localStorage.getItem('replay') !== 'false');
-      setIncludeNumbers(localStorage.getItem('includeNumbers') !== 'false');
-      setIncludeStdPunct(localStorage.getItem('includeStdPunct') !== 'false');
-      setIncludeAdvPunct(localStorage.getItem('includeAdvPunct') === 'true');
-    };
+    localStorage.setItem('duration', duration.toString());
+  }, [duration]);
 
-    updateSettings();
+  useEffect(() => {
+    localStorage.setItem('speedTier', speedTier);
+  }, [speedTier]);
 
-    // Also listen for storage events (if settings changed in another tab)
-    window.addEventListener('storage', updateSettings);
-    return () => window.removeEventListener('storage', updateSettings);
-  }, []);
+  useEffect(() => {
+    localStorage.setItem('selectedSourceId', selectedSourceId);
+  }, [selectedSourceId]);
+
+  useEffect(() => {
+    localStorage.setItem('wpm', wpm.toString());
+  }, [wpm]);
+
+  useEffect(() => {
+    localStorage.setItem('feedback', feedback);
+  }, [feedback]);
+
+  useEffect(() => {
+    localStorage.setItem('replay', replay.toString());
+  }, [replay]);
+
+  useEffect(() => {
+    localStorage.setItem('liveCopyFeedback', liveCopyFeedback);
+  }, [liveCopyFeedback]);
+
+  useEffect(() => {
+    localStorage.setItem('includeNumbers', includeNumbers.toString());
+  }, [includeNumbers]);
+
+  useEffect(() => {
+    localStorage.setItem('includeStdPunct', includeStdPunct.toString());
+  }, [includeStdPunct]);
+
+  useEffect(() => {
+    localStorage.setItem('includeAdvPunct', includeAdvPunct.toString());
+  }, [includeAdvPunct]);
 
   // Handle source selection
   const handleSourceChange = async (sourceId: string) => {
