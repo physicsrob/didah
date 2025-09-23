@@ -103,27 +103,29 @@ export function SessionCompletePage() {
           </div>
         ) : (
           <>
-            {/* Two column summary */}
+            {/* Two column summary - hide results for listen mode */}
             <div className="session-summary">
-              {/* Results section */}
-              <div className="results-section">
-                <h2 className="section-title">Session Results</h2>
-                <div className="completion-message">Session Complete!</div>
+              {/* Results section - only show for practice and live-copy modes */}
+              {config.mode !== 'listen' && (
+                <div className="results-section">
+                  <h2 className="section-title">Session Results</h2>
+                  <div className="completion-message">Session Complete!</div>
 
-                <div className="stat-item">
-                  <span className="stat-label">Overall Accuracy</span>
-                  <span className="stat-value accuracy">{accuracy}%</span>
+                  <div className="stat-item">
+                    <span className="stat-label">Overall Accuracy</span>
+                    <span className="stat-value accuracy">{accuracy}%</span>
+                  </div>
+
+                  <div className="stat-item">
+                    <span className="stat-label">Characters Practiced</span>
+                    <span className="stat-value">{totalChars}</span>
+                  </div>
+
                 </div>
+              )}
 
-                <div className="stat-item">
-                  <span className="stat-label">Characters Practiced</span>
-                  <span className="stat-value">{totalChars}</span>
-                </div>
-
-              </div>
-
-              {/* Settings section */}
-              <div className="settings-section">
+              {/* Settings section - adjust width for listen mode */}
+              <div className={`settings-section ${config.mode === 'listen' ? 'settings-full-width' : ''}`}>
                 <h2 className="section-title">Session Settings</h2>
 
                 <div className="setting-item">

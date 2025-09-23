@@ -2,7 +2,7 @@
  * Timing test helpers to reduce magic numbers and improve maintainability
  */
 
-import { wpmToDitMs, calculateCharacterDurationMs } from '../../../../core/morse/timing';
+import { wpmToDitMs, calculateCharacterDurationMs, getListenModeTimingMs } from '../../../../core/morse/timing';
 
 /**
  * Standard test timing configuration
@@ -31,12 +31,11 @@ export const TestTiming = {
     lightning: 300
   },
 
-  // Passive mode delays
-  passive: {
-    slow: { preReveal: TEST_DIT_MS * 3, postReveal: TEST_DIT_MS * 3 },
-    medium: { preReveal: TEST_DIT_MS * 3, postReveal: TEST_DIT_MS * 2 },
-    fast: { preReveal: TEST_DIT_MS * 2, postReveal: TEST_DIT_MS },
-    lightning: { preReveal: TEST_DIT_MS * 2, postReveal: TEST_DIT_MS }
+  // Listen mode delays (now using standard 3-dit spacing)
+  // Note: speedTier is no longer used for Listen mode timing
+  listen: {
+    preReveal: Math.round(0.66 * TEST_DIT_MS * 3), // ~119ms for 20 WPM
+    postReveal: Math.round(0.34 * TEST_DIT_MS * 3) // ~61ms for 20 WPM
   }
 } as const;
 
@@ -48,17 +47,18 @@ export function getCharTimeout(char: string, speedTier: keyof typeof TestTiming.
 }
 
 /**
- * Helper to create a timing sequence for passive mode
+ * Helper to create a timing sequence for listen mode
+ * Note: speedTier is ignored as Listen mode now uses standard 3-dit spacing
  */
-export function getPassiveSequence(char: string, speedTier: keyof typeof TestTiming.passive, wpm = TEST_WPM) {
+export function getListenSequence(char: string, wpm = TEST_WPM) {
   const charDuration = calculateCharacterDurationMs(char, wpm);
-  const delays = TestTiming.passive[speedTier];
+  const delays = getListenModeTimingMs(wpm);
 
   return {
     playChar: charDuration,
-    preReveal: delays.preReveal,
-    postReveal: delays.postReveal,
-    total: charDuration + delays.preReveal + delays.postReveal
+    preReveal: delays.preRevealDelayMs,
+    postReveal: delays.postRevealDelayMs,
+    total: charDuration + delays.preRevealDelayMs + delays.postRevealDelayMs
   };
 }
 

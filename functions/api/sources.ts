@@ -12,7 +12,7 @@ export const SOURCES = [
 ];
 
 // Cloudflare Pages Function
-export async function onRequestGet(context: any) {
+export async function onRequestGet() {
   // Return list of all available sources
   return Response.json({
     sources: SOURCES,

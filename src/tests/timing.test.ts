@@ -1,9 +1,8 @@
 import { describe, it, expect } from 'vitest';
 import {
   wpmToDitMs,
-  getPassiveTimingMultipliers,
   getActiveWindowMs,
-  getPassiveTimingMs,
+  getListenModeTimingMs,
   getSpacingMs,
   calculateCharacterDurationMs,
   MORSE_SPACING,
@@ -25,52 +24,46 @@ describe('Morse Timing Engine', () => {
   });
 
 
-  describe('getPassiveTimingMultipliers', () => {
-    it('returns correct timing for each speed tier', () => {
-      expect(getPassiveTimingMultipliers('slow')).toEqual({
-        preRevealDits: 3,
-        postRevealDits: 3,
-      });
-      expect(getPassiveTimingMultipliers('medium')).toEqual({
-        preRevealDits: 3,
-        postRevealDits: 2,
-      });
-      expect(getPassiveTimingMultipliers('fast')).toEqual({
-        preRevealDits: 2,
-        postRevealDits: 1,
-      });
-    });
-  });
-
   describe('getActiveWindowMs', () => {
     it('returns constant window duration regardless of WPM', () => {
       // Windows are now constant, not based on WPM
-      expect(getActiveWindowMs(20, 'slow')).toBe(TestTiming.windows.slow);
-      expect(getActiveWindowMs(20, 'medium')).toBe(TestTiming.windows.medium);
-      expect(getActiveWindowMs(20, 'fast')).toBe(TestTiming.windows.fast);
-      expect(getActiveWindowMs(20, 'lightning')).toBe(TestTiming.windows.lightning);
+      expect(getActiveWindowMs('slow')).toBe(TestTiming.windows.slow);
+      expect(getActiveWindowMs('medium')).toBe(TestTiming.windows.medium);
+      expect(getActiveWindowMs('fast')).toBe(TestTiming.windows.fast);
+      expect(getActiveWindowMs('lightning')).toBe(TestTiming.windows.lightning);
 
-      // Should be the same at different WPMs
-      expect(getActiveWindowMs(5, 'slow')).toBe(TestTiming.windows.slow);
-      expect(getActiveWindowMs(25, 'slow')).toBe(TestTiming.windows.slow);
-      expect(getActiveWindowMs(40, 'slow')).toBe(TestTiming.windows.slow);
+      // WPM parameter was removed - window is purely based on speed tier
+      expect(getActiveWindowMs('slow')).toBe(TestTiming.windows.slow);
+      expect(getActiveWindowMs('medium')).toBe(TestTiming.windows.medium);
+      expect(getActiveWindowMs('fast')).toBe(TestTiming.windows.fast);
     });
   });
 
-  describe('getPassiveTimingMs', () => {
-    it('calculates correct pre/post reveal timings', () => {
-      // 20 WPM = 60ms dit
-      expect(getPassiveTimingMs(20, 'slow')).toEqual({
-        preRevealMs: 180, // 60 * 3
-        postRevealMs: 180, // 60 * 3
-      });
-      expect(getPassiveTimingMs(20, 'medium')).toEqual({
-        preRevealMs: 180, // 60 * 3
-        postRevealMs: 120, // 60 * 2
-      });
-      expect(getPassiveTimingMs(20, 'fast')).toEqual({
-        preRevealMs: 120, // 60 * 2
-        postRevealMs: 60, // 60 * 1
+  describe('getListenModeTimingMs', () => {
+    it('returns standard 3-dit spacing split approximately 66/34', () => {
+      // Test at different WPM values
+      const testCases = [10, 20, 30, 40];
+
+      testCases.forEach(wpm => {
+        const ditMs = wpmToDitMs(wpm);
+        const expectedTotal = ditMs * 3; // Standard 3-dit spacing
+
+        const timing = getListenModeTimingMs(wpm);
+        const actualTotal = timing.preRevealDelayMs + timing.postRevealDelayMs;
+
+        // Total should equal 3 dits (allowing for rounding)
+        expect(actualTotal).toBeGreaterThanOrEqual(expectedTotal - 1);
+        expect(actualTotal).toBeLessThanOrEqual(expectedTotal + 1);
+
+        // Pre-reveal should be roughly 66% of total
+        const preRevealRatio = timing.preRevealDelayMs / actualTotal;
+        expect(preRevealRatio).toBeGreaterThan(0.6);
+        expect(preRevealRatio).toBeLessThan(0.7);
+
+        // Post-reveal should be roughly 34% of total
+        const postRevealRatio = timing.postRevealDelayMs / actualTotal;
+        expect(postRevealRatio).toBeGreaterThan(0.3);
+        expect(postRevealRatio).toBeLessThan(0.4);
       });
     });
   });
@@ -149,13 +142,13 @@ describe('Morse Timing Engine', () => {
       wpmToDitMs(wpm); // 48ms
 
       // Active mode at medium speed should give reasonable recognition window
-      const windowMs = getActiveWindowMs(wpm, 'medium');
+      const windowMs = getActiveWindowMs('medium');
       expect(windowMs).toBe(TestTiming.windows.medium); // Constant window for medium speed
 
-      // Passive mode timing should flow naturally
-      const passiveTiming = getPassiveTimingMs(wpm, 'medium');
-      expect(passiveTiming.preRevealMs).toBe(144); // 3 dits before reveal
-      expect(passiveTiming.postRevealMs).toBe(96); // 2 dits after reveal
+      // Listen mode timing uses standard 3-dit spacing
+      const listenTiming = getListenModeTimingMs(wpm);
+      const totalDelay = listenTiming.preRevealDelayMs + listenTiming.postRevealDelayMs;
+      expect(totalDelay).toBeCloseTo(144, 0); // Total should be 3 dits (48ms * 3)
     });
 
     it('character durations are consistent with audio engine expectations', () => {

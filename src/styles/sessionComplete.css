@@ -125,6 +125,13 @@
   font-weight: 500;
 }
 
+/* Full width settings for listen mode */
+.settings-full-width {
+  grid-column: 1 / -1;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
 /* Action Buttons */
 .action-buttons {
   display: flex;

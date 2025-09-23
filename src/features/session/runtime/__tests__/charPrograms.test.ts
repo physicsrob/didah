@@ -7,9 +7,9 @@ import { runPracticeEmission, runListenEmission } from '../charPrograms';
 import { FakeClock } from '../clock';
 import { TestInputBus } from '../inputBus';
 import { TestIO } from './testIO';
-import { calculateCharacterDurationMs } from '../../../../core/morse/timing';
+import { calculateCharacterDurationMs, wpmToDitMs } from '../../../../core/morse/timing';
 import { advanceAndFlush, createTestConfig, flushPromises } from './testUtils';
-import { TestTiming, getCharTimeout, getPassiveSequence } from './timingTestHelpers';
+import { TestTiming, getCharTimeout, getListenSequence } from './timingTestHelpers';
 
 describe('runPracticeEmission', () => {
   let clock: FakeClock;
@@ -264,7 +264,7 @@ describe('runListenEmission', () => {
     );
 
     // Calculate timings using helper
-    const sequence = getPassiveSequence('F', 'slow', config.wpm);
+    const sequence = getListenSequence('F', config.wpm);
 
     // Advance through complete sequence
     await advanceAndFlush(clock, sequence.playChar); // Audio playback
@@ -284,39 +284,59 @@ describe('runListenEmission', () => {
     expect(io.getReveals()).toContain('F');
   });
 
-  it('respects speed tier timings', async () => {
-    const config = createTestConfig({
-      mode: 'listen',
-      wpm: 20, // dit = 60ms
-      speedTier: 'fast' // Timings from TestTiming.passive.fast
-    });
+  it('uses standard 3-dit spacing regardless of speed tier', async () => {
+    // Test that Listen mode ignores speedTier and always uses 3-dit spacing
+    const testSpeedTiers = ['slow', 'medium', 'fast', 'lightning'] as const;
 
-    const startTime = clock.now();
+    for (const speedTier of testSpeedTiers) {
+      // Reset state for each iteration
+      io = new TestIO(clock);
 
-    // Start emission
-    const emissionPromise = runListenEmission(
-      config,
-      'G',
-      io,
-      clock,
-      signal
-    );
+      const config = createTestConfig({
+        mode: 'listen',
+        wpm: 20, // dit = 60ms
+        speedTier // Should be ignored
+      });
 
-    // Calculate expected timings using helper
-    const sequence = getPassiveSequence('G', 'fast', config.wpm);
+      const startTime = clock.now();
 
-    // Advance through complete sequence
-    await advanceAndFlush(clock, sequence.playChar);
-    await advanceAndFlush(clock, sequence.preReveal);
-    await advanceAndFlush(clock, sequence.postReveal);
+      // Start emission
+      const emissionPromise = runListenEmission(
+        config,
+        'G',
+        io,
+        clock,
+        signal
+      );
 
-    await emissionPromise;
+      // All speed tiers should use the same timing (standard 3-dit spacing)
+      const sequence = getListenSequence('G', config.wpm);
 
-    const totalTime = clock.now() - startTime;
-    expect(totalTime).toBe(sequence.total);
+      // Advance through complete sequence
+      await advanceAndFlush(clock, sequence.playChar);
+      await advanceAndFlush(clock, sequence.preReveal);
+      await advanceAndFlush(clock, sequence.postReveal);
 
-    // Verify the reveal happened
-    expect(io.getReveals()).toContain('G');
+      await emissionPromise;
+
+      const totalTime = clock.now() - startTime;
+
+      // Total time should be consistent across all speed tiers
+      // Character duration + 3 dits of spacing (split 66/34)
+      const charDuration = calculateCharacterDurationMs('G', config.wpm);
+      const expectedSpacing = wpmToDitMs(config.wpm) * 3;
+      const expectedTotal = charDuration + expectedSpacing;
+
+      // Allow for rounding differences
+      expect(totalTime).toBeGreaterThanOrEqual(expectedTotal - 2);
+      expect(totalTime).toBeLessThanOrEqual(expectedTotal + 2);
+
+      // Verify the reveal happened
+      expect(io.getReveals()).toContain('G');
+
+      // Reset clock for next iteration
+      clock = new FakeClock();
+    }
   });
 
   it('handles abort signal', async () => {

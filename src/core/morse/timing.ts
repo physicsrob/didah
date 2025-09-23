@@ -21,35 +21,14 @@ export function wpmToDitMs(wpm: number): number {
 }
 
 /**
- * Get the timing configuration for Passive mode based on speed tier
- * Returns { preRevealDits, postRevealDits } per spec:
- * - slow: 3 dits → reveal → 3 dits
- * - medium: 3 dits → reveal → 2 dits
- * - fast: 2 dits → reveal → 1 dit
- */
-export function getPassiveTimingMultipliers(speedTier: SpeedTier): {
-  preRevealDits: number;
-  postRevealDits: number;
-} {
-  const timings = {
-    slow: { preRevealDits: 3, postRevealDits: 3 },
-    medium: { preRevealDits: 3, postRevealDits: 2 },
-    fast: { preRevealDits: 2, postRevealDits: 1 },
-    lightning: { preRevealDits: 2, postRevealDits: 1 }, // lightning not in spec, use fast
-  } as const;
-
-  return timings[speedTier];
-}
-
-/**
  * Get the recognition window duration for Active mode based on speed tier
- * Returns constant milliseconds regardless of WPM:
+ * Returns constant milliseconds (not affected by WPM):
  * - slow: 2000ms
  * - medium: 1000ms
  * - fast: 500ms
  * - lightning: 300ms
  */
-export function getActiveWindowMs(_wpm: number, speedTier: SpeedTier): number {
+export function getActiveWindowMs(speedTier: SpeedTier): number {
   const windows = {
     slow: 2000,
     medium: 1000,
@@ -61,18 +40,34 @@ export function getActiveWindowMs(_wpm: number, speedTier: SpeedTier): number {
 }
 
 /**
- * Calculate the pre and post reveal delays in milliseconds for Passive mode
+ * Get standard inter-character spacing for modes that simulate real Morse transmission.
+ * Used by Listen and Live Copy modes. NOT used by Practice mode.
+ *
+ * Practice mode does not use this - it has its own timing based on recognition windows
+ * and user input, not Morse transmission standards.
+ *
+ * @param wpm - Words per minute
+ * @returns Inter-character spacing in milliseconds (3 dits per Morse standard)
  */
-export function getPassiveTimingMs(wpm: number, speedTier: SpeedTier): {
-  preRevealMs: number;
-  postRevealMs: number;
-} {
+export function getInterCharacterSpacingMs(wpm: number): number {
   const ditMs = wpmToDitMs(wpm);
-  const { preRevealDits, postRevealDits } = getPassiveTimingMultipliers(speedTier);
+  return ditMs * MORSE_SPACING.symbol; // 3 dits
+}
+
+/**
+ * Calculate timing for Listen mode character reveal
+ * Total delay equals standard inter-character spacing (3 dits)
+ * Split as 66% before reveal, 34% after reveal
+ */
+export function getListenModeTimingMs(wpm: number): {
+  preRevealDelayMs: number;
+  postRevealDelayMs: number;
+} {
+  const totalSpacingMs = getInterCharacterSpacingMs(wpm);
 
   return {
-    preRevealMs: ditMs * preRevealDits,
-    postRevealMs: ditMs * postRevealDits,
+    preRevealDelayMs: Math.round(0.66 * totalSpacingMs),
+    postRevealDelayMs: Math.round(0.34 * totalSpacingMs),
   };
 }
 

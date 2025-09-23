@@ -14,7 +14,7 @@ export function SessionConfigPage() {
   const location = useLocation();
 
   // Get mode from navigation state (set by HomePage)
-  const mode: SessionMode = (location.state as any)?.mode || 'practice';
+  const mode: SessionMode = (location.state as { mode?: SessionMode })?.mode || 'practice';
 
   // Mode-specific configuration
   const modeConfig = {
@@ -32,11 +32,22 @@ export function SessionConfigPage() {
     }
   };
 
-  // Session configuration state
-  const [duration, setDuration] = useState<1 | 2 | 5>(1);
-  const [speedTier, setSpeedTier] = useState<SpeedTier>('slow');
-  const [selectedSourceId, setSelectedSourceId] = useState<string>('random_letters');
-  const [wpm, setWpm] = useState(15);
+  // Session configuration state - load from localStorage
+  const [duration, setDuration] = useState<1 | 2 | 5>(() => {
+    const saved = localStorage.getItem('duration');
+    return saved ? (Number(saved) as 1 | 2 | 5) : 1;
+  });
+  const [speedTier, setSpeedTier] = useState<SpeedTier>(() => {
+    const saved = localStorage.getItem('speedTier');
+    return (saved as SpeedTier) || 'slow';
+  });
+  const [selectedSourceId, setSelectedSourceId] = useState<string>(() => {
+    return localStorage.getItem('selectedSourceId') || 'random_letters';
+  });
+  const [wpm, setWpm] = useState(() => {
+    const saved = localStorage.getItem('wpm');
+    return saved ? Number(saved) : 15;
+  });
 
   // Text source state
   const [availableSources, setAvailableSources] = useState<ApiTextSource[]>([]);
@@ -58,12 +69,16 @@ export function SessionConfigPage() {
     if (feedback === 'buzzer') return 'buzzer';
     return 'flash'; // default
   });
-  const [includeNumbers, setIncludeNumbers] = useState(() => localStorage.getItem('includeNumbers') !== 'false');
-  const [includeStdPunct, setIncludeStdPunct] = useState(() => localStorage.getItem('includeStdPunct') !== 'false');
-  const [includeAdvPunct, setIncludeAdvPunct] = useState(() => localStorage.getItem('includeAdvPunct') === 'true');
+  // Character options - these setters are currently unused but the values are used
+  const [includeNumbers, ] = useState(() => localStorage.getItem('includeNumbers') !== 'false');
+  const [includeStdPunct, ] = useState(() => localStorage.getItem('includeStdPunct') !== 'false');
+  const [includeAdvPunct, ] = useState(() => localStorage.getItem('includeAdvPunct') === 'true');
 
   // Live Copy specific settings
-  const [liveCopyFeedback, setLiveCopyFeedback] = useState<'end' | 'immediate'>('end');
+  const [liveCopyFeedback, setLiveCopyFeedback] = useState<'end' | 'immediate'>(() => {
+    const saved = localStorage.getItem('liveCopyFeedback');
+    return (saved as 'end' | 'immediate') || 'end';
+  });
 
   // Fetch available sources on mount
   useEffect(() => {
@@ -91,22 +106,46 @@ export function SessionConfigPage() {
       });
   }, []);
 
-  // Re-read localStorage when component mounts/becomes visible
+  // Save settings to localStorage when they change
   useEffect(() => {
-    const updateSettings = () => {
-      setFeedback((localStorage.getItem('feedback') as FeedbackType) || 'both');
-      setReplay(localStorage.getItem('replay') !== 'false');
-      setIncludeNumbers(localStorage.getItem('includeNumbers') !== 'false');
-      setIncludeStdPunct(localStorage.getItem('includeStdPunct') !== 'false');
-      setIncludeAdvPunct(localStorage.getItem('includeAdvPunct') === 'true');
-    };
+    localStorage.setItem('duration', duration.toString());
+  }, [duration]);
 
-    updateSettings();
+  useEffect(() => {
+    localStorage.setItem('speedTier', speedTier);
+  }, [speedTier]);
 
-    // Also listen for storage events (if settings changed in another tab)
-    window.addEventListener('storage', updateSettings);
-    return () => window.removeEventListener('storage', updateSettings);
-  }, []);
+  useEffect(() => {
+    localStorage.setItem('selectedSourceId', selectedSourceId);
+  }, [selectedSourceId]);
+
+  useEffect(() => {
+    localStorage.setItem('wpm', wpm.toString());
+  }, [wpm]);
+
+  useEffect(() => {
+    localStorage.setItem('feedback', feedback);
+  }, [feedback]);
+
+  useEffect(() => {
+    localStorage.setItem('replay', replay.toString());
+  }, [replay]);
+
+  useEffect(() => {
+    localStorage.setItem('liveCopyFeedback', liveCopyFeedback);
+  }, [liveCopyFeedback]);
+
+  useEffect(() => {
+    localStorage.setItem('includeNumbers', includeNumbers.toString());
+  }, [includeNumbers]);
+
+  useEffect(() => {
+    localStorage.setItem('includeStdPunct', includeStdPunct.toString());
+  }, [includeStdPunct]);
+
+  useEffect(() => {
+    localStorage.setItem('includeAdvPunct', includeAdvPunct.toString());
+  }, [includeAdvPunct]);
 
   // Handle source selection
   const handleSourceChange = async (sourceId: string) => {
@@ -139,7 +178,7 @@ export function SessionConfigPage() {
       wpm,
       speedTier,
       sourceId: selectedSourceId,
-      feedback,
+      feedback: feedback === 'none' ? 'both' : feedback, // Default to 'both' if 'none'
       replay,
       effectiveAlphabet: buildAlphabet(),
       ...(mode === 'live-copy' && { liveCopyFeedback }),
@@ -407,38 +446,40 @@ export function SessionConfigPage() {
             </div>
           )}
 
-          {/* Timeout Speed */}
-          <div className="settings-row">
-            <div className="settings-label">Timeout Speed</div>
-            <div className="settings-control">
-              <div className="segmented-control">
-                <button
-                  className={`segmented-btn ${speedTier === 'slow' ? 'active' : ''}`}
-                  onClick={() => setSpeedTier('slow')}
-                >
-                  Slow
-                </button>
-                <button
-                  className={`segmented-btn ${speedTier === 'medium' ? 'active' : ''}`}
-                  onClick={() => setSpeedTier('medium')}
-                >
-                  Medium
-                </button>
-                <button
-                  className={`segmented-btn ${speedTier === 'fast' ? 'active' : ''}`}
-                  onClick={() => setSpeedTier('fast')}
-                >
-                  Fast
-                </button>
-                <button
-                  className={`segmented-btn ${speedTier === 'lightning' ? 'active' : ''}`}
-                  onClick={() => setSpeedTier('lightning')}
-                >
-                  Lightning
-                </button>
+          {/* Timeout Speed - Only show for practice and live-copy modes */}
+          {mode !== 'listen' && (
+            <div className="settings-row">
+              <div className="settings-label">Timeout Speed</div>
+              <div className="settings-control">
+                <div className="segmented-control">
+                  <button
+                    className={`segmented-btn ${speedTier === 'slow' ? 'active' : ''}`}
+                    onClick={() => setSpeedTier('slow')}
+                  >
+                    Slow
+                  </button>
+                  <button
+                    className={`segmented-btn ${speedTier === 'medium' ? 'active' : ''}`}
+                    onClick={() => setSpeedTier('medium')}
+                  >
+                    Medium
+                  </button>
+                  <button
+                    className={`segmented-btn ${speedTier === 'fast' ? 'active' : ''}`}
+                    onClick={() => setSpeedTier('fast')}
+                  >
+                    Fast
+                  </button>
+                  <button
+                    className={`segmented-btn ${speedTier === 'lightning' ? 'active' : ''}`}
+                    onClick={() => setSpeedTier('lightning')}
+                  >
+                    Lightning
+                  </button>
+                </div>
               </div>
             </div>
-          </div>
+          )}
         </div>
 
         {/* Start Button */}

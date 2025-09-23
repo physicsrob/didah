@@ -38,6 +38,17 @@ The app uses a runtime-based approach (NOT state machines) - see `arch.md` for d
 - **Pages**: `src/pages/` - React components
 - **API Functions**: `functions/api/` - Cloudflare Pages Functions
 
+## Styling Approach
+
+**IMPORTANT: This project uses regular CSS files with class names. We do NOT use Tailwind CSS.**
+- Style files are in `src/styles/` and component-specific CSS files
+- Main styles: `src/styles/main.css` (CSS variables, base styles)
+- Component styles: `src/components/ComponentName.css`
+- Page styles: `src/styles/pageName.css`
+- Write semantic class names, not utility classes
+- Use the CSS variables defined in main.css for colors and spacing
+- See `brand.md` for design guidelines
+
 ## Key Files
 
 - `src/core/morse/timing.ts` - Morse timing calculations (WPM → dit length)
