@@ -4,6 +4,23 @@ A modern web application for learning Morse code with real-time feedback and ins
 
 **Live App:** https://morseacademy.pages.dev
 
+## Learning Experiences
+
+Morse Academy offers three distinct ways to study and improve your Morse code skills:
+
+### 🎯 Practice Mode
+Interactive training where you type what you hear in real-time. The key distinct element of this mode is that the learner has some control of pacing. They should try to go as fast as possible, but the app will wait (up until the timeout!)
+When you are operating in this mode you try to type as quickly as you can, and you optionally get three types of feedback:
+- Visual Flash
+- Buzzer
+- Replay -- When a character is missed it will show the character to you on the screen and play the audio for it again.
+
+### 👂 Listen Mode
+Passive listening experience where Morse code is played and then revealed on screen after a timed delay. Ideal for familiarizing yourself with Morse patterns without pressure. You simply listen, try to decode mentally, then see the correct answer. Great for when you want a more relxed experience. 
+
+### 📻 Live Copy Mode
+Copying experience that more closely simulates real morse code copy -- no controlling the transmission pacing -- no feedback until you are done.
+
 ## Documentation
 
 - **[spec.md](spec.md)** - Product requirements and feature specifications
@@ -40,17 +57,9 @@ npm run check
 
 ### Not Yet Implemented ❌
 - Statistics persistence and history
-- Multiple text sources (words, RSS, hard characters)
 - User settings and configuration
-- Multiple pages/routing
 
 ## Architecture
-
-The app uses a **runtime-based session orchestration** approach (not state machines):
-- Single async conductor function manages the entire session
-- Centralized timing through Clock abstraction with AbortSignal cancellation
-- IO abstraction isolates all side effects
-- Race/select utility for handling concurrent operations (input vs timeout)
 
 See [arch.md](arch.md) for detailed architecture documentation.
 
@@ -102,7 +111,6 @@ Currently ~32 tests passing.
 ## Tech Stack
 
 - **Frontend**: React 19 + TypeScript + Vite
-- **Styling**: Inline styles (tech debt - should be CSS modules)
 - **Audio**: WebAudio API
 - **Testing**: Vitest
 - **Hosting**: Cloudflare Pages

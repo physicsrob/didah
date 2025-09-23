@@ -52,10 +52,10 @@ By default we should support a few obvious reddits, but we should let the user a
 ## Mode: Active
 In active mode, text will be sent to the user, and the user will be expected to type what they hear quickly.
 The user has limited time to recognize each character:
-- slow: 5 times the dit length
-- medium: 3 times the dit length
-- fast: 2 times the dit length
-- lightning: 1 times the dit length
+- slow: 2000ms
+- medium: 1000ms
+- fast: 500ms
+- lightning: 300ms
 
 If the user is successful we move on immediately to the next character.
 If the user fails:
