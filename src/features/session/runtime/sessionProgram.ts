@@ -329,15 +329,16 @@ export function createSessionRunner(deps: SessionRunnerDeps): SessionRunner {
 
   // Perform session cleanup when session ends
   function cleanupSession(): void {
-    snapshot.phase = 'ended';
-    snapshot.currentChar = null;
-    publish();
-
-    // Log session end
+    // Log session end BEFORE publishing 'ended' phase
+    // This ensures the sessionEnd event is in the collector before stats are calculated
     deps.io.log({
       type: 'sessionEnd',
       at: deps.clock.now()
     });
+
+    snapshot.phase = 'ended';
+    snapshot.currentChar = null;
+    publish();
   }
 
   // Main conductor function
