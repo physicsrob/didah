@@ -55,15 +55,43 @@ export function getInterCharacterSpacingMs(wpm: number): number {
 }
 
 /**
+ * Calculate Farnsworth inter-character spacing
+ * When characterWpm > effectiveWpm, extends spacing to slow down overall rate
+ * When characterWpm = effectiveWpm, returns standard 3-dit spacing
+ *
+ * Formula: (60×C - 37.2×W) / (C×W) × 1000
+ * Where C = character WPM, W = effective WPM
+ */
+export function calculateFarnsworthSpacingMs(characterWpm: number, effectiveWpm: number): number {
+  if (characterWpm <= 0 || effectiveWpm <= 0) {
+    throw new Error("WPM values must be positive");
+  }
+
+  if (effectiveWpm > characterWpm) {
+    throw new Error("Effective WPM cannot exceed character WPM");
+  }
+
+  // When speeds are equal, use standard spacing
+  if (characterWpm === effectiveWpm) {
+    return getInterCharacterSpacingMs(characterWpm);
+  }
+
+  // Farnsworth formula for inter-character spacing
+  const spacingMs = ((60 * characterWpm - 37.2 * effectiveWpm) / (characterWpm * effectiveWpm)) * 1000;
+  return Math.max(spacingMs, 0); // Ensure non-negative
+}
+
+/**
  * Calculate timing for Listen mode character reveal
- * Total delay equals standard inter-character spacing (3 dits)
+ * Uses Farnsworth spacing when effectiveWpm < characterWpm
+ * Falls back to standard spacing when speeds are equal
  * Split as 66% before reveal, 34% after reveal
  */
-export function getListenModeTimingMs(wpm: number): {
+export function getListenModeTimingMs(characterWpm: number, effectiveWpm: number): {
   preRevealDelayMs: number;
   postRevealDelayMs: number;
 } {
-  const totalSpacingMs = getInterCharacterSpacingMs(wpm);
+  const totalSpacingMs = calculateFarnsworthSpacingMs(characterWpm, effectiveWpm);
 
   return {
     preRevealDelayMs: Math.round(0.66 * totalSpacingMs),

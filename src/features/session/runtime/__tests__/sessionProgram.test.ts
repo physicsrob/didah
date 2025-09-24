@@ -37,6 +37,7 @@ describe('SessionRunner', () => {
     const config = {
       mode: 'practice' as const,
       wpm: 20,
+      effectiveWpm: 20,
       speedTier: 'medium' as const,
       lengthMs: 5000
     };
@@ -60,6 +61,7 @@ describe('SessionRunner', () => {
     const config = {
       mode: 'practice' as const,
       wpm: 20,
+      effectiveWpm: 20,
       speedTier: 'fast' as const,
       lengthMs: 1000
     };
@@ -88,6 +90,7 @@ describe('SessionRunner', () => {
     const config = {
       mode: 'practice' as const,
       wpm: 20,
+      effectiveWpm: 20,
       speedTier: 'medium' as const,
       lengthMs: 10000
     };
@@ -161,6 +164,7 @@ describe('SessionRunner', () => {
     const config = {
       mode: 'practice' as const,
       wpm: 20,
+      effectiveWpm: 20,
       speedTier: 'medium' as const,
       lengthMs: 60000
     };
@@ -248,6 +252,7 @@ describe('SessionRunner', () => {
     runner.start({
       mode: 'practice' as const,
       wpm: 20,
+      effectiveWpm: 20,
       speedTier: 'medium' as const,
       lengthMs: 1000
     });

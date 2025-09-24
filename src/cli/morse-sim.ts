@@ -28,6 +28,7 @@ const inputBus = new SimpleInputBus();
 const config: SessionConfig = {
   mode: args.mode,
   wpm: args.wpm,
+  effectiveWpm: args.wpm,  // Use standard timing for CLI
   speedTier: args.speed,
   lengthMs: 60000, // Not used for CLI simulation
   replay: args.mode === 'practice'
