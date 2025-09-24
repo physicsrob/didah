@@ -83,7 +83,7 @@ async function fetchSubredditPosts(token: string, subreddit: string): Promise<st
 
   const data = await response.json() as RedditListingResponse;
 
-  // Extract titles and clean them
+  // Extract titles and clean them (don't shuffle here - do it on read)
   const titles = data.data.children.map(post =>
     post.data.title
       .replace(/&amp;/g, '&')
@@ -93,12 +93,6 @@ async function fetchSubredditPosts(token: string, subreddit: string): Promise<st
       .replace(/&#39;/g, "'")
       .trim()
   );
-
-  // Shuffle for variety
-  for (let i = titles.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [titles[i], titles[j]] = [titles[j], titles[i]];
-  }
 
   return titles;
 }

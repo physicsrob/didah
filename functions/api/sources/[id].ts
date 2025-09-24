@@ -79,16 +79,21 @@ function extractTitles(rssText: string, limit: number = 50): string[] {
     }
   }
 
-  // Skip first title (usually feed name) and shuffle
+  // Skip first title (usually feed name) but don't shuffle here
   const items = titles.slice(1, limit + 1);
-
-  // Shuffle array
-  for (let i = items.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [items[i], items[j]] = [items[j], items[i]];
-  }
-
   return items;
+}
+
+/**
+ * Shuffle an array in place
+ */
+function shuffleArray<T>(array: T[]): T[] {
+  const shuffled = [...array]; // Create a copy
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  }
+  return shuffled;
 }
 
 /**
@@ -154,7 +159,8 @@ export async function onRequestGet(context: CloudflareContext) {
 
             if (cached && cached.posts) {
               // Always serve cached data, even if stale
-              items = cached.posts;
+              // Shuffle on every request for variety
+              items = shuffleArray(cached.posts);
 
               // Add staleness warning in response headers if data is old
               const fetchedAt = new Date(cached.fetchedAt);
@@ -193,7 +199,8 @@ export async function onRequestGet(context: CloudflareContext) {
         // Otherwise check if it's an RSS source
         else if (id in RSS_FEEDS) {
           const titles = await fetchRSS(RSS_FEEDS[id]);
-          items = titles.length > 0 ? titles : ['No items found in feed'];
+          // Shuffle RSS feed items on every request too
+          items = titles.length > 0 ? shuffleArray(titles) : ['No items found in feed'];
         } else {
           return Response.json({ error: 'Source not found' }, { status: 404 });
         }
