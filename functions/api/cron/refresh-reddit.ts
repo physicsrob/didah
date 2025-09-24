@@ -127,15 +127,13 @@ export async function onRequestGet(context: { env: Env }) {
       console.log(`Fetching r/${source.subreddit}...`);
       const posts = await fetchSubredditPosts(token, source.subreddit);
 
-      // Cache for 1 hour
+      // Cache indefinitely (no TTL) - we'll always serve data even if stale
       const cacheKey = `reddit:${source.id}`;
       await env.KV.put(cacheKey, JSON.stringify({
         posts,
         fetchedAt: new Date().toISOString(),
         count: posts.length
-      }), {
-        expirationTtl: 3600 // 1 hour
-      });
+      }));
 
       results[source.id] = {
         status: 'success',

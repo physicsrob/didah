@@ -153,12 +153,33 @@ export async function onRequestGet(context: CloudflareContext) {
             const cached = await kv.get(cacheKey, 'json') as { posts: string[], fetchedAt: string } | null;
 
             if (cached && cached.posts) {
+              // Always serve cached data, even if stale
               items = cached.posts;
+
+              // Add staleness warning in response headers if data is old
+              const fetchedAt = new Date(cached.fetchedAt);
+              const ageHours = (Date.now() - fetchedAt.getTime()) / (1000 * 60 * 60);
+
+              const response = Response.json({
+                id,
+                items,
+                cached: true,
+                fetchedAt: cached.fetchedAt,
+                ageHours: Math.round(ageHours * 10) / 10
+              });
+
+              // Add cache headers to indicate staleness
+              if (ageHours > 2) {
+                response.headers.set('X-Cache-Status', 'stale');
+                response.headers.set('X-Cache-Age-Hours', ageHours.toString());
+              }
+
+              return response;
             } else {
-              // No cache found, return error suggesting to wait for cron
+              // No cache found at all - this should be rare
               return Response.json({
-                error: 'Reddit data not yet cached. Please try again in a few minutes.',
-                details: 'Reddit feeds are refreshed hourly. If this persists, check the cron job.'
+                error: 'Reddit data not yet available. Please try again in a few minutes.',
+                details: 'This source has not been initialized yet. The cron job will populate it shortly.'
               }, { status: 503 });
             }
           } catch (error) {
