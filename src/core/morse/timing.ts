@@ -59,8 +59,10 @@ export function getInterCharacterSpacingMs(wpm: number): number {
  * When characterWpm > effectiveWpm, extends spacing to slow down overall rate
  * When characterWpm = effectiveWpm, returns standard 3-dit spacing
  *
- * Formula: (60×C - 37.2×W) / (C×W) × 1000
- * Where C = character WPM, W = effective WPM
+ * Uses the ARRL Farnsworth formula:
+ * Total character time = (60 / (W × 5)) seconds
+ * Inter-character spacing = Total time - Character duration - Standard spacing
+ * Where W = effective WPM
  */
 export function calculateFarnsworthSpacingMs(characterWpm: number, effectiveWpm: number): number {
   if (characterWpm <= 0 || effectiveWpm <= 0) {
@@ -76,9 +78,20 @@ export function calculateFarnsworthSpacingMs(characterWpm: number, effectiveWpm:
     return getInterCharacterSpacingMs(characterWpm);
   }
 
-  // Farnsworth formula for inter-character spacing
-  const spacingMs = ((60 * characterWpm - 37.2 * effectiveWpm) / (characterWpm * effectiveWpm)) * 1000;
-  return Math.max(spacingMs, 0); // Ensure non-negative
+  // ARRL Farnsworth formula:
+  // Total time per character at effective speed (including all spacing)
+  const totalTimePerCharMs = (60 / (effectiveWpm * 5)) * 1000; // Convert to ms
+
+  // Average character duration at character speed (assuming 10 units per average character)
+  // Standard word "PARIS" = 50 units, 5 chars = 10 units average
+  const avgCharDurationMs = (10 * wpmToDitMs(characterWpm));
+
+  // Inter-character spacing = Total time - Character duration
+  const spacingMs = totalTimePerCharMs - avgCharDurationMs;
+
+  // Ensure minimum standard spacing (3 dits)
+  const minSpacingMs = getInterCharacterSpacingMs(characterWpm);
+  return Math.max(spacingMs, minSpacingMs);
 }
 
 /**

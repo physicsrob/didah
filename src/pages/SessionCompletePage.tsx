@@ -54,7 +54,7 @@ export function SessionCompletePage() {
 
   const handlePracticeAgain = () => {
     // Navigate to session config page
-    navigate('/config');
+    navigate('/session-config');
   };
 
   // Handle missing data (shouldn't happen but good to be safe)
