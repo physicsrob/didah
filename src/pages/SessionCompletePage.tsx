@@ -148,6 +148,13 @@ export function SessionCompletePage() {
                     <span className="stat-value accuracy">{Math.round(accuracy)}%</span>
                   </div>
 
+                  {fullStatistics.config.mode === 'practice' && (
+                    <div className="stat-item">
+                      <span className="stat-label">Effective WPM</span>
+                      <span className="stat-value">{fullStatistics.effectiveWpm}</span>
+                    </div>
+                  )}
+
                   <div className="stat-item">
                     <span className="stat-label">Characters Practiced</span>
                     <span className="stat-value">{totalChars}</span>

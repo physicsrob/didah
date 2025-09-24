@@ -45,6 +45,7 @@ export function SessionConfigPage() {
   const [availableSources, setAvailableSources] = useState<ApiTextSource[]>([]);
   const [sourceContent, setSourceContent] = useState<SourceContent | null>(null);
   const [sourcesLoading, setSourcesLoading] = useState(true);
+  const [sourceLoadError, setSourceLoadError] = useState<string | null>(null);
 
   // Single source of truth for feedback configuration
   const [feedbackMode, setFeedbackMode] = useState<FeedbackMode>('flash');
@@ -93,14 +94,19 @@ export function SessionConfigPage() {
     fetchSources()
       .then(sources => {
         setAvailableSources(sources);
-        // Pre-fetch content for default source
-        if (selectedSourceId) {
+        // Pre-fetch content for default source (but not random_letters)
+        if (selectedSourceId && selectedSourceId !== 'random_letters') {
           return fetchSourceContent(selectedSourceId);
         }
       })
       .then(content => {
-        if (content) {
-          setSourceContent(content);
+        if (content !== undefined) { // Check for undefined, as null is a valid return
+          if (content) {
+            setSourceContent(content);
+          } else if (selectedSourceId !== 'random_letters') {
+            // Source failed to load
+            setSourceLoadError(`Failed to load "${selectedSourceId}". Please try again or select a different source.`);
+          }
         }
       })
       .catch(error => {
@@ -159,12 +165,27 @@ export function SessionConfigPage() {
   // Handle source selection
   const handleSourceChange = async (sourceId: string) => {
     setSelectedSourceId(sourceId);
+    setSourceLoadError(null); // Clear any previous errors
+
+    // Random letters is always available locally
+    if (sourceId === 'random_letters') {
+      setSourceContent(null); // null means use local random generator
+      return;
+    }
+
     try {
       const content = await fetchSourceContent(sourceId);
-      setSourceContent(content);
+      if (content) {
+        setSourceContent(content);
+      } else {
+        // fetchSourceContent returns null on error
+        setSourceLoadError(`Failed to load "${availableSources.find(s => s.id === sourceId)?.name || sourceId}". Please try again or select a different source.`);
+        setSourceContent(null);
+      }
     } catch (error) {
       console.error(`Failed to fetch source ${sourceId}:`, error);
-      setSourceContent(null); // Will fallback to local random
+      setSourceLoadError(`Failed to load "${availableSources.find(s => s.id === sourceId)?.name || sourceId}". Please try again or select a different source.`);
+      setSourceContent(null);
     }
   };
 
@@ -178,6 +199,12 @@ export function SessionConfigPage() {
   };
 
   const handleStartSession = () => {
+    // Don't start if there's a source loading error (unless using random_letters)
+    if (sourceLoadError && selectedSourceId !== 'random_letters') {
+      console.warn('Cannot start session: source loading error');
+      return;
+    }
+
     const { feedback, replay } = getFeedbackConfig();
     const config: SessionConfig = {
       mode,
@@ -291,6 +318,43 @@ export function SessionConfigPage() {
               </select>
             </div>
           </div>
+
+          {/* Error message for source loading */}
+          {sourceLoadError && (
+            <div style={{
+              marginTop: '12px',
+              marginBottom: '12px',
+              padding: '12px 16px',
+              backgroundColor: 'rgba(239, 68, 68, 0.1)',
+              border: '1px solid rgba(239, 68, 68, 0.3)',
+              borderRadius: '6px',
+              color: '#ef4444',
+              fontSize: '14px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px'
+            }}>
+              <span>⚠️</span>
+              <span style={{ flex: 1 }}>{sourceLoadError}</span>
+              <button
+                onClick={() => handleSourceChange(selectedSourceId)}
+                style={{
+                  padding: '4px 12px',
+                  fontSize: '13px',
+                  backgroundColor: 'rgba(239, 68, 68, 0.2)',
+                  color: '#ef4444',
+                  border: '1px solid rgba(239, 68, 68, 0.3)',
+                  borderRadius: '4px',
+                  cursor: 'pointer',
+                  transition: 'background-color 0.2s'
+                }}
+                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(239, 68, 68, 0.3)'}
+                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'rgba(239, 68, 68, 0.2)'}
+              >
+                Retry
+              </button>
+            </div>
+          )}
 
           {/* Duration */}
           <div className="settings-row">
@@ -461,6 +525,12 @@ export function SessionConfigPage() {
           <button
             onClick={handleStartSession}
             className="btn-start-session"
+            disabled={sourceLoadError !== null && selectedSourceId !== 'random_letters'}
+            style={{
+              opacity: (sourceLoadError !== null && selectedSourceId !== 'random_letters') ? 0.5 : 1,
+              cursor: (sourceLoadError !== null && selectedSourceId !== 'random_letters') ? 'not-allowed' : 'pointer'
+            }}
+            title={sourceLoadError ? 'Please resolve the source loading error before starting' : ''}
           >
             Start {modeConfig[mode].title.replace(' Mode', '')}
           </button>

@@ -22,12 +22,32 @@ interface AuthProviderProps {
   children: React.ReactNode
 }
 
+// Helper function to check if a JWT token is expired
+const isTokenExpired = (token: string): boolean => {
+  try {
+    const payload = JSON.parse(atob(token.split('.')[1]))
+    if (!payload.exp) return false // No expiration claim
+
+    const now = Math.floor(Date.now() / 1000)
+    return payload.exp < now
+  } catch {
+    return true // Consider invalid tokens as expired
+  }
+}
+
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [user, setUser] = useState<User | null>(() => {
     // Restore user from localStorage on mount
     try {
       const token = localStorage.getItem('google_token')
       if (token) {
+        // Check if token is expired
+        if (isTokenExpired(token)) {
+          console.log('Stored token is expired, clearing...')
+          localStorage.removeItem('google_token')
+          return null
+        }
+
         const payload = JSON.parse(atob(token.split('.')[1]))
         return {
           id: payload.sub,
@@ -37,7 +57,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         }
       }
     } catch {
-      // Ignore parsing errors
+      // Clear invalid tokens
+      localStorage.removeItem('google_token')
     }
     return null
   })

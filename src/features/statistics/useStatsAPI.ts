@@ -24,8 +24,35 @@ export function useStatsAPI() {
       return;
     }
 
-    const api = new StatsAPI(token);
-    await api.saveSessionStats(stats);
+    // Check if token is expired
+    const isTokenExpired = (token: string): boolean => {
+      try {
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        if (!payload.exp) return false;
+        const now = Math.floor(Date.now() / 1000);
+        return payload.exp < now;
+      } catch {
+        return true;
+      }
+    };
+
+    if (isTokenExpired(token)) {
+      console.log('Stats not saved - token expired');
+      localStorage.removeItem('google_token');
+      throw new Error('Session expired. Please sign in again to save your statistics.');
+    }
+
+    try {
+      const api = new StatsAPI(token);
+      await api.saveSessionStats(stats);
+    } catch (error) {
+      // If it's a 401, clear the token
+      if (error instanceof Error && error.message.includes('Authentication failed')) {
+        localStorage.removeItem('google_token');
+        throw new Error('Session expired. Please sign in again to save your statistics.');
+      }
+      throw error;
+    }
   }, [user]);
 
   return {
