@@ -42,48 +42,6 @@ export default function SettingsPage() {
           <h1 className="heading-1">Settings</h1>
         </div>
 
-        {/* Active Mode Settings */}
-        <div className="card mb-6">
-          <h2 className="heading-2 mb-6">Active Mode Settings</h2>
-
-          {/* Feedback Mode */}
-          <div className="form-group mb-6">
-            <label className="form-label">Error Feedback</label>
-            <div className="flex gap-3">
-              <button
-                className={`btn btn-small ${settings.feedbackMode === 'flash' ? 'btn-primary' : 'btn-secondary'}`}
-                onClick={() => updateSetting('feedbackMode', 'flash')}
-              >
-                Flash
-              </button>
-              <button
-                className={`btn btn-small ${settings.feedbackMode === 'buzzer' ? 'btn-primary' : 'btn-secondary'}`}
-                onClick={() => updateSetting('feedbackMode', 'buzzer')}
-              >
-                Buzzer
-              </button>
-              <button
-                className={`btn btn-small ${settings.feedbackMode === 'replay' ? 'btn-primary' : 'btn-secondary'}`}
-                onClick={() => updateSetting('feedbackMode', 'replay')}
-              >
-                Replay
-              </button>
-              <button
-                className={`btn btn-small ${settings.feedbackMode === 'off' ? 'btn-primary' : 'btn-secondary'}`}
-                onClick={() => updateSetting('feedbackMode', 'off')}
-              >
-                Off
-              </button>
-            </div>
-            <p className="body-small text-muted mt-2">
-              Flash: Visual feedback only<br />
-              Buzzer: Audio feedback only<br />
-              Replay: Both flash and buzzer, plus shows the missed character<br />
-              Off: No feedback on errors
-            </p>
-          </div>
-        </div>
-
         {/* Character Sets */}
         <div className="card mb-6">
           <h2 className="heading-2 mb-6">Character Sets</h2>
