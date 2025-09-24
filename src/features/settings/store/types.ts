@@ -4,6 +4,7 @@ export type UserSettings = {
   // Core settings
   wpm: number
   effectiveWpm: number  // For Farnsworth timing
+  frequency: number  // Audio frequency in Hz
   includeNumbers: boolean
   includeStdPunct: boolean
   includeAdvPunct: boolean
@@ -24,6 +25,7 @@ export type UserSettings = {
 export const DEFAULT_USER_SETTINGS: UserSettings = {
   wpm: 15,
   effectiveWpm: 10,  // Default to slower effective speed for Farnsworth
+  frequency: 600,  // Default to 600 Hz (common for Morse code)
   includeNumbers: true,
   includeStdPunct: true,
   includeAdvPunct: false,

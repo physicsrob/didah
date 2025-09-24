@@ -42,6 +42,51 @@ export default function SettingsPage() {
           <h1 className="heading-1">Settings</h1>
         </div>
 
+        {/* Audio Settings */}
+        <div className="card mb-6">
+          <h2 className="heading-2 mb-6">Audio Settings</h2>
+
+          <div className="form-group">
+            <label className="form-label">Frequency: {settings.frequency} Hz</label>
+            <input
+              type="range"
+              value={settings.frequency}
+              onChange={(e) => {
+                const value = parseInt(e.target.value)
+                updateSetting('frequency', value)
+              }}
+              min="500"
+              max="1000"
+              step="10"
+              className="form-slider"
+              style={{
+                width: '100%',
+                height: '6px',
+                backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                borderRadius: '3px',
+                outline: 'none',
+                appearance: 'none',
+                WebkitAppearance: 'none',
+                cursor: 'pointer'
+              }}
+            />
+            <div style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              marginTop: '4px',
+              fontSize: '12px',
+              color: 'rgba(255, 255, 255, 0.5)'
+            }}>
+              <span>500 Hz</span>
+              <span>750 Hz</span>
+              <span>1000 Hz</span>
+            </div>
+            <p className="body-small text-muted mt-2">
+              Adjust the tone frequency for Morse code audio. Common range: 600-700 Hz
+            </p>
+          </div>
+        </div>
+
         {/* Character Sets */}
         <div className="card mb-6">
           <h2 className="heading-2 mb-6">Character Sets</h2>
