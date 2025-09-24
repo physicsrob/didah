@@ -6,7 +6,6 @@
 
 import { useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { fetchSourceContent } from '../features/sources';
 import { LiveCopyResults } from '../components/LiveCopyResults';
 import type { SessionStatistics } from '../core/types/statistics';
 import { useStatsAPI } from '../features/statistics/useStatsAPI';
@@ -53,40 +52,9 @@ export function SessionCompletePage() {
     navigate('/');
   };
 
-  const handlePracticeAgain = async () => {
-    if (!fullStatistics) return;
-
-    // Reconstruct the full config from statistics
-    const fullConfig = {
-      mode: fullStatistics.config.mode,
-      lengthMs: fullStatistics.config.lengthMs,
-      wpm: fullStatistics.config.wpm,
-      speedTier: fullStatistics.config.speedTier,
-      sourceId: fullStatistics.config.sourceId,
-      replay: fullStatistics.config.replay,
-      feedback: fullStatistics.config.feedback,
-      effectiveAlphabet: fullStatistics.config.effectiveAlphabet,
-      liveCopyFeedback: fullStatistics.config.liveCopyFeedback,
-    };
-
-    // Refetch source content to get fresh data (e.g., new Reddit headlines)
-    let freshSourceContent = null;
-    if (fullStatistics.config.sourceId !== 'random_letters') {
-      try {
-        freshSourceContent = await fetchSourceContent(fullStatistics.config.sourceId);
-      } catch (error) {
-        console.error('Failed to refetch source content:', error);
-      }
-    }
-
-    // Go back to ActiveSession with config and source name
-    navigate('/session', {
-      state: {
-        config: fullConfig,
-        sourceContent: freshSourceContent,
-        sourceName
-      }
-    });
+  const handlePracticeAgain = () => {
+    // Navigate to session config page
+    navigate('/config');
   };
 
   // Handle missing data (shouldn't happen but good to be safe)
