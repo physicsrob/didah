@@ -1,5 +1,10 @@
 /* Session Complete Page Styles */
 
+.completion-wrapper {
+  min-height: 100vh;
+  width: 100%;
+}
+
 .completion-container {
   max-width: 900px;
   margin: 0 auto;

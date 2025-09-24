@@ -337,11 +337,12 @@ export function ActiveSessionPage() {
   };
 
   return (
-    <div className="active-session-container bg-gradient-primary">
-      {/* Feedback Flash Overlay */}
-      {feedbackFlash && (
-        <div className={`feedback-flash ${feedbackFlash}`} />
-      )}
+    <div className="active-session-wrapper bg-gradient-primary">
+      <div className="active-session-container">
+        {/* Feedback Flash Overlay */}
+        {feedbackFlash && (
+          <div className={`feedback-flash ${feedbackFlash}`} />
+        )}
 
       {/* Welcome Screen */}
       {sessionPhase === 'waiting' && (
@@ -425,6 +426,7 @@ export function ActiveSessionPage() {
           </div>
         </div>
       )}
+      </div>
     </div>
   );
 }

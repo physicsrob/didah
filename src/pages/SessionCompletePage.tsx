@@ -92,13 +92,15 @@ export function SessionCompletePage() {
   // Handle missing data (shouldn't happen but good to be safe)
   if (!fullStatistics) {
     return (
-      <div className="completion-container bg-gradient-primary">
-        <div className="content-area">
+      <div className="completion-wrapper bg-gradient-primary">
+        <div className="completion-container">
+          <div className="content-area">
           <div className="error-message">
             <h2>Session data not found</h2>
             <button className="btn btn-primary" onClick={handleBackToMenu}>
               Back to Menu
             </button>
+          </div>
           </div>
         </div>
       </div>
@@ -106,9 +108,10 @@ export function SessionCompletePage() {
   }
 
   return (
-    <div className="completion-container bg-gradient-primary">
-      {/* Top branding */}
-      <div className="brand-header">
+    <div className="completion-wrapper bg-gradient-primary">
+      <div className="completion-container">
+        {/* Top branding */}
+        <div className="brand-header">
         <h1 className="brand-title" onClick={handleBackToMenu}>
           MorseAcademy
         </h1>
@@ -200,6 +203,7 @@ export function SessionCompletePage() {
             </div>
           </>
         )}
+      </div>
       </div>
     </div>
   );
