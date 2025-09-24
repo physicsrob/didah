@@ -77,7 +77,8 @@ export class SessionStatsCalculator {
     });
 
     const effectiveWpm = this.calculateEffectiveWpm(
-      correctCount,
+      totalCharacters,
+      incorrectCount + timeoutCount,
       durationMs,
       config.mode
     );
@@ -183,12 +184,16 @@ export class SessionStatsCalculator {
   }
 
   /**
-   * Calculate effective WPM using standard CW copying formula:
-   * Effective WPM = (Correct characters / Time in minutes) / 5
-   * Or equivalently: (Correct characters / Time in seconds) * 12
+   * Calculate effective WPM with double penalty for errors:
+   * Effective WPM = ((Characters sent - 2 * Errors) / Time in seconds) * 12
+   * where Errors = incorrect + timeout
+   *
+   * This formula penalizes errors heavily - each error costs 2 characters
+   * from your effective copying speed.
    */
   private calculateEffectiveWpm(
-    correctCount: number,
+    totalCharacters: number,
+    errorCount: number,
     sessionDurationMs: number,
     mode: string
   ): number {
@@ -203,9 +208,15 @@ export class SessionStatsCalculator {
     // Convert to seconds
     const sessionDurationSeconds = sessionDurationMs / 1000;
 
-    // Standard CW formula: (characters per second) * 12
+    // Apply double penalty for errors: characters sent - 2 * errors
+    const effectiveCharacters = totalCharacters - (2 * errorCount);
+
+    // Don't allow negative WPM
+    if (effectiveCharacters <= 0) return 0;
+
+    // Standard CW formula with error penalty: (effective characters per second) * 12
     // The factor 12 comes from: (60 seconds/minute) / (5 characters/word)
-    const charactersPerSecond = correctCount / sessionDurationSeconds;
+    const charactersPerSecond = effectiveCharacters / sessionDurationSeconds;
     const effectiveWpm = charactersPerSecond * 12;
 
     return Math.round(effectiveWpm);
