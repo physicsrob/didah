@@ -204,7 +204,7 @@ export function SessionConfigPage() {
     return alphabet.split('');
   };
 
-  const handleStartSession = () => {
+  const handleStartSession = async () => {
     // Don't start if there's a source loading error (unless using random_letters)
     if (sourceLoadError && selectedSourceId !== 'random_letters') {
       console.warn('Cannot start session: source loading error');
@@ -228,8 +228,19 @@ export function SessionConfigPage() {
     // Find the source name from availableSources
     const sourceName = availableSources.find(s => s.id === selectedSourceId)?.name || 'Unknown';
 
-    // Navigate to session with config, pre-fetched content, and source name
-    navigate('/session', { state: { config, sourceContent, sourceName } });
+    // Fetch fresh content for each new session (except random_letters which is generated locally)
+    let freshContent = null;
+    if (selectedSourceId !== 'random_letters') {
+      try {
+        freshContent = await fetchSourceContent(selectedSourceId);
+      } catch (error) {
+        console.error('Failed to fetch fresh content, using cached:', error);
+        freshContent = sourceContent; // Fall back to cached content if fetch fails
+      }
+    }
+
+    // Navigate to session with config, fresh content, and source name
+    navigate('/session', { state: { config, sourceContent: freshContent, sourceName } });
   };
 
   const handleCancel = () => {
