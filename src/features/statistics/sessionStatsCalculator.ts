@@ -8,7 +8,6 @@
 import type { SessionStatistics, CharacterStatistics } from '../../core/types/statistics';
 import type { SessionConfig } from '../../core/types/domain';
 import type { LogEvent } from '../session/runtime/io';
-import { getActiveWindowMs } from '../../core/morse/timing';
 
 export class SessionStatsCalculator {
   /**
@@ -17,6 +16,13 @@ export class SessionStatsCalculator {
   calculateStats(events: LogEvent[], config: SessionConfig): SessionStatistics {
     const sessionStart = events.find(e => e.type === 'sessionStart');
     const sessionEnd = events.find(e => e.type === 'sessionEnd');
+
+    console.log('[Stats Debug] Session events:', {
+      sessionStart,
+      sessionEnd,
+      totalEvents: events.length,
+      eventTypes: events.map(e => e.type)
+    });
 
     // Initialize counters and maps
     const characterStats = new Map<string, CharacterStatistics>();
@@ -57,12 +63,23 @@ export class SessionStatsCalculator {
     const overallAccuracy = totalCharacters > 0 ? (correctCount / totalCharacters) * 100 : 0;
     const meanRecognitionTimeMs = this.calculateMean(recognitionTimes);
     const medianRecognitionTimeMs = this.calculateMedian(recognitionTimes);
+
+    // Use session duration for effective WPM calculation
+    const durationMs = (sessionEnd?.at || 0) - (sessionStart?.at || 0);
+
+    console.log('[Stats Debug] Duration calculation:', {
+      startTime: sessionStart?.at,
+      endTime: sessionEnd?.at,
+      durationMs,
+      durationSeconds: durationMs / 1000,
+      correctCount,
+      totalCharacters: totalCharacters
+    });
+
     const effectiveWpm = this.calculateEffectiveWpm(
       correctCount,
-      totalCharacters,
-      meanRecognitionTimeMs,
-      config.wpm,
-      config.speedTier
+      durationMs,
+      config.mode
     );
 
     return {
@@ -166,40 +183,32 @@ export class SessionStatsCalculator {
   }
 
   /**
-   * Calculate effective WPM based on accuracy and recognition speed
+   * Calculate effective WPM using standard CW copying formula:
+   * Effective WPM = (Correct characters / Time in minutes) / 5
+   * Or equivalently: (Correct characters / Time in seconds) * 12
    */
   private calculateEffectiveWpm(
     correctCount: number,
-    totalCount: number,
-    meanRecognitionTimeMs: number,
-    configWpm: number,
-    speedTier: string
+    sessionDurationMs: number,
+    mode: string
   ): number {
-    if (totalCount === 0) return 0;
-
-    // Base accuracy factor
-    const accuracy = correctCount / totalCount;
-
-    // For modes that don't have recognition windows (listen, live-copy),
-    // effective WPM is just accuracy * configured WPM
-    if (speedTier === 'listen' || speedTier === 'live-copy') {
-      return Math.round(configWpm * accuracy);
+    // For listen mode, effective WPM doesn't make sense as there's no user input
+    if (mode === 'listen') {
+      return 0;
     }
 
-    // For practice mode, factor in recognition speed
-    const expectedTimeMs = getActiveWindowMs(speedTier as 'slow' | 'medium' | 'fast' | 'lightning');
+    // Avoid division by zero
+    if (sessionDurationMs <= 0) return 0;
 
-    // Time efficiency factor (capped at 1.0 for faster than expected)
-    // If no successful recognitions, use 0 efficiency
-    const timeEfficiency = meanRecognitionTimeMs > 0
-      ? Math.min(1.0, expectedTimeMs / meanRecognitionTimeMs)
-      : 0;
+    // Convert to seconds
+    const sessionDurationSeconds = sessionDurationMs / 1000;
 
-    // Combine factors
-    const effectiveFactor = accuracy * timeEfficiency;
+    // Standard CW formula: (characters per second) * 12
+    // The factor 12 comes from: (60 seconds/minute) / (5 characters/word)
+    const charactersPerSecond = correctCount / sessionDurationSeconds;
+    const effectiveWpm = charactersPerSecond * 12;
 
-    // Apply to configured WPM
-    return Math.round(configWpm * effectiveFactor);
+    return Math.round(effectiveWpm);
   }
 
   /**
