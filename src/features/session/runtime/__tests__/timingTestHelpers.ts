@@ -52,7 +52,7 @@ export function getCharTimeout(char: string, speedTier: keyof typeof TestTiming.
  */
 export function getListenSequence(char: string, wpm = TEST_WPM) {
   const charDuration = calculateCharacterDurationMs(char, wpm);
-  const delays = getListenModeTimingMs(wpm);
+  const delays = getListenModeTimingMs(wpm, wpm);  // Use same wpm for both (standard timing)
 
   return {
     playChar: charDuration,

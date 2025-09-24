@@ -3,6 +3,7 @@ import type { FeedbackMode } from '../../../core/types/domain'
 export type UserSettings = {
   // Core settings
   wpm: number
+  effectiveWpm: number  // For Farnsworth timing
   includeNumbers: boolean
   includeStdPunct: boolean
   includeAdvPunct: boolean
@@ -22,6 +23,7 @@ export type UserSettings = {
 
 export const DEFAULT_USER_SETTINGS: UserSettings = {
   wpm: 15,
+  effectiveWpm: 10,  // Default to slower effective speed for Farnsworth
   includeNumbers: true,
   includeStdPunct: true,
   includeAdvPunct: false,

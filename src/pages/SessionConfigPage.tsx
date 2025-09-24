@@ -40,6 +40,7 @@ export function SessionConfigPage() {
   const [speedTier, setSpeedTier] = useState<SpeedTier>('slow');
   const [selectedSourceId, setSelectedSourceId] = useState<string>('random_letters');
   const [wpm, setWpm] = useState(15);
+  const [effectiveWpm, setEffectiveWpm] = useState(10);
 
   // Text source state
   const [availableSources, setAvailableSources] = useState<ApiTextSource[]>([]);
@@ -80,6 +81,7 @@ export function SessionConfigPage() {
       setSpeedTier(settings.defaultSpeedTier || 'slow');
       setSelectedSourceId(settings.defaultSourceId || 'random_letters');
       setWpm(settings.wpm || 15);
+      setEffectiveWpm(settings.effectiveWpm || 10);
       setLiveCopyFeedback(settings.liveCopyFeedback || 'end');
 
       // Direct assignment - feedbackMode is stored as-is now
@@ -127,6 +129,7 @@ export function SessionConfigPage() {
         settings.defaultSpeedTier !== speedTier ||
         settings.defaultSourceId !== selectedSourceId ||
         settings.wpm !== wpm ||
+        settings.effectiveWpm !== effectiveWpm ||
         settings.feedbackMode !== feedbackMode ||
         settings.liveCopyFeedback !== liveCopyFeedback;
 
@@ -144,6 +147,9 @@ export function SessionConfigPage() {
         if (settings.wpm !== wpm) {
           updateSetting('wpm', wpm);
         }
+        if (settings.effectiveWpm !== effectiveWpm) {
+          updateSetting('effectiveWpm', effectiveWpm);
+        }
         if (settings.feedbackMode !== feedbackMode) {
           updateSetting('feedbackMode', feedbackMode);
         }
@@ -154,7 +160,7 @@ export function SessionConfigPage() {
     }, 300); // 300ms debounce
 
     return () => clearTimeout(timer);
-  }, [duration, speedTier, selectedSourceId, wpm, feedbackMode, liveCopyFeedback, settings, settingsLoading, updateSetting]);
+  }, [duration, speedTier, selectedSourceId, wpm, effectiveWpm, feedbackMode, liveCopyFeedback, settings, settingsLoading, updateSetting]);
 
   // Handle source selection
   const handleSourceChange = async (sourceId: string) => {
@@ -183,6 +189,7 @@ export function SessionConfigPage() {
       mode,
       lengthMs: duration * 60 * 1000,
       wpm,
+      effectiveWpm,
       speedTier,
       sourceId: selectedSourceId,
       feedback,
@@ -334,7 +341,14 @@ export function SessionConfigPage() {
                 min="5"
                 max="40"
                 value={wpm}
-                onChange={(e) => setWpm(Number(e.target.value))}
+                onChange={(e) => {
+                  const newWpm = Number(e.target.value);
+                  setWpm(newWpm);
+                  // If effective WPM is greater than character WPM, cap it
+                  if (effectiveWpm > newWpm) {
+                    setEffectiveWpm(newWpm);
+                  }
+                }}
                 style={{
                   flex: 1,
                   height: '4px',
@@ -356,6 +370,40 @@ export function SessionConfigPage() {
               </span>
             </div>
           </div>
+
+          {/* Effective Speed - Only show for listen and live-copy modes */}
+          {(mode === 'listen' || mode === 'live-copy') && (
+            <div className="settings-row">
+              <div className="settings-label">Effective Speed</div>
+              <div className="settings-control">
+                <input
+                  type="range"
+                  min="5"
+                  max={wpm} // Cannot exceed character speed
+                  value={effectiveWpm}
+                  onChange={(e) => setEffectiveWpm(Number(e.target.value))}
+                  style={{
+                    flex: 1,
+                    height: '4px',
+                    background: 'rgba(255, 255, 255, 0.2)',
+                    borderRadius: '2px',
+                    outline: 'none',
+                    WebkitAppearance: 'none',
+                    appearance: 'none'
+                  }}
+                />
+                <span style={{
+                  color: '#4dabf7',
+                  fontSize: '16px',
+                  fontWeight: '500',
+                  minWidth: '80px',
+                  textAlign: 'right'
+                }}>
+                  {effectiveWpm} WPM{effectiveWpm === wpm ? ' (std)' : ''}
+                </span>
+              </div>
+            </div>
+          )}
 
           {/* Live Copy Feedback Mode */}
           {mode === 'live-copy' && (

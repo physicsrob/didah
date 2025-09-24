@@ -6,13 +6,14 @@ import type { Clock } from './clock';
 import type { IO } from './io';
 import type { InputBus, KeyEvent } from './inputBus';
 import { select, waitForEvent, clockTimeout } from './select';
-import { getActiveWindowMs, getListenModeTimingMs, wpmToDitMs, calculateCharacterDurationMs, getInterCharacterSpacingMs } from '../../../core/morse/timing';
+import { getActiveWindowMs, getListenModeTimingMs, wpmToDitMs, calculateCharacterDurationMs, calculateFarnsworthSpacingMs } from '../../../core/morse/timing';
 import { debug } from '../../../core/debug';
 
 // Session config type - simplified for now
 export type SessionConfig = {
   mode: 'practice' | 'listen' | 'live-copy';
   wpm: number;
+  effectiveWpm: number; // For Farnsworth timing
   speedTier: 'slow' | 'medium' | 'fast' | 'lightning';
   lengthMs: number;
   replay?: boolean;
@@ -212,8 +213,8 @@ export async function runListenEmission(
     debug.warn(`Audio failed for char: ${char}`, error);
   }
 
-  // Get standard listen mode timing (3 dits before and after reveal)
-  const { preRevealDelayMs, postRevealDelayMs } = getListenModeTimingMs(cfg.wpm);
+  // Get listen mode timing with Farnsworth support
+  const { preRevealDelayMs, postRevealDelayMs } = getListenModeTimingMs(cfg.wpm, cfg.effectiveWpm);
 
   // Wait before revealing character
   await clock.sleep(preRevealDelayMs, sessionSignal);
@@ -245,8 +246,8 @@ export async function runLiveCopyEmission(
     debug.warn(`Audio failed for char: ${char}`, error);
   }
 
-  // Add standard inter-character spacing for Live Copy mode
+  // Add inter-character spacing for Live Copy mode with Farnsworth support
   // This simulates real Morse transmission timing
-  const interCharSpacingMs = getInterCharacterSpacingMs(cfg.wpm);
+  const interCharSpacingMs = calculateFarnsworthSpacingMs(cfg.wpm, cfg.effectiveWpm);
   await clock.sleep(interCharSpacingMs, sessionSignal);
 }

@@ -48,7 +48,7 @@ describe('Morse Timing Engine', () => {
         const ditMs = wpmToDitMs(wpm);
         const expectedTotal = ditMs * 3; // Standard 3-dit spacing
 
-        const timing = getListenModeTimingMs(wpm);
+        const timing = getListenModeTimingMs(wpm, wpm);  // Standard timing (same wpm for both)
         const actualTotal = timing.preRevealDelayMs + timing.postRevealDelayMs;
 
         // Total should equal 3 dits (allowing for rounding)
@@ -146,7 +146,7 @@ describe('Morse Timing Engine', () => {
       expect(windowMs).toBe(TestTiming.windows.medium); // Constant window for medium speed
 
       // Listen mode timing uses standard 3-dit spacing
-      const listenTiming = getListenModeTimingMs(wpm);
+      const listenTiming = getListenModeTimingMs(wpm, wpm);  // Standard timing
       const totalDelay = listenTiming.preRevealDelayMs + listenTiming.postRevealDelayMs;
       expect(totalDelay).toBeCloseTo(144, 0); // Total should be 3 dits (48ms * 3)
     });

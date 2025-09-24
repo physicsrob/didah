@@ -21,6 +21,7 @@ export type SessionConfig = {
   mode: "practice" | "listen" | "live-copy";
   lengthMs: number;
   wpm: number;
+  effectiveWpm: number; // For Farnsworth timing (when equal to wpm, standard timing is used)
   speedTier: "slow" | "medium" | "fast" | "lightning";
   sourceId: string;
   feedback: "buzzer" | "flash" | "both" | "none";

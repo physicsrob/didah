@@ -128,6 +128,7 @@ export async function advanceInSteps(
 export function createTestConfig(overrides?: Partial<{
   mode: 'practice' | 'listen';
   wpm: number;
+  effectiveWpm: number;
   speedTier: 'slow' | 'medium' | 'fast' | 'lightning';
   lengthMs: number;
   replay?: boolean;
@@ -135,6 +136,7 @@ export function createTestConfig(overrides?: Partial<{
   return {
     mode: 'practice' as const,
     wpm: 20,
+    effectiveWpm: 20,  // Default to same as wpm for standard timing
     speedTier: 'medium' as const,
     lengthMs: 60000,
     ...overrides
