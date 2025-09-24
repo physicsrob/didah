@@ -116,10 +116,14 @@ interface CloudflareContext {
   params: {
     id: string;
   };
+  env?: {
+    KV?: KVNamespace;
+  };
 }
 
 export async function onRequestGet(context: CloudflareContext) {
   const { id } = context.params;
+  const kv = context.env?.KV;
 
   if (!id) {
     return Response.json({ error: 'Source ID required' }, { status: 400 });
@@ -142,8 +146,31 @@ export async function onRequestGet(context: CloudflareContext) {
         break;
 
       default:
-        // Check if it's an RSS source
-        if (id in RSS_FEEDS) {
+        // Check if it's a Reddit source first (read from KV cache)
+        if (id.startsWith('reddit_') && kv) {
+          try {
+            const cacheKey = `reddit:${id}`;
+            const cached = await kv.get(cacheKey, 'json') as { posts: string[], fetchedAt: string } | null;
+
+            if (cached && cached.posts) {
+              items = cached.posts;
+            } else {
+              // No cache found, return error suggesting to wait for cron
+              return Response.json({
+                error: 'Reddit data not yet cached. Please try again in a few minutes.',
+                details: 'Reddit feeds are refreshed hourly. If this persists, check the cron job.'
+              }, { status: 503 });
+            }
+          } catch (error) {
+            console.error(`Error reading KV cache for ${id}:`, error);
+            return Response.json({
+              error: 'Failed to fetch Reddit data from cache',
+              details: error instanceof Error ? error.message : 'Unknown error'
+            }, { status: 500 });
+          }
+        }
+        // Otherwise check if it's an RSS source
+        else if (id in RSS_FEEDS) {
           const titles = await fetchRSS(RSS_FEEDS[id]);
           items = titles.length > 0 ? titles : ['No items found in feed'];
         } else {

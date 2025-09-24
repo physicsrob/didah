@@ -1,0 +1,40 @@
+name: Refresh Reddit Cache
+
+on:
+  schedule:
+    # Run every hour at minute 0
+    - cron: '0 * * * *'
+  workflow_dispatch:  # Allow manual trigger from GitHub UI
+
+jobs:
+  refresh-reddit-cache:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Call Reddit refresh endpoint
+        run: |
+          response=$(curl -s -w "\n%{http_code}" https://morse.academy/api/cron/refresh-reddit)
+          http_code=$(echo "$response" | tail -1)
+          body=$(echo "$response" | head -n -1)
+
+          echo "Response body:"
+          echo "$body" | jq . 2>/dev/null || echo "$body"
+
+          if [ "$http_code" != "200" ]; then
+            echo "Error: HTTP status code $http_code"
+            exit 1
+          fi
+
+          echo "✅ Reddit cache refreshed successfully"
+
+      - name: Verify cache populated
+        run: |
+          # Test one of the Reddit sources to ensure cache is working
+          response=$(curl -s -w "\n%{http_code}" https://morse.academy/api/sources/reddit_popular)
+          http_code=$(echo "$response" | tail -1)
+
+          if [ "$http_code" = "200" ]; then
+            echo "✅ Cache verified - Reddit sources are accessible"
+          else
+            echo "⚠️ Warning: Cache may not be properly populated (HTTP $http_code)"
+          fi
