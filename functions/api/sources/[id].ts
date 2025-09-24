@@ -172,6 +172,12 @@ export async function onRequestGet(context: CloudflareContext) {
                 cached: true,
                 fetchedAt: cached.fetchedAt,
                 ageHours: Math.round(ageHours * 10) / 10
+              }, {
+                headers: {
+                  'Cache-Control': 'no-store, no-cache, must-revalidate',
+                  'Pragma': 'no-cache',
+                  'Expires': '0'
+                }
               });
 
               // Add cache headers to indicate staleness
@@ -209,6 +215,12 @@ export async function onRequestGet(context: CloudflareContext) {
     return Response.json({
       id,
       items
+    }, {
+      headers: {
+        'Cache-Control': 'no-store, no-cache, must-revalidate',
+        'Pragma': 'no-cache',
+        'Expires': '0'
+      }
     });
 
   } catch (error) {

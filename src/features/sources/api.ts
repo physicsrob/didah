@@ -29,7 +29,9 @@ export async function fetchSources(): Promise<TextSource[]> {
  */
 export async function fetchSourceContent(id: string): Promise<SourceContent | null> {
   try {
-    const response = await fetch(`/api/sources/${id}`);
+    const response = await fetch(`/api/sources/${id}`, {
+      cache: 'no-store', // Prevent browser caching to ensure fresh randomization
+    });
     if (!response.ok) {
       throw new Error(`Failed to fetch source content: ${response.status}`);
     }

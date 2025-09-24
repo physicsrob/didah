@@ -96,20 +96,6 @@ export function SessionConfigPage() {
     fetchSources()
       .then(sources => {
         setAvailableSources(sources);
-        // Pre-fetch content for default source (but not random_letters)
-        if (selectedSourceId && selectedSourceId !== 'random_letters') {
-          return fetchSourceContent(selectedSourceId);
-        }
-      })
-      .then(content => {
-        if (content !== undefined) { // Check for undefined, as null is a valid return
-          if (content) {
-            setSourceContent(content);
-          } else if (selectedSourceId !== 'random_letters') {
-            // Source failed to load
-            setSourceLoadError(`Failed to load "${selectedSourceId}". Please try again or select a different source.`);
-          }
-        }
       })
       .catch(error => {
         console.error('Failed to fetch sources:', error);
@@ -118,6 +104,35 @@ export function SessionConfigPage() {
       })
       .finally(() => {
         setSourcesLoading(false);
+      });
+  }, []);
+
+  // Fetch content when selectedSourceId changes or on mount
+  useEffect(() => {
+    if (!selectedSourceId) return;
+
+    setSourceLoadError(null); // Clear any previous errors
+
+    // Random letters is always available locally
+    if (selectedSourceId === 'random_letters') {
+      setSourceContent(null); // null means use local random generator
+      return;
+    }
+
+    // Always fetch fresh content (even on mount/reload)
+    fetchSourceContent(selectedSourceId)
+      .then(content => {
+        if (content) {
+          setSourceContent(content);
+        } else {
+          setSourceLoadError(`Failed to load "${selectedSourceId}". Please try again or select a different source.`);
+          setSourceContent(null);
+        }
+      })
+      .catch(error => {
+        console.error(`Failed to fetch source ${selectedSourceId}:`, error);
+        setSourceLoadError(`Failed to load "${selectedSourceId}". Please try again or select a different source.`);
+        setSourceContent(null);
       });
   }, [selectedSourceId]);
 
