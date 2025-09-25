@@ -353,6 +353,18 @@ input[type="range"]::-moz-range-track {
     transform: translateY(0);
 }
 
+/* Disabled button state */
+.btn-disabled,
+.btn-disabled:hover,
+.btn-disabled:active {
+    opacity: 0.5;
+    cursor: not-allowed;
+    background: transparent;
+    color: var(--text-muted);
+    border-color: var(--text-muted);
+    transform: none;
+}
+
 .btn-secondary:active {
     background: var(--color-blue-dark);
     border-color: var(--color-blue-dark);
@@ -855,49 +867,49 @@ input[type="range"]::-moz-range-track {
 .calendar-wrapper {
     background: var(--bg-tertiary);
     border-radius: 8px;
-    padding: 12px;
-    max-width: 280px;
+    padding: 24px;
+    max-width: 520px;
     margin: 0 auto;
 }
 
 .calendar-weekdays {
     display: grid;
     grid-template-columns: repeat(7, 1fr);
-    gap: 3px;
-    margin-bottom: 6px;
+    gap: 5px;
+    margin-bottom: 10px;
 }
 
 .calendar-weekday {
     text-align: center;
-    font-size: 10px;
+    font-size: 14px;
     font-weight: 500;
     color: var(--text-muted);
-    padding: 2px;
+    padding: 4px;
 }
 
 .calendar-grid {
     display: flex;
     flex-direction: column;
-    gap: 3px;
+    gap: 5px;
 }
 
 .calendar-week {
     display: grid;
     grid-template-columns: repeat(7, 1fr);
-    gap: 3px;
+    gap: 5px;
 }
 
 .calendar-cell {
     aspect-ratio: 1;
-    border-radius: 2px;
+    border-radius: 8px;
     display: flex;
     align-items: center;
     justify-content: center;
     position: relative;
     cursor: default;
     transition: all 0.2s ease;
-    min-width: 20px;
-    max-width: 24px;
+    min-width: 36px;
+    max-width: 44px;
 }
 
 .calendar-cell:hover {
@@ -916,7 +928,7 @@ input[type="range"]::-moz-range-track {
 }
 
 .calendar-day-number {
-    font-size: 9px;
+    font-size: 13px;
     color: var(--text-primary);
     font-weight: 600;
     opacity: 0.7;
@@ -963,9 +975,9 @@ input[type="range"]::-moz-range-track {
 }
 
 .legend-squares .calendar-cell {
-    width: 16px;
-    height: 16px;
-    min-width: 16px;
+    width: 24px;
+    height: 24px;
+    min-width: 24px;
 }
 
 .legend-squares .calendar-cell:hover {
@@ -976,29 +988,43 @@ input[type="range"]::-moz-range-track {
 /* Summary Statistics */
 .calendar-stats {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
     gap: 16px;
-    margin-top: 16px;
+    margin-top: 24px;
 }
 
 .stat-card {
-    background: var(--bg-tertiary);
-    border-radius: 8px;
-    padding: 16px;
+    background: var(--background-secondary);
+    border: 1px solid var(--border-primary);
+    border-radius: 12px;
+    padding: 20px;
     text-align: center;
+    position: relative;
+    overflow: hidden;
+}
+
+.stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: var(--color-blue-primary);
 }
 
 .stat-value {
-    font-size: 28px;
+    font-size: 36px;
     font-weight: 600;
     color: var(--color-blue-primary);
-    margin-bottom: 4px;
+    margin-bottom: 8px;
+    line-height: 1;
 }
 
 .stat-label {
     font-size: 12px;
     text-transform: uppercase;
-    letter-spacing: 0.05em;
+    letter-spacing: 1px;
     color: var(--text-muted);
     font-weight: 500;
 }

@@ -136,9 +136,9 @@ export default function SessionGraph({ sessions, dataKey, yLabel, yDomain }: Ses
         </button>
       </div>
 
-      <ResponsiveContainer width="100%" height={350}>
+      <ResponsiveContainer width="100%" height={250}>
         <ScatterChart
-          margin={{ top: 20, right: 30, left: 20, bottom: 40 }}
+          margin={{ top: 15, right: 20, left: 15, bottom: 30 }}
         >
           <CartesianGrid
             strokeDasharray="3 3"

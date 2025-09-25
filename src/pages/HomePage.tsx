@@ -84,8 +84,10 @@ export default function HomePage() {
           {/* Utility buttons */}
           <div className="flex gap-5 w-full">
             <button
-              className="btn btn-utility flex-1"
+              className={`btn btn-utility flex-1 ${!user ? 'btn-disabled' : ''}`}
               onClick={handleStatistics}
+              disabled={!user}
+              title={!user ? 'Sign in to view statistics' : ''}
             >
               Statistics
             </button>
