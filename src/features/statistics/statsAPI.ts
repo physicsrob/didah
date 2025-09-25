@@ -17,6 +17,12 @@ export class StatsAPI {
    * Save session statistics to the backend
    */
   async saveSessionStats(stats: SessionStatistics): Promise<void> {
+    // Only save stats if session had a positive duration
+    if (stats.durationMs <= 0) {
+      console.log('Stats not saved - session duration is not positive');
+      return;
+    }
+
     // Add date and timestamp to the stats
     const statsWithMetadata = {
       ...stats,
