@@ -65,6 +65,44 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
+  // Check token expiry and trigger re-auth before it expires
+  useEffect(() => {
+    if (!user) return
+
+    const checkTokenExpiry = () => {
+      const token = localStorage.getItem('google_token')
+      if (!token) return
+
+      try {
+        const payload = JSON.parse(atob(token.split('.')[1]))
+        if (!payload.exp) return
+
+        const now = Math.floor(Date.now() / 1000)
+        const timeUntilExpiry = payload.exp - now
+
+        // If token expires in less than 5 minutes, trigger One Tap
+        if (timeUntilExpiry < 300 && timeUntilExpiry > 0) {
+          console.log('Token expiring soon, triggering re-authentication...')
+          if (window.google) {
+            window.google.accounts.id.prompt((notification) => {
+              if (notification.isNotDisplayed()) {
+                console.log('One Tap not displayed for refresh:', notification.getNotDisplayedReason())
+              }
+            })
+          }
+        }
+      } catch (error) {
+        console.error('Error checking token expiry:', error)
+      }
+    }
+
+    // Check immediately and then every minute
+    checkTokenExpiry()
+    const intervalId = setInterval(checkTokenExpiry, 60000)
+
+    return () => clearInterval(intervalId)
+  }, [user])
+
   useEffect(() => {
     // Check for required environment variable
     const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID
@@ -86,7 +124,18 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           window.google.accounts.id.initialize({
             client_id: clientId,
             callback: handleCredentialResponse,
+            auto_select: true, // Automatically sign in returning users
           })
+
+          // Show One Tap prompt for signed-out users or expired tokens
+          if (!user) {
+            window.google.accounts.id.prompt((notification) => {
+              if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
+                console.log('One Tap not displayed:', notification.getNotDisplayedReason())
+              }
+            })
+          }
+
           setIsLoading(false)
           setError(null) // Clear any previous errors
         } catch (error) {
