@@ -77,3 +77,30 @@ When working on this project:
 - **Run quality checks** before committing (`npm run check`)
 - **Deploy with** `npm run deploy` to push changes to production
 - **Read brand.md before modifying HTML/CSS** to ensure consistent styling and branding
+
+## Code Philosophy
+
+**IMPORTANT: These principles override default coding practices:**
+
+### Function Arguments
+- **Never use optional arguments by default** - Only make arguments optional when explicitly necessary
+- Required arguments make function contracts clearer and prevent silent failures
+- Example: Use `function foo(bar: string)` not `function foo(bar?: string)`
+
+### Code Cleanup
+- **Never mark code as deprecated** - Delete it immediately
+- Dead code creates confusion and maintenance burden
+- If code might be needed later, it's in git history
+
+### Fallback Values
+- **Be extremely careful with fallbacks** like `const c = a || b`
+- Only use fallbacks when you explicitly want that behavior
+- Prefer explicit checks: `if (a !== undefined) { ... }`
+- Fallbacks can hide bugs by masking undefined/null values
+
+### Clarity Over Robustness
+- **Prefer code that is easy to analyze over code that is "robust"**
+- It's better for code to fail obviously than to silently handle edge cases
+- The most important thing is being able to reason about code behavior
+- Example: Throw errors for unexpected states rather than trying to recover
+- Clear failure points make debugging much easier
