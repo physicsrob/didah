@@ -26,8 +26,25 @@ export default function StatisticsPage() {
   const ActiveTabComponent = tabs.find(tab => tab.id === activeTab)?.component || TimeTab
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-primary">
-      <div className="w-full px-6 py-10 max-w-xl">
+    <div className="min-h-screen bg-gradient-primary">
+      {/* Header with Back button and MorseAcademy branding */}
+      <header className="config-header">
+        <button
+          onClick={handleBack}
+          className="btn-back"
+        >
+          <span className="btn-back-arrow">←</span>
+          Back
+        </button>
+        <h1
+          className="brand-title"
+          onClick={() => navigate('/')}
+        >
+          MorseAcademy
+        </h1>
+      </header>
+
+      <div className="w-full px-6 py-4 max-w-xl" style={{ margin: '0 auto' }}>
         <div className="text-center mb-6">
           <h1 className="heading-1">Statistics</h1>
         </div>
@@ -50,15 +67,6 @@ export default function StatisticsPage() {
               <ActiveTabComponent />
             </div>
           </div>
-        </div>
-
-        <div className="text-center mt-8">
-          <button
-            className="btn btn-secondary btn-large"
-            onClick={handleBack}
-          >
-            Back to Menu
-          </button>
         </div>
       </div>
     </div>
