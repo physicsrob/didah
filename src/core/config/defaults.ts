@@ -20,6 +20,7 @@ export const DEFAULT_SESSION_CONFIG: SessionConfig = {
   mode: 'practice',
   speedTier: 'slow',
   sourceId: 'randomLetters',
+  sourceName: 'Random Letters',
   feedback: 'both',
   replay: true,
   effectiveAlphabet: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789.,?/='.split(''),

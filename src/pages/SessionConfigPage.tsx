@@ -227,6 +227,10 @@ export function SessionConfigPage() {
     }
 
     const { feedback, replay } = getFeedbackConfig();
+
+    // Find the source name from availableSources
+    const sourceName = availableSources.find(s => s.id === selectedSourceId)?.name || 'Unknown';
+
     const config: SessionConfig = {
       mode,
       lengthMs: duration * 60 * 1000,
@@ -234,14 +238,12 @@ export function SessionConfigPage() {
       effectiveWpm,
       speedTier,
       sourceId: selectedSourceId,
+      sourceName,
       feedback,
       replay,
       effectiveAlphabet: buildAlphabet(),
       ...(mode === 'live-copy' && { liveCopyFeedback }),
     };
-
-    // Find the source name from availableSources
-    const sourceName = availableSources.find(s => s.id === selectedSourceId)?.name || 'Unknown';
 
     // Fetch fresh content for each new session (except random_letters which is generated locally)
     let freshContent = null;
@@ -254,8 +256,8 @@ export function SessionConfigPage() {
       }
     }
 
-    // Navigate to session with config, fresh content, and source name
-    navigate('/session', { state: { config, sourceContent: freshContent, sourceName } });
+    // Navigate to session with config and fresh content
+    navigate('/session', { state: { config, sourceContent: freshContent } });
   };
 
   const handleCancel = () => {

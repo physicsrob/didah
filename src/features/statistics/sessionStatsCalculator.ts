@@ -93,6 +93,7 @@ export class SessionStatsCalculator {
         wpm: config.wpm,
         speedTier: config.speedTier,
         sourceId: config.sourceId,
+        sourceName: config.sourceName,
         replay: config.replay,
         feedback: config.feedback,
         effectiveAlphabet: config.effectiveAlphabet,

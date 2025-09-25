@@ -24,6 +24,7 @@ export type SessionConfig = {
   effectiveWpm: number; // For Farnsworth timing (when equal to wpm, standard timing is used)
   speedTier: "slow" | "medium" | "fast" | "lightning";
   sourceId: string;
+  sourceName: string;  // Display name of the source
   feedback: "buzzer" | "flash" | "both" | "none";
   replay: boolean;
   effectiveAlphabet: string[]; // based on toggles

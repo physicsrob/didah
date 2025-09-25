@@ -15,12 +15,14 @@ export type SessionStatistics = {
   startedAt: number;
   endedAt: number;
   durationMs: number;
+  timestamp?: number;  // Unix timestamp when session was saved (ms since epoch)
   config: {
     mode: "practice" | "listen" | "live-copy";
     lengthMs: number;               // Configured session length
     wpm: number;
     speedTier: SpeedTier;
     sourceId: string;
+    sourceName?: string;            // Display name of the source
     replay: boolean;
     feedback: "buzzer" | "flash" | "both" | "none";
     effectiveAlphabet: string[];    // Characters practiced

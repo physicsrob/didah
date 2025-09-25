@@ -6,6 +6,7 @@ import AccuracyTab from '../components/statistics/AccuracyTab'
 import ConfusionTab from '../components/statistics/ConfusionTab'
 import HistoryTab from '../components/statistics/HistoryTab'
 import '../styles/main.css'
+import '../styles/statistics.css'
 
 export default function StatisticsPage() {
   const navigate = useNavigate()

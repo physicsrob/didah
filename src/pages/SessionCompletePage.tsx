@@ -19,12 +19,12 @@ export function SessionCompletePage() {
 
   // Get session data from navigation state
   const fullStatistics = location.state?.fullStatistics as SessionStatistics | undefined;
-  const sourceName = location.state?.sourceName as string | undefined;
   const liveCopyState = location.state?.liveCopyState;
 
   // Extract what we need from fullStatistics
   const accuracy = fullStatistics?.overallAccuracy || 0;
   const totalChars = fullStatistics?.totalCharacters || 0;
+  const sourceName = fullStatistics?.config.sourceName;
 
   // Save statistics when the component mounts
   useEffect(() => {

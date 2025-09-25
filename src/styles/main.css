@@ -771,6 +771,72 @@ input[type="range"]::-moz-range-track {
     min-height: 300px;
 }
 
+/* Session Graph Components */
+.session-graph-container {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.session-graph-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 300px;
+    text-align: center;
+}
+
+.graph-tooltip {
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-primary);
+    border-radius: 6px;
+    padding: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+}
+
+.tooltip-date {
+    color: var(--text-primary);
+    font-size: 12px;
+    font-weight: 500;
+    margin-bottom: 4px;
+}
+
+.tooltip-value {
+    color: var(--color-blue-primary);
+    font-size: 16px;
+    font-weight: 600;
+    margin-bottom: 4px;
+}
+
+.tooltip-ago {
+    color: var(--text-muted);
+    font-size: 11px;
+}
+
+.graph-summary {
+    text-align: center;
+    margin-top: 8px;
+}
+
+/* Override Recharts default styles for dark theme */
+.recharts-cartesian-axis-tick-value {
+    fill: var(--text-muted);
+}
+
+.recharts-label {
+    fill: var(--text-muted);
+}
+
+.recharts-dot {
+    r: 5;
+}
+
+.recharts-dot:hover {
+    r: 7;
+}
+
 /* Calendar View */
 .calendar-container {
     display: flex;

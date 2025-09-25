@@ -62,8 +62,12 @@ export async function onRequestGet(context: { request: Request; env: Env }): Pro
       }
     }
 
-    // Sort by startedAt timestamp (most recent first)
-    allSessions.sort((a, b) => b.startedAt - a.startedAt);
+    // Sort by timestamp (most recent first)
+    allSessions.sort((a, b) => {
+      const timestampA = a.timestamp || 0;
+      const timestampB = b.timestamp || 0;
+      return timestampB - timestampA;
+    });
 
     return Response.json(allSessions);
   } catch (error) {

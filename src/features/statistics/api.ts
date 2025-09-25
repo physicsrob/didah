@@ -5,6 +5,8 @@
  * Extensible to support multiple statistics endpoints.
  */
 
+import type { SessionStatistics, CharacterStatistics } from '../../core/types/statistics';
+
 export interface DailyPracticeTime {
   day: string;  // ISO date string (YYYY-MM-DD)
   minutes: number;
@@ -28,6 +30,50 @@ export class StatisticsAPI {
 
   constructor(authToken: string | null) {
     this.authToken = authToken;
+  }
+
+  /**
+   * Fetch all session statistics for the last 30 days
+   */
+  async getSessions(): Promise<SessionStatistics[]> {
+    if (!this.authToken) {
+      // Return empty data for unauthenticated users
+      return [];
+    }
+
+    try {
+      const response = await fetch('/api/sessions', {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${this.authToken}`,
+        }
+      });
+
+      if (!response.ok) {
+        console.error(`Failed to fetch sessions: ${response.status}`);
+        return [];
+      }
+
+      const sessions = await response.json();
+
+      // Convert Map objects back from plain objects if needed
+      return sessions.map((session: SessionStatistics & {
+        characterStats: Record<string, CharacterStatistics>;
+        confusionMatrix: Record<string, Record<string, number>>;
+      }) => ({
+        ...session,
+        characterStats: new Map(Object.entries(session.characterStats || {})),
+        confusionMatrix: new Map(
+          Object.entries(session.confusionMatrix || {}).map(([key, value]) => [
+            key,
+            new Map(Object.entries(value))
+          ])
+        )
+      }));
+    } catch (error) {
+      console.error('Error fetching sessions:', error);
+      return [];
+    }
   }
 
   /**

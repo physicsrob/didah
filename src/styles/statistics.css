@@ -1,0 +1,95 @@
+/* Statistics Page Styles */
+
+/* Session Graph Controls */
+.graph-controls {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+  justify-content: flex-end;
+}
+
+.time-toggle {
+  padding: 8px 16px;
+  border: 1px solid var(--border-primary);
+  background: var(--background-secondary);
+  color: var(--text-secondary);
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.time-toggle:hover {
+  background: var(--background-tertiary);
+  border-color: var(--border-secondary);
+}
+
+.time-toggle.active {
+  background: var(--color-blue-primary);
+  color: white;
+  border-color: var(--color-blue-primary);
+}
+
+.time-toggle.active:hover {
+  background: var(--color-blue-secondary);
+  border-color: var(--color-blue-secondary);
+}
+
+.session-graph-container {
+  margin: 24px 0;
+}
+
+.session-graph-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 350px;
+  color: var(--text-muted);
+}
+
+.graph-summary {
+  text-align: center;
+  margin-top: 16px;
+}
+
+.graph-tooltip {
+  background: var(--background-primary);
+  border: 1px solid var(--border-primary);
+  border-radius: 6px;
+  padding: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.tooltip-date {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin: 0 0 4px 0;
+}
+
+.tooltip-value {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0 0 4px 0;
+}
+
+.tooltip-ago {
+  font-size: 12px;
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+.tooltip-details {
+  margin: 8px 0;
+  padding: 8px 0;
+  border-top: 1px solid var(--border-secondary);
+  border-bottom: 1px solid var(--border-secondary);
+}
+
+.tooltip-detail {
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin: 4px 0;
+}

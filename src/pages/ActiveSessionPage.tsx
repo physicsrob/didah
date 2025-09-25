@@ -36,7 +36,6 @@ export function ActiveSessionPage() {
   // Get config, source content, and source name from navigation state
   const config = location.state?.config;
   const sourceContent = location.state?.sourceContent as SourceContent | null;
-  const sourceName = location.state?.sourceName as string | undefined;
 
   // Check if audio is actually ready
   const audioActuallyReady = isAudioReady();
@@ -153,7 +152,6 @@ export function ActiveSessionPage() {
       navigate('/session-complete', {
         state: {
           fullStatistics,
-          sourceName,
           liveCopyState: config.mode === 'live-copy' ? evaluateLiveCopy(
             liveCopyEvents,
             liveCopyTime,
@@ -171,7 +169,7 @@ export function ActiveSessionPage() {
     } else {
       doNavigate();
     }
-  }, [navigate, config, liveCopyEvents, liveCopyTime, sourceName]);
+  }, [navigate, config, liveCopyEvents, liveCopyTime]);
 
   // Subscribe to session snapshots
   useEffect(() => {
@@ -332,8 +330,8 @@ export function ActiveSessionPage() {
   }
 
   const getSourceDisplay = () => {
-    // Use the source name passed from SessionConfigPage
-    return sourceName || 'Unknown';
+    // Use the source name from config
+    return config?.sourceName || 'Unknown';
   };
 
   return (
