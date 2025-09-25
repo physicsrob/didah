@@ -658,6 +658,125 @@ input[type="range"]::-moz-range-track {
     max-width: 1200px;
 }
 
+/* Tab Components */
+.tabs-container {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+.tabs-header {
+    display: flex;
+    flex-shrink: 0;
+    border-bottom: 1px solid var(--border-primary);
+    background: var(--bg-secondary);
+    border-radius: 8px 8px 0 0;
+    overflow-x: auto;
+    overflow-y: hidden;
+    scrollbar-width: thin;
+}
+
+.tabs-header::-webkit-scrollbar {
+    height: 4px;
+}
+
+.tabs-header::-webkit-scrollbar-track {
+    background: var(--bg-tertiary);
+}
+
+.tabs-header::-webkit-scrollbar-thumb {
+    background: var(--border-secondary);
+    border-radius: 2px;
+}
+
+.tab-button {
+    flex: 1;
+    min-width: 120px;
+    padding: 16px 24px;
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    font-family: var(--font-primary);
+    font-size: 14px;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    cursor: pointer;
+    position: relative;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+}
+
+.tab-button:hover:not(.tab-active) {
+    color: var(--text-secondary);
+    background: var(--overlay-primary-light);
+}
+
+.tab-button.tab-active {
+    color: var(--color-blue-primary);
+    background: var(--bg-tertiary);
+}
+
+.tab-button.tab-active::after {
+    content: '';
+    position: absolute;
+    bottom: -1px;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: var(--color-blue-primary);
+}
+
+.tab-content {
+    flex: 1;
+    padding: 32px;
+    background: var(--bg-secondary);
+    border-radius: 0 0 8px 8px;
+    overflow-y: auto;
+}
+
+.tab-panel {
+    display: none;
+    animation: fadeIn 0.3s ease;
+}
+
+.tab-panel.active {
+    display: block;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(8px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Grid Utilities */
+.grid {
+    display: grid;
+}
+
+.grid-cols-auto {
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+}
+
+.gap-4 {
+    gap: 16px;
+}
+
+/* Statistics Components */
+.stats-tabs-container {
+    height: 500px;
+}
+
+.stats-placeholder {
+    min-height: 300px;
+}
+
 /* Height Utilities */
 .min-h-screen {
     min-height: 100vh;

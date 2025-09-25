@@ -1,60 +1,60 @@
+import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import TimeTab from '../components/statistics/TimeTab'
+import SpeedTab from '../components/statistics/SpeedTab'
+import AccuracyTab from '../components/statistics/AccuracyTab'
+import ConfusionTab from '../components/statistics/ConfusionTab'
+import HistoryTab from '../components/statistics/HistoryTab'
 import '../styles/main.css'
 
 export default function StatisticsPage() {
   const navigate = useNavigate()
+  const [activeTab, setActiveTab] = useState('time')
 
   const handleBack = () => {
     navigate('/')
   }
 
+  const tabs = [
+    { id: 'time', label: 'Time', component: TimeTab },
+    { id: 'speed', label: 'Speed', component: SpeedTab },
+    { id: 'accuracy', label: 'Accuracy', component: AccuracyTab },
+    { id: 'confusion', label: 'Confusion', component: ConfusionTab },
+    { id: 'history', label: 'History', component: HistoryTab },
+  ]
+
+  const ActiveTabComponent = tabs.find(tab => tab.id === activeTab)?.component || TimeTab
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-primary">
-      <div className="w-full px-6 py-10" style={{ maxWidth: '448px' }}>
-        <div className="text-center">
-          <h1 className="heading-1 mb-6">Statistics</h1>
+      <div className="w-full px-6 py-10 max-w-xl">
+        <div className="text-center mb-6">
+          <h1 className="heading-1">Statistics</h1>
+        </div>
 
-          <div className="card mb-8">
-            <div className="flex items-center justify-center" style={{ minHeight: '200px' }}>
-              <div className="text-center">
-                <div className="text-muted mb-4">
-                  <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="mx-auto mb-4">
-                    <path d="M3 12h4l3 9l4-18l3 9h4" strokeLinecap="round" strokeLinejoin="round"/>
-                  </svg>
-                </div>
-                <h2 className="heading-3 mb-2">Coming Soon</h2>
-                <p className="body-regular text-muted">
-                  Statistics tracking will be available in the next update.
-                </p>
-              </div>
-            </div>
+        <div className="tabs-container stats-tabs-container">
+          <div className="tabs-header">
+            {tabs.map(tab => (
+              <button
+                key={tab.id}
+                className={`tab-button ${activeTab === tab.id ? 'tab-active' : ''}`}
+                onClick={() => setActiveTab(tab.id)}
+              >
+                {tab.label}
+              </button>
+            ))}
           </div>
 
-          <div className="space-y-4">
-            <div className="card-compact surface">
-              <div className="flex justify-between items-center">
-                <span className="label">Total Sessions</span>
-                <span className="heading-3">-</span>
-              </div>
-            </div>
-
-            <div className="card-compact surface">
-              <div className="flex justify-between items-center">
-                <span className="label">Average Accuracy</span>
-                <span className="heading-3">-</span>
-              </div>
-            </div>
-
-            <div className="card-compact surface">
-              <div className="flex justify-between items-center">
-                <span className="label">Study Time</span>
-                <span className="heading-3">-</span>
-              </div>
+          <div className="tab-content">
+            <div className="tab-panel active">
+              <ActiveTabComponent />
             </div>
           </div>
+        </div>
 
+        <div className="text-center mt-8">
           <button
-            className="btn btn-secondary btn-large mt-8"
+            className="btn btn-secondary btn-large"
             onClick={handleBack}
           >
             Back to Menu
