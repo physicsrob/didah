@@ -11,9 +11,9 @@
 /* Core Variables */
 :root {
     /* Colors - Core Foundation */
-    --color-primary-black: #1a1a1a;
-    --color-secondary-gray: #2a2a2a;
-    --color-tertiary-gray: #3a3a3a;
+    --color-primary-black: #1e2028;
+    --color-secondary-gray: #2a2d38;
+    --color-tertiary-gray: #373b48;
     --color-white: #ffffff;
     --color-blue-primary: #4dabf7;
 
@@ -37,14 +37,17 @@
     --bg-primary: var(--color-primary-black);
     --bg-secondary: var(--color-secondary-gray);
     --bg-tertiary: var(--color-tertiary-gray);
+    --background-primary: #1e2028;
+    --background-secondary: #262933;
+    --background-tertiary: #2f3340;
 
     /* Colors - Border */
-    --border-primary: var(--color-tertiary-gray);
-    --border-secondary: #404040;
+    --border-primary: #3d4152;
+    --border-secondary: #4a4f62;
 
     /* Colors - Gradient backgrounds */
-    --gradient-dark-start: #0f171a;
-    --gradient-dark-end: #1e293b;
+    --gradient-dark-start: #1a1d26;
+    --gradient-dark-end: #252a3a;
 
     /* Colors - Shadows and overlays */
     --shadow-primary: rgba(77, 171, 247, 0.3);
@@ -87,9 +90,11 @@ html, body {
     height: 100%;
     background:
         radial-gradient(circle at 20% 80%, var(--overlay-primary-subtle) 0%, transparent 50%),
-        radial-gradient(circle at 80% 20%, var(--overlay-primary-light) 0%, transparent 50%);
+        radial-gradient(circle at 80% 20%, var(--overlay-primary-light) 0%, transparent 50%),
+        radial-gradient(circle at 50% 50%, rgba(77, 171, 247, 0.03) 0%, transparent 70%);
     pointer-events: none;
     z-index: -1; /* Behind content but within the stacking context */
+    opacity: 0.8;
 }
 
 /* Placeholder navigation - very subtle, non-functional */
@@ -1001,6 +1006,14 @@ input[type="range"]::-moz-range-track {
     text-align: center;
     position: relative;
     overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15), 0 1px 3px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+}
+
+.stat-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2), 0 2px 4px rgba(0, 0, 0, 0.12);
+    border-color: var(--border-secondary);
 }
 
 .stat-card::before {
@@ -1009,8 +1022,8 @@ input[type="range"]::-moz-range-track {
     top: 0;
     left: 0;
     right: 0;
-    height: 4px;
-    background: var(--color-blue-primary);
+    height: 5px;
+    background: linear-gradient(90deg, var(--color-blue-primary) 0%, var(--color-blue-light) 100%);
 }
 
 .stat-value {
@@ -1043,7 +1056,14 @@ input[type="range"]::-moz-range-track {
     background: var(--color-secondary-gray);
     border-radius: 12px;
     padding: 24px;
-    border: 1px solid var(--color-tertiary-gray);
+    border: 1px solid var(--border-primary);
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.2), 0 1px 2px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+}
+
+.card:hover {
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25), 0 2px 4px rgba(0, 0, 0, 0.15);
+    transform: translateY(-1px);
 }
 
 .card-compact {
@@ -1583,7 +1603,7 @@ input[type="range"]::-moz-range-track {
 .settings-label {
     font-size: 16px;
     font-weight: 500;
-    color: rgba(255, 255, 255, 0.8);
+    color: rgba(255, 255, 255, 0.9);
     min-width: 140px;
     flex-shrink: 0;
 }
@@ -1600,10 +1620,11 @@ input[type="range"]::-moz-range-track {
 .segmented-control {
     display: flex;
     width: 100%;
-    background: transparent;
+    background: var(--background-tertiary);
+    border: 1px solid var(--border-primary);
     border-radius: 8px;
-    padding: 2px;
-    gap: 6px;
+    padding: 4px;
+    gap: 4px;
     justify-content: space-between;
 }
 
@@ -1613,7 +1634,7 @@ input[type="range"]::-moz-range-track {
     font-size: 13px;
     font-weight: 500;
     background: transparent;
-    color: rgba(255, 255, 255, 0.6);
+    color: rgba(255, 255, 255, 0.7);
     border: none;
     border-radius: 6px;
     cursor: pointer;
@@ -1623,18 +1644,19 @@ input[type="range"]::-moz-range-track {
 }
 
 .segmented-btn:hover {
-    color: rgba(255, 255, 255, 0.9);
-    background: rgba(255, 255, 255, 0.05);
+    color: rgba(255, 255, 255, 0.95);
+    background: rgba(255, 255, 255, 0.08);
 }
 
 .segmented-btn.active {
-    background: #4dabf7;
+    background: var(--color-blue-primary);
     color: #1a1a1a;
     font-weight: 600;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
 }
 
 .segmented-btn.active:hover {
-    background: #74bbf8;
+    background: var(--color-blue-light);
     color: #1a1a1a;
 }
 

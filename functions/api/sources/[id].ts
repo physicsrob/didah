@@ -135,7 +135,7 @@ export async function onRequestGet(context: CloudflareContext) {
   }
 
   try {
-    let items: string[] = [];
+    let items: string[] | Array<{title: string, body: string}> = [];
 
     switch (id) {
       case 'random_letters':
@@ -155,12 +155,16 @@ export async function onRequestGet(context: CloudflareContext) {
         if (id.startsWith('reddit_') && kv) {
           try {
             const cacheKey = `reddit:${id}`;
-            const cached = await kv.get(cacheKey, 'json') as { posts: string[], fetchedAt: string } | null;
+            const cached = await kv.get(cacheKey, 'json') as { posts: Array<{title: string, body: string}>, fetchedAt: string } | null;
 
             if (cached && cached.posts) {
               // Always serve cached data, even if stale
               // Shuffle on every request for variety
-              items = shuffleArray(cached.posts);
+              const shuffledPosts = shuffleArray(cached.posts);
+
+              // Return structured data for Reddit sources
+              // Frontend will handle formatting based on user preference
+              items = shuffledPosts;
 
               // Add staleness warning in response headers if data is old
               const fetchedAt = new Date(cached.fetchedAt);

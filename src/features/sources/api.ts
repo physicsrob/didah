@@ -5,7 +5,7 @@
 import type { TextSource, SourceContent, SourcesResponse } from './types';
 
 /**
- * Fetch list of available text sources
+ * Fetch list of available text sources and enrich with variants
  */
 export async function fetchSources(): Promise<TextSource[]> {
   try {
@@ -14,12 +14,36 @@ export async function fetchSources(): Promise<TextSource[]> {
       throw new Error(`Failed to fetch sources: ${response.status}`);
     }
     const data: SourcesResponse = await response.json();
-    return data.sources;
+
+    // Enrich sources: expand Reddit sources into headlines/full variants
+    const enrichedSources = data.sources.flatMap(source => {
+      if (source.id.startsWith('reddit_')) {
+        // Create two variants for each Reddit source
+        return [
+          {
+            ...source,
+            id: `${source.id}_headlines`,
+            name: `${source.name} (Headlines)`,
+            backendId: source.id
+          },
+          {
+            ...source,
+            id: `${source.id}_full`,
+            name: `${source.name} (Full)`,
+            backendId: source.id
+          }
+        ];
+      }
+      // Non-Reddit sources: explicitly set backendId = id
+      return { ...source, backendId: source.id };
+    });
+
+    return enrichedSources;
   } catch (error) {
     console.error('Error fetching sources:', error);
     // Return default sources as fallback
     return [
-      { id: 'random_letters', name: 'Random Letters', type: 'generated' }
+      { id: 'random_letters', name: 'Random Letters', type: 'generated', backendId: 'random_letters' }
     ];
   }
 }

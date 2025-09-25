@@ -3,6 +3,7 @@
  */
 
 import type { CharacterSource } from '../session/runtime/sessionProgram';
+import type { FullPost } from './types';
 
 /**
  * Source that cycles through an array of text items (e.g., headlines)
@@ -124,5 +125,75 @@ export class LocalRandomSource implements CharacterSource {
 
   reset(): void {
     // No state to reset for random source
+  }
+}
+
+/**
+ * Source for Reddit/RSS posts with title and body
+ * Can format as headlines only or full content based on mode
+ */
+export class FullPostSource implements CharacterSource {
+  private items: string[];
+  private currentItemIndex: number = 0;
+  private currentCharIndex: number = 0;
+  private currentText: string;
+  private allowedChars: Set<string>;
+
+  constructor(posts: FullPost[], allowedChars: string, fullMode: boolean = false) {
+    // Format posts based on mode
+    if (fullMode) {
+      // Full mode: TITLE = BODY AR (with AR as separator between posts)
+      this.items = posts.map(post => {
+        const body = post.body.trim();
+        if (body) {
+          return `${post.title} = ${body} AR`;
+        } else {
+          // No body, just use title with separator
+          return `${post.title} AR`;
+        }
+      });
+    } else {
+      // Headlines mode: TITLE = TITLE =
+      this.items = posts.map(post => post.title + ' = ');
+    }
+
+    this.currentText = this.items[0] || '';
+
+    // Build set of allowed characters - ensure space, =, A, and R are always included
+    this.allowedChars = new Set((allowedChars + ' =AR').toUpperCase());
+  }
+
+  next(): string {
+    // If we've reached the end of current item
+    if (this.currentCharIndex >= this.currentText.length) {
+      // Move to next item
+      this.currentItemIndex = (this.currentItemIndex + 1) % this.items.length;
+      this.currentText = this.items[this.currentItemIndex] || '';
+      this.currentCharIndex = 0;
+      return this.next(); // Get first char of next item
+    }
+
+    // Get next character from current item
+    const char = this.currentText[this.currentCharIndex];
+    this.currentCharIndex++;
+
+    // Handle whitespace
+    if (char === ' ' || /\s/.test(char)) {
+      return ' ';
+    }
+
+    // Check if character is allowed
+    const upperChar = char.toUpperCase();
+    if (!this.allowedChars.has(upperChar)) {
+      return this.next(); // Recursively get next valid character
+    }
+
+    return upperChar;
+  }
+
+  reset(): void {
+    this.currentItemIndex = 0;
+    this.currentCharIndex = 0;
+    this.currentText = this.items[0] || '';
   }
 }

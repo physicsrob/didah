@@ -19,6 +19,7 @@ interface RedditTokenResponse {
 interface RedditPost {
   data: {
     title: string;
+    selftext?: string;
     created_utc: number;
   };
 }
@@ -65,7 +66,7 @@ async function getRedditToken(clientId: string, clientSecret: string): Promise<s
 /**
  * Fetch posts from a subreddit
  */
-async function fetchSubredditPosts(token: string, subreddit: string): Promise<string[]> {
+async function fetchSubredditPosts(token: string, subreddit: string): Promise<Array<{title: string, body: string}>> {
   const response = await fetch(
     `https://oauth.reddit.com/r/${subreddit}/hot?limit=50&raw_json=1`,
     {
@@ -83,18 +84,24 @@ async function fetchSubredditPosts(token: string, subreddit: string): Promise<st
 
   const data = await response.json() as RedditListingResponse;
 
-  // Extract titles and clean them (don't shuffle here - do it on read)
-  const titles = data.data.children.map(post =>
-    post.data.title
+  // Extract titles and full content (don't shuffle here - do it on read)
+  const posts = data.data.children.map(post => {
+    const cleanText = (text: string) => text
       .replace(/&amp;/g, '&')
       .replace(/&lt;/g, '<')
       .replace(/&gt;/g, '>')
       .replace(/&quot;/g, '"')
       .replace(/&#39;/g, "'")
-      .trim()
-  );
+      .replace(/\n+/g, ' ') // Replace newlines with spaces for Morse
+      .trim();
 
-  return titles;
+    return {
+      title: cleanText(post.data.title),
+      body: post.data.selftext ? cleanText(post.data.selftext) : ''
+    };
+  });
+
+  return posts;
 }
 
 export async function onRequestGet(context: { env: Env }) {
@@ -132,7 +139,7 @@ export async function onRequestGet(context: { env: Env }) {
       results[source.id] = {
         status: 'success',
         count: posts.length,
-        sample: posts[0]?.substring(0, 50) + '...'
+        withContent: posts.filter(p => p.body.length > 0).length
       };
     } catch (error) {
       console.error(`Failed to fetch ${source.id}:`, error);

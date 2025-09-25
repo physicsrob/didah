@@ -100,7 +100,7 @@ export function SessionConfigPage() {
       .catch(error => {
         console.error('Failed to fetch sources:', error);
         // Fallback to local source
-        setAvailableSources([{ id: 'random_letters', name: 'Random Letters', type: 'generated' }]);
+        setAvailableSources([{ id: 'random_letters', name: 'Random Letters', type: 'generated', backendId: 'random_letters' }]);
       })
       .finally(() => {
         setSourcesLoading(false);
@@ -119,22 +119,30 @@ export function SessionConfigPage() {
       return;
     }
 
+    // Find the source object to get its backendId
+    const source = availableSources.find(s => s.id === selectedSourceId);
+    if (!source) {
+      console.error(`Source not found: ${selectedSourceId}`);
+      return;
+    }
+
     // Always fetch fresh content (even on mount/reload)
-    fetchSourceContent(selectedSourceId)
+    fetchSourceContent(source.backendId)
       .then(content => {
         if (content) {
-          setSourceContent(content);
+          // Override the content ID with the frontend ID for proper source factory detection
+          setSourceContent({ ...content, id: selectedSourceId });
         } else {
-          setSourceLoadError(`Failed to load "${selectedSourceId}". Please try again or select a different source.`);
+          setSourceLoadError(`Failed to load "${source.name}". Please try again or select a different source.`);
           setSourceContent(null);
         }
       })
       .catch(error => {
-        console.error(`Failed to fetch source ${selectedSourceId}:`, error);
-        setSourceLoadError(`Failed to load "${selectedSourceId}". Please try again or select a different source.`);
+        console.error(`Failed to fetch source ${source.backendId}:`, error);
+        setSourceLoadError(`Failed to load "${source.name}". Please try again or select a different source.`);
         setSourceContent(null);
       });
-  }, [selectedSourceId]);
+  }, [selectedSourceId, availableSources]);
 
   // Save settings to centralized store when they change
   useEffect(() => {
@@ -194,18 +202,26 @@ export function SessionConfigPage() {
       return;
     }
 
+    // Find the source object to get its backendId
+    const source = availableSources.find(s => s.id === sourceId);
+    if (!source) {
+      console.error(`Source not found: ${sourceId}`);
+      return;
+    }
+
     try {
-      const content = await fetchSourceContent(sourceId);
+      const content = await fetchSourceContent(source.backendId);
       if (content) {
-        setSourceContent(content);
+        // Override the content ID with the frontend ID for proper source factory detection
+        setSourceContent({ ...content, id: sourceId });
       } else {
         // fetchSourceContent returns null on error
-        setSourceLoadError(`Failed to load "${availableSources.find(s => s.id === sourceId)?.name || sourceId}". Please try again or select a different source.`);
+        setSourceLoadError(`Failed to load "${source.name}". Please try again or select a different source.`);
         setSourceContent(null);
       }
     } catch (error) {
-      console.error(`Failed to fetch source ${sourceId}:`, error);
-      setSourceLoadError(`Failed to load "${availableSources.find(s => s.id === sourceId)?.name || sourceId}". Please try again or select a different source.`);
+      console.error(`Failed to fetch source ${source.backendId}:`, error);
+      setSourceLoadError(`Failed to load "${source.name}". Please try again or select a different source.`);
       setSourceContent(null);
     }
   };
@@ -248,11 +264,16 @@ export function SessionConfigPage() {
     // Fetch fresh content for each new session (except random_letters which is generated locally)
     let freshContent = null;
     if (selectedSourceId !== 'random_letters') {
-      try {
-        freshContent = await fetchSourceContent(selectedSourceId);
-      } catch (error) {
-        console.error('Failed to fetch fresh content, using cached:', error);
-        freshContent = sourceContent; // Fall back to cached content if fetch fails
+      const source = availableSources.find(s => s.id === selectedSourceId);
+      if (source) {
+        try {
+          const content = await fetchSourceContent(source.backendId);
+          // Override the content ID with the frontend ID for proper source factory detection
+          freshContent = content ? { ...content, id: selectedSourceId } : null;
+        } catch (error) {
+          console.error('Failed to fetch fresh content, using cached:', error);
+          freshContent = sourceContent; // Fall back to cached content if fetch fails
+        }
       }
     }
 
@@ -299,9 +320,6 @@ export function SessionConfigPage() {
         <div className="card mb-4" style={{
           maxWidth: '672px',
           margin: '0 auto',
-          background: 'rgba(26, 26, 26, 0.8)',
-          backdropFilter: 'blur(10px)',
-          border: '1px solid rgba(255, 255, 255, 0.1)',
           padding: '32px'
         }}>
           {/* Mode Title and Description */}
@@ -331,9 +349,9 @@ export function SessionConfigPage() {
                   width: '100%',
                   padding: '10px 16px',
                   fontSize: '15px',
-                  background: 'rgba(42, 42, 42, 0.8)',
+                  background: 'var(--background-tertiary)',
                   color: '#ffffff',
-                  border: '1px solid rgba(255, 255, 255, 0.2)',
+                  border: '1px solid var(--border-primary)',
                   borderRadius: '6px',
                   cursor: 'pointer'
                 }}
