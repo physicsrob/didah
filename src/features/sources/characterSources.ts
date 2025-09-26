@@ -119,21 +119,27 @@ export class ContinuousTextSource implements CharacterSource {
 
 /**
  * Local random character source (fallback)
- * Same as existing RandomCharSource
+ * Groups characters by 5 with spaces, same as backend
  */
 export class LocalRandomSource implements CharacterSource {
   private readonly chars: string[];
+  private charCount: number = 0;
 
   constructor(alphabet: string = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789') {
     this.chars = alphabet.split('');
   }
 
   next(): string {
+    if (this.charCount > 0 && this.charCount % 5 === 0) {
+      this.charCount++;
+      return ' ';
+    }
+    this.charCount++;
     return this.chars[Math.floor(Math.random() * this.chars.length)];
   }
 
   reset(): void {
-    // No state to reset for random source
+    this.charCount = 0;
   }
 }
 
