@@ -59,7 +59,7 @@ function generateConfusingText(pairs: Array<{ char: string; confusedWith: string
   }
 
   const blocks: string[] = [];
-  const targetLength = 100;
+  const targetLength = 1000;
   let currentLength = 0;
 
   while (currentLength < targetLength) {
