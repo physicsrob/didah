@@ -23,27 +23,6 @@ export function SettingsProvider({ children }: SettingsProviderProps) {
       return
     }
 
-    // Check if token is expired before using it
-    const isTokenExpired = (token: string): boolean => {
-      try {
-        const payload = JSON.parse(atob(token.split('.')[1]))
-        if (!payload.exp) return false
-        const now = Math.floor(Date.now() / 1000)
-        return payload.exp < now
-      } catch {
-        return true
-      }
-    }
-
-    if (isTokenExpired(token)) {
-      console.log('Token expired, clearing and using anonymous mode')
-      localStorage.removeItem('google_token')
-      settingsStore.initializeAnonymous()
-      setInitialized(true)
-      setError('Your session has expired. Please sign in again to sync your settings.')
-      return
-    }
-
     // Initialize settings with the auth token
     settingsStore.initialize(token)
       .then(() => {
@@ -53,17 +32,10 @@ export function SettingsProvider({ children }: SettingsProviderProps) {
       .catch(err => {
         console.error('Failed to initialize settings:', err)
 
-        // Check if it's an authentication error
-        if (err.message && err.message.includes('Authentication failed')) {
-          localStorage.removeItem('google_token')
-          setError('Your session has expired. Please sign in again to sync your settings.')
-          // Fall back to anonymous mode
-          settingsStore.initializeAnonymous()
-        } else {
-          setError('Unable to load settings from server. Using local settings.')
-        }
-
-        // Continue with defaults even if fetch fails
+        // For any error (auth or network), fall back to anonymous mode
+        localStorage.removeItem('google_token')
+        settingsStore.initializeAnonymous()
+        setError('Working offline - changes will sync when you sign in again.')
         setInitialized(true)
       })
 
@@ -90,8 +62,8 @@ export function SettingsProvider({ children }: SettingsProviderProps) {
     )
   }
 
-  // Show session expired warning if there's an authentication error
-  if (error && error.includes('session has expired')) {
+  // Show warning banner if working offline
+  if (error) {
     return (
       <>
         <div style={{
@@ -100,7 +72,7 @@ export function SettingsProvider({ children }: SettingsProviderProps) {
           left: '50%',
           transform: 'translateX(-50%)',
           zIndex: 9999,
-          backgroundColor: 'rgba(239, 68, 68, 0.95)',
+          backgroundColor: 'rgba(251, 146, 60, 0.95)',
           color: 'white',
           padding: '12px 20px',
           borderRadius: '8px',
@@ -109,7 +81,7 @@ export function SettingsProvider({ children }: SettingsProviderProps) {
           maxWidth: '500px',
           textAlign: 'center'
         }}>
-          ⚠️ {error}
+          📡 {error}
         </div>
         {children}
       </>

@@ -25,13 +25,14 @@ export type { CombinedFeedbackConfig };
  */
 export function createFeedback(
   type: FeedbackType,
-  options?: {
-    buzzerConfig?: Partial<BuzzerConfig>;
-    flashConfig?: Partial<FlashConfig>;
-  }
+  buzzerVolume: number
 ): Feedback {
-  const buzzerConfig = { ...DEFAULT_BUZZER_CONFIG, ...options?.buzzerConfig };
-  const flashConfig = { ...DEFAULT_FLASH_CONFIG, ...options?.flashConfig };
+  const buzzerConfig: BuzzerConfig = {
+    frequency: DEFAULT_BUZZER_CONFIG.frequency,
+    duration: DEFAULT_BUZZER_CONFIG.duration,
+    volume: buzzerVolume
+  };
+  const flashConfig = DEFAULT_FLASH_CONFIG;
 
   switch (type) {
     case 'buzzer':

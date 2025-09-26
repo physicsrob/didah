@@ -1,9 +1,13 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '../../hooks/useAuth';
 import { StatisticsAPI } from '../../features/statistics/api';
 import type { SessionStatistics } from '../../core/types/statistics';
 
-export default function HistoryTab() {
+interface HistoryTabProps {
+  timeWindow: 7 | 30;
+}
+
+export default function HistoryTab({ timeWindow }: HistoryTabProps) {
   const { user } = useAuth();
   const [sessions, setSessions] = useState<SessionStatistics[]>([]);
   const [loading, setLoading] = useState(true);
@@ -35,6 +39,12 @@ export default function HistoryTab() {
 
     fetchSessions();
   }, [user]);
+
+  const filteredSessions = useMemo(() => {
+    const now = Date.now();
+    const cutoffTime = now - (timeWindow * 24 * 60 * 60 * 1000);
+    return sessions.filter(s => s.timestamp && s.timestamp >= cutoffTime);
+  }, [sessions, timeWindow]);
 
   // Format mode display name
   const formatMode = (mode: string): string => {
@@ -80,7 +90,7 @@ export default function HistoryTab() {
     <div className="space-y-6">
       <div className="text-center mb-6">
         <h2 className="heading-2">Session History</h2>
-        <p className="body-small text-muted">Your recent practice sessions</p>
+        <p className="body-small text-muted">Last {timeWindow} days</p>
       </div>
 
       {loading && (
@@ -106,7 +116,7 @@ export default function HistoryTab() {
         </div>
       )}
 
-      {!loading && !error && sessions.length > 0 && (
+      {!loading && !error && filteredSessions.length > 0 && (
         <div className="card p-4">
           <div className="history-table-container">
             <table className="history-table">
@@ -121,7 +131,7 @@ export default function HistoryTab() {
                 </tr>
               </thead>
               <tbody>
-                {sessions.map((session, index) => (
+                {filteredSessions.map((session, index) => (
                   <tr key={`${session.timestamp || session.startedAt}-${index}`}>
                     <td className="date-cell">
                       {session.timestamp ? formatRelativeDate(session.timestamp) : '-'}
@@ -155,7 +165,7 @@ export default function HistoryTab() {
         </div>
       )}
 
-      {!loading && !error && sessions.length === 0 && !user && (
+      {!loading && !error && filteredSessions.length === 0 && !user && (
         <div className="card p-6 text-center">
           <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="mx-auto mb-3 text-muted">
             <path d="M9 11l3 3L22 4" strokeLinecap="round" strokeLinejoin="round"/>
@@ -167,7 +177,7 @@ export default function HistoryTab() {
         </div>
       )}
 
-      {!loading && !error && sessions.length === 0 && user && (
+      {!loading && !error && filteredSessions.length === 0 && user && (
         <div className="card p-8 text-center">
           <div className="text-muted">
             <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="mx-auto mb-4">

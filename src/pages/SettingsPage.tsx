@@ -3,6 +3,7 @@ import { useRef } from 'react'
 import { useSettings } from '../features/settings/hooks/useSettings'
 import { useAudio } from '../contexts/useAudio'
 import { DEFAULT_WPM } from '../core/config/defaults'
+import { BuzzerFeedback, DEFAULT_BUZZER_CONFIG } from '../features/session/services/feedback/buzzerFeedback'
 import '../styles/main.css'
 
 export default function SettingsPage() {
@@ -60,6 +61,51 @@ export default function SettingsPage() {
     }
   }
 
+  const handleVolumeChange = (value: number) => {
+    updateSetting('volume', value)
+
+    if (debounceTimerRef.current !== null) {
+      clearTimeout(debounceTimerRef.current)
+    }
+
+    debounceTimerRef.current = window.setTimeout(async () => {
+      try {
+        await initializeAudio()
+        const audioEngine = getAudioEngine()
+        await audioEngine.playCharacter('?', DEFAULT_WPM)
+      } catch (error) {
+        console.error('Failed to play preview:', error)
+      }
+    }, 150)
+  }
+
+  const handleBuzzerVolumeChange = (value: number) => {
+    updateSetting('buzzerVolume', value)
+
+    if (debounceTimerRef.current !== null) {
+      clearTimeout(debounceTimerRef.current)
+    }
+
+    debounceTimerRef.current = window.setTimeout(async () => {
+      try {
+        await initializeAudio()
+        const audioEngine = getAudioEngine()
+        const audioContext = (audioEngine as unknown as { audioContext?: AudioContext }).audioContext
+
+        if (audioContext) {
+          const buzzer = new BuzzerFeedback({
+            ...DEFAULT_BUZZER_CONFIG,
+            volume: value
+          })
+          await buzzer.initialize(audioContext)
+          buzzer.onFail()
+        }
+      } catch (error) {
+        console.error('Failed to play buzzer preview:', error)
+      }
+    }, 150)
+  }
+
   if (isLoading || !settings) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-primary">
@@ -97,7 +143,7 @@ export default function SettingsPage() {
             </div>
           </div>
 
-          <div className="form-group">
+          <div className="form-group mb-6">
             <label className="form-label">Frequency: {settings.frequency} Hz</label>
             <input
               type="range"
@@ -125,6 +171,68 @@ export default function SettingsPage() {
             </div>
             <p className="body-small text-muted mt-2">
               Adjust the tone frequency for Morse code audio. Common range: 600-700 Hz
+            </p>
+          </div>
+
+          <div className="form-group mb-6">
+            <label className="form-label">Volume: {Math.round(settings.volume * 100)}%</label>
+            <input
+              type="range"
+              value={settings.volume}
+              onChange={(e) => {
+                const value = parseFloat(e.target.value)
+                handleVolumeChange(value)
+              }}
+              min="0"
+              max="1"
+              step="0.05"
+              className="form-slider"
+              style={{ width: '100%' }}
+            />
+            <div style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              marginTop: '4px',
+              fontSize: '12px',
+              color: 'rgba(255, 255, 255, 0.5)'
+            }}>
+              <span>0%</span>
+              <span>50%</span>
+              <span>100%</span>
+            </div>
+            <p className="body-small text-muted mt-2">
+              Adjust the volume for Morse code audio
+            </p>
+          </div>
+
+          <div className="form-group">
+            <label className="form-label">Buzzer Volume: {Math.round(settings.buzzerVolume * 100)}%</label>
+            <input
+              type="range"
+              value={settings.buzzerVolume}
+              onChange={(e) => {
+                const value = parseFloat(e.target.value)
+                handleBuzzerVolumeChange(value)
+              }}
+              min="0"
+              max="1"
+              step="0.05"
+              className="form-slider"
+              style={{ width: '100%' }}
+            />
+            <div style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              marginTop: '4px',
+              fontSize: '12px',
+              color: 'rgba(255, 255, 255, 0.5)'
+            }}>
+              <span>0%</span>
+              <span>50%</span>
+              <span>100%</span>
+            </div>
+            <p className="body-small text-muted mt-2">
+              Adjust the volume for error feedback buzzer
             </p>
           </div>
         </div>

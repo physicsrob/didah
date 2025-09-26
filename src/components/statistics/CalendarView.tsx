@@ -3,6 +3,7 @@ import type { DailyPracticeTime } from '../../features/statistics/api';
 
 interface CalendarViewProps {
   data: DailyPracticeTime[];
+  timeWindow: 7 | 30;
 }
 
 interface CalendarDay {
@@ -19,7 +20,7 @@ interface SummaryStats {
   currentStreak: number;
 }
 
-export default function CalendarView({ data }: CalendarViewProps) {
+export default function CalendarView({ data, timeWindow }: CalendarViewProps) {
   // Process calendar data
   const { calendarGrid, stats, dateRange } = useMemo(() => {
     if (!data || data.length === 0) {
@@ -30,8 +31,23 @@ export default function CalendarView({ data }: CalendarViewProps) {
       };
     }
 
+    const now = Date.now();
+    const cutoffTime = now - (timeWindow * 24 * 60 * 60 * 1000);
+    const filteredData = data.filter(item => {
+      const itemDate = new Date(item.day + 'T00:00:00');
+      return itemDate.getTime() >= cutoffTime;
+    });
+
+    if (filteredData.length === 0) {
+      return {
+        calendarGrid: [],
+        stats: { totalDays: 0, totalMinutes: 0, currentStreak: 0 },
+        dateRange: { start: '', end: '' }
+      };
+    }
+
     // Convert data to calendar days
-    const calendarDays: CalendarDay[] = data.map(item => {
+    const calendarDays: CalendarDay[] = filteredData.map(item => {
       const date = new Date(item.day + 'T00:00:00');
       return {
         date,
@@ -44,14 +60,14 @@ export default function CalendarView({ data }: CalendarViewProps) {
 
     // Calculate stats
     const stats: SummaryStats = {
-      totalDays: data.filter(d => d.minutes > 0).length,
-      totalMinutes: data.reduce((sum, d) => sum + d.minutes, 0),
-      currentStreak: calculateStreak(data)
+      totalDays: filteredData.filter(d => d.minutes > 0).length,
+      totalMinutes: filteredData.reduce((sum, d) => sum + d.minutes, 0),
+      currentStreak: calculateStreak(filteredData)
     };
 
     // Get date range
-    const firstDate = new Date(data[0].day + 'T00:00:00');
-    const lastDate = new Date(data[data.length - 1].day + 'T00:00:00');
+    const firstDate = new Date(filteredData[0].day + 'T00:00:00');
+    const lastDate = new Date(filteredData[filteredData.length - 1].day + 'T00:00:00');
     const dateRange = {
       start: formatDateRange(firstDate),
       end: formatDateRange(lastDate)
@@ -86,7 +102,7 @@ export default function CalendarView({ data }: CalendarViewProps) {
     }
 
     return { calendarGrid: grid, stats, dateRange };
-  }, [data]);
+  }, [data, timeWindow]);
 
   // Calculate current streak
   function calculateStreak(data: DailyPracticeTime[]): number {
@@ -132,7 +148,7 @@ export default function CalendarView({ data }: CalendarViewProps) {
     <div className="calendar-container">
       {/* Header */}
       <div className="calendar-header">
-        <h3 className="heading-3">Study Time Last 30 Days</h3>
+        <h3 className="heading-3">Study Time Last {timeWindow} Days</h3>
         <p className="body-small text-muted">
           {dateRange.start} - {dateRange.end}
         </p>

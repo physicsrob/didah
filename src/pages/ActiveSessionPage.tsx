@@ -18,6 +18,7 @@ import { createCharacterSource } from '../features/sources';
 import type { SourceContent } from '../features/sources';
 import { createFeedback } from '../features/session/services/feedback/index.js';
 import { useAudio } from '../contexts/useAudio';
+import { useSettings } from '../features/settings/hooks/useSettings';
 import { CharacterDisplay } from '../components/CharacterDisplay';
 import { historyToDisplay, liveCopyToDisplay } from '../components/CharacterDisplay.transformations';
 import { useLiveCopy } from '../features/session/livecopy/useLiveCopy';
@@ -32,6 +33,7 @@ export function ActiveSessionPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const { initializeAudio, getAudioEngine, isAudioReady } = useAudio();
+  const { settings } = useSettings();
 
   // Get config, source content, and source name from navigation state
   const config = location.state?.config;
@@ -84,7 +86,10 @@ export function ActiveSessionPage() {
     // Create buzzer feedback for 'buzzer' or 'both'
     let fb = null;
     if (feedbackType === 'buzzer' || feedbackType === 'both') {
-      fb = createFeedback('buzzer');
+      if (!settings) {
+        throw new Error('Settings must be loaded before creating feedback');
+      }
+      fb = createFeedback('buzzer', settings.buzzerVolume);
     }
 
     if (fb && audioEngine) {
@@ -95,7 +100,7 @@ export function ActiveSessionPage() {
     }
 
     return fb;
-  }, [config?.feedback, audioEngine]);
+  }, [config?.feedback, audioEngine, settings]);
 
   // Create character source
   const source = useMemo(() => {

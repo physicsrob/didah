@@ -30,15 +30,6 @@ export const DEFAULT_SESSION_CONFIG: SessionConfig = {
 };
 
 /**
- * Audio engine default configuration
- */
-export const DEFAULT_AUDIO_CONFIG = {
-  frequency: 700,
-  volume: 0.2,
-  tone: 'normal' as const,
-};
-
-/**
  * Timing constants
  */
 export const TIMING_CONSTANTS = {

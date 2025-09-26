@@ -17,12 +17,15 @@ interface CharacterConfusion {
   }>;
 }
 
-export default function ConfusionTab() {
+interface ConfusionTabProps {
+  timeWindow: 7 | 30;
+}
+
+export default function ConfusionTab({ timeWindow }: ConfusionTabProps) {
   const { user } = useAuth();
   const [sessions, setSessions] = useState<SessionStatistics[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [timeWindow, setTimeWindow] = useState<7 | 30>(30);
 
   useEffect(() => {
     async function fetchSessions() {
@@ -216,20 +219,6 @@ export default function ConfusionTab() {
           <h2 className="heading-2">Character Confusion</h2>
           <p className="body-small text-muted">Your most frequently confused characters</p>
         </div>
-        <div className="graph-controls">
-          <button
-            className={`time-toggle ${timeWindow === 7 ? 'active' : ''}`}
-            onClick={() => setTimeWindow(7)}
-          >
-            Last 7 Days
-          </button>
-          <button
-            className={`time-toggle ${timeWindow === 30 ? 'active' : ''}`}
-            onClick={() => setTimeWindow(30)}
-          >
-            Last 30 Days
-          </button>
-        </div>
         <div className="card p-8 text-center">
           <div className="text-muted">
             <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="mx-auto mb-4">
@@ -251,21 +240,6 @@ export default function ConfusionTab() {
       <div className="text-center mb-6">
         <h2 className="heading-2">Character Confusion</h2>
         <p className="body-small text-muted">Your most frequently confused characters</p>
-      </div>
-
-      <div className="graph-controls">
-        <button
-          className={`time-toggle ${timeWindow === 7 ? 'active' : ''}`}
-          onClick={() => setTimeWindow(7)}
-        >
-          Last 7 Days
-        </button>
-        <button
-          className={`time-toggle ${timeWindow === 30 ? 'active' : ''}`}
-          onClick={() => setTimeWindow(30)}
-        >
-          Last 30 Days
-        </button>
       </div>
 
       <div className="card p-4">

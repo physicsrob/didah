@@ -4,7 +4,11 @@ import { StatisticsAPI } from '../../features/statistics/api';
 import type { SessionStatistics } from '../../core/types/statistics';
 import SessionGraph from './SessionGraph';
 
-export default function SpeedTab() {
+interface SpeedTabProps {
+  timeWindow: 7 | 30;
+}
+
+export default function SpeedTab({ timeWindow }: SpeedTabProps) {
   const { user } = useAuth();
   const [sessions, setSessions] = useState<SessionStatistics[]>([]);
   const [loading, setLoading] = useState(true);
@@ -46,7 +50,7 @@ export default function SpeedTab() {
     <div className="space-y-6">
       <div className="text-center mb-6">
         <h2 className="heading-2">Practice Mode Effective WPM</h2>
-        <p className="body-small text-muted">Your speed progression over the last 30 days</p>
+        <p className="body-small text-muted">Your speed progression over the last {timeWindow} days</p>
       </div>
 
       {loading && (
@@ -79,6 +83,7 @@ export default function SpeedTab() {
             dataKey="effectiveWpm"
             yLabel="WPM"
             yDomain={[0, 30]}
+            timeWindow={timeWindow}
           />
         </div>
       )}

@@ -4,7 +4,11 @@ import { StatisticsAPI } from '../../features/statistics/api';
 import type { SessionStatistics } from '../../core/types/statistics';
 import SessionGraph from './SessionGraph';
 
-export default function AccuracyTab() {
+interface AccuracyTabProps {
+  timeWindow: 7 | 30;
+}
+
+export default function AccuracyTab({ timeWindow }: AccuracyTabProps) {
   const { user } = useAuth();
   const [sessions, setSessions] = useState<SessionStatistics[]>([]);
   const [loading, setLoading] = useState(true);
@@ -46,7 +50,7 @@ export default function AccuracyTab() {
     <div className="space-y-6">
       <div className="text-center mb-6">
         <h2 className="heading-2">Practice Mode Accuracy</h2>
-        <p className="body-small text-muted">Your accuracy progression over the last 30 days</p>
+        <p className="body-small text-muted">Your accuracy progression over the last {timeWindow} days</p>
       </div>
 
       {loading && (
@@ -79,6 +83,7 @@ export default function AccuracyTab() {
             dataKey="overallAccuracy"
             yLabel="Accuracy %"
             yDomain={[0, 100]}
+            timeWindow={timeWindow}
           />
         </div>
       )}

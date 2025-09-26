@@ -19,27 +19,26 @@ class SettingsStore {
     this.api = new SettingsAPI(authToken)
     this.isInitialized = true
 
-    // 1. Load from cache (non-blocking)
-    const cached = this.loadFromCache()
-    if (cached) {
-      this.settings = cached
-      this.notifyListeners()
-    }
-
-    // 2. Fetch from backend (authoritative)
     try {
       const remote = await this.api.fetch()
-      this.settings = remote
-      this.saveToCache(remote)
+      // Merge remote settings with defaults to handle schema evolution
+      const cleanRemote = Object.fromEntries(
+        Object.entries(remote).filter(([_, v]) => v !== undefined)
+      )
+      this.settings = { ...DEFAULT_USER_SETTINGS, ...cleanRemote }
+      this.saveToCache(this.settings)
       this.notifyListeners()
     } catch (error) {
       console.error('Failed to fetch settings:', error)
-      // Use cached or defaults
-      if (!this.settings) {
-        this.settings = DEFAULT_USER_SETTINGS
-        this.saveToCache(this.settings)
-        this.notifyListeners()
-      }
+
+      // Any error: Fall back to cache or defaults
+      const cached = this.loadFromCache()
+      this.settings = cached || DEFAULT_USER_SETTINGS
+      this.saveToCache(this.settings)
+      this.notifyListeners()
+
+      // Re-throw so SettingsProvider can show warning banner
+      throw error
     }
   }
 
@@ -155,7 +154,12 @@ class SettingsStore {
       const parsed = JSON.parse(cached)
       // Basic validation that it has expected shape
       if (typeof parsed === 'object' && 'wpm' in parsed) {
-        return parsed as UserSettings
+        // Merge with defaults, but filter out undefined values from cached settings
+        // so defaults can fill them in
+        const cleanParsed = Object.fromEntries(
+          Object.entries(parsed).filter(([_, v]) => v !== undefined)
+        )
+        return { ...DEFAULT_USER_SETTINGS, ...cleanParsed } as UserSettings
       }
       return null
     } catch (error) {

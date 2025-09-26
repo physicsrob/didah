@@ -4,7 +4,11 @@ import { StatisticsAPI } from '../../features/statistics/api';
 import type { DailyPracticeTime } from '../../features/statistics/api';
 import CalendarView from './CalendarView';
 
-export default function TimeTab() {
+interface TimeTabProps {
+  timeWindow: 7 | 30;
+}
+
+export default function TimeTab({ timeWindow }: TimeTabProps) {
   const { user } = useAuth();
   const [practiceData, setPracticeData] = useState<DailyPracticeTime[]>([]);
   const [loading, setLoading] = useState(true);
@@ -62,7 +66,7 @@ export default function TimeTab() {
       )}
 
       {!loading && !error && practiceData.length > 0 && (
-        <CalendarView data={practiceData} />
+        <CalendarView data={practiceData} timeWindow={timeWindow} />
       )}
 
       {!loading && !error && !user && (

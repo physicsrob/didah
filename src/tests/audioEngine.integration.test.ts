@@ -8,7 +8,7 @@
 
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { AudioEngine } from '../features/session/services/audioEngine.js';
-import { DEFAULT_AUDIO_CONFIG, DEFAULT_WPM } from '../core/config/defaults.js';
+import { DEFAULT_WPM } from '../core/config/defaults.js';
 
 // Mock AudioContext for testing environment
 class MockAudioContext {
@@ -73,7 +73,7 @@ describe('AudioEngine Integration', () => {
   let audioEngine: AudioEngine;
 
   beforeEach(() => {
-    audioEngine = new AudioEngine(DEFAULT_AUDIO_CONFIG);
+    audioEngine = new AudioEngine({ frequency: 600, volume: 0.2, tone: 'normal' });
   });
 
   afterEach(() => {

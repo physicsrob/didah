@@ -1,6 +1,5 @@
 import React, { useRef, useCallback, useEffect } from 'react';
 import { AudioEngine } from '../features/session/services/audioEngine';
-import { DEFAULT_AUDIO_CONFIG } from '../core/config/defaults';
 import { AudioContext } from './AudioContextType';
 import { useSettings } from '../features/settings/hooks/useSettings';
 
@@ -11,26 +10,27 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
 
   const getAudioEngine = useCallback(() => {
     if (!audioEngineRef.current) {
-      const frequency = settings?.frequency || DEFAULT_AUDIO_CONFIG.frequency;
-      const tone = settings?.tone || DEFAULT_AUDIO_CONFIG.tone;
+      if (!settings) {
+        throw new Error('Settings must be loaded before AudioEngine can be created');
+      }
       audioEngineRef.current = new AudioEngine({
-        ...DEFAULT_AUDIO_CONFIG,
-        frequency,
-        tone
+        frequency: settings.frequency,
+        volume: settings.volume,
+        tone: settings.tone
       });
     }
     return audioEngineRef.current;
-  }, [settings?.frequency, settings?.tone]);
+  }, [settings]);
 
   useEffect(() => {
     if (audioEngineRef.current && settings) {
       audioEngineRef.current.updateConfig({
         frequency: settings.frequency,
-        volume: DEFAULT_AUDIO_CONFIG.volume,
+        volume: settings.volume,
         tone: settings.tone
       });
     }
-  }, [settings?.frequency, settings?.tone]);
+  }, [settings]);
 
   const initializeAudio = useCallback(async (): Promise<boolean> => {
     try {

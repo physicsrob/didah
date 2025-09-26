@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import {
   ScatterChart,
   Scatter,
@@ -16,6 +16,7 @@ interface SessionGraphProps {
   dataKey: keyof SessionStatistics;
   yLabel: string;
   yDomain: [number, number];
+  timeWindow: 7 | 30;
 }
 
 interface DataPoint {
@@ -25,8 +26,7 @@ interface DataPoint {
   sessionId: string;
 }
 
-export default function SessionGraph({ sessions, dataKey, yLabel, yDomain }: SessionGraphProps) {
-  const [timeWindow, setTimeWindow] = useState<7 | 30>(30);
+export default function SessionGraph({ sessions, dataKey, yLabel, yDomain, timeWindow }: SessionGraphProps) {
 
   // Process sessions into data points
   const dataPoints = useMemo(() => {
@@ -121,20 +121,6 @@ export default function SessionGraph({ sessions, dataKey, yLabel, yDomain }: Ses
 
   return (
     <div className="session-graph-container">
-      <div className="graph-controls">
-        <button
-          className={`time-toggle ${timeWindow === 7 ? 'active' : ''}`}
-          onClick={() => setTimeWindow(7)}
-        >
-          Last 7 Days
-        </button>
-        <button
-          className={`time-toggle ${timeWindow === 30 ? 'active' : ''}`}
-          onClick={() => setTimeWindow(30)}
-        >
-          Last 30 Days
-        </button>
-      </div>
 
       <ResponsiveContainer width="100%" height={250}>
         <ScatterChart

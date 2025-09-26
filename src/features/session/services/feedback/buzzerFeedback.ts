@@ -7,6 +7,10 @@
 
 import type { Feedback } from './feedbackInterface.js';
 
+// Square waves are perceived as much louder than sine waves due to harmonics
+// Apply compensation factor to match perceived loudness of sine wave morse code
+export const SQUARE_WAVE_VOLUME_COMPENSATION = 0.25;
+
 export interface BuzzerConfig {
   frequency: number;  // Buzzer frequency in Hz (typically lower than morse tone)
   duration: number;   // Duration in milliseconds
@@ -64,9 +68,11 @@ export class BuzzerFeedback implements Feedback {
       const attackTime = 0.005; // 5ms attack
       const releaseTime = 0.01;  // 10ms release
 
+      const compensatedVolume = this.config.volume * SQUARE_WAVE_VOLUME_COMPENSATION;
+
       gainNode.gain.setValueAtTime(0, startTime);
-      gainNode.gain.linearRampToValueAtTime(this.config.volume, startTime + attackTime);
-      gainNode.gain.setValueAtTime(this.config.volume, startTime + duration - releaseTime);
+      gainNode.gain.linearRampToValueAtTime(compensatedVolume, startTime + attackTime);
+      gainNode.gain.setValueAtTime(compensatedVolume, startTime + duration - releaseTime);
       gainNode.gain.linearRampToValueAtTime(0, startTime + duration);
 
       // Connect audio graph
