@@ -33,8 +33,9 @@ export const DEFAULT_SESSION_CONFIG: SessionConfig = {
  * Audio engine default configuration
  */
 export const DEFAULT_AUDIO_CONFIG = {
-  frequency: 700, // Hz - standard CW tone frequency
-  volume: 0.2,    // 20% volume - comfortable listening level
+  frequency: 700,
+  volume: 0.2,
+  tone: 'normal' as const,
 };
 
 /**

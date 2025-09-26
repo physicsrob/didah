@@ -1,10 +1,15 @@
 import { useNavigate } from 'react-router-dom'
+import { useRef } from 'react'
 import { useSettings } from '../features/settings/hooks/useSettings'
+import { useAudio } from '../contexts/useAudio'
+import { DEFAULT_WPM } from '../core/config/defaults'
 import '../styles/main.css'
 
 export default function SettingsPage() {
   const navigate = useNavigate()
   const { settings, updateSetting, isLoading } = useSettings()
+  const { initializeAudio, getAudioEngine } = useAudio()
+  const debounceTimerRef = useRef<number | null>(null)
 
   // Build effective alphabet based on toggles
   const buildAlphabet = () => {
@@ -23,6 +28,36 @@ export default function SettingsPage() {
   const handleSave = () => {
     // Settings are auto-saved via the store
     navigate('/')
+  }
+
+  const handleFrequencyChange = (value: number) => {
+    updateSetting('frequency', value)
+
+    if (debounceTimerRef.current !== null) {
+      clearTimeout(debounceTimerRef.current)
+    }
+
+    debounceTimerRef.current = window.setTimeout(async () => {
+      try {
+        await initializeAudio()
+        const audioEngine = getAudioEngine()
+        await audioEngine.playCharacter('?', DEFAULT_WPM)
+      } catch (error) {
+        console.error('Failed to play preview:', error)
+      }
+    }, 150)
+  }
+
+  const handleToneChange = async (tone: 'soft' | 'normal' | 'hard') => {
+    updateSetting('tone', tone)
+
+    try {
+      await initializeAudio()
+      const audioEngine = getAudioEngine()
+      await audioEngine.playCharacter('?', DEFAULT_WPM)
+    } catch (error) {
+      console.error('Failed to play preview:', error)
+    }
   }
 
   if (isLoading || !settings) {
@@ -46,6 +81,22 @@ export default function SettingsPage() {
         <div className="card mb-6">
           <h2 className="heading-2 mb-6">Audio Settings</h2>
 
+          <div className="form-group mb-6">
+            <label className="form-label">Tone</label>
+            <div className="segmented-control" style={{ marginTop: '8px' }}>
+              {(['soft', 'normal', 'hard'] as const).map((tone) => (
+                <button
+                  key={tone}
+                  onClick={() => handleToneChange(tone)}
+                  className={settings.tone === tone ? 'segmented-btn active' : 'segmented-btn'}
+                  style={{ textTransform: 'capitalize' }}
+                >
+                  {tone}
+                </button>
+              ))}
+            </div>
+          </div>
+
           <div className="form-group">
             <label className="form-label">Frequency: {settings.frequency} Hz</label>
             <input
@@ -53,22 +104,13 @@ export default function SettingsPage() {
               value={settings.frequency}
               onChange={(e) => {
                 const value = parseInt(e.target.value)
-                updateSetting('frequency', value)
+                handleFrequencyChange(value)
               }}
               min="500"
               max="1000"
               step="10"
               className="form-slider"
-              style={{
-                width: '100%',
-                height: '6px',
-                backgroundColor: 'rgba(255, 255, 255, 0.1)',
-                borderRadius: '3px',
-                outline: 'none',
-                appearance: 'none',
-                WebkitAppearance: 'none',
-                cursor: 'pointer'
-              }}
+              style={{ width: '100%' }}
             />
             <div style={{
               display: 'flex',

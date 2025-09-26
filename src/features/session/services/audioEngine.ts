@@ -8,9 +8,12 @@
 import { getMorsePattern, type MorsePattern } from '../../../core/morse/alphabet.js';
 import { wpmToDitMs, getSpacingMs } from '../../../core/morse/timing.js';
 
+export type ToneSetting = 'soft' | 'normal' | 'hard';
+
 export interface AudioEngineConfig {
-  frequency: number; // Tone frequency in Hz (typically 600-800 Hz)
-  volume: number;    // Volume (0.0 to 1.0)
+  frequency: number;
+  volume: number;
+  tone: ToneSetting;
 }
 
 export class AudioEngine {
@@ -164,6 +167,35 @@ export class AudioEngine {
   }
 
   /**
+   * Create a distortion curve for the WaveShaperNode
+   */
+  private createDistortionCurve(amount: number): Float32Array {
+    const samples = 44100;
+    const curve = new Float32Array(samples);
+
+    for (let i = 0; i < samples; i++) {
+      const x = (i * 2) / samples - 1;
+      curve[i] = Math.tanh(x * amount) / amount;
+    }
+    return curve;
+  }
+
+  /**
+   * Get envelope timings based on tone setting
+   */
+  private getEnvelopeTimings(): { riseTime: number; fallTime: number } {
+    switch (this.config.tone) {
+      case 'soft':
+        return { riseTime: 0.025, fallTime: 0.025 };
+      case 'hard':
+        return { riseTime: 0.001, fallTime: 0.001 };
+      case 'normal':
+      default:
+        return { riseTime: 0.005, fallTime: 0.005 };
+    }
+  }
+
+  /**
    * Play a tone for the specified duration with shaped envelope
    */
   private async playTone(durationMs: number): Promise<void> {
@@ -174,35 +206,36 @@ export class AudioEngine {
         const startTime = this.audioContext!.currentTime;
         const duration = durationMs / 1000;
 
-        // Create oscillator and gain node
         const oscillator = this.audioContext!.createOscillator();
         const gainNode = this.audioContext!.createGain();
 
         this.currentOscillator = oscillator;
         this.currentGain = gainNode;
 
-        // Configure oscillator
         oscillator.type = 'sine';
         oscillator.frequency.setValueAtTime(this.config.frequency, startTime);
 
-        // Configure gain with shaped envelope to avoid clicks
-        const riseTime = Math.min(0.005, duration * 0.1); // 5ms or 10% of duration
-        const fallTime = Math.min(0.005, duration * 0.1);
+        const { riseTime, fallTime } = this.getEnvelopeTimings();
 
         gainNode.gain.setValueAtTime(0, startTime);
         gainNode.gain.linearRampToValueAtTime(this.config.volume, startTime + riseTime);
         gainNode.gain.setValueAtTime(this.config.volume, startTime + duration - fallTime);
         gainNode.gain.linearRampToValueAtTime(0, startTime + duration);
 
-        // Connect audio graph
         oscillator.connect(gainNode);
-        gainNode.connect(this.audioContext!.destination);
 
-        // Schedule playback
+        if (this.config.tone === 'hard') {
+          const shaper = this.audioContext!.createWaveShaper();
+          shaper.curve = this.createDistortionCurve(3.0);
+          gainNode.connect(shaper);
+          shaper.connect(this.audioContext!.destination);
+        } else {
+          gainNode.connect(this.audioContext!.destination);
+        }
+
         oscillator.start(startTime);
         oscillator.stop(startTime + duration);
 
-        // Handle completion
         oscillator.onended = () => {
           oscillator.disconnect();
           gainNode.disconnect();

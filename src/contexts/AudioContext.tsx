@@ -11,25 +11,26 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
 
   const getAudioEngine = useCallback(() => {
     if (!audioEngineRef.current) {
-      // Use frequency from settings if available, otherwise use default
       const frequency = settings?.frequency || DEFAULT_AUDIO_CONFIG.frequency;
+      const tone = settings?.tone || DEFAULT_AUDIO_CONFIG.tone;
       audioEngineRef.current = new AudioEngine({
         ...DEFAULT_AUDIO_CONFIG,
-        frequency
+        frequency,
+        tone
       });
     }
     return audioEngineRef.current;
-  }, [settings?.frequency]);
+  }, [settings?.frequency, settings?.tone]);
 
-  // Update audio engine frequency when settings change
   useEffect(() => {
-    if (audioEngineRef.current && settings?.frequency) {
+    if (audioEngineRef.current && settings) {
       audioEngineRef.current.updateConfig({
         frequency: settings.frequency,
-        volume: DEFAULT_AUDIO_CONFIG.volume
+        volume: DEFAULT_AUDIO_CONFIG.volume,
+        tone: settings.tone
       });
     }
-  }, [settings?.frequency]);
+  }, [settings?.frequency, settings?.tone]);
 
   const initializeAudio = useCallback(async (): Promise<boolean> => {
     try {

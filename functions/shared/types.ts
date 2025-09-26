@@ -2,6 +2,8 @@
 export type UserSettings = {
   // Core settings
   wpm: number
+  frequency: number
+  tone: 'soft' | 'normal' | 'hard'
   includeNumbers: boolean
   includeStdPunct: boolean
   includeAdvPunct: boolean
@@ -22,6 +24,8 @@ export type UserSettings = {
 
 export const DEFAULT_USER_SETTINGS: UserSettings = {
   wpm: 15,
+  frequency: 600,
+  tone: 'normal',
   includeNumbers: true,
   includeStdPunct: true,
   includeAdvPunct: false,
@@ -48,7 +52,7 @@ export function validateSettings(settings: unknown): settings is UserSettings {
   }
 
   const requiredFields: (keyof UserSettings)[] = [
-    'wpm', 'includeNumbers', 'includeStdPunct', 'includeAdvPunct',
+    'wpm', 'frequency', 'tone', 'includeNumbers', 'includeStdPunct', 'includeAdvPunct',
     'defaultDuration', 'defaultMode', 'defaultSpeedTier', 'defaultSourceId',
     'feedback', 'replay', 'liveCopyFeedback'
   ]
@@ -61,6 +65,14 @@ export function validateSettings(settings: unknown): settings is UserSettings {
 
   // Type-specific validations
   if (typeof settings.wpm !== 'number' || settings.wpm < 5 || settings.wpm > 100) {
+    return false
+  }
+
+  if (typeof settings.frequency !== 'number' || settings.frequency < 500 || settings.frequency > 1000) {
+    return false
+  }
+
+  if (!['soft', 'normal', 'hard'].includes(settings.tone)) {
     return false
   }
 
