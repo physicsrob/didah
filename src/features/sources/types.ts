@@ -6,7 +6,8 @@ export interface TextSource {
   id: string;
   name: string;
   type: 'generated' | 'rss';
-  backendId: string;  // ID to use when fetching from backend
+  backendId: string;
+  requiresAuth?: boolean;
 }
 
 export interface FullPost {

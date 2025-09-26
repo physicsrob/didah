@@ -4,6 +4,7 @@ import type { SessionConfig, FeedbackMode } from '../core/types/domain';
 import { fetchSources, fetchSourceContent } from '../features/sources';
 import type { TextSource as ApiTextSource, SourceContent } from '../features/sources';
 import { useSettings } from '../features/settings/hooks/useSettings';
+import { useAuth } from '../hooks/useAuth';
 import '../styles/main.css';
 
 type SpeedTier = 'slow' | 'medium' | 'fast' | 'lightning';
@@ -34,6 +35,7 @@ export function SessionConfigPage() {
 
   // Use centralized settings
   const { settings, updateSetting, isLoading: settingsLoading } = useSettings();
+  const { user } = useAuth();
 
   // Session configuration state - default values before settings load
   const [duration, setDuration] = useState<1 | 2 | 5>(1);
@@ -95,7 +97,13 @@ export function SessionConfigPage() {
     setSourcesLoading(true);
     fetchSources()
       .then(sources => {
-        setAvailableSources(sources);
+        const filteredSources = sources.filter(source => {
+          if (source.requiresAuth && !user) {
+            return false;
+          }
+          return true;
+        });
+        setAvailableSources(filteredSources);
       })
       .catch(error => {
         console.error('Failed to fetch sources:', error);
@@ -105,7 +113,7 @@ export function SessionConfigPage() {
       .finally(() => {
         setSourcesLoading(false);
       });
-  }, []);
+  }, [user]);
 
   // Fetch content when selectedSourceId changes or on mount
   useEffect(() => {
@@ -127,7 +135,7 @@ export function SessionConfigPage() {
     }
 
     // Always fetch fresh content (even on mount/reload)
-    fetchSourceContent(source.backendId)
+    fetchSourceContent(source.backendId, source.requiresAuth)
       .then(content => {
         if (content) {
           // Override the content ID with the frontend ID for proper source factory detection
@@ -210,7 +218,7 @@ export function SessionConfigPage() {
     }
 
     try {
-      const content = await fetchSourceContent(source.backendId);
+      const content = await fetchSourceContent(source.backendId, source.requiresAuth);
       if (content) {
         // Override the content ID with the frontend ID for proper source factory detection
         setSourceContent({ ...content, id: sourceId });
@@ -267,7 +275,7 @@ export function SessionConfigPage() {
       const source = availableSources.find(s => s.id === selectedSourceId);
       if (source) {
         try {
-          const content = await fetchSourceContent(source.backendId);
+          const content = await fetchSourceContent(source.backendId, source.requiresAuth);
           // Override the content ID with the frontend ID for proper source factory detection
           freshContent = content ? { ...content, id: selectedSourceId } : null;
         } catch (error) {

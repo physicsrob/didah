@@ -3,6 +3,7 @@ export const SOURCES = [
   { id: 'random_letters', name: 'Random Letters', type: 'generated' },
   { id: 'common_words', name: 'Common Words', type: 'generated' },
   { id: 'common_words_easy', name: 'Easy Words', type: 'generated' },
+  { id: 'confusing_characters', name: 'Confusing Characters', type: 'generated', requiresAuth: true },
   { id: 'reddit_popular', name: 'Reddit Popular', type: 'rss', url: 'https://www.reddit.com/r/popular.rss' },
   { id: 'reddit_news', name: 'Reddit News', type: 'rss', url: 'https://www.reddit.com/r/news.rss' },
   { id: 'reddit_amateurradio', name: 'Amateur Radio', type: 'rss', url: 'https://www.reddit.com/r/amateurradio.rss' },

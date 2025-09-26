@@ -51,10 +51,22 @@ export async function fetchSources(): Promise<TextSource[]> {
 /**
  * Fetch content for a specific source
  */
-export async function fetchSourceContent(id: string): Promise<SourceContent | null> {
+export async function fetchSourceContent(id: string, requiresAuth: boolean = false): Promise<SourceContent | null> {
   try {
+    const headers: HeadersInit = {
+      'Cache-Control': 'no-store'
+    };
+
+    if (requiresAuth) {
+      const token = localStorage.getItem('google_token');
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+    }
+
     const response = await fetch(`/api/sources/${id}`, {
-      cache: 'no-store', // Prevent browser caching to ensure fresh randomization
+      cache: 'no-store',
+      headers
     });
     if (!response.ok) {
       throw new Error(`Failed to fetch source content: ${response.status}`);

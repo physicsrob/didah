@@ -150,6 +150,11 @@ export async function onRequestGet(context: CloudflareContext) {
         items = [generateCommonWords(100, true)];
         break;
 
+      case 'confusing_characters': {
+        const confusingModule = await import('./confusing_characters');
+        return confusingModule.onRequestGet(context);
+      }
+
       default:
         // Check if it's a Reddit source first (read from KV cache)
         if (id.startsWith('reddit_') && kv) {
