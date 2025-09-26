@@ -5,6 +5,15 @@
 import type { CharacterSource } from '../session/runtime/sessionProgram';
 import type { FullPost } from './types';
 
+function stripUrls(text: string): string {
+  return text
+    .replace(/https?:\/\/[^\s]+/g, '')
+    .replace(/www\.[^\s]+/g, '')
+    .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
 /**
  * Source that cycles through an array of text items (e.g., headlines)
  * Preserves spaces within items, adds " = " separator between items
@@ -144,7 +153,7 @@ export class FullPostSource implements CharacterSource {
     if (fullMode) {
       // Full mode: TITLE = BODY AR (with AR as separator between posts)
       this.items = posts.map(post => {
-        const body = post.body.trim();
+        const body = stripUrls(post.body.trim());
         if (body) {
           return `${post.title} = ${body} AR`;
         } else {
