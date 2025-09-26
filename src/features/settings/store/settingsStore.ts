@@ -23,7 +23,7 @@ class SettingsStore {
       const remote = await this.api.fetch()
       // Merge remote settings with defaults to handle schema evolution
       const cleanRemote = Object.fromEntries(
-        Object.entries(remote).filter(([_, v]) => v !== undefined)
+        Object.entries(remote).filter(([, v]) => v !== undefined)
       )
       this.settings = { ...DEFAULT_USER_SETTINGS, ...cleanRemote }
       this.saveToCache(this.settings)
@@ -157,7 +157,7 @@ class SettingsStore {
         // Merge with defaults, but filter out undefined values from cached settings
         // so defaults can fill them in
         const cleanParsed = Object.fromEntries(
-          Object.entries(parsed).filter(([_, v]) => v !== undefined)
+          Object.entries(parsed).filter(([, v]) => v !== undefined)
         )
         return { ...DEFAULT_USER_SETTINGS, ...cleanParsed } as UserSettings
       }
