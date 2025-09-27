@@ -525,8 +525,8 @@ export function SessionConfigPage() {
             </div>
           )}
 
-          {/* Timeout Speed - Only show for practice and live-copy modes */}
-          {mode !== 'listen' && (
+          {/* Timeout Speed - Only show for practice mode */}
+          {mode === 'practice' && (
             <div className="settings-row">
               <div className="settings-label">Timeout Speed</div>
               <div className="settings-control">
