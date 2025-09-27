@@ -52,11 +52,6 @@ export function SessionCompletePage() {
     navigate('/');
   };
 
-  const handlePracticeAgain = () => {
-    // Navigate to session config page
-    navigate('/session-config');
-  };
-
   // Handle missing data (shouldn't happen but good to be safe)
   if (!fullStatistics) {
     return (
@@ -74,6 +69,25 @@ export function SessionCompletePage() {
       </div>
     );
   }
+
+  // Navigation handler for session again - defined after fullStatistics check
+  const handleSessionAgain = () => {
+    navigate('/session-config', { state: { mode: fullStatistics.config.mode } });
+  };
+
+  // Get button text based on mode
+  const getSessionAgainText = () => {
+    switch (fullStatistics.config.mode) {
+      case 'practice':
+        return 'Practice Again';
+      case 'listen':
+        return 'Listen Again';
+      case 'live-copy':
+        return 'Live Copy Again';
+      default:
+        return 'Practice Again';
+    }
+  };
 
   return (
     <div className="completion-wrapper bg-gradient-primary">
@@ -112,8 +126,8 @@ export function SessionCompletePage() {
               <button className="btn btn-primary" onClick={handleBackToMenu}>
                 Back to Menu
               </button>
-              <button className="btn btn-secondary" onClick={handlePracticeAgain}>
-                Practice Again
+              <button className="btn btn-secondary" onClick={handleSessionAgain}>
+                {getSessionAgainText()}
               </button>
             </div>
           </div>
@@ -188,8 +202,8 @@ export function SessionCompletePage() {
               <button className="btn btn-primary" onClick={handleBackToMenu}>
                 Back to Menu
               </button>
-              <button className="btn btn-secondary" onClick={handlePracticeAgain}>
-                Practice Again
+              <button className="btn btn-secondary" onClick={handleSessionAgain}>
+                {getSessionAgainText()}
               </button>
             </div>
           </>
