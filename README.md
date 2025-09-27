@@ -9,17 +9,17 @@ A modern web application for learning Morse code with real-time feedback and ins
 Morse Academy offers three distinct ways to study and improve your Morse code skills:
 
 ### 🎯 Practice Mode
-Interactive training where you type what you hear in real-time. The key distinct element of this mode is that the learner has some control of pacing. They should try to go as fast as possible, but the app will wait (up until the timeout!)
+Interactive training where you type what you hear in real-time with immediate feedback. The key distinct element of this mode is that the learner has some control of pacing. They should try to go as fast as possible, but the app will wait (up until the timeout!)
 When you are operating in this mode you try to type as quickly as you can, and you optionally get three types of feedback:
-- Visual Flash
-- Buzzer
-- Replay -- When a character is missed it will show the character to you on the screen and play the audio for it again.
+- Visual Flash - immediate visual feedback on errors
+- Buzzer - immediate audio feedback on errors
+- Replay - When a character is missed it will show the character to you on the screen and play the audio for it again
 
 ### 👂 Listen Mode
-Passive listening experience where Morse code is played and then revealed on screen after a timed delay. Ideal for familiarizing yourself with Morse patterns without pressure. You simply listen, try to decode mentally, then see the correct answer. Great for when you want a more relxed experience. 
+Passive listening experience where Morse code is played and then revealed on screen after a timed delay. Ideal for familiarizing yourself with Morse patterns without pressure. You simply listen, try to decode mentally, then see the correct answer. Great for when you want a more relaxed experience.
 
 ### 📻 Live Copy Mode
-Copying experience that more closely simulates real morse code copy -- no controlling the transmission pacing -- no feedback until you are done.
+Copying experience that more closely simulates real morse code copy -- no controlling the transmission pacing, no feedback during the session. You type what you hear, and all corrections are revealed only at the end of the session.
 
 ## Documentation
 
@@ -42,20 +42,6 @@ npm test
 # Run all quality checks before committing
 npm run check
 ```
-
-## Features
-
-### Implemented ✅
-- **Active Mode**: Type what you hear with immediate feedback
-- **Passive Mode**: Listen and learn with timed character reveals
-- **Real-time feedback**: Visual flash on errors
-- **Session timer**: Track remaining time
-- **Accuracy tracking**: Within-session statistics
-- **Random letters**: Basic text source
-
-### Not Yet Implemented ❌
-- Statistics persistence and history
-- User settings and configuration
 
 ## Development
 

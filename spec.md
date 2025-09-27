@@ -43,14 +43,14 @@ By default we should support a few obvious reddits, but we should let the user a
 ## Study Session
 - User selects how much time they want this session to be, from 1, 2, or 5 minutes
 - User selects text source from drop down of options
-- User selects mode: Active or Passive
+- User selects mode: Practice, Listen, or Live Copy
 - User specifies speed: slow, medium, fast, lightning
-- If active, user selects:
+- If Practice mode, user selects:
   - Feedback: buzzer, flash, both
   - Replay: True / False
 
-## Mode: Active
-In active mode, text will be sent to the user, and the user will be expected to type what they hear quickly.
+## Mode: Practice
+In Practice mode, text will be sent to the user, and the user will be expected to type what they hear quickly with immediate feedback.
 The user has limited time to recognize each character:
 - slow: 2000ms
 - medium: 1000ms
@@ -65,8 +65,8 @@ If the user fails:
 
 The user should be able to see the previously sent characters
 
-## Mode: Passive
-In passive mode there is no feedback. The text source is just sent to the user.
+## Mode: Listen
+In Listen mode there is no feedback or user input. The text source is just sent to the user for passive listening.
 
 The user should be able to see the previously sent characters, but critically they cannot see the current character.
 The timing should work as follows:
@@ -74,6 +74,9 @@ The timing should work as follows:
 - Medium: character sent, 3 dits spacing, character displayed on screen, 2 dit spacing, next character
 - Fast: character sent, 2 dits spacing, character displayed on screen, 1 dit spacing, next character
 - Lightning: character sent, 2 dits spacing, character displayed on screen, 1 dit spacing, next character (same as fast)
+
+## Mode: Live Copy
+In Live Copy mode, the user types what they hear in real-time, but receives no feedback during the session. All corrections are revealed only at the end of the session. This more closely simulates real morse code copy where you cannot control transmission pacing.
 
 
 

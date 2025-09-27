@@ -34,6 +34,7 @@ npm run deploy      # Deploy to Cloudflare Pages
 - **Services**: `src/features/session/services/` - Audio, feedback
 - **Pages**: `src/pages/` - React components
 - **API Functions**: `functions/api/` - Cloudflare Pages Functions
+- **Live Copy**: `src/features/session/livecopy/` - Live Copy mode evaluation
 
 ## Styling Approach
 
@@ -51,20 +52,10 @@ npm run deploy      # Deploy to Cloudflare Pages
 - `src/core/morse/timing.ts` - Morse timing calculations (WPM → dit length)
 - `src/core/morse/alphabet.ts` - Character to Morse pattern mappings
 - `src/features/session/runtime/sessionProgram.ts` - Main session orchestrator
-- `src/features/session/runtime/charPrograms.ts` - Active/Passive mode logic
-- `src/pages/ActiveSessionPage.tsx` - Active practice session UI
+- `src/features/session/runtime/charPrograms.ts` - Practice/Listen/Live Copy mode logic
+- `src/features/session/livecopy/evaluator.ts` - Live Copy evaluation engine
+- `src/pages/ActiveSessionPage.tsx` - Session UI (all modes)
 - `src/pages/SessionConfigPage.tsx` - Session configuration UI
-
-## Current Status
-
-✅ Core timing engine with tests
-✅ Runtime session orchestration
-✅ Audio engine (WebAudio)
-✅ Basic UI with Active/Passive modes
-✅ API with multiple text sources (random, words, RSS feeds)
-✅ Deployed on Cloudflare Pages
-❌ No persistence/statistics
-❌ No user settings management
 
 # Import Context
 @spec.md
