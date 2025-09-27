@@ -20,9 +20,8 @@ import { createFeedback } from '../features/session/services/feedback/index.js';
 import { useAudio } from '../contexts/useAudio';
 import { useSettings } from '../features/settings/hooks/useSettings';
 import { CharacterDisplay } from '../components/CharacterDisplay';
-import { historyToDisplay, liveCopyToDisplay } from '../components/CharacterDisplay.transformations';
-import { useLiveCopy } from '../features/session/livecopy/useLiveCopy';
-import { evaluateLiveCopy, LIVE_COPY_INPUT_OFFSET_MS } from '../features/session/livecopy/evaluator';
+import type { DisplayCharacter } from '../components/CharacterDisplay';
+import { historyToDisplay } from '../components/CharacterDisplay.transformations';
 import { SessionStatsCalculator } from '../features/statistics/sessionStatsCalculator';
 import '../styles/main.css';
 import '../styles/activeSession.css';
@@ -60,14 +59,8 @@ export function ActiveSessionPage() {
   const isPausedRef = useRef(false);  // Use ref to avoid recreating IO adapter
   const eventCollector = useRef<LogEvent[]>([]);  // Collect events for statistics
 
-  // Live Copy mode
-  const isLiveCopyActive = config?.mode === 'live-copy' && sessionPhase === 'active' && snapshot.phase === 'running';
-  const {
-    events: liveCopyEvents,
-    currentTime: liveCopyTime,
-    addTransmitEvent,
-    reset: resetLiveCopy
-  } = useLiveCopy(isLiveCopyActive);
+  // Live Copy mode - simple typed string
+  const [liveCopyTyped, setLiveCopyTyped] = useState('');
 
   // Create runtime dependencies
   const clock = useMemo(() => new SystemClock(), []);
@@ -157,11 +150,8 @@ export function ActiveSessionPage() {
       navigate('/session-complete', {
         state: {
           fullStatistics,
-          liveCopyState: config.mode === 'live-copy' ? evaluateLiveCopy(
-            liveCopyEvents,
-            liveCopyTime,
-            { offset: LIVE_COPY_INPUT_OFFSET_MS }
-          ) : null
+          liveCopyTyped: config.mode === 'live-copy' ? liveCopyTyped : null,
+          liveCopyTransmitted: config.mode === 'live-copy' ? snapshot.emissions.map(e => e.char) : null
         }
       });
     };
@@ -171,21 +161,13 @@ export function ActiveSessionPage() {
     } else {
       doNavigate();
     }
-  }, [navigate, config, liveCopyEvents, liveCopyTime]);
+  }, [navigate, config, liveCopyTyped, snapshot.emissions]);
 
   // Subscribe to session snapshots
   useEffect(() => {
     if (config) {
       const unsub = runner.subscribe((snap) => {
         setSnapshot(snap);
-
-        // For Live Copy mode, sync emissions
-        if (config.mode === 'live-copy' && snap.emissions.length > liveCopyEvents.filter(e => e.type === 'transmitted').length) {
-          const newEmissions = snap.emissions.slice(liveCopyEvents.filter(e => e.type === 'transmitted').length);
-          newEmissions.forEach(emission => {
-            addTransmitEvent(emission.char, emission.startTime, emission.duration);
-          });
-        }
 
         // Navigate to completion page when session ends
         if (snap.phase === 'ended') {
@@ -195,7 +177,7 @@ export function ActiveSessionPage() {
       });
       return () => unsub();
     }
-  }, [runner, config, addTransmitEvent, liveCopyEvents, navigateToCompletion]);
+  }, [runner, config, navigateToCompletion]);
 
   // Handle pause/resume
   const handlePause = useCallback(() => {
@@ -234,6 +216,40 @@ export function ActiveSessionPage() {
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [input, config?.mode, sessionPhase, isPaused, snapshot.phase, handlePause]);
+
+  // Handle keyboard input for Live Copy mode
+  useEffect(() => {
+    if (config?.mode !== 'live-copy') return;
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Handle pause/resume
+      if (e.key === 'Escape') {
+        if (sessionPhase === 'active' && snapshot.phase === 'running') {
+          handlePause();
+        }
+        return;
+      }
+
+      // Only capture input during active session
+      if (sessionPhase !== 'active' || isPaused || snapshot.phase !== 'running') return;
+
+      // Handle backspace
+      if (e.key === 'Backspace') {
+        e.preventDefault();
+        setLiveCopyTyped(prev => prev.slice(0, -1));
+        return;
+      }
+
+      // Handle character input
+      if (e.key.length === 1) {
+        e.preventDefault();
+        setLiveCopyTyped(prev => prev + e.key.toUpperCase());
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [config?.mode, sessionPhase, isPaused, snapshot.phase, handlePause]);
 
   const handleEndSession = useCallback(() => {
     // Stop the runner
@@ -277,11 +293,11 @@ export function ActiveSessionPage() {
       }
 
       setSessionPhase('active');
-      resetLiveCopy();
+      setLiveCopyTyped('');
     };
 
     runCountdown();
-  }, [sessionPhase, isAudioReady, resetLiveCopy]);
+  }, [sessionPhase, isAudioReady]);
 
   // Start session when active
   useEffect(() => {
@@ -312,17 +328,14 @@ export function ActiveSessionPage() {
     };
   }, [runner]);
 
-  // Evaluate Live Copy state
-  const liveCopyState = useMemo(
-    () => config?.mode === 'live-copy'
-      ? evaluateLiveCopy(
-          liveCopyEvents,
-          liveCopyTime,
-          { offset: LIVE_COPY_INPUT_OFFSET_MS }
-        )
-      : null,
-    [liveCopyEvents, liveCopyTime, config?.mode]
-  );
+  // Convert Live Copy typed string to display characters
+  const liveCopyDisplay = useMemo((): DisplayCharacter[] => {
+    return liveCopyTyped.split('').map((char, i) => ({
+      text: char,
+      status: 'neutral' as const,
+      key: i
+    }));
+  }, [liveCopyTyped]);
 
   if (!config) {
     return null;
@@ -376,8 +389,8 @@ export function ActiveSessionPage() {
         <div className="session-display-area">
           <CharacterDisplay
             characters={
-              config?.mode === 'live-copy' && liveCopyState
-                ? liveCopyToDisplay(liveCopyState.display)
+              config?.mode === 'live-copy'
+                ? liveCopyDisplay
                 : historyToDisplay(snapshot.previous)
             }
           />

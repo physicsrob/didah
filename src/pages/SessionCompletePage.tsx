@@ -6,7 +6,6 @@
 
 import { useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { LiveCopyResults } from '../components/LiveCopyResults';
 import type { SessionStatistics } from '../core/types/statistics';
 import { useStatsAPI } from '../features/statistics/useStatsAPI';
 import '../styles/main.css';
@@ -19,7 +18,8 @@ export function SessionCompletePage() {
 
   // Get session data from navigation state
   const fullStatistics = location.state?.fullStatistics as SessionStatistics | undefined;
-  const liveCopyState = location.state?.liveCopyState;
+  const liveCopyTyped = location.state?.liveCopyTyped as string | null;
+  const liveCopyTransmitted = location.state?.liveCopyTransmitted as string[] | null;
 
   // Extract what we need from fullStatistics
   const accuracy = fullStatistics?.overallAccuracy || 0;
@@ -88,10 +88,26 @@ export function SessionCompletePage() {
       {/* Main content */}
       <div className="content-area">
         {/* Special handling for Live Copy mode */}
-        {fullStatistics.config.mode === 'live-copy' && liveCopyState ? (
+        {fullStatistics.config.mode === 'live-copy' ? (
           <div className="live-copy-results-container">
             <h2 className="section-title">Live Copy Results</h2>
-            <LiveCopyResults state={liveCopyState} />
+            <div className="completion-message">Session Complete!</div>
+
+            <div className="stat-item">
+              <span className="stat-label">Characters Transmitted</span>
+              <span className="stat-value">{liveCopyTransmitted?.length || 0}</span>
+            </div>
+
+            <div className="stat-item">
+              <span className="stat-label">Characters Typed</span>
+              <span className="stat-value">{liveCopyTyped?.length || 0}</span>
+            </div>
+
+            <div className="stat-item">
+              <span className="stat-label">Speed</span>
+              <span className="stat-value">{fullStatistics.config.wpm} WPM</span>
+            </div>
+
             <div className="action-buttons">
               <button className="btn btn-primary" onClick={handleBackToMenu}>
                 Back to Menu
