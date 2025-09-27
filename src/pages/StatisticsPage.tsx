@@ -6,6 +6,7 @@ import ConfusionTab from '../components/statistics/ConfusionTab'
 import HistoryTab from '../components/statistics/HistoryTab'
 import TimeWindowSelector from '../components/statistics/TimeWindowSelector'
 import { HeaderBar } from '../components/HeaderBar'
+import TabbedPanel, { type Tab } from '../components/TabbedPanel'
 import '../styles/main.css'
 import '../styles/statistics.css'
 
@@ -13,7 +14,7 @@ export default function StatisticsPage() {
   const [activeTab, setActiveTab] = useState('time')
   const [timeWindow, setTimeWindow] = useState<7 | 30>(7)
 
-  const tabs = [
+  const tabs: Tab<{ timeWindow: 7 | 30 }>[] = [
     { id: 'time', label: 'Time', component: TimeTab },
     { id: 'speed', label: 'Speed', component: SpeedTab },
     { id: 'accuracy', label: 'Accuracy', component: AccuracyTab },
@@ -30,29 +31,13 @@ export default function StatisticsPage() {
           <TimeWindowSelector value={timeWindow} onChange={setTimeWindow} />
         </div>
 
-        <div className="tabs-container stats-tabs-container">
-          <div className="tabs-header">
-            {tabs.map(tab => (
-              <button
-                key={tab.id}
-                className={`tab-button ${activeTab === tab.id ? 'tab-active' : ''}`}
-                onClick={() => setActiveTab(tab.id)}
-              >
-                {tab.label}
-              </button>
-            ))}
-          </div>
-
-          <div className="tab-content">
-            <div className="tab-panel active">
-              {activeTab === 'speed' && <SpeedTab timeWindow={timeWindow} />}
-              {activeTab === 'accuracy' && <AccuracyTab timeWindow={timeWindow} />}
-              {activeTab === 'confusion' && <ConfusionTab timeWindow={timeWindow} />}
-              {activeTab === 'time' && <TimeTab timeWindow={timeWindow} />}
-              {activeTab === 'history' && <HistoryTab timeWindow={timeWindow} />}
-            </div>
-          </div>
-        </div>
+        <TabbedPanel
+          tabs={tabs}
+          activeTab={activeTab}
+          onTabChange={setActiveTab}
+          tabProps={{ timeWindow }}
+          className="stats-tabs-container"
+        />
       </div>
     </div>
   )
