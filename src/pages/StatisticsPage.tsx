@@ -1,22 +1,17 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
 import TimeTab from '../components/statistics/TimeTab'
 import SpeedTab from '../components/statistics/SpeedTab'
 import AccuracyTab from '../components/statistics/AccuracyTab'
 import ConfusionTab from '../components/statistics/ConfusionTab'
 import HistoryTab from '../components/statistics/HistoryTab'
 import TimeWindowSelector from '../components/statistics/TimeWindowSelector'
+import { HeaderBar } from '../components/HeaderBar'
 import '../styles/main.css'
 import '../styles/statistics.css'
 
 export default function StatisticsPage() {
-  const navigate = useNavigate()
   const [activeTab, setActiveTab] = useState('time')
   const [timeWindow, setTimeWindow] = useState<7 | 30>(7)
-
-  const handleBack = () => {
-    navigate('/')
-  }
 
   const tabs = [
     { id: 'time', label: 'Time', component: TimeTab },
@@ -28,26 +23,10 @@ export default function StatisticsPage() {
 
   return (
     <div className="min-h-screen bg-gradient-primary">
-      {/* Header with Back button and MorseAcademy branding */}
-      <header className="config-header">
-        <button
-          onClick={handleBack}
-          className="btn-back"
-        >
-          <span className="btn-back-arrow">←</span>
-          Back
-        </button>
-        <h1
-          className="brand-title"
-          onClick={() => navigate('/')}
-        >
-          MorseAcademy
-        </h1>
-      </header>
+      <HeaderBar pageTitle="Statistics" />
 
       <div className="w-full px-6 py-4 max-w-xl" style={{ margin: '0 auto' }}>
-        <div className="mb-6" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <h1 className="heading-1" style={{ margin: 0, textAlign: 'center', flex: 1 }}>Statistics</h1>
+        <div className="mb-6" style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end' }}>
           <TimeWindowSelector value={timeWindow} onChange={setTimeWindow} />
         </div>
 

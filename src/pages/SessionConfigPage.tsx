@@ -5,6 +5,7 @@ import { fetchSources, fetchSourceContent } from '../features/sources';
 import type { TextSource as ApiTextSource, SourceContent } from '../features/sources';
 import { useSettings } from '../features/settings/hooks/useSettings';
 import { useAuth } from '../hooks/useAuth';
+import { HeaderBar } from '../components/HeaderBar';
 import '../styles/main.css';
 
 type SpeedTier = 'slow' | 'medium' | 'fast' | 'lightning';
@@ -289,9 +290,6 @@ export function SessionConfigPage() {
     navigate('/session', { state: { config, sourceContent: freshContent } });
   };
 
-  const handleCancel = () => {
-    navigate('/');
-  };
 
   // Show loading state while settings are loading
   if (settingsLoading || !settings) {
@@ -306,22 +304,7 @@ export function SessionConfigPage() {
 
   return (
     <div className="min-h-screen bg-gradient-primary">
-      {/* Header with Back button and MorseAcademy branding */}
-      <header className="config-header">
-        <button
-          onClick={handleCancel}
-          className="btn-back"
-        >
-          <span className="btn-back-arrow">←</span>
-          Back
-        </button>
-        <h1
-          className="brand-title"
-          onClick={() => navigate('/')}
-        >
-          MorseAcademy
-        </h1>
-      </header>
+      <HeaderBar pageTitle={modeConfig[mode].title} />
 
       <div className="container" style={{ margin: '0 auto', padding: '0 16px' }}>
         {/* Main Settings Card */}
@@ -330,21 +313,14 @@ export function SessionConfigPage() {
           margin: '0 auto',
           padding: '32px'
         }}>
-          {/* Mode Title and Description */}
+          {/* Mode Description */}
           <div style={{ marginBottom: '40px' }}>
-            <h1 className="heading-1" style={{
-              color: '#ffffff',
-              fontSize: '32px',
-              marginBottom: '12px'
-            }}>
-              {modeConfig[mode].title}
-            </h1>
             <p className="body-regular" style={{
               color: 'rgba(255, 255, 255, 0.7)',
               fontSize: '16px',
               lineHeight: '1.5'
             }}>
-              {modeConfig[mode].description}
+              <span style={{ fontWeight: '600' }}>{modeConfig[mode].title}:</span> {modeConfig[mode].description}
             </p>
           </div>
 
