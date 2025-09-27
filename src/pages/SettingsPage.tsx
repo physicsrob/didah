@@ -1,4 +1,3 @@
-import { useNavigate } from 'react-router-dom'
 import { useState } from 'react'
 import { useSettings } from '../features/settings/hooks/useSettings'
 import AudioTab from '../components/settings/AudioTab'
@@ -8,7 +7,6 @@ import { HeaderBar } from '../components/HeaderBar'
 import '../styles/main.css'
 
 export default function SettingsPage() {
-  const navigate = useNavigate()
   const { isLoading } = useSettings()
   const [activeTab, setActiveTab] = useState('audio')
 
@@ -16,14 +14,6 @@ export default function SettingsPage() {
     { id: 'audio', label: 'Audio', component: AudioTab },
     { id: 'characters', label: 'Characters', component: CharactersTab },
   ]
-
-  const handleBack = () => {
-    navigate('/')
-  }
-
-  const handleSave = () => {
-    navigate('/')
-  }
 
   if (isLoading) {
     return (
@@ -47,21 +37,6 @@ export default function SettingsPage() {
             onTabChange={setActiveTab}
             tabProps={{}}
           />
-
-          <div className="flex gap-3" style={{ marginTop: '24px' }}>
-            <button
-              className="btn btn-secondary flex-1"
-              onClick={handleBack}
-            >
-              Cancel
-            </button>
-            <button
-              className="btn btn-primary flex-1"
-              onClick={handleSave}
-            >
-              Save Settings
-            </button>
-          </div>
         </div>
       </div>
     </div>
