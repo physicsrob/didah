@@ -140,12 +140,16 @@ export function getSpacingMs(wpm: number) {
 /**
  * Calculate the total duration in milliseconds for playing a character's Morse pattern
  * Includes the time for all dits/dahs plus intra-symbol spacing
+ * @param char The character to calculate duration for
+ * @param wpm Words per minute
+ * @param extraWordSpacing Additional space characters worth of time to add to word spacing (0-5, default 0)
  */
-export function calculateCharacterDurationMs(char: string, wpm: number): number {
-  // Handle space character (4 dits of silence)
+export function calculateCharacterDurationMs(char: string, wpm: number, extraWordSpacing: number = 0): number {
+  // Handle space character (4 dits of silence + extra word spacing)
+  // Each extra space adds 7 dits (the standard inter-word spacing)
   if (char === ' ') {
     const ditMs = wpmToDitMs(wpm);
-    return ditMs * 4;
+    return ditMs * (4 + (extraWordSpacing * 7));
   }
 
   const pattern = getMorsePattern(char);

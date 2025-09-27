@@ -20,6 +20,7 @@ export type IOAdapterConfig = {
   onFlash?: (type: 'error' | 'warning' | 'success') => void; // Flash callback
   replayDuration?: number; // ms to show replay overlay
   isPaused?: () => boolean; // Check if session is paused
+  extraWordSpacing?: number; // Extra word spacing for listen/live-copy modes
 };
 
 /**
@@ -36,14 +37,15 @@ export function createIOAdapter(config: IOAdapterConfig): IO {
     onSnapshot,
     onFlash,
     replayDuration = 1000,
-    isPaused
+    isPaused,
+    extraWordSpacing = 0
   } = config;
 
   return {
     async playChar(char: string, wpm: number): Promise<void> {
       console.log(`[Audio] Playing '${char}' at ${wpm} WPM`);
       try {
-        await audioEngine.playCharacter(char, wpm);
+        await audioEngine.playCharacter(char, wpm, extraWordSpacing);
       } catch (error) {
         // Log but don't throw - let the session continue
         console.warn(`Failed to play audio for char: ${char}`, error);

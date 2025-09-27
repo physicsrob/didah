@@ -17,6 +17,7 @@ export type SessionConfig = {
   speedTier: 'slow' | 'medium' | 'fast' | 'lightning';
   lengthMs: number;
   replay?: boolean;
+  extraWordSpacing?: number; // Extra space characters to add between words (0-5, for listen/live-copy only)
 };
 
 export type PracticeOutcome = 'correct' | 'incorrect' | 'timeout';
@@ -77,7 +78,8 @@ export async function runPracticeEmission(
     getActiveWindowMs(cfg.speedTier),
     Math.max(60, ditMs) // Minimum 60ms or 1 dit
   );
-  const charDurationMs = calculateCharacterDurationMs(char, cfg.wpm);
+  // Practice mode always uses standard spacing (extraWordSpacing = 0)
+  const charDurationMs = calculateCharacterDurationMs(char, cfg.wpm, 0);
   debug.log(`[Window] Recognition window: ${windowMs}ms (${cfg.speedTier} @ ${cfg.wpm} WPM, dit=${ditMs}ms)`);
   debug.log(`[Audio] Character duration: ${charDurationMs}ms`);
 

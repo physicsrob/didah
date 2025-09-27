@@ -68,17 +68,18 @@ export class AudioEngine {
   /**
    * Play a character's Morse pattern
    */
-  async playCharacter(char: string, wpm: number): Promise<void> {
+  async playCharacter(char: string, wpm: number, extraWordSpacing: number = 0): Promise<void> {
     if (!this.audioContext) {
       throw new Error('Audio context not initialized');
     }
 
-    // Handle space character as a silent pause (4 dits)
-    // This adds to the standard 3-dit inter-character spacing for 7 total
+    // Handle space character as a silent pause (4 dits + extra word spacing)
+    // This adds to the standard 3-dit inter-character spacing for 7 total (or more with extraWordSpacing)
+    // Each extra word spacing adds 7 dits (one full space character worth)
     if (char === ' ') {
       const ditMs = wpmToDitMs(wpm);
       await this.stop(); // Stop any current playback
-      this.playbackPromise = this.silence(ditMs * 4);
+      this.playbackPromise = this.silence(ditMs * (4 + (extraWordSpacing * 7)));
       return this.playbackPromise;
     }
 

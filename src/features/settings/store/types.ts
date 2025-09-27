@@ -11,6 +11,7 @@ export type UserSettings = {
   includeNumbers: boolean
   includeStdPunct: boolean
   includeAdvPunct: boolean
+  extraWordSpacing: number  // Extra space characters to add between words (0-5)
 
   // Session defaults
   defaultDuration: 60 | 120 | 300
@@ -32,6 +33,7 @@ export const DEFAULT_USER_SETTINGS: UserSettings = {
   includeNumbers: true,
   includeStdPunct: true,
   includeAdvPunct: false,
+  extraWordSpacing: 0,  // No extra word spacing by default
   defaultDuration: 60,
   defaultMode: 'practice',
   defaultSpeedTier: 'slow',

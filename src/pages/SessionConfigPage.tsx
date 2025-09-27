@@ -44,6 +44,7 @@ export function SessionConfigPage() {
   const [selectedSourceId, setSelectedSourceId] = useState<string>('random_letters');
   const [wpm, setWpm] = useState(15);
   const [effectiveWpm, setEffectiveWpm] = useState(10);
+  const [extraWordSpacing, setExtraWordSpacing] = useState(0);
 
   // Text source state
   const [availableSources, setAvailableSources] = useState<ApiTextSource[]>([]);
@@ -83,6 +84,7 @@ export function SessionConfigPage() {
       setSelectedSourceId(settings.defaultSourceId || 'random_letters');
       setWpm(settings.wpm || 15);
       setEffectiveWpm(settings.effectiveWpm || 10);
+      setExtraWordSpacing(settings.extraWordSpacing || 0);
 
       // Direct assignment - feedbackMode is stored as-is now
       setFeedbackMode(settings.feedbackMode || 'flash');
@@ -164,6 +166,7 @@ export function SessionConfigPage() {
         settings.defaultSourceId !== selectedSourceId ||
         settings.wpm !== wpm ||
         settings.effectiveWpm !== effectiveWpm ||
+        settings.extraWordSpacing !== extraWordSpacing ||
         settings.feedbackMode !== feedbackMode;
 
       if (needsUpdate) {
@@ -183,6 +186,9 @@ export function SessionConfigPage() {
         if (settings.effectiveWpm !== effectiveWpm) {
           updateSetting('effectiveWpm', effectiveWpm);
         }
+        if (settings.extraWordSpacing !== extraWordSpacing) {
+          updateSetting('extraWordSpacing', extraWordSpacing);
+        }
         if (settings.feedbackMode !== feedbackMode) {
           updateSetting('feedbackMode', feedbackMode);
         }
@@ -190,7 +196,7 @@ export function SessionConfigPage() {
     }, 300); // 300ms debounce
 
     return () => clearTimeout(timer);
-  }, [duration, speedTier, selectedSourceId, wpm, effectiveWpm, feedbackMode, settings, settingsLoading, updateSetting]);
+  }, [duration, speedTier, selectedSourceId, wpm, effectiveWpm, extraWordSpacing, feedbackMode, settings, settingsLoading, updateSetting]);
 
   // Handle source selection
   const handleSourceChange = async (sourceId: string) => {
@@ -259,6 +265,7 @@ export function SessionConfigPage() {
       feedback,
       replay,
       effectiveAlphabet: buildAlphabet(),
+      extraWordSpacing,
     };
 
     // Fetch fresh content for each new session (except random_letters which is generated locally)
@@ -485,6 +492,41 @@ export function SessionConfigPage() {
                   textAlign: 'right'
                 }}>
                   {effectiveWpm} WPM{effectiveWpm === wpm ? ' (std)' : ''}
+                </span>
+              </div>
+            </div>
+          )}
+
+          {/* Extra Word Spacing - Only show for listen and live-copy modes */}
+          {(mode === 'listen' || mode === 'live-copy') && (
+            <div className="settings-row">
+              <div className="settings-label">Extra Word Spacing</div>
+              <div className="settings-control">
+                <input
+                  type="range"
+                  min="0"
+                  max="5"
+                  step="1"
+                  value={extraWordSpacing}
+                  onChange={(e) => setExtraWordSpacing(Number(e.target.value))}
+                  style={{
+                    flex: 1,
+                    height: '4px',
+                    background: 'rgba(255, 255, 255, 0.2)',
+                    borderRadius: '2px',
+                    outline: 'none',
+                    WebkitAppearance: 'none',
+                    appearance: 'none'
+                  }}
+                />
+                <span style={{
+                  color: '#4dabf7',
+                  fontSize: '16px',
+                  fontWeight: '500',
+                  minWidth: '60px',
+                  textAlign: 'right'
+                }}>
+                  {extraWordSpacing === 0 ? 'None' : `+${extraWordSpacing}`}
                 </span>
               </div>
             </div>
