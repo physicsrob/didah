@@ -12,7 +12,6 @@ import { liveCopyToDisplay } from '../../../../components/CharacterDisplay.trans
 describe('Live Copy Display Timing', () => {
   const config: LiveCopyConfig = {
     offset: 100,
-    feedbackMode: 'immediate',
   };
 
   it('should display correctly when no input is provided (HELLO sequence)', () => {
@@ -46,14 +45,6 @@ describe('Live Copy Display Timing', () => {
     // Analyze for issues
     const issues: string[] = [];
 
-    // Check for multiple underscores at same time
-    snapshots.forEach(({ time, display }) => {
-      const underscoreCount = (display.match(/_/g) || []).length;
-      if (underscoreCount > 1) {
-        issues.push(`Time ${time}ms: Multiple underscores (${underscoreCount}): "${display}"`);
-      }
-    });
-
     // Check for flickering (character appears, disappears, reappears)
     for (let i = 1; i < snapshots.length - 1; i++) {
       const prev = snapshots[i - 1].display;
@@ -75,14 +66,14 @@ describe('Live Copy Display Timing', () => {
 
     // Print timeline for debugging
     console.log('\n=== Live Copy Display Timeline (no input) ===');
-    console.log('Expected behavior:');
+    console.log('Expected behavior (end-of-session mode):');
     console.log('  0-99ms: Nothing displayed');
     console.log('  100-599ms: "_" (H pending)');
-    console.log('  600-1099ms: "H_" (H missed, E pending)');
-    console.log('  1100-1599ms: "HE_" (E missed, first L pending)');
-    console.log('  1600-2099ms: "HEL_" (first L missed, second L pending)');
-    console.log('  2100-2599ms: "HELL_" (second L missed, O pending)');
-    console.log('  2600+ms: "HELLO" (O missed)');
+    console.log('  600-1099ms: "__" (H missed but not revealed, E pending)');
+    console.log('  1100-1599ms: "___" (H,E missed but not revealed, first L pending)');
+    console.log('  1600-2099ms: "____" (H,E,L missed but not revealed, second L pending)');
+    console.log('  2100-2599ms: "_____" (H,E,L,L missed but not revealed, O pending)');
+    console.log('  2600+ms: "_____" (all missed but not revealed)');
     console.log('\nActual timeline:');
 
     // Print key moments
@@ -103,18 +94,18 @@ describe('Live Copy Display Timing', () => {
     // Assertions
     expect(issues).toHaveLength(0);
 
-    // Verify specific expected states
+    // Verify specific expected states (end-of-session mode: no reveals)
     const at100 = snapshots.find(s => s.time === 100);
     expect(at100?.display).toBe('_'); // At 100ms should show single underscore for pending H
 
     const at600 = snapshots.find(s => s.time === 600);
-    expect(at600?.display).toBe('H_'); // At 600ms should show H (missed) and underscore for pending E
+    expect(at600?.display).toBe('__'); // At 600ms should show __ (H missed but not revealed, E pending)
 
     const at1100 = snapshots.find(s => s.time === 1100);
-    expect(at1100?.display).toBe('HE_'); // At 1100ms should show HE and underscore for pending L
+    expect(at1100?.display).toBe('___'); // At 1100ms should show ___ (H,E missed but not revealed, L pending)
 
     const at2600 = snapshots.find(s => s.time === 2600);
-    expect(at2600?.display).toBe('HELLO'); // At 2600ms should show complete HELLO
+    expect(at2600?.display).toBe('_____'); // At 2600ms should show _____ (all missed but not revealed)
   });
 
   it('should handle the last character without flickering', () => {
@@ -169,22 +160,19 @@ describe('Live Copy Display Timing', () => {
     }
   });
 
-  it('should never show duplicate underscores', () => {
+  it('should show underscores for all missed unrevealed characters', () => {
     const events: LiveCopyEvent[] = [
       { type: 'transmitted', char: 'X', startTime: 0, duration: 500 },
       { type: 'transmitted', char: 'Y', startTime: 500, duration: 500 },
       { type: 'transmitted', char: 'Z', startTime: 1000, duration: 500 },
     ];
 
-    // Test entire sequence
-    for (let time = 0; time <= 1500; time += 10) {
-      const state = evaluateLiveCopy(events, time, config);
-      const displayChars = liveCopyToDisplay(state.display);
-      const displayText = displayChars.map(c => c.text).join('');
+    // At 1500ms, all three characters should be missed but not revealed
+    const state = evaluateLiveCopy(events, 1500, config);
+    const displayChars = liveCopyToDisplay(state.display);
+    const displayText = displayChars.map(c => c.text).join('');
 
-      const underscoreCount = (displayText.match(/_/g) || []).length;
-
-      expect(underscoreCount).toBeLessThanOrEqual(1); // Should only have at most one underscore
-    }
+    // In end-of-session mode, all missed characters show as underscores
+    expect(displayText).toBe('___');
   });
 });

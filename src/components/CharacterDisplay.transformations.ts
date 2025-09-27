@@ -4,7 +4,7 @@
  * Convert various data formats to DisplayCharacter arrays
  */
 
-import type { CharacterStatus, DisplayCharacter } from './CharacterDisplay';
+import type { DisplayCharacter } from './CharacterDisplay';
 
 /**
  * Transform HistoryItem array to DisplayCharacter array
@@ -26,57 +26,20 @@ export function historyToDisplay(
 
 /**
  * Transform Live Copy evaluation state to DisplayCharacter array
- * Used by Live Copy mode
+ * Used by Live Copy mode (end-of-session feedback only)
  */
 export function liveCopyToDisplay(
   display: Array<{
     char: string;
     status: 'pending' | 'correct' | 'wrong' | 'missed';
     typed?: string;
-    revealed: boolean;
   }>
 ): DisplayCharacter[] {
-  return display.map((item, i) => {
-    // Determine what text to show
-    let text = item.char; // Default to correct character
-
-    // Check revealed first - if revealed, always show the correct character
-    if (item.revealed) {
-      // Revealed - show the correct character
-      text = item.char;
-    } else if (item.status === 'pending' && item.typed) {
-      // User typed something, not evaluated/revealed yet - show what they typed
-      text = item.typed;
-    } else if (!item.revealed && item.typed) {
-      // Not revealed yet but user typed - show what they typed
-      text = item.typed;
-    } else if (item.status === 'missed' && !item.revealed) {
-      // Missed and not revealed - show placeholder
-      text = '_';
-    } else if (item.status === 'pending' && !item.typed) {
-      // Nothing typed yet in pending window
-      text = '_';
-    }
-
-    // Map status to visual state
-    let status: CharacterStatus;
-    if (!item.revealed && item.status !== 'pending') {
-      // Not revealed yet (end mode) - show as pending
-      status = 'pending';
-    } else if (item.status === 'pending') {
-      status = 'pending';
-    } else if (item.status === 'correct') {
-      status = 'correct';
-    } else if (item.status === 'wrong') {
-      status = 'incorrect';
-    } else if (item.status === 'missed') {
-      status = 'missed';
-    } else {
-      status = 'neutral';
-    }
-
-    return { text, status, key: i };
-  });
+  return display.map((item, i) => ({
+    text: item.typed || '_',
+    status: 'pending', // All characters show as pending during session
+    key: i
+  }));
 }
 
 /**
@@ -88,7 +51,6 @@ export function liveCopyResultsDisplay(
     char: string;
     status: 'pending' | 'correct' | 'wrong' | 'missed';
     typed?: string;
-    revealed: boolean;
   }>
 ): {
   userCopy: DisplayCharacter[];

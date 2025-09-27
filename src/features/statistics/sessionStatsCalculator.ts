@@ -97,7 +97,6 @@ export class SessionStatsCalculator {
         replay: config.replay,
         feedback: config.feedback,
         effectiveAlphabet: config.effectiveAlphabet,
-        liveCopyFeedback: config.liveCopyFeedback,
       },
       overallAccuracy,
       effectiveWpm,

@@ -26,7 +26,6 @@ export type SessionStatistics = {
     replay: boolean;
     feedback: "buzzer" | "flash" | "both" | "none";
     effectiveAlphabet: string[];    // Characters practiced
-    liveCopyFeedback?: "end" | "immediate";  // For live-copy mode
   };
 
   // Overall Metrics

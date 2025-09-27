@@ -12,7 +12,6 @@ import {
 describe('evaluateLiveCopy', () => {
   const defaultConfig: LiveCopyConfig = {
     offset: 100,
-    feedbackMode: 'immediate',
   };
 
   it('should handle empty events', () => {
@@ -25,7 +24,6 @@ describe('evaluateLiveCopy', () => {
       total: 0,
       accuracy: 0,
     });
-    expect(result.currentPosition).toBe(0);
   });
 
   it('should mark character as pending when window is still open', () => {
@@ -41,7 +39,6 @@ describe('evaluateLiveCopy', () => {
       char: 'A',
       status: 'pending',
       typed: undefined,
-      revealed: false,
     });
   });
 
@@ -58,7 +55,6 @@ describe('evaluateLiveCopy', () => {
       char: 'A',
       status: 'correct',
       typed: undefined,
-      revealed: true,
     });
     expect(result.score.correct).toBe(1);
     expect(result.score.accuracy).toBe(100);
@@ -77,7 +73,6 @@ describe('evaluateLiveCopy', () => {
       char: 'A',
       status: 'wrong',
       typed: 'B',
-      revealed: true,
     });
     expect(result.score.wrong).toBe(1);
     expect(result.score.accuracy).toBe(0);
@@ -96,7 +91,6 @@ describe('evaluateLiveCopy', () => {
       char: 'A',
       status: 'missed',
       typed: undefined,
-      revealed: true, // Revealed because currentTime >= nextStartTime + offset
     });
     expect(result.score.missed).toBe(1);
   });
@@ -145,24 +139,18 @@ describe('evaluateLiveCopy', () => {
     expect(result.score.total).toBe(3);
   });
 
-  it('should not reveal in end mode', () => {
-    const endConfig: LiveCopyConfig = {
-      offset: 100,
-      feedbackMode: 'end',
-    };
-
+  it('should not reveal during session', () => {
     const events: LiveCopyEvent[] = [
       { type: 'transmitted', char: 'A', startTime: 0, duration: 500 },
       { type: 'typed', char: 'B', time: 150 }, // Wrong
     ];
 
-    const result = evaluateLiveCopy(events, 700, endConfig);
+    const result = evaluateLiveCopy(events, 700, defaultConfig);
 
     expect(result.display[0]).toEqual({
       char: 'A',
       status: 'wrong',
       typed: 'B',
-      revealed: false, // Not revealed in end mode
     });
   });
 
@@ -179,7 +167,6 @@ describe('evaluateLiveCopy', () => {
       char: 'A',
       status: 'pending',
       typed: 'X', // Shows what was typed
-      revealed: false,
     });
   });
 
@@ -211,7 +198,7 @@ describe('evaluateLiveCopy', () => {
     // C window: 1100-1600 (open)
     const result = evaluateLiveCopy(events, 1150, defaultConfig);
 
-    expect(result.currentPosition).toBe(2); // A and B evaluated
+    // A and B evaluated, C still pending
     expect(result.display[0].status).toBe('correct');
     expect(result.display[1].status).toBe('correct');
     expect(result.display[2].status).toBe('pending');

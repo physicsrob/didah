@@ -28,7 +28,6 @@ export type SessionConfig = {
   feedback: "buzzer" | "flash" | "both" | "none";
   replay: boolean;
   effectiveAlphabet: string[]; // based on toggles
-  liveCopyFeedback?: "end" | "immediate"; // For Live Copy mode only
 };
 
 export type Emission = {

@@ -20,9 +20,6 @@ export type UserSettings = {
 
   // Active mode settings
   feedbackMode: FeedbackMode
-
-  // Live copy settings
-  liveCopyFeedback: 'end' | 'immediate'
 }
 
 export const DEFAULT_USER_SETTINGS: UserSettings = {
@@ -39,6 +36,5 @@ export const DEFAULT_USER_SETTINGS: UserSettings = {
   defaultMode: 'practice',
   defaultSpeedTier: 'slow',
   defaultSourceId: 'random_letters',
-  feedbackMode: 'replay',  // Default to replay (both + replay)
-  liveCopyFeedback: 'end'
+  feedbackMode: 'replay'  // Default to replay (both + replay)
 }

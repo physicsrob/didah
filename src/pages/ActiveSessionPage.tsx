@@ -22,7 +22,7 @@ import { useSettings } from '../features/settings/hooks/useSettings';
 import { CharacterDisplay } from '../components/CharacterDisplay';
 import { historyToDisplay, liveCopyToDisplay } from '../components/CharacterDisplay.transformations';
 import { useLiveCopy } from '../features/session/livecopy/useLiveCopy';
-import { evaluateLiveCopy } from '../features/session/livecopy/evaluator';
+import { evaluateLiveCopy, LIVE_COPY_INPUT_OFFSET_MS } from '../features/session/livecopy/evaluator';
 import { SessionStatsCalculator } from '../features/statistics/sessionStatsCalculator';
 import '../styles/main.css';
 import '../styles/activeSession.css';
@@ -160,10 +160,7 @@ export function ActiveSessionPage() {
           liveCopyState: config.mode === 'live-copy' ? evaluateLiveCopy(
             liveCopyEvents,
             liveCopyTime,
-            {
-              offset: 100,
-              feedbackMode: config.liveCopyFeedback || 'immediate'
-            }
+            { offset: LIVE_COPY_INPUT_OFFSET_MS }
           ) : null
         }
       });
@@ -321,13 +318,10 @@ export function ActiveSessionPage() {
       ? evaluateLiveCopy(
           liveCopyEvents,
           liveCopyTime,
-          {
-            offset: 100,
-            feedbackMode: config.liveCopyFeedback || 'immediate'
-          }
+          { offset: LIVE_COPY_INPUT_OFFSET_MS }
         )
       : null,
-    [liveCopyEvents, liveCopyTime, config?.mode, config?.liveCopyFeedback]
+    [liveCopyEvents, liveCopyTime, config?.mode]
   );
 
   if (!config) {

@@ -17,9 +17,6 @@ export type UserSettings = {
   // Active mode settings
   feedback: 'buzzer' | 'flash' | 'both'
   replay: boolean
-
-  // Live copy settings
-  liveCopyFeedback: 'end' | 'immediate'
 }
 
 export const DEFAULT_USER_SETTINGS: UserSettings = {
@@ -34,8 +31,7 @@ export const DEFAULT_USER_SETTINGS: UserSettings = {
   defaultSpeedTier: 'slow',
   defaultSourceId: 'random_letters',
   feedback: 'both',
-  replay: true,
-  liveCopyFeedback: 'end'
+  replay: true
 }
 
 export interface User {
@@ -54,7 +50,7 @@ export function validateSettings(settings: unknown): settings is UserSettings {
   const requiredFields: (keyof UserSettings)[] = [
     'wpm', 'frequency', 'tone', 'includeNumbers', 'includeStdPunct', 'includeAdvPunct',
     'defaultDuration', 'defaultMode', 'defaultSpeedTier', 'defaultSourceId',
-    'feedback', 'replay', 'liveCopyFeedback'
+    'feedback', 'replay'
   ]
 
   for (const field of requiredFields) {
@@ -89,10 +85,6 @@ export function validateSettings(settings: unknown): settings is UserSettings {
   }
 
   if (!['buzzer', 'flash', 'both'].includes(settings.feedback)) {
-    return false
-  }
-
-  if (!['end', 'immediate'].includes(settings.liveCopyFeedback)) {
     return false
   }
 

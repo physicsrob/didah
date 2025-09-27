@@ -17,7 +17,6 @@ export type SessionConfig = {
   speedTier: 'slow' | 'medium' | 'fast' | 'lightning';
   lengthMs: number;
   replay?: boolean;
-  liveCopyFeedback?: 'end' | 'immediate'; // For Live Copy mode
 };
 
 export type PracticeOutcome = 'correct' | 'incorrect' | 'timeout';

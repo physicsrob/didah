@@ -74,9 +74,6 @@ export function SessionConfigPage() {
   const includeStdPunct = settings?.includeStdPunct ?? true;
   const includeAdvPunct = settings?.includeAdvPunct ?? false;
 
-  // Live Copy specific settings
-  const [liveCopyFeedback, setLiveCopyFeedback] = useState<'end' | 'immediate'>('end');
-
   // Load settings into local state when they become available
   useEffect(() => {
     if (settings && !settingsLoading) {
@@ -86,7 +83,6 @@ export function SessionConfigPage() {
       setSelectedSourceId(settings.defaultSourceId || 'random_letters');
       setWpm(settings.wpm || 15);
       setEffectiveWpm(settings.effectiveWpm || 10);
-      setLiveCopyFeedback(settings.liveCopyFeedback || 'end');
 
       // Direct assignment - feedbackMode is stored as-is now
       setFeedbackMode(settings.feedbackMode || 'flash');
@@ -168,8 +164,7 @@ export function SessionConfigPage() {
         settings.defaultSourceId !== selectedSourceId ||
         settings.wpm !== wpm ||
         settings.effectiveWpm !== effectiveWpm ||
-        settings.feedbackMode !== feedbackMode ||
-        settings.liveCopyFeedback !== liveCopyFeedback;
+        settings.feedbackMode !== feedbackMode;
 
       if (needsUpdate) {
         // Update all settings at once
@@ -191,14 +186,11 @@ export function SessionConfigPage() {
         if (settings.feedbackMode !== feedbackMode) {
           updateSetting('feedbackMode', feedbackMode);
         }
-        if (settings.liveCopyFeedback !== liveCopyFeedback) {
-          updateSetting('liveCopyFeedback', liveCopyFeedback);
-        }
       }
     }, 300); // 300ms debounce
 
     return () => clearTimeout(timer);
-  }, [duration, speedTier, selectedSourceId, wpm, effectiveWpm, feedbackMode, liveCopyFeedback, settings, settingsLoading, updateSetting]);
+  }, [duration, speedTier, selectedSourceId, wpm, effectiveWpm, feedbackMode, settings, settingsLoading, updateSetting]);
 
   // Handle source selection
   const handleSourceChange = async (sourceId: string) => {
@@ -267,7 +259,6 @@ export function SessionConfigPage() {
       feedback,
       replay,
       effectiveAlphabet: buildAlphabet(),
-      ...(mode === 'live-copy' && { liveCopyFeedback }),
     };
 
     // Fetch fresh content for each new session (except random_letters which is generated locally)
@@ -496,34 +487,6 @@ export function SessionConfigPage() {
                   {effectiveWpm} WPM{effectiveWpm === wpm ? ' (std)' : ''}
                 </span>
               </div>
-            </div>
-          )}
-
-          {/* Live Copy Feedback Mode */}
-          {mode === 'live-copy' && (
-            <div className="form-group mb-4">
-              <label className="form-label">Feedback Mode</label>
-              <div className="flex gap-3">
-                <button
-                  type="button"
-                  className={`btn ${liveCopyFeedback === 'end' ? 'btn-primary' : 'btn-secondary'}`}
-                  onClick={() => setLiveCopyFeedback('end')}
-                >
-                  End of Session
-                </button>
-                <button
-                  type="button"
-                  className={`btn ${liveCopyFeedback === 'immediate' ? 'btn-primary' : 'btn-secondary'}`}
-                  onClick={() => setLiveCopyFeedback('immediate')}
-                >
-                  Live Corrections
-                </button>
-              </div>
-              <p className="body-small text-muted mt-2">
-                {liveCopyFeedback === 'end'
-                  ? 'Grade your copy at the end of the session'
-                  : 'See corrections in red as you type'}
-              </p>
             </div>
           )}
 

@@ -3,6 +3,10 @@
  * Pure functions for evaluating Live Copy state from event streams
  */
 
+// Constants
+export const LIVE_COPY_INPUT_OFFSET_MS = 100;
+export const LIVE_COPY_DISPLAY_UPDATE_INTERVAL_MS = 50;
+
 // Event types
 export type TransmitEvent = {
   type: 'transmitted';
@@ -24,7 +28,6 @@ export type CharDisplay = {
   char: string; // The correct character
   status: 'pending' | 'correct' | 'wrong' | 'missed';
   typed?: string; // What user actually typed (if wrong)
-  revealed: boolean; // Whether to show the correction yet
 };
 
 // Complete state including scoring
@@ -37,13 +40,11 @@ export type LiveCopyState = {
     total: number;
     accuracy: number; // percentage
   };
-  currentPosition: number; // Where user is in the sequence
 };
 
 // Configuration for evaluation
 export type LiveCopyConfig = {
-  offset: number; // Milliseconds after char starts (default 100)
-  feedbackMode: 'immediate' | 'end';
+  offset: number; // Milliseconds after char starts before input window opens
 };
 
 /**
@@ -70,7 +71,6 @@ export function evaluateLiveCopy(
     // Calculate input window for this character using explicit duration
     const windowStart = tx.startTime + config.offset;
     const windowEnd = tx.startTime + tx.duration + config.offset;
-    const revealTime = windowEnd;
 
     // Find typed characters in this window (but only those that have already happened)
     const typedInWindow = typed.filter(
@@ -105,31 +105,10 @@ export function evaluateLiveCopy(
       status = 'missed';
     }
 
-    // Determine if revealed
-    let revealed: boolean;
-    if (config.feedbackMode === 'immediate') {
-      // In immediate mode:
-      // - Only reveal when status is determined (window closed)
-      // - While pending, show typed character but don't reveal correct answer
-      if (status === 'correct' || status === 'wrong') {
-        revealed = true;
-      } else if (status === 'missed') {
-        revealed = currentTime >= revealTime;
-      } else {
-        // Status is pending - don't reveal the correct answer yet
-        // Let user see what they typed without distraction
-        revealed = false;
-      }
-    } else {
-      // End mode: never reveal during session
-      revealed = false;
-    }
-
     return {
       char: tx.char,
       status,
       typed: typedChar,
-      revealed,
     };
   });
 
@@ -150,62 +129,8 @@ export function evaluateLiveCopy(
     score.accuracy = Math.round((score.correct / score.total) * 100);
   }
 
-  // Current position is the number of evaluated characters
-  const currentPosition = display.filter((d) => d.status !== 'pending').length;
-
   return {
     display,
     score,
-    currentPosition,
   };
-}
-
-/**
- * Helper function to get the display text for a character
- */
-export function getCharDisplayText(char: CharDisplay): string {
-  if (!char.revealed && char.typed) {
-    // User typed something, not evaluated yet
-    return char.typed;
-  } else if (char.revealed) {
-    // Evaluation complete, show correct char
-    return char.char;
-  } else if (char.status === 'pending' && char.typed) {
-    // User typed something in current window
-    return char.typed;
-  } else if (char.status === 'pending') {
-    // Nothing typed yet, window still open
-    return '_';
-  } else {
-    // Not revealed yet (end mode)
-    return char.typed || '_';
-  }
-}
-
-/**
- * Helper function to get the CSS class for a character
- */
-export function getCharDisplayClass(char: CharDisplay): string {
-  if (!char.revealed && char.typed) {
-    // User typed something, not evaluated yet - neutral
-    return 'text-gray-800';
-  } else if (char.revealed) {
-    // Evaluation complete
-    switch (char.status) {
-      case 'correct':
-        return 'text-green-600';
-      case 'wrong':
-        return 'text-red-600';
-      case 'missed':
-        return 'text-red-400';
-      default:
-        return 'text-gray-400';
-    }
-  } else if (char.status === 'pending') {
-    // Window still open
-    return char.typed ? 'text-gray-800' : 'text-gray-300';
-  } else {
-    // Not revealed (end mode)
-    return 'text-gray-800';
-  }
 }

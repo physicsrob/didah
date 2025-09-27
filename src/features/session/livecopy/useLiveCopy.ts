@@ -4,6 +4,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import type { LiveCopyEvent } from './evaluator';
+import { LIVE_COPY_DISPLAY_UPDATE_INTERVAL_MS } from './evaluator';
 
 export function useLiveCopy(isActive: boolean) {
   const [events, setEvents] = useState<LiveCopyEvent[]>([]);
@@ -49,13 +50,13 @@ export function useLiveCopy(isActive: boolean) {
     return () => window.removeEventListener('keydown', handleKey);
   }, [isActive]);
 
-  // Update current time for reveal timing
+  // Update current time for window evaluation
   useEffect(() => {
     if (!isActive) return;
 
     const timer = setInterval(() => {
       setCurrentTime(performance.now());
-    }, 50); // 50ms for smooth reveals
+    }, LIVE_COPY_DISPLAY_UPDATE_INTERVAL_MS); // Smooth display updates
 
     return () => clearInterval(timer);
   }, [isActive]);
