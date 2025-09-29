@@ -7,9 +7,9 @@ import { runPracticeEmission, runListenEmission } from '../charPrograms';
 import { FakeClock } from '../clock';
 import { TestInputBus } from '../inputBus';
 import { TestIO } from './testIO';
-import { calculateCharacterDurationMs, wpmToDitMs } from '../../../../core/morse/timing';
+import { calculateCharacterDurationMs, wpmToDitMs, getActiveWindowMs } from '../../../../core/morse/timing';
 import { advanceAndFlush, createTestConfig, flushPromises } from './testUtils';
-import { TestTiming, getCharTimeout, getListenSequence } from './timingTestHelpers';
+import { TestTiming, getListenSequence } from './timingTestHelpers';
 
 describe('runPracticeEmission', () => {
   let clock: FakeClock;
@@ -37,7 +37,11 @@ describe('runPracticeEmission', () => {
       signal
     );
 
-    // Type correct character immediately
+    // Advance clock to simulate audio playback
+    const audioDuration = calculateCharacterDurationMs('A', config.wpm, 0);
+    await advanceAndFlush(clock, audioDuration);
+
+    // Now type correct character after audio completes
     input.type('A', clock.now());
     await flushPromises();
 
@@ -73,11 +77,13 @@ describe('runPracticeEmission', () => {
       signal
     );
 
-    // Calculate actual timings with timing helpers
-    const totalTimeout = getCharTimeout('B', 'slow', config.wpm);
+    // First advance through audio playback
+    const audioDuration = calculateCharacterDurationMs('B', config.wpm, 0);
+    await advanceAndFlush(clock, audioDuration);
 
-    // Advance past timeout
-    await advanceAndFlush(clock, totalTimeout + 1);
+    // Then advance through recognition window to trigger timeout
+    const windowMs = getActiveWindowMs('slow');
+    await advanceAndFlush(clock, windowMs + 1);
 
     // Advance for inter-character spacing
     await advanceAndFlush(clock, TestTiming.interChar);
@@ -106,7 +112,11 @@ describe('runPracticeEmission', () => {
       signal
     );
 
-    // Type incorrect character
+    // Advance clock to simulate audio playback
+    const audioDuration = calculateCharacterDurationMs('C', config.wpm, 0);
+    await advanceAndFlush(clock, audioDuration);
+
+    // Type incorrect character after audio completes
     input.type('A', clock.now());
     await flushPromises();
 
@@ -139,12 +149,13 @@ describe('runPracticeEmission', () => {
       signal
     );
 
-    // Calculate actual timings with timing helpers
-    // Removed charDuration - no longer needed since replay moved to session level
-    const totalTimeout = getCharTimeout('D', 'fast', config.wpm);
+    // First advance through audio playback
+    const audioDuration = calculateCharacterDurationMs('D', config.wpm, 0);
+    await advanceAndFlush(clock, audioDuration);
 
-    // Advance to trigger timeout
-    await advanceAndFlush(clock, totalTimeout + 1);
+    // Then advance through recognition window to trigger timeout
+    const windowMs = getActiveWindowMs('fast');
+    await advanceAndFlush(clock, windowMs + 1);
 
     const result = await emissionPromise;
 
@@ -168,7 +179,11 @@ describe('runPracticeEmission', () => {
       signal
     );
 
-    // Type lowercase
+    // Advance clock to simulate audio playback
+    const audioDuration = calculateCharacterDurationMs('E', config.wpm, 0);
+    await advanceAndFlush(clock, audioDuration);
+
+    // Type lowercase after audio completes
     input.type('e', clock.now());
     await flushPromises();
 
@@ -188,9 +203,9 @@ describe('runPracticeEmission', () => {
     });
 
     // Character 'H' = '....' (4 dits + 3 intra-symbol spacing)
-    // Expected: audio duration = calculateCharacterDurationMs('H', 5) = 1680ms
-    // Expected timeout: 1680ms audio + TestTiming.windows.slow = 3680ms
-    const expectedTimeout = getCharTimeout('H', 'slow', config.wpm);
+    // Audio duration first, then recognition window
+    const audioDuration = calculateCharacterDurationMs('H', config.wpm, 0);
+    const windowMs = getActiveWindowMs('slow');
 
     const startTime = clock.now();
 
@@ -204,14 +219,17 @@ describe('runPracticeEmission', () => {
       signal
     );
 
-    // Advance to just before timeout
-    await advanceAndFlush(clock, expectedTimeout - 1);
+    // First advance through audio playback
+    await advanceAndFlush(clock, audioDuration);
+
+    // Now advance to just before window timeout
+    await advanceAndFlush(clock, windowMs - 1);
 
     // Should not have timed out yet
     let feedbackCalls = io.getCalls('feedback');
     expect(feedbackCalls).toHaveLength(0);
 
-    // Advance past timeout
+    // Advance past window timeout
     await advanceAndFlush(clock, 2);
 
     // Now should have timed out
@@ -232,7 +250,8 @@ describe('runPracticeEmission', () => {
     });
     expect(timeoutLogs).toHaveLength(1);
     const timeoutTime = (timeoutLogs[0].args[0] as { at: number }).at;
-    expect(timeoutTime).toBeGreaterThanOrEqual(startTime + expectedTimeout);
+    const expectedTotalTime = audioDuration + windowMs;
+    expect(timeoutTime).toBeGreaterThanOrEqual(startTime + expectedTotalTime);
   });
 });
 

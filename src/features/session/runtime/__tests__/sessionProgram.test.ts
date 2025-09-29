@@ -9,7 +9,8 @@ import { TestInputBus } from '../inputBus';
 import { TestIO } from './testIO';
 import type { SessionSnapshot } from '../io';
 import { advanceAndFlush, createTestConfig, flushPromises } from './testUtils';
-import { TestTiming, getCharTimeout, getListenSequence } from './timingTestHelpers';
+import { TestTiming, getListenSequence } from './timingTestHelpers';
+import { calculateCharacterDurationMs } from '../../../../core/morse/timing';
 
 describe('SessionRunner', () => {
   let clock: FakeClock;
@@ -67,6 +68,9 @@ describe('SessionRunner', () => {
     // Check start log
     expect(io.hasLoggedEvent('sessionStart')).toBe(true);
 
+    // Advance clock to allow any ongoing audio to complete
+    await advanceAndFlush(clock, 5000);
+
     // Stop session and wait for it to complete
     await runner.stop();
 
@@ -89,10 +93,14 @@ describe('SessionRunner', () => {
 
     runner.start(config);
 
-    // Wait for first character
+    // Wait for first character to start
     await new Promise(resolve => setTimeout(resolve, 10));
 
-    // Type correct character
+    // Advance through audio playback for 'A'
+    const audioDuration = calculateCharacterDurationMs('A', config.wpm, 0);
+    await advanceAndFlush(clock, audioDuration);
+
+    // Type correct character after audio completes
     input.type('A', clock.now());
 
     // Wait for processing
@@ -166,6 +174,9 @@ describe('SessionRunner', () => {
     // Verify it's running
     expect(phases).toContain('running');
 
+    // Advance clock to allow any ongoing audio to complete
+    await advanceAndFlush(clock, 5000);
+
     // Stop it and wait for completion
     await runner.stop();
 
@@ -192,7 +203,11 @@ describe('SessionRunner', () => {
     // Wait for first character to start
     await flushPromises();
 
-    // Type correct character 'A'
+    // Advance through audio playback for 'A'
+    const audioDurationA = calculateCharacterDurationMs('A', config.wpm, 0);
+    await advanceAndFlush(clock, audioDurationA);
+
+    // Type correct character 'A' after audio completes
     input.type('A', clock.now());
     await flushPromises();
 
@@ -205,11 +220,13 @@ describe('SessionRunner', () => {
     expect(snapshot.previous.some(item => item.char === 'A' && item.result === 'correct')).toBe(true);
 
     // Now let's trigger a timeout for 'B'
-    // Calculate timings for 'B' with timing helper
-    const timeoutTime = getCharTimeout('B', 'medium', config.wpm);
+    // Advance through audio for 'B'
+    const audioDurationB = calculateCharacterDurationMs('B', config.wpm, 0);
+    await advanceAndFlush(clock, audioDurationB);
 
-    // Advance to trigger timeout
-    await advanceAndFlush(clock, timeoutTime + 1);
+    // Then advance through recognition window to trigger timeout
+    const windowMs = TestTiming.windows.medium;
+    await advanceAndFlush(clock, windowMs + 1);
 
     // Advance for inter-character spacing
     await advanceAndFlush(clock, TestTiming.interChar);
@@ -222,6 +239,9 @@ describe('SessionRunner', () => {
     // The accuracy should be 50% (1 correct out of 2)
     const accuracy = snapshot.stats?.accuracy || 0;
     expect(accuracy).toBeCloseTo(50, 0);
+
+    // Advance clock to allow any ongoing operations to complete
+    await advanceAndFlush(clock, 5000);
 
     // Stop the runner and wait for cleanup
     await runner.stop();

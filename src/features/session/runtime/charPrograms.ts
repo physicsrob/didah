@@ -21,10 +21,23 @@ function isValidChar(key: string): boolean {
 
 /**
  * Run a Practice mode emission
- * - Start audio (don't wait)
- * - Race: first correct key vs timeout
- * - Log incorrect keys during window
- * - Handle feedback and optional replay
+ *
+ * Timing model (sequential):
+ * 1. Play character audio to completion (~charDurationMs)
+ * 2. Accept user input during recognition window (~windowMs)
+ * 3. Race: correct key vs incorrect key vs timeout
+ *
+ * Note: Audio plays first to prevent late keypresses from the previous
+ * character leaking into the next character's input window.
+ *
+ * Error handling:
+ * - Audio failures are logged but don't crash the emission
+ * - On audio failure, input acceptance begins immediately (no artificial delay)
+ * - Latency is measured from when input acceptance begins, not emission start
+ *
+ * Cancellation:
+ * - Session abort during audio will complete the current audio before canceling
+ * - charScope provides cleanup but doesn't interrupt audio playback
  */
 export async function runPracticeEmission(
   cfg: SessionConfig,
@@ -56,17 +69,13 @@ export async function runPracticeEmission(
     return 'correct';
   }
 
-  // Start audio but don't await - we accept input during audio
-  io.playChar(char, cfg.wpm).catch(() => {
-    // Audio errors shouldn't crash the emission
-    debug.warn(`Audio failed for char: ${char}`);
-  });
-
   // Calculate recognition window and character audio duration
   const ditMs = wpmToDitMs(cfg.wpm);
+  // Recognition window = speed tier setting (slow=2000ms, medium=1000ms, fast=500ms, lightning=300ms)
+  // with a safety minimum of 60ms or 1 dit (never actually triggered in normal usage)
   const windowMs = Math.max(
     getActiveWindowMs(cfg.speedTier),
-    Math.max(60, ditMs) // Minimum 60ms or 1 dit
+    Math.max(60, ditMs)
   );
   // Practice mode always uses standard spacing (extraWordSpacing = 0)
   const charDurationMs = calculateCharacterDurationMs(char, cfg.wpm, 0);
@@ -74,6 +83,8 @@ export async function runPracticeEmission(
   debug.log(`[Audio] Character duration: ${charDurationMs}ms`);
 
   // Create a scoped abort controller for this emission
+  // Note: charScope is currently used only for cleanup, not for interrupting audio playback
+  // If sessionSignal aborts during audio, the audio will complete before cancellation propagates
   const charScope = new AbortController();
   const linkAbort = () => charScope.abort();
   sessionSignal.addEventListener('abort', linkAbort, { once: true });
@@ -81,6 +92,19 @@ export async function runPracticeEmission(
   try {
     // Log emission start
     io.log({ type: 'emission', at: emissionStart, char });
+
+    // Play audio and wait for it to complete before accepting ANY input
+    // This prevents late keypresses from affecting the next character
+    try {
+      await io.playChar(char, cfg.wpm);
+      debug.log(`[Audio] Completed playing '${char}' - now accepting input`);
+    } catch (error) {
+      // Audio errors shouldn't crash the emission
+      debug.warn(`Audio failed for char: ${char}`, error);
+    }
+
+    // Update timing reference point - input acceptance starts now
+    const inputStartTime = clock.now();
 
     // Race: correct key vs incorrect key vs timeout
     type RaceResult =
@@ -100,7 +124,7 @@ export async function runPracticeEmission(
           signal
         );
 
-        const latencyMs = event.at - emissionStart;
+        const latencyMs = event.at - inputStartTime;
         io.log({
           type: 'correct',
           at: event.at,
@@ -130,8 +154,8 @@ export async function runPracticeEmission(
         return { type: 'incorrect', key: event.key } as const;
       }),
 
-      // Arm 2: Timeout (after audio completes + recognition window)
-      clockTimeout(clock, charDurationMs + windowMs, { type: 'timeout' } as const)
+      // Arm 2: Timeout (recognition window only, since audio already completed)
+      clockTimeout(clock, windowMs, { type: 'timeout' } as const)
     ], sessionSignal);
 
     // Clean up observers
