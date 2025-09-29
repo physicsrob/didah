@@ -274,10 +274,12 @@ export function createSessionRunner(deps: SessionRunnerDeps): SessionRunner {
     if (config.replay && (outcome === 'incorrect' || outcome === 'timeout') && deps.io.replay) {
       console.log(`[Session] Replaying character '${char}' after ${outcome}`);
       await deps.io.replay(char, config.wpm);
+    }
 
-      // Add inter-character spacing after replay to give user time to process
+    // Add inter-character spacing after any incorrect or timeout (with or without replay)
+    if (outcome === 'incorrect' || outcome === 'timeout') {
       const interCharSpacingMs = getInterCharacterSpacingMs(config.wpm);
-      console.log(`[Spacing] Adding post-replay spacing: ${interCharSpacingMs}ms (3 dits)`);
+      console.log(`[Spacing] Adding post-error spacing: ${interCharSpacingMs}ms (3 dits)`);
       await deps.clock.sleep(interCharSpacingMs, signal);
     }
   }
