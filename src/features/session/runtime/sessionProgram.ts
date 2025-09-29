@@ -274,6 +274,11 @@ export function createSessionRunner(deps: SessionRunnerDeps): SessionRunner {
     if (config.replay && (outcome === 'incorrect' || outcome === 'timeout') && deps.io.replay) {
       console.log(`[Session] Replaying character '${char}' after ${outcome}`);
       await deps.io.replay(char, config.wpm);
+
+      // Add inter-character spacing after replay to give user time to process
+      const interCharSpacingMs = getInterCharacterSpacingMs(config.wpm);
+      console.log(`[Spacing] Adding post-replay spacing: ${interCharSpacingMs}ms (3 dits)`);
+      await deps.clock.sleep(interCharSpacingMs, signal);
     }
   }
 
@@ -381,15 +386,6 @@ export function createSessionRunner(deps: SessionRunnerDeps): SessionRunner {
             case 'live-copy':
               await handleLiveCopyMode(config, char, startTime, signal);
               break;
-          }
-
-          // Add inter-character spacing for practice mode
-          // This provides a pause between practice attempts, giving users a moment before the next character
-          // Listen and Live Copy modes handle their spacing internally within their emission functions
-          if (config.mode === 'practice') {
-            const interCharSpacingMs = getInterCharacterSpacingMs(config.wpm);
-            console.log(`[Spacing] Adding inter-character spacing: ${interCharSpacingMs}ms (3 dits)`);
-            await deps.clock.sleep(interCharSpacingMs, signal);
           }
 
         } catch (error) {
