@@ -8,17 +8,7 @@ import type { InputBus, KeyEvent } from './inputBus';
 import { select, waitForEvent, clockTimeout } from './select';
 import { getActiveWindowMs, getListenModeTimingMs, wpmToDitMs, calculateCharacterDurationMs, calculateFarnsworthSpacingMs } from '../../../core/morse/timing';
 import { debug } from '../../../core/debug';
-
-// Session config type - simplified for now
-export type SessionConfig = {
-  mode: 'practice' | 'listen' | 'live-copy';
-  wpm: number;
-  effectiveWpm: number; // For Farnsworth timing
-  speedTier: 'slow' | 'medium' | 'fast' | 'lightning';
-  lengthMs: number;
-  replay?: boolean;
-  extraWordSpacing?: number; // Extra space characters to add between words (0-5, for listen/live-copy only)
-};
+import type { SessionConfig } from '../../../core/types/domain';
 
 export type PracticeOutcome = 'correct' | 'incorrect' | 'timeout';
 

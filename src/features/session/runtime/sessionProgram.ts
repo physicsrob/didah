@@ -5,7 +5,8 @@
 import type { Clock } from './clock';
 import type { IO, SessionSnapshot } from './io';
 import type { InputBus } from './inputBus';
-import { runPracticeEmission, runListenEmission, runLiveCopyEmission, type SessionConfig } from './charPrograms';
+import { runPracticeEmission, runListenEmission, runLiveCopyEmission } from './charPrograms';
+import type { SessionConfig } from '../../../core/types/domain';
 import { calculateCharacterDurationMs, getInterCharacterSpacingMs } from '../../../core/morse/timing';
 
 /**

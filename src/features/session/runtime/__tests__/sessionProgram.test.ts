@@ -34,13 +34,9 @@ describe('SessionRunner', () => {
   });
 
   it('transitions to running when started', async () => {
-    const config = {
-      mode: 'practice' as const,
-      wpm: 20,
-      effectiveWpm: 20,
-      speedTier: 'medium' as const,
+    const config = createTestConfig({
       lengthMs: 5000
-    };
+    });
 
     const snapshots: SessionSnapshot[] = [];
     const unsub = runner.subscribe(s => snapshots.push({ ...s }));
@@ -58,13 +54,10 @@ describe('SessionRunner', () => {
   });
 
   it('logs session start and end', async () => {
-    const config = {
-      mode: 'practice' as const,
-      wpm: 20,
-      effectiveWpm: 20,
-      speedTier: 'fast' as const,
+    const config = createTestConfig({
+      speedTier: 'fast',
       lengthMs: 1000
-    };
+    });
 
     runner.start(config);
 
@@ -87,13 +80,9 @@ describe('SessionRunner', () => {
     const chars = ['A', 'B', 'C'];
     source.next = () => chars[charIndex++ % chars.length];
 
-    const config = {
-      mode: 'practice' as const,
-      wpm: 20,
-      effectiveWpm: 20,
-      speedTier: 'medium' as const,
+    const config = createTestConfig({
       lengthMs: 10000
-    };
+    });
 
     const snapshots: SessionSnapshot[] = [];
     runner.subscribe(s => snapshots.push({ ...s }));
@@ -161,13 +150,9 @@ describe('SessionRunner', () => {
   });
 
   it('can be stopped mid-session', async () => {
-    const config = {
-      mode: 'practice' as const,
-      wpm: 20,
-      effectiveWpm: 20,
-      speedTier: 'medium' as const,
+    const config = createTestConfig({
       lengthMs: 60000
-    };
+    });
 
     // Track phase changes
     const phases: string[] = [];
@@ -249,13 +234,9 @@ describe('SessionRunner', () => {
     const unsub1 = runner.subscribe(() => count1++);
     const unsub2 = runner.subscribe(() => count2++);
 
-    runner.start({
-      mode: 'practice' as const,
-      wpm: 20,
-      effectiveWpm: 20,
-      speedTier: 'medium' as const,
+    runner.start(createTestConfig({
       lengthMs: 1000
-    });
+    }));
 
     expect(count1).toBeGreaterThan(0);
     expect(count2).toBeGreaterThan(0);

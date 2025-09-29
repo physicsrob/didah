@@ -3,6 +3,7 @@
  */
 
 import type { FakeClock } from '../clock';
+import type { SessionConfig } from '../../../../core/types/domain';
 
 /**
  * Force all pending promises to resolve
@@ -125,20 +126,18 @@ export async function advanceInSteps(
  * Create a test config with common defaults
  * Reduces boilerplate in tests
  */
-export function createTestConfig(overrides?: Partial<{
-  mode: 'practice' | 'listen';
-  wpm: number;
-  effectiveWpm: number;
-  speedTier: 'slow' | 'medium' | 'fast' | 'lightning';
-  lengthMs: number;
-  replay?: boolean;
-}>) {
+export function createTestConfig(overrides?: Partial<SessionConfig>): SessionConfig {
   return {
     mode: 'practice' as const,
     wpm: 20,
     effectiveWpm: 20,  // Default to same as wpm for standard timing
     speedTier: 'medium' as const,
     lengthMs: 60000,
+    sourceId: 'test_source',
+    sourceName: 'Test Source',
+    feedback: 'none',
+    replay: false,
+    effectiveAlphabet: ['A', 'B', 'C'],
     ...overrides
   };
 }

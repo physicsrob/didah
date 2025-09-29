@@ -21,6 +21,7 @@ export type IOAdapterConfig = {
   replayDuration?: number; // ms to show replay overlay
   isPaused?: () => boolean; // Check if session is paused
   extraWordSpacing?: number; // Extra word spacing for listen/live-copy modes
+  mode?: 'practice' | 'listen' | 'live-copy'; // Session mode
 };
 
 /**
@@ -38,14 +39,18 @@ export function createIOAdapter(config: IOAdapterConfig): IO {
     onFlash,
     replayDuration = 1000,
     isPaused,
-    extraWordSpacing = 0
+    extraWordSpacing = 0,
+    mode = 'practice'
   } = config;
 
   return {
     async playChar(char: string, wpm: number): Promise<void> {
       console.log(`[Audio] Playing '${char}' at ${wpm} WPM`);
       try {
-        await audioEngine.playCharacter(char, wpm, extraWordSpacing);
+        // Practice mode should never use extra word spacing (always 0)
+        // Only Listen and Live Copy modes should use it
+        const spacing = mode === 'practice' ? 0 : extraWordSpacing;
+        await audioEngine.playCharacter(char, wpm, spacing);
       } catch (error) {
         // Log but don't throw - let the session continue
         console.warn(`Failed to play audio for char: ${char}`, error);
@@ -134,10 +139,10 @@ export function createIOAdapter(config: IOAdapterConfig): IO {
         return;
       }
 
-      // Play the audio
+      // Play the audio (replays are always in practice mode, so no extra spacing)
       try {
         console.log(`[Replay] Playing audio for '${char}'`);
-        await audioEngine.playCharacter(char, wpm);
+        await audioEngine.playCharacter(char, wpm, 0);
       } catch (error) {
         console.warn(`Failed to replay audio for char: ${char}`, error);
       }

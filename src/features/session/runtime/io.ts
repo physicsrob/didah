@@ -26,7 +26,7 @@ export type SessionSnapshot = {
   };
 };
 
-import type { SessionConfig } from './charPrograms';
+import type { SessionConfig } from '../../../core/types/domain';
 
 export type LogEvent =
   | { type: 'sessionStart'; at: number; config: SessionConfig }

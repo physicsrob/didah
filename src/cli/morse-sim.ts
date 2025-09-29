@@ -11,7 +11,7 @@ import { createMockIO } from './mockIO';
 import { InstantClock, RealtimeClock } from './clocks';
 import { SimpleInputBus } from '../features/session/runtime/inputBus';
 import { runPracticeEmission, runListenEmission } from '../features/session/runtime/charPrograms';
-import type { SessionConfig } from '../features/session/runtime/charPrograms';
+import type { SessionConfig } from '../core/types/domain';
 
 // Parse command line arguments
 const args = parseArgs(process.argv.slice(2));
@@ -31,7 +31,11 @@ const config: SessionConfig = {
   effectiveWpm: args.wpm,  // Use standard timing for CLI
   speedTier: args.speed,
   lengthMs: 60000, // Not used for CLI simulation
-  replay: args.mode === 'practice'
+  replay: args.mode === 'practice',
+  sourceId: 'random_letters',
+  sourceName: 'Random Letters',
+  feedback: 'none',
+  effectiveAlphabet: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789.,?'.split('')
 };
 
 // Create mock IO

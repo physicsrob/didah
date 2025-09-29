@@ -115,6 +115,7 @@ export function ActiveSessionPage() {
       audioEngine,
       feedback: feedback || undefined,
       feedbackType: config?.feedback,
+      mode: config?.mode,  // Pass the mode so IO adapter knows when to apply extra spacing
       onReveal: (char: string) => {
         // Don't show replays when paused
         if (config?.mode === 'practice' && config?.replay && !isPausedRef.current) {
