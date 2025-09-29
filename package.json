@@ -17,6 +17,7 @@
     "check:fix": "npm run typecheck && npm run lint -- --fix && npm run test -- --run",
     "precommit": "npm run check",
     "morse-sim": "tsx src/cli/morse-sim.ts",
+    "migrate": "tsx scripts/migrations/migrate.ts",
     "prepare": "husky"
   },
   "dependencies": {

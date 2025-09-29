@@ -1,0 +1,57 @@
+/**
+ * Migration Template
+ *
+ * Copy this file and rename it to XXX-description.ts where XXX is the next
+ * migration number (e.g., 002-add-new-field.ts).
+ *
+ * Remember to update the import path in migrate.ts loadMigration() function
+ * to match your new migration filename pattern.
+ */
+
+import type { Migration } from '../types';
+import type { SessionStatistics } from '../../../src/core/types/statistics';
+
+export const migration: Migration = {
+  id: 'XXX-description',  // Update this
+  description: 'What this migration does',  // Update this
+
+  /**
+   * Check if this session needs migration
+   * Return true if the migration should be applied
+   */
+  needsMigration(session: SessionStatistics): boolean {
+    // Example: Check if a new field exists
+    // return (session as any).newField === undefined;
+
+    // TODO: Implement your check
+    return false;
+  },
+
+  /**
+   * Transform the session statistics
+   * Return the updated session with your changes
+   */
+  transform(session: SessionStatistics): SessionStatistics {
+    // Example: Add a new calculated field
+    // return {
+    //   ...session,
+    //   newField: calculateNewField(session)
+    // };
+
+    // TODO: Implement your transformation
+    return session;
+  },
+
+  /**
+   * Optional: Validate the transformation was successful
+   * Throw an error if validation fails
+   */
+  validate(original: SessionStatistics, transformed: SessionStatistics): void {
+    // Example validation:
+    // if ((transformed as any).newField === undefined) {
+    //   throw new Error('Migration failed: newField not added');
+    // }
+
+    // TODO: Add your validation logic (optional)
+  }
+};
