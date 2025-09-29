@@ -142,9 +142,16 @@ export function SessionCompletePage() {
                   <div className="completion-message">Session Complete!</div>
 
                   <div className="stat-item">
-                    <span className="stat-label">Overall Accuracy</span>
+                    <span className="stat-label">Accuracy</span>
                     <span className="stat-value accuracy">{Math.round(accuracy)}%</span>
                   </div>
+
+                  {fullStatistics.config.mode === 'practice' && fullStatistics.timeoutPercentage !== undefined && (
+                    <div className="stat-item">
+                      <span className="stat-label">Timeouts</span>
+                      <span className="stat-value">{Math.round(fullStatistics.timeoutPercentage)}%</span>
+                    </div>
+                  )}
 
                   {fullStatistics.config.mode === 'practice' && (
                     <div className="stat-item">

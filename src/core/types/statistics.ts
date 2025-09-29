@@ -29,7 +29,8 @@ export type SessionStatistics = {
   };
 
   // Overall Metrics
-  overallAccuracy: number;        // 0-100 percentage
+  overallAccuracy: number;        // 0-100 percentage (excludes timeouts)
+  timeoutPercentage: number;      // 0-100 percentage of timeouts
   effectiveWpm: number;           // Adjusted for accuracy and timing
   totalCharacters: number;
   correctCount: number;

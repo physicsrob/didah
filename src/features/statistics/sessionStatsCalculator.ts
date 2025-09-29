@@ -60,7 +60,9 @@ export class SessionStatsCalculator {
 
     // Calculate aggregates
     const totalCharacters = correctCount + incorrectCount + timeoutCount;
-    const overallAccuracy = totalCharacters > 0 ? (correctCount / totalCharacters) * 100 : 0;
+    const actualAttempts = correctCount + incorrectCount;  // Exclude timeouts
+    const overallAccuracy = actualAttempts > 0 ? (correctCount / actualAttempts) * 100 : 0;
+    const timeoutPercentage = totalCharacters > 0 ? (timeoutCount / totalCharacters) * 100 : 0;
     const meanRecognitionTimeMs = this.calculateMean(recognitionTimes);
     const medianRecognitionTimeMs = this.calculateMedian(recognitionTimes);
 
@@ -77,8 +79,8 @@ export class SessionStatsCalculator {
     });
 
     const effectiveWpm = this.calculateEffectiveWpm(
-      totalCharacters,
-      incorrectCount + timeoutCount,
+      correctCount,
+      incorrectCount,
       durationMs,
       config.mode
     );
@@ -99,6 +101,7 @@ export class SessionStatsCalculator {
         effectiveAlphabet: config.effectiveAlphabet,
       },
       overallAccuracy,
+      timeoutPercentage,
       effectiveWpm,
       totalCharacters,
       correctCount,
@@ -184,16 +187,15 @@ export class SessionStatsCalculator {
   }
 
   /**
-   * Calculate effective WPM with double penalty for errors:
-   * Effective WPM = ((Characters sent - 2 * Errors) / Time in seconds) * 12
-   * where Errors = incorrect + timeout
+   * Calculate effective WPM based on net correct characters:
+   * Effective WPM = ((Correct characters - Incorrect characters) / Time in seconds) * 12
    *
-   * This formula penalizes errors heavily - each error costs 2 characters
-   * from your effective copying speed.
+   * Timeouts are not included in the numerator - they naturally slow you down
+   * by increasing time without adding characters.
    */
   private calculateEffectiveWpm(
-    totalCharacters: number,
-    errorCount: number,
+    correctCount: number,
+    incorrectCount: number,
     sessionDurationMs: number,
     mode: string
   ): number {
@@ -208,8 +210,8 @@ export class SessionStatsCalculator {
     // Convert to seconds
     const sessionDurationSeconds = sessionDurationMs / 1000;
 
-    // Apply double penalty for errors: characters sent - 2 * errors
-    const effectiveCharacters = totalCharacters - (2 * errorCount);
+    // Calculate net correct characters: correct - incorrect
+    const effectiveCharacters = correctCount - incorrectCount;
 
     // Don't allow negative WPM
     if (effectiveCharacters <= 0) return 0;
