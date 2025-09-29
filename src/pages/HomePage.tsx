@@ -27,7 +27,7 @@ export default function HomePage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-primary">
+    <div className="min-h-screen flex items-center justify-center">
       {/* Top navigation */}
       <nav style={{ position: 'fixed', top: '24px', right: '24px', zIndex: 10 }}>
         <div style={{ display: 'flex', gap: '20px', alignItems: 'center' }}>

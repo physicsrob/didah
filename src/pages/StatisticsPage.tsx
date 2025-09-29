@@ -23,7 +23,7 @@ export default function StatisticsPage() {
   ]
 
   return (
-    <div className="min-h-screen bg-gradient-primary">
+    <div className="min-h-screen">
       <HeaderBar pageTitle="Statistics" />
 
       <div className="w-full px-6 py-4 max-w-xl" style={{ margin: '0 auto' }}>

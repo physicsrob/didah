@@ -55,7 +55,7 @@ export function SessionCompletePage() {
   // Handle missing data (shouldn't happen but good to be safe)
   if (!fullStatistics) {
     return (
-      <div className="completion-wrapper bg-gradient-primary">
+      <div className="completion-wrapper">
         <div className="completion-container">
           <div className="content-area">
           <div className="error-message">
@@ -90,7 +90,7 @@ export function SessionCompletePage() {
   };
 
   return (
-    <div className="completion-wrapper bg-gradient-primary">
+    <div className="completion-wrapper">
       <div className="completion-container">
         {/* Top branding */}
         <div className="brand-header">

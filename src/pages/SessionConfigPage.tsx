@@ -292,7 +292,7 @@ export function SessionConfigPage() {
   // Show loading state while settings are loading
   if (settingsLoading || !settings) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-primary">
+      <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <h2 className="heading-2">Loading settings...</h2>
         </div>
@@ -301,7 +301,7 @@ export function SessionConfigPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-primary">
+    <div className="min-h-screen">
       <HeaderBar pageTitle={modeConfig[mode].title} />
 
       <div className="container" style={{ margin: '0 auto', padding: '0 16px' }}>

@@ -78,7 +78,6 @@ html, body {
 .bg-gradient-primary {
     background: linear-gradient(60deg, var(--gradient-dark-start) 0%, var(--gradient-dark-end) 100%);
     position: relative;
-    isolation: isolate; /* Create a new stacking context */
 }
 
 .bg-gradient-primary::before {
@@ -315,7 +314,7 @@ input[type="range"]::-moz-range-track {
 }
 
 .btn-secondary {
-    background: transparent;
+    background: rgba(30, 58, 95, 0.8);
     color: var(--color-blue-primary);
     border: 2px solid var(--color-blue-primary);
     font-size: 18px;
@@ -337,7 +336,7 @@ input[type="range"]::-moz-range-track {
 
 /* Utility buttons - smaller, side-by-side */
 .btn-utility {
-    background: transparent;
+    background: rgba(30, 58, 95, 0.6);
     color: var(--color-blue-primary);
     border: 2px solid var(--color-blue-primary);
     font-size: 16px;
@@ -966,6 +965,8 @@ input[type="range"]::-moz-range-track {
     border: 1px solid var(--border-primary);
     box-shadow: 0 2px 12px rgba(0, 0, 0, 0.2), 0 1px 2px rgba(0, 0, 0, 0.1);
     transition: all 0.3s ease;
+    position: relative;
+    z-index: 1;
 }
 
 .card:hover {
@@ -1354,6 +1355,8 @@ input[type="range"]::-moz-range-track {
     gap: 24px;
     padding: 20px 24px;
     margin-bottom: 32px;
+    position: relative;
+    z-index: 10;
 }
 
 .config-header .brand-title {
