@@ -30,7 +30,8 @@ const isTokenExpired = (token: string): boolean => {
 
     const now = Math.floor(Date.now() / 1000)
     return payload.exp < now
-  } catch {
+  } catch (error) {
+    console.error('Error checking token expiration:', error)
     return true // Consider invalid tokens as expired
   }
 }
@@ -56,9 +57,14 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           picture: payload.picture,
         }
       }
-    } catch {
+    } catch (error) {
+      console.error('Error restoring user from localStorage:', error)
       // Clear invalid tokens
-      localStorage.removeItem('google_token')
+      try {
+        localStorage.removeItem('google_token')
+      } catch (storageError) {
+        console.error('Error clearing invalid token:', storageError)
+      }
     }
     return null
   })
