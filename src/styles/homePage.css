@@ -1,0 +1,62 @@
+/* HomePage Mode Cards */
+
+.mode-cards-container {
+  display: flex;
+  flex-direction: row;
+  gap: 24px;
+  width: 100%;
+  margin-top: 48px;
+}
+
+.mode-card {
+  flex: 1;
+  background: var(--color-secondary-gray);
+  border: 1px solid var(--border-primary);
+  border-radius: 12px;
+  padding: 32px 24px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  position: relative;
+  z-index: 1;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.mode-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 24px rgba(77, 171, 247, 0.2);
+  border-color: var(--color-blue-primary);
+}
+
+.mode-card:active {
+  transform: translateY(-2px);
+}
+
+.mode-card-icon {
+  font-size: 48px;
+  margin-bottom: 16px;
+  line-height: 1;
+}
+
+.mode-card-title {
+  font-size: 24px;
+  font-weight: 600;
+  color: var(--text-accent);
+  margin-bottom: 16px;
+}
+
+.mode-card-description {
+  font-size: 15px;
+  color: var(--text-secondary);
+  line-height: 1.6;
+}
+
+/* Responsive - stack vertically on mobile */
+@media (max-width: 768px) {
+  .mode-cards-container {
+    flex-direction: column;
+    gap: 16px;
+  }
+}

@@ -4,6 +4,7 @@ import { useAuth } from '../hooks/useAuth'
 import GoogleSignInButton from '../components/GoogleSignInButton'
 import { UserDropdown } from '../components/UserDropdown'
 import '../styles/main.css'
+import '../styles/homePage.css'
 
 export default function HomePage() {
   const navigate = useNavigate()
@@ -43,7 +44,7 @@ export default function HomePage() {
         </div>
       </nav>
 
-      <div className="w-full px-6 py-10" style={{ maxWidth: '500px', position: 'relative', zIndex: 1 }}>
+      <div className="w-full px-6 py-10" style={{ maxWidth: '1000px', position: 'relative', zIndex: 1 }}>
         <h1 className="brand-title text-center mb-4" style={{ fontSize: '48px' }}>
           MorseAcademy
         </h1>
@@ -59,26 +60,38 @@ export default function HomePage() {
         )}
 
         <div className="flex flex-col gap-8 items-center">
-          {/* Practice modes */}
-          <div className="flex flex-col gap-4 w-full">
-            <button
-              className="btn btn-primary btn-large w-full"
+          {/* Mode selection cards */}
+          <div className="mode-cards-container">
+            <div
+              className="mode-card"
               onClick={() => handleModeSelect('practice')}
             >
-              Practice
-            </button>
-            <button
-              className="btn btn-secondary btn-large w-full"
+              <div className="mode-card-icon">⌨️</div>
+              <div className="mode-card-title">Practice</div>
+              <div className="mode-card-description">
+                Interactive training where you type what you hear. Control your own pacing and get immediate feedback on errors.
+              </div>
+            </div>
+            <div
+              className="mode-card"
               onClick={() => handleModeSelect('listen')}
             >
-              Listen
-            </button>
-            <button
-              className="btn btn-secondary btn-large w-full"
+              <div className="mode-card-icon">🎧</div>
+              <div className="mode-card-title">Listen</div>
+              <div className="mode-card-description">
+                Passive learning where characters are revealed after playing. Perfect for familiarizing yourself with patterns.
+              </div>
+            </div>
+            <div
+              className="mode-card"
               onClick={() => handleModeSelect('live-copy')}
             >
-              Live Copy
-            </button>
+              <div className="mode-card-icon">⚡</div>
+              <div className="mode-card-title">Live Copy</div>
+              <div className="mode-card-description">
+                Real-time copying like actual CW. Characters stream continuously with no feedback until the session ends.
+              </div>
+            </div>
           </div>
 
           {/* Utility buttons */}
