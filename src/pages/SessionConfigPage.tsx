@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import type { SessionConfig, FeedbackMode } from '../core/types/domain';
+import type { SessionConfig } from '../core/types/domain';
+import type { FeedbackMode } from '../features/settings/store/types';
 import { fetchSources, fetchSourceContent } from '../features/sources';
 import type { TextSource as ApiTextSource, SourceContent } from '../features/sources';
 import { useSettings } from '../features/settings/hooks/useSettings';

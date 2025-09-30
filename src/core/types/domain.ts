@@ -1,6 +1,4 @@
 // Configuration
-export type FeedbackMode = 'flash' | 'buzzer' | 'replay' | 'off';
-
 export type UserConfig = {
   wpm: number;                  // character speed in WPM
   includeNumbers: boolean;
