@@ -7,8 +7,7 @@
 
 import { getMorsePattern, type MorsePattern } from '../../../core/morse/alphabet.js';
 import { wpmToDitMs, getSpacingMs } from '../../../core/morse/timing.js';
-
-export type ToneSetting = 'soft' | 'normal' | 'hard';
+import type { ToneSetting } from '../../../core/types/domain.js';
 
 export interface AudioEngineConfig {
   frequency: number;

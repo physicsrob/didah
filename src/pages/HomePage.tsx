@@ -1,4 +1,5 @@
 import { useNavigate } from 'react-router-dom'
+import type { SessionMode } from '../core/types/domain'
 import { useAudio } from '../contexts/useAudio'
 import { useAuth } from '../hooks/useAuth'
 import GoogleSignInButton from '../components/GoogleSignInButton'
@@ -11,7 +12,7 @@ export default function HomePage() {
   const { initializeAudio } = useAudio()
   const { user, handleCredentialResponse, error } = useAuth()
 
-  const handleModeSelect = async (mode: 'practice' | 'listen' | 'live-copy') => {
+  const handleModeSelect = async (mode: SessionMode) => {
     // Initialize audio while we have user gesture context
     await initializeAudio()
 

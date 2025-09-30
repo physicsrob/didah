@@ -5,6 +5,7 @@
 import type { IO, SessionSnapshot, LogEvent } from './io';
 import type { AudioEngine } from '../services/audioEngine';
 import type { Feedback } from '../services/feedback/feedbackInterface';
+import type { SessionMode } from '../../../core/types/domain';
 
 /**
  * Configuration for the IO adapter
@@ -21,7 +22,7 @@ export type IOAdapterConfig = {
   replayDuration?: number; // ms to show replay overlay
   isPaused?: () => boolean; // Check if session is paused
   extraWordSpacing?: number; // Extra word spacing for listen/live-copy modes
-  mode?: 'practice' | 'listen' | 'live-copy'; // Session mode
+  mode?: SessionMode; // Session mode
 };
 
 /**

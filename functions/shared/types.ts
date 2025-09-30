@@ -1,6 +1,8 @@
 // Shared types for API functions
 export type FeedbackMode = 'flash' | 'buzzer' | 'replay' | 'off'
+export type SessionMode = 'practice' | 'listen' | 'live-copy'
 export type SpeedTier = 'slow' | 'medium' | 'fast' | 'lightning'
+export type ToneSetting = 'soft' | 'normal' | 'hard'
 
 export type UserSettings = {
   // Core settings
@@ -9,7 +11,7 @@ export type UserSettings = {
   frequency: number  // Audio frequency in Hz
   volume: number  // Audio volume (0.0 to 1.0)
   buzzerVolume: number  // Buzzer volume (0.0 to 1.0)
-  tone: 'soft' | 'normal' | 'hard'
+  tone: ToneSetting
   includeNumbers: boolean
   includeStdPunct: boolean
   includeAdvPunct: boolean
@@ -17,8 +19,8 @@ export type UserSettings = {
 
   // Session defaults
   defaultDuration: 60 | 120 | 300
-  defaultMode: 'practice' | 'listen' | 'live-copy'
-  defaultSpeedTier: 'slow' | 'medium' | 'fast' | 'lightning'
+  defaultMode: SessionMode
+  defaultSpeedTier: SpeedTier
   defaultSourceId: string
 
   // Active mode settings
@@ -75,7 +77,7 @@ export type SessionStatistics = {
   durationMs: number
   timestamp?: number  // Unix timestamp when session was saved (ms since epoch)
   config: {
-    mode: 'practice' | 'listen' | 'live-copy'
+    mode: SessionMode
     lengthMs: number               // Configured session length
     wpm: number
     speedTier: SpeedTier
@@ -148,7 +150,8 @@ export function validateSettings(settings: unknown): settings is UserSettings {
     return false
   }
 
-  if (!['soft', 'normal', 'hard'].includes(s.tone as string)) {
+  const validTones: ToneSetting[] = ['soft', 'normal', 'hard']
+  if (!validTones.includes(s.tone as ToneSetting)) {
     return false
   }
 
@@ -160,7 +163,8 @@ export function validateSettings(settings: unknown): settings is UserSettings {
     return false
   }
 
-  if (!['practice', 'listen', 'live-copy'].includes(s.defaultMode as string)) {
+  const validModes: SessionMode[] = ['practice', 'listen', 'live-copy']
+  if (!validModes.includes(s.defaultMode as SessionMode)) {
     return false
   }
 

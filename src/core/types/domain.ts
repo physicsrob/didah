@@ -1,3 +1,8 @@
+import type { SessionMode, SpeedTier, ToneSetting } from '../../../functions/shared/types'
+
+// Re-export shared types for convenience
+export type { SessionMode, SpeedTier, ToneSetting }
+
 // Configuration
 export type UserConfig = {
   wpm: number;                  // character speed in WPM
@@ -6,8 +11,8 @@ export type UserConfig = {
   includeAdvPunct: boolean;
   sessionDefaults: {
     lengthSec: 60 | 120 | 300;
-    mode: "practice" | "listen" | "live-copy";
-    speedTier: "slow" | "medium" | "fast" | "lightning";
+    mode: SessionMode;
+    speedTier: SpeedTier;
     feedback: "buzzer" | "flash" | "both";
     replay: boolean;
     sourceId: string;
@@ -16,11 +21,11 @@ export type UserConfig = {
 
 // Session lifecycle
 export type SessionConfig = {
-  mode: "practice" | "listen" | "live-copy";
+  mode: SessionMode;
   lengthMs: number;
   wpm: number;
   effectiveWpm: number; // For Farnsworth timing (when equal to wpm, standard timing is used)
-  speedTier: "slow" | "medium" | "fast" | "lightning";
+  speedTier: SpeedTier;
   sourceId: string;
   sourceName: string;  // Display name of the source
   feedback: "buzzer" | "flash" | "both" | "none";

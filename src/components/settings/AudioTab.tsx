@@ -1,4 +1,5 @@
 import { useRef } from 'react'
+import type { ToneSetting } from '../../core/types/domain'
 import { useSettings } from '../../features/settings/hooks/useSettings'
 import { useAudio } from '../../contexts/useAudio'
 import { DEFAULT_WPM } from '../../core/config/defaults'
@@ -27,7 +28,7 @@ export default function AudioTab() {
     }, 150)
   }
 
-  const handleToneChange = async (tone: 'soft' | 'normal' | 'hard') => {
+  const handleToneChange = async (tone: ToneSetting) => {
     updateSetting('tone', tone)
 
     try {

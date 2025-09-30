@@ -7,7 +7,7 @@
  */
 
 // Re-export canonical types from backend (single source of truth)
-export type { SessionStatistics, CharacterStatistics, SpeedTier } from '../../../functions/shared/types'
+export type { SessionStatistics, CharacterStatistics } from '../../../functions/shared/types'
 
 /**
  * Frontend-specific type: SessionStatistics with Maps instead of Records
