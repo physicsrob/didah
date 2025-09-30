@@ -5,7 +5,7 @@
  * Extensible to support multiple statistics endpoints.
  */
 
-import type { SessionStatistics, CharacterStatistics } from '../../core/types/statistics';
+import type { SessionStatistics, SessionStatisticsWithMaps } from '../../core/types/statistics';
 
 export interface DailyPracticeTime {
   day: string;  // ISO date string (YYYY-MM-DD)
@@ -34,8 +34,9 @@ export class StatisticsAPI {
 
   /**
    * Fetch all session statistics for the last 30 days
+   * Note: Backend returns Record format, we convert to Maps for frontend use
    */
-  async getSessions(): Promise<SessionStatistics[]> {
+  async getSessions(): Promise<SessionStatisticsWithMaps[]> {
     if (!this.authToken) {
       // Return empty data for unauthenticated users
       return [];
@@ -54,13 +55,10 @@ export class StatisticsAPI {
         return [];
       }
 
-      const sessions = await response.json();
+      const sessions: SessionStatistics[] = await response.json();
 
-      // Convert Map objects back from plain objects if needed
-      return sessions.map((session: SessionStatistics & {
-        characterStats: Record<string, CharacterStatistics>;
-        confusionMatrix: Record<string, Record<string, number>>;
-      }) => ({
+      // Convert Record objects to Maps for ergonomic frontend use
+      return sessions.map((session) => ({
         ...session,
         characterStats: new Map(Object.entries(session.characterStats || {})),
         confusionMatrix: new Map(
@@ -69,7 +67,7 @@ export class StatisticsAPI {
             new Map(Object.entries(value))
           ])
         )
-      }));
+      })) as SessionStatisticsWithMaps[];
     } catch (error) {
       console.error('Error fetching sessions:', error);
       return [];

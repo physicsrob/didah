@@ -3,17 +3,19 @@
  *
  * Calculates comprehensive statistics from session event logs.
  * This is a pure calculation service with no side effects.
+ * Returns SessionStatisticsWithMaps (frontend uses Maps internally).
  */
 
-import type { SessionStatistics, CharacterStatistics } from '../../core/types/statistics';
+import type { SessionStatisticsWithMaps, CharacterStatistics } from '../../core/types/statistics';
 import type { SessionConfig } from '../../core/types/domain';
 import type { LogEvent } from '../session/runtime/io';
 
 export class SessionStatsCalculator {
   /**
    * Calculate complete statistics from a session's event log
+   * Returns Maps for ergonomic frontend use (converted to Record at API boundary)
    */
-  calculateStats(events: LogEvent[], config: SessionConfig): SessionStatistics {
+  calculateStats(events: LogEvent[], config: SessionConfig): SessionStatisticsWithMaps {
     const sessionStart = events.find(e => e.type === 'sessionStart');
     const sessionEnd = events.find(e => e.type === 'sessionEnd');
 

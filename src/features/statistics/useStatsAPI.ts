@@ -1,7 +1,7 @@
 import { useCallback } from 'react';
 import { useAuth } from '../../hooks/useAuth';
 import { StatsAPI } from './statsAPI';
-import type { SessionStatistics } from '../../core/types/statistics';
+import type { SessionStatisticsWithMaps } from '../../core/types/statistics';
 
 /**
  * React hook for saving session statistics
@@ -12,7 +12,7 @@ import type { SessionStatistics } from '../../core/types/statistics';
 export function useStatsAPI() {
   const { user } = useAuth();
 
-  const saveSessionStats = useCallback(async (stats: SessionStatistics): Promise<void> => {
+  const saveSessionStats = useCallback(async (stats: SessionStatisticsWithMaps): Promise<void> => {
     if (!user) {
       console.log('Stats not saved - user not authenticated');
       return;

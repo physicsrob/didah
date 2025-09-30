@@ -9,11 +9,11 @@ import {
   ResponsiveContainer,
   Cell
 } from 'recharts';
-import type { SessionStatistics } from '../../core/types/statistics';
+import type { SessionStatisticsWithMaps } from '../../core/types/statistics';
 
 interface SessionGraphProps {
-  sessions: SessionStatistics[];
-  dataKey: keyof SessionStatistics;
+  sessions: SessionStatisticsWithMaps[];
+  dataKey: keyof SessionStatisticsWithMaps;
   yLabel: string;
   yDomain: [number, number];
   timeWindow: 7 | 30;

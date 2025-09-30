@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import type { SessionConfig } from '../core/types/domain';
 import type { FeedbackMode } from '../features/settings/store/types';
+import type { SpeedTier } from '../core/types/statistics';
 import { fetchSources, fetchSourceContent } from '../features/sources';
 import type { TextSource as ApiTextSource, SourceContent } from '../features/sources';
 import { useSettings } from '../features/settings/hooks/useSettings';
@@ -9,7 +10,6 @@ import { useAuth } from '../hooks/useAuth';
 import { HeaderBar } from '../components/HeaderBar';
 import '../styles/main.css';
 
-type SpeedTier = 'slow' | 'medium' | 'fast' | 'lightning';
 type SessionMode = 'practice' | 'listen' | 'live-copy';
 
 export function SessionConfigPage() {

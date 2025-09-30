@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '../../hooks/useAuth';
 import { StatisticsAPI } from '../../features/statistics/api';
-import type { SessionStatistics } from '../../core/types/statistics';
+import type { SessionStatisticsWithMaps } from '../../core/types/statistics';
 
 interface HistoryTabProps {
   timeWindow: 7 | 30;
@@ -9,7 +9,7 @@ interface HistoryTabProps {
 
 export default function HistoryTab({ timeWindow }: HistoryTabProps) {
   const { user } = useAuth();
-  const [sessions, setSessions] = useState<SessionStatistics[]>([]);
+  const [sessions, setSessions] = useState<SessionStatisticsWithMaps[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 

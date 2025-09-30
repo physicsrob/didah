@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../../hooks/useAuth';
 import { StatisticsAPI } from '../../features/statistics/api';
-import type { SessionStatistics } from '../../core/types/statistics';
+import type { SessionStatisticsWithMaps } from '../../core/types/statistics';
 import SessionGraph from './SessionGraph';
 
 interface AccuracyTabProps {
@@ -10,7 +10,7 @@ interface AccuracyTabProps {
 
 export default function AccuracyTab({ timeWindow }: AccuracyTabProps) {
   const { user } = useAuth();
-  const [sessions, setSessions] = useState<SessionStatistics[]>([]);
+  const [sessions, setSessions] = useState<SessionStatisticsWithMaps[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 

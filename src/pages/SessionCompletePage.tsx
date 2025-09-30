@@ -6,7 +6,7 @@
 
 import { useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import type { SessionStatistics } from '../core/types/statistics';
+import type { SessionStatisticsWithMaps } from '../core/types/statistics';
 import { useStatsAPI } from '../features/statistics/useStatsAPI';
 import '../styles/main.css';
 import '../styles/sessionComplete.css';
@@ -17,7 +17,7 @@ export function SessionCompletePage() {
   const { saveSessionStats, isAuthenticated } = useStatsAPI();
 
   // Get session data from navigation state
-  const fullStatistics = location.state?.fullStatistics as SessionStatistics | undefined;
+  const fullStatistics = location.state?.fullStatistics as SessionStatisticsWithMaps | undefined;
   const liveCopyTyped = location.state?.liveCopyTyped as string | null;
   const liveCopyTransmitted = location.state?.liveCopyTransmitted as string[] | null;
 

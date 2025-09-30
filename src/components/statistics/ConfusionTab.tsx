@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '../../hooks/useAuth';
 import { StatisticsAPI } from '../../features/statistics/api';
-import type { SessionStatistics } from '../../core/types/statistics';
+import type { SessionStatisticsWithMaps } from '../../core/types/statistics';
 import { getMorsePattern } from '../../core/morse/alphabet';
 
 interface CharacterConfusion {
@@ -23,7 +23,7 @@ interface ConfusionTabProps {
 
 export default function ConfusionTab({ timeWindow }: ConfusionTabProps) {
   const { user } = useAuth();
-  const [sessions, setSessions] = useState<SessionStatistics[]>([]);
+  const [sessions, setSessions] = useState<SessionStatisticsWithMaps[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 

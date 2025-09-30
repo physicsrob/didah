@@ -1,64 +1,20 @@
 /**
  * Session Statistics Types
  *
- * Types for calculating and storing session statistics.
- * These are generated at the end of each session from the event log.
+ * Frontend re-export of shared statistics types from backend.
+ * Backend stores as Record (JSON-serializable), frontend uses Maps internally.
+ * Conversion happens at API boundaries in statsAPI.ts and api.ts.
  */
 
-import type { SpeedTier } from '../morse/timing';
+// Re-export canonical types from backend (single source of truth)
+export type { SessionStatistics, CharacterStatistics, SpeedTier } from '../../../functions/shared/types'
 
 /**
- * Complete statistics for a single practice session
+ * Frontend-specific type: SessionStatistics with Maps instead of Records
+ * Used internally in frontend for ergonomic access patterns.
+ * Converted to/from backend Record format at API boundaries.
  */
-export type SessionStatistics = {
-  // Session Metadata
-  startedAt: number;
-  endedAt: number;
-  durationMs: number;
-  timestamp?: number;  // Unix timestamp when session was saved (ms since epoch)
-  config: {
-    mode: "practice" | "listen" | "live-copy";
-    lengthMs: number;               // Configured session length
-    wpm: number;
-    speedTier: SpeedTier;
-    sourceId: string;
-    sourceName?: string;            // Display name of the source
-    replay: boolean;
-    feedback: "buzzer" | "flash" | "both" | "none";
-    effectiveAlphabet: string[];    // Characters practiced
-  };
-
-  // Overall Metrics
-  overallAccuracy: number;        // 0-100 percentage (excludes timeouts)
-  timeoutPercentage: number;      // 0-100 percentage of timeouts
-  effectiveWpm: number;           // Adjusted for accuracy and timing
-  totalCharacters: number;
-  correctCount: number;
-  incorrectCount: number;
-  timeoutCount: number;
-
-  // Per-Character Statistics
-  characterStats: Map<string, CharacterStatistics>;
-
-  // Confusion Matrix (expected char → what user typed → count)
-  confusionMatrix: Map<string, Map<string, number>>;
-
-  // Timing Analysis (only successful recognitions)
-  meanRecognitionTimeMs: number;
-  medianRecognitionTimeMs: number;
-};
-
-/**
- * Statistics for a single character across all its occurrences in a session
- */
-export type CharacterStatistics = {
-  char: string;
-  attempts: number;
-  correct: number;
-  incorrect: number;
-  timeout: number;
-  accuracy: number;              // 0-100 percentage
-  recognitionTimes: number[];     // All successful recognition times
-  meanRecognitionTimeMs: number;
-  medianRecognitionTimeMs: number;
-};
+export type SessionStatisticsWithMaps = Omit<import('../../../functions/shared/types').SessionStatistics, 'characterStats' | 'confusionMatrix'> & {
+  characterStats: Map<string, import('../../../functions/shared/types').CharacterStatistics>
+  confusionMatrix: Map<string, Map<string, number>>
+}

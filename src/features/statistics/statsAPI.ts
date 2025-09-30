@@ -1,4 +1,4 @@
-import type { SessionStatistics } from '../../core/types/statistics';
+import type { SessionStatisticsWithMaps, SessionStatistics } from '../../core/types/statistics';
 
 /**
  * Stats API Client
@@ -15,16 +15,17 @@ export class StatsAPI {
 
   /**
    * Save session statistics to the backend
+   * Converts Maps to Record for JSON serialization
    */
-  async saveSessionStats(stats: SessionStatistics): Promise<void> {
+  async saveSessionStats(stats: SessionStatisticsWithMaps): Promise<void> {
     // Only save stats if session had a positive duration
     if (stats.durationMs <= 0) {
       console.log('Stats not saved - session duration is not positive');
       return;
     }
 
-    // Add date and timestamp to the stats
-    const statsWithMetadata = {
+    // Add date and timestamp to the stats, convert Maps to Record
+    const statsWithMetadata: SessionStatistics & { date: string } = {
       ...stats,
       date: new Date().toISOString().split('T')[0],
       timestamp: Date.now(),

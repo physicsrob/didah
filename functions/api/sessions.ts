@@ -7,7 +7,7 @@
 
 import type { KVNamespace } from '@cloudflare/workers-types';
 import { getUserIdFromToken } from '../shared/auth';
-import type { SessionStatistics } from '../../src/core/types/statistics';
+import type { SessionStatistics } from '../shared/types';
 
 interface Env {
   KV: KVNamespace;

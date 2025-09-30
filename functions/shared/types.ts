@@ -1,5 +1,6 @@
 // Shared types for API functions
 export type FeedbackMode = 'flash' | 'buzzer' | 'replay' | 'off'
+export type SpeedTier = 'slow' | 'medium' | 'fast' | 'lightning'
 
 export type UserSettings = {
   // Core settings
@@ -47,6 +48,62 @@ export interface User {
   email: string
   name: string
   picture?: string
+}
+
+/**
+ * Statistics for a single character across all its occurrences in a session
+ */
+export type CharacterStatistics = {
+  char: string
+  attempts: number
+  correct: number
+  incorrect: number
+  timeout: number
+  accuracy: number              // 0-100 percentage
+  recognitionTimes: number[]     // All successful recognition times
+  meanRecognitionTimeMs: number
+  medianRecognitionTimeMs: number
+}
+
+/**
+ * Complete statistics for a single practice session
+ */
+export type SessionStatistics = {
+  // Session Metadata
+  startedAt: number
+  endedAt: number
+  durationMs: number
+  timestamp?: number  // Unix timestamp when session was saved (ms since epoch)
+  config: {
+    mode: 'practice' | 'listen' | 'live-copy'
+    lengthMs: number               // Configured session length
+    wpm: number
+    speedTier: SpeedTier
+    sourceId: string
+    sourceName?: string            // Display name of the source
+    replay: boolean
+    feedback: 'buzzer' | 'flash' | 'both' | 'none'
+    effectiveAlphabet: string[]    // Characters practiced
+  }
+
+  // Overall Metrics
+  overallAccuracy: number        // 0-100 percentage (excludes timeouts)
+  timeoutPercentage: number      // 0-100 percentage of timeouts
+  effectiveWpm: number           // Adjusted for accuracy and timing
+  totalCharacters: number
+  correctCount: number
+  incorrectCount: number
+  timeoutCount: number
+
+  // Per-Character Statistics (JSON-serializable)
+  characterStats: Record<string, CharacterStatistics>
+
+  // Confusion Matrix (expected char → what user typed → count) (JSON-serializable)
+  confusionMatrix: Record<string, Record<string, number>>
+
+  // Timing Analysis (only successful recognitions)
+  meanRecognitionTimeMs: number
+  medianRecognitionTimeMs: number
 }
 
 // Validation function for settings
