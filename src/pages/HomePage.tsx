@@ -47,7 +47,7 @@ export default function HomePage() {
         <h1 className="brand-title text-center mb-4" style={{ fontSize: '48px' }}>
           MorseAcademy
         </h1>
-        <p className="text-muted text-center text-lg mb-16">
+        <p className="text-center text-lg mb-16" style={{ color: 'var(--text-accent)' }}>
           Flow state learning for morse code mastery
         </p>
 

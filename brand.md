@@ -7,10 +7,11 @@ MorseAcademy is a morse code learning app focused on creating flow state experie
 
 ## Visual Style Direction
 
-**High Contrast Blue**
+**High Contrast Blue with Warm Accents**
 - Deep blacks and bright whites for strong definition
 - Clean, modern typography with technical precision  
 - Bright blue accent for energy and confidence
+- Warm peachy accent for headers and key messaging
 - Tech-forward but warm and inviting
 
 ---
@@ -40,6 +41,7 @@ MorseAcademy is a morse code learning app focused on creating flow state experie
 - Weight: 600
 - Letter-spacing: -0.3px
 - Line-height: 1.2
+- Color: #f5a573 for page-level headers, #ffffff for section headers
 
 **Heading 2**
 - Font: Inter
@@ -47,6 +49,7 @@ MorseAcademy is a morse code learning app focused on creating flow state experie
 - Weight: 600
 - Letter-spacing: -0.2px
 - Line-height: 1.3
+- Color: #f5a573 for page-level headers, #ffffff for section headers
 
 **Heading 3**
 - Font: Inter
@@ -94,10 +97,12 @@ MorseAcademy is a morse code learning app focused on creating flow state experie
 - **Tertiary Gray:** #3a3a3a (Borders, dividers, subtle elements)
 - **Pure White:** #ffffff (Primary text, high contrast elements)
 - **Primary Blue:** #4dabf7 (Brand accent, CTAs, focus states)
+- **Accent Warm:** #f5a573 (Headers, key messaging, page titles)
 
 ### Text Colors
 - **Text Primary:** #ffffff (Main headings, important content)
 - **Text Secondary:** #e0e0e0 (Body text, descriptions)
+- **Text Accent:** #f5a573 (Page headers, taglines, key messaging)
 - **Text Muted:** #888888 (Captions, timestamps, subtle info)
 - **Text Disabled:** #555555 (Disabled buttons, inactive elements)
 
@@ -122,12 +127,14 @@ MorseAcademy is a morse code learning app focused on creating flow state experie
 - Maintain consistent letter-spacing for brand elements
 - Use negative letter-spacing on large headings for better visual balance
 - Stick to 400, 500, and 600 font weights to avoid visual noise
+- Use warm accent color (#f5a573) for page-level headers and key messaging to add warmth and visual interest
 
 ### Color Usage
 - Use Primary Blue sparingly for maximum impact
+- Use Accent Warm (#f5a573) for headers, taglines, and page titles to add warmth
 - Maintain high contrast between text and backgrounds
 - Use state colors consistently (green for success, red for errors, etc.)
-- Default to grayscale palette with blue as strategic accent
+- Default to grayscale palette with blue and warm accents as strategic highlights
 
 ### Visual Principles
 - Prioritize clarity and readability above all else
@@ -135,6 +142,7 @@ MorseAcademy is a morse code learning app focused on creating flow state experie
 - Maintain consistent spacing and alignment
 - Balance minimalism with functional clarity
 - Design for flow state - avoid visual distractions
+- Use warm accent to prevent overly cold, monochromatic designs
 
 ---
 
