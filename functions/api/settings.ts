@@ -3,11 +3,21 @@ import { validateSettings, DEFAULT_USER_SETTINGS, type UserSettings } from '../s
 
 interface Env {
   KV: KVNamespace
+  GOOGLE_CLIENT_ID: string
 }
 
 // GET /api/settings
 export async function onRequestGet(context: { request: Request; env: Env }) {
   try {
+    // Get Google Client ID from environment
+    const clientId = context.env.GOOGLE_CLIENT_ID
+    if (!clientId) {
+      return new Response(JSON.stringify({ error: 'Server configuration error' }), {
+        status: 500,
+        headers: { 'Content-Type': 'application/json' }
+      })
+    }
+
     // Extract and validate auth token
     const authHeader = context.request.headers.get('Authorization')
     if (!authHeader) {
@@ -19,7 +29,7 @@ export async function onRequestGet(context: { request: Request; env: Env }) {
 
     let userId: string
     try {
-      userId = getUserIdFromToken(authHeader)
+      userId = await getUserIdFromToken(authHeader, clientId)
     } catch {
       return new Response(JSON.stringify({ error: 'Invalid token' }), {
         status: 401,
@@ -69,6 +79,15 @@ export async function onRequestGet(context: { request: Request; env: Env }) {
 // PUT /api/settings
 export async function onRequestPut(context: { request: Request; env: Env }) {
   try {
+    // Get Google Client ID from environment
+    const clientId = context.env.GOOGLE_CLIENT_ID
+    if (!clientId) {
+      return new Response(JSON.stringify({ error: 'Server configuration error' }), {
+        status: 500,
+        headers: { 'Content-Type': 'application/json' }
+      })
+    }
+
     // Extract and validate auth token
     const authHeader = context.request.headers.get('Authorization')
     if (!authHeader) {
@@ -80,7 +99,7 @@ export async function onRequestPut(context: { request: Request; env: Env }) {
 
     let userId: string
     try {
-      userId = getUserIdFromToken(authHeader)
+      userId = await getUserIdFromToken(authHeader, clientId)
     } catch {
       return new Response(JSON.stringify({ error: 'Invalid token' }), {
         status: 401,

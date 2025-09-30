@@ -26,3 +26,4 @@ dist-ssr
 .wrangler
 .env
 .dev.vars
+tech_debt.md

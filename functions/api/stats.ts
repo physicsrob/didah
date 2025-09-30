@@ -10,12 +10,19 @@ import { getUserIdFromToken } from '../shared/auth';
 
 interface Env {
   KV: KVNamespace;
+  GOOGLE_CLIENT_ID: string;
 }
 
 /**
  * POST /api/stats - Save session statistics
  */
 export async function onRequestPost(context: { request: Request; env: Env }): Promise<Response> {
+  // Get Google Client ID from environment
+  const clientId = context.env.GOOGLE_CLIENT_ID;
+  if (!clientId) {
+    return new Response('Server configuration error', { status: 500 });
+  }
+
   // Get user ID from token
   let userId: string;
   try {
@@ -23,7 +30,7 @@ export async function onRequestPost(context: { request: Request; env: Env }): Pr
     if (!authHeader) {
       return new Response('Authorization required', { status: 401 });
     }
-    userId = getUserIdFromToken(authHeader);
+    userId = await getUserIdFromToken(authHeader, clientId);
   } catch (error) {
     console.error('Auth error:', error);
     return new Response('Invalid token', { status: 401 });
