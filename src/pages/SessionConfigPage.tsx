@@ -105,15 +105,8 @@ export function SessionConfigPage() {
 
     try {
       const content = await fetchSourceContent(source.backendId, source.requiresAuth ?? false);
-      if (content) {
-        // Override the content ID with the frontend ID for proper source factory detection
-        return { ...content, id: sourceId };
-      } else {
-        if (options.setError) {
-          setSourceLoadError(`Failed to load "${source.name}". Please try again or select a different source.`);
-        }
-        return null;
-      }
+      // Override the content ID with the frontend ID for proper source factory detection
+      return { ...content, id: sourceId };
     } catch (error) {
       console.error(`Failed to fetch source ${source.backendId}:`, error);
       if (options.setError) {

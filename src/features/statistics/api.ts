@@ -42,36 +42,30 @@ export class StatisticsAPI {
       return [];
     }
 
-    try {
-      const response = await fetch('/api/sessions', {
-        method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${this.authToken}`,
-        }
-      });
-
-      if (!response.ok) {
-        console.error(`Failed to fetch sessions: ${response.status}`);
-        return [];
+    const response = await fetch('/api/sessions', {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${this.authToken}`,
       }
+    });
 
-      const sessions: SessionStatistics[] = await response.json();
-
-      // Convert Record objects to Maps for ergonomic frontend use
-      return sessions.map((session) => ({
-        ...session,
-        characterStats: new Map(Object.entries(session.characterStats || {})),
-        confusionMatrix: new Map(
-          Object.entries(session.confusionMatrix || {}).map(([key, value]) => [
-            key,
-            new Map(Object.entries(value))
-          ])
-        )
-      })) as SessionStatisticsWithMaps[];
-    } catch (error) {
-      console.error('Error fetching sessions:', error);
-      return [];
+    if (!response.ok) {
+      throw new Error(`Failed to fetch sessions: ${response.status}`);
     }
+
+    const sessions: SessionStatistics[] = await response.json();
+
+    // Convert Record objects to Maps for ergonomic frontend use
+    return sessions.map((session) => ({
+      ...session,
+      characterStats: new Map(Object.entries(session.characterStats || {})),
+      confusionMatrix: new Map(
+        Object.entries(session.confusionMatrix || {}).map(([key, value]) => [
+          key,
+          new Map(Object.entries(value))
+        ])
+      )
+    })) as SessionStatisticsWithMaps[];
   }
 
   /**
@@ -83,24 +77,18 @@ export class StatisticsAPI {
       return this.generateEmptyPracticeTime();
     }
 
-    try {
-      const response = await fetch('/api/practice-time', {
-        method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${this.authToken}`,
-        }
-      });
-
-      if (!response.ok) {
-        console.error(`Failed to fetch practice time: ${response.status}`);
-        return this.generateEmptyPracticeTime();
+    const response = await fetch('/api/practice-time', {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${this.authToken}`,
       }
+    });
 
-      return await response.json();
-    } catch (error) {
-      console.error('Error fetching practice time:', error);
-      return this.generateEmptyPracticeTime();
+    if (!response.ok) {
+      throw new Error(`Failed to fetch practice time: ${response.status}`);
     }
+
+    return await response.json();
   }
 
   /**
@@ -112,23 +100,18 @@ export class StatisticsAPI {
       return [];
     }
 
-    try {
-      const response = await fetch(`/api/accuracy?days=${days}`, {
-        method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${this.authToken}`,
-        }
-      });
-
-      if (!response.ok) {
-        return [];
+    const response = await fetch(`/api/accuracy?days=${days}`, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${this.authToken}`,
       }
+    });
 
-      return await response.json();
-    } catch (error) {
-      console.error('Error fetching accuracy:', error);
-      return [];
+    if (!response.ok) {
+      throw new Error(`Failed to fetch accuracy: ${response.status}`);
     }
+
+    return await response.json();
   }
 
   /**
@@ -140,23 +123,18 @@ export class StatisticsAPI {
       return [];
     }
 
-    try {
-      const response = await fetch(`/api/speed?days=${days}`, {
-        method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${this.authToken}`,
-        }
-      });
-
-      if (!response.ok) {
-        return [];
+    const response = await fetch(`/api/speed?days=${days}`, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${this.authToken}`,
       }
+    });
 
-      return await response.json();
-    } catch (error) {
-      console.error('Error fetching speed:', error);
-      return [];
+    if (!response.ok) {
+      throw new Error(`Failed to fetch speed: ${response.status}`);
     }
+
+    return await response.json();
   }
 
   /**
