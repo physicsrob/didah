@@ -162,8 +162,7 @@ describe('runPracticeEmission', () => {
     expect(result).toBe('timeout');
 
     // Verify replay was NOT called (moved to session level)
-    const replayCalls = io.getCalls('replay');
-    expect(replayCalls).toHaveLength(0);
+    expect(io.getReplayedChars()).toHaveLength(0);
   });
 
   it('respects case-insensitive input', async () => {
@@ -226,16 +225,13 @@ describe('runPracticeEmission', () => {
     await advanceAndFlush(clock, windowMs - 1);
 
     // Should not have timed out yet
-    let feedbackCalls = io.getCalls('feedback');
-    expect(feedbackCalls).toHaveLength(0);
+    expect(io.getFeedbackFor('H')).toBeUndefined();
 
     // Advance past window timeout
     await advanceAndFlush(clock, 2);
 
     // Now should have timed out
-    feedbackCalls = io.getCalls('feedback');
-    expect(feedbackCalls).toHaveLength(1);
-    expect(feedbackCalls[0].args).toEqual(['timeout', 'H']);
+    expect(io.getFeedbackFor('H')).toBe('timeout');
 
     // Advance for inter-character spacing
     await advanceAndFlush(clock, TestTiming.interChar);
@@ -244,12 +240,9 @@ describe('runPracticeEmission', () => {
     expect(result).toBe('timeout');
 
     // Verify timeout happened at the correct time
-    const timeoutLogs = io.getCalls('log').filter(c => {
-      const event = c.args[0] as { type: string; at: number };
-      return event.type === 'timeout';
-    });
+    const timeoutLogs = io.getLoggedEvents('timeout');
     expect(timeoutLogs).toHaveLength(1);
-    const timeoutTime = (timeoutLogs[0].args[0] as { at: number }).at;
+    const timeoutTime = timeoutLogs[0].at;
     const expectedTotalTime = audioDuration + windowMs;
     expect(timeoutTime).toBeGreaterThanOrEqual(startTime + expectedTotalTime);
   });

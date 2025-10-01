@@ -82,30 +82,6 @@ export async function select<T>(
 }
 
 /**
- * Helper to create a timeout arm for select
- * @deprecated Use clockTimeout instead for testability
- */
-export function timeout<T>(ms: number, value: T): SelectArm<T> {
-  return {
-    run: (signal) =>
-      new Promise<T>((resolve, reject) => {
-        const timeoutId = setTimeout(() => resolve(value), ms);
-
-        if (signal.aborted) {
-          clearTimeout(timeoutId);
-          reject(new DOMException('Aborted', 'AbortError'));
-          return;
-        }
-
-        signal.addEventListener('abort', () => {
-          clearTimeout(timeoutId);
-          reject(new DOMException('Aborted', 'AbortError'));
-        }, { once: true });
-      })
-  };
-}
-
-/**
  * Clock-aware timeout helper for select
  */
 export function clockTimeout<T>(clock: Clock, ms: number, value: T): SelectArm<T> {
