@@ -31,7 +31,8 @@ export function useStatsAPI() {
         if (!payload.exp) return false;
         const now = Math.floor(Date.now() / 1000);
         return payload.exp < now;
-      } catch {
+      } catch (error) {
+        console.error('Failed to parse JWT token:', error);
         return true;
       }
     };

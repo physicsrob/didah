@@ -30,7 +30,8 @@ export async function onRequestGet(context: { request: Request; env: Env }) {
     let userId: string
     try {
       userId = await getUserIdFromToken(authHeader, clientId)
-    } catch {
+    } catch (error) {
+      console.error('Token validation failed:', error)
       return new Response(JSON.stringify({ error: 'Invalid token' }), {
         status: 401,
         headers: { 'Content-Type': 'application/json' }
@@ -100,7 +101,8 @@ export async function onRequestPut(context: { request: Request; env: Env }) {
     let userId: string
     try {
       userId = await getUserIdFromToken(authHeader, clientId)
-    } catch {
+    } catch (error) {
+      console.error('Token validation failed:', error)
       return new Response(JSON.stringify({ error: 'Invalid token' }), {
         status: 401,
         headers: { 'Content-Type': 'application/json' }
@@ -111,7 +113,8 @@ export async function onRequestPut(context: { request: Request; env: Env }) {
     let requestData: unknown
     try {
       requestData = await context.request.json()
-    } catch {
+    } catch (error) {
+      console.error('Failed to parse request JSON:', error)
       return new Response(JSON.stringify({ error: 'Invalid JSON in request body' }), {
         status: 400,
         headers: { 'Content-Type': 'application/json' }
