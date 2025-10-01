@@ -8,6 +8,7 @@ import type { InputBus } from './inputBus';
 import { runPracticeEmission, runListenEmission, runLiveCopyEmission } from './charPrograms';
 import type { SessionConfig } from '../../../core/types/domain';
 import { calculateCharacterDurationMs, getInterCharacterSpacingMs } from '../../../core/morse/timing';
+import { debug } from '../../../core/debug';
 
 /**
  * Character source interface
@@ -272,14 +273,14 @@ export function createSessionRunner(deps: SessionRunnerDeps): SessionRunner {
 
     // Handle replay AFTER history update (for incorrect or timeout)
     if (config.replay && (outcome === 'incorrect' || outcome === 'timeout') && deps.io.replay) {
-      console.log(`[Session] Replaying character '${char}' after ${outcome}`);
+      debug.log(`[Session] Replaying character '${char}' after ${outcome}`);
       await deps.io.replay(char, config.wpm);
     }
 
     // Add inter-character spacing after any incorrect or timeout (with or without replay)
     if (outcome === 'incorrect' || outcome === 'timeout') {
       const interCharSpacingMs = getInterCharacterSpacingMs(config.wpm);
-      console.log(`[Spacing] Adding post-error spacing: ${interCharSpacingMs}ms (3 dits)`);
+      debug.log(`[Spacing] Adding post-error spacing: ${interCharSpacingMs}ms (3 dits)`);
       await deps.clock.sleep(interCharSpacingMs, signal);
     }
   }
@@ -448,7 +449,7 @@ export function createSessionRunner(deps: SessionRunnerDeps): SessionRunner {
       if (!isPaused && snapshot.phase === 'running') {
         isPaused = true;
         pausedAt = deps.clock.now();
-        console.log('[Session] Paused at', pausedAt);
+        debug.log('[Session] Paused at', pausedAt);
       }
     },
 
@@ -457,7 +458,7 @@ export function createSessionRunner(deps: SessionRunnerDeps): SessionRunner {
       if (isPaused && pausedAt !== null) {
         const pauseDuration = deps.clock.now() - pausedAt;
         totalPausedMs += pauseDuration;
-        console.log('[Session] Resumed after', pauseDuration, 'ms pause. Total paused:', totalPausedMs, 'ms');
+        debug.log('[Session] Resumed after', pauseDuration, 'ms pause. Total paused:', totalPausedMs, 'ms');
 
         isPaused = false;
         pausedAt = null;

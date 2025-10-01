@@ -6,6 +6,7 @@ import type { IO, SessionSnapshot, LogEvent } from './io';
 import type { AudioEngine } from '../services/audioEngine';
 import type { Feedback } from '../services/feedback/feedbackInterface';
 import type { SessionMode } from '../../../core/types/domain';
+import { debug } from '../../../core/debug';
 
 /**
  * Configuration for the IO adapter
@@ -46,7 +47,7 @@ export function createIOAdapter(config: IOAdapterConfig): IO {
 
   return {
     async playChar(char: string, wpm: number): Promise<void> {
-      console.log(`[Audio] Playing '${char}' at ${wpm} WPM`);
+      debug.log(`[Audio] Playing '${char}' at ${wpm} WPM`);
       try {
         // Practice mode should never use extra word spacing (always 0)
         // Only Listen and Live Copy modes should use it
@@ -67,17 +68,17 @@ export function createIOAdapter(config: IOAdapterConfig): IO {
     },
 
     reveal(char: string): void {
-      console.log(`[IO] Revealing character: '${char}'`);
+      debug.log(`[IO] Revealing character: '${char}'`);
       onReveal?.(char);
     },
 
     hide(): void {
-      console.log(`[IO] Hiding character`);
+      debug.log(`[IO] Hiding character`);
       onHide?.();
     },
 
     feedback(kind: 'correct' | 'incorrect' | 'timeout', char: string): void {
-      console.log(`[Feedback] ${kind} for '${char}'`);
+      debug.log(`[Feedback] ${kind} for '${char}'`);
 
       // Skip all feedback if feedbackType is 'none'
       if (feedbackType === 'none') {
@@ -95,7 +96,7 @@ export function createIOAdapter(config: IOAdapterConfig): IO {
 
       // Trigger feedback instance (buzzer or combined)
       if (!feedback) {
-        console.log(`[Feedback] No feedback handler configured`);
+        debug.log(`[Feedback] No feedback handler configured`);
         return;
       }
 
@@ -115,47 +116,47 @@ export function createIOAdapter(config: IOAdapterConfig): IO {
     async replay(char: string, wpm: number): Promise<void> {
       // Don't replay if paused
       if (isPaused && isPaused()) {
-        console.log(`[Replay] Skipping replay for '${char}' - session is paused`);
+        debug.log(`[Replay] Skipping replay for '${char}' - session is paused`);
         return;
       }
 
-      console.log(`[Replay] Starting replay for '${char}' at ${wpm} WPM`);
+      debug.log(`[Replay] Starting replay for '${char}' at ${wpm} WPM`);
       if (!onReveal || !audioEngine) {
-        console.log(`[Replay] Missing dependencies - onReveal: ${!!onReveal}, audioEngine: ${!!audioEngine}`);
+        debug.log(`[Replay] Missing dependencies - onReveal: ${!!onReveal}, audioEngine: ${!!audioEngine}`);
         return;
       }
 
       // Show the character immediately
-      console.log(`[Replay] Showing character: '${char}'`);
+      debug.log(`[Replay] Showing character: '${char}'`);
       onReveal(char);
 
       // Wait 500ms before playing audio
-      console.log(`[Replay] Waiting 500ms before audio`);
+      debug.log(`[Replay] Waiting 500ms before audio`);
       await new Promise(resolve => setTimeout(resolve, 500));
 
       // Check again if paused before playing audio
       if (isPaused && isPaused()) {
-        console.log(`[Replay] Session paused during wait - skipping audio`);
+        debug.log(`[Replay] Session paused during wait - skipping audio`);
         onHide?.();
         return;
       }
 
       // Play the audio (replays are always in practice mode, so no extra spacing)
       try {
-        console.log(`[Replay] Playing audio for '${char}'`);
+        debug.log(`[Replay] Playing audio for '${char}'`);
         await audioEngine.playCharacter(char, wpm, 0);
       } catch (error) {
         console.warn(`Failed to replay audio for char: ${char}`, error);
       }
 
       // Wait a bit for the user to see (after audio completes)
-      console.log(`[Replay] Waiting ${replayDuration}ms`);
+      debug.log(`[Replay] Waiting ${replayDuration}ms`);
       await new Promise(resolve => setTimeout(resolve, replayDuration));
 
       // Hide the character
-      console.log(`[Replay] Hiding character`);
+      debug.log(`[Replay] Hiding character`);
       onHide?.();
-      console.log(`[Replay] Complete for '${char}'`);
+      debug.log(`[Replay] Complete for '${char}'`);
     },
 
     log(event: LogEvent): void {

@@ -1,4 +1,5 @@
 import React, { createContext, useState, useEffect } from 'react'
+import { debug } from '../core/debug'
 
 interface User {
   id: string
@@ -44,7 +45,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       if (token) {
         // Check if token is expired
         if (isTokenExpired(token)) {
-          console.log('Stored token is expired, clearing...')
+          debug.log('Stored token is expired, clearing...')
           localStorage.removeItem('google_token')
           return null
         }
@@ -88,11 +89,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
         // If token expires in less than 5 minutes, trigger One Tap
         if (timeUntilExpiry < 300 && timeUntilExpiry > 0) {
-          console.log('Token expiring soon, triggering re-authentication...')
+          debug.log('Token expiring soon, triggering re-authentication...')
           if (window.google) {
             window.google.accounts.id.prompt((notification) => {
               if (notification.isNotDisplayed()) {
-                console.log('One Tap not displayed for refresh:', notification.getNotDisplayedReason())
+                debug.log('One Tap not displayed for refresh:', notification.getNotDisplayedReason())
               }
             })
           }
@@ -137,7 +138,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           if (!user) {
             window.google.accounts.id.prompt((notification) => {
               if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
-                console.log('One Tap not displayed:', notification.getNotDisplayedReason())
+                debug.log('One Tap not displayed:', notification.getNotDisplayedReason())
               }
             })
           }

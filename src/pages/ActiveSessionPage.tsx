@@ -18,6 +18,7 @@ import { createCharacterSource } from '../features/sources';
 import type { SourceContent } from '../features/sources';
 import { createFeedback } from '../features/session/services/feedback/index.js';
 import { useAudio } from '../contexts/useAudio';
+import { debug } from '../core/debug';
 import { useSettings } from '../features/settings/hooks/useSettings';
 import { CharacterDisplay } from '../components/CharacterDisplay';
 import type { DisplayCharacter } from '../components/CharacterDisplay';
@@ -146,7 +147,7 @@ export function ActiveSessionPage() {
     // Calculate comprehensive statistics
     const calculator = new SessionStatsCalculator();
     const fullStatistics = calculator.calculateStats(eventCollector.current, config);
-    console.log('Session statistics calculated:', fullStatistics);
+    debug.log('Session statistics calculated:', fullStatistics);
 
     const doNavigate = () => {
       navigate('/session-complete', {

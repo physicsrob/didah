@@ -8,6 +8,7 @@ import { useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import type { SessionStatisticsWithMaps } from '../core/types/statistics';
 import { useStatsAPI } from '../features/statistics/useStatsAPI';
+import { debug } from '../core/debug';
 import '../styles/main.css';
 import '../styles/sessionComplete.css';
 
@@ -31,13 +32,13 @@ export function SessionCompletePage() {
     if (fullStatistics && isAuthenticated) {
       saveSessionStats(fullStatistics)
         .then(() => {
-          console.log('Session statistics saved successfully');
+          debug.log('Session statistics saved successfully');
         })
         .catch(err => {
           console.error('Failed to save session statistics:', err);
         });
     } else if (!isAuthenticated && fullStatistics) {
-      console.log('Statistics not saved - user not authenticated');
+      debug.log('Statistics not saved - user not authenticated');
     }
   }, [fullStatistics, isAuthenticated, saveSessionStats]);
 
