@@ -17,6 +17,11 @@ export interface Feedback {
   onCorrect?(char: string): void;
 
   /**
+   * Initialize feedback with audio context (optional, for audio-based feedback)
+   */
+  initialize?(audioContext: AudioContext): Promise<void>;
+
+  /**
    * Cleanup resources if needed
    */
   dispose?(): void;
