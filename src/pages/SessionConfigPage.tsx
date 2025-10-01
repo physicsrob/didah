@@ -9,6 +9,8 @@ import { useAuth } from '../hooks/useAuth';
 import { HeaderBar } from '../components/HeaderBar';
 import { getCharactersByCategory } from '../core/morse/alphabet';
 import '../styles/main.css';
+import '../styles/sessionConfig.css';
+import '../styles/components.css';
 
 // Type guard for validating SessionMode
 function isValidSessionMode(value: unknown): value is SessionMode {
@@ -296,21 +298,15 @@ export function SessionConfigPage() {
     <div className="min-h-screen">
       <HeaderBar pageTitle={modeConfig[mode].title} />
 
-      <div className="container" style={{ margin: '0 auto', padding: '0 16px' }}>
+      <div className="container container-centered">
         {/* Main Settings Card */}
-        <div className="card mb-4" style={{
-          maxWidth: '672px',
-          margin: '0 auto',
+        <div className="card mb-4 container-narrow" style={{
           padding: '32px'
         }}>
           {/* Mode Description */}
-          <div style={{ marginBottom: '40px' }}>
-            <p className="body-regular" style={{
-              color: 'rgba(255, 255, 255, 0.7)',
-              fontSize: '16px',
-              lineHeight: '1.5'
-            }}>
-              <span style={{ fontWeight: '600' }}>{modeConfig[mode].title}:</span> {modeConfig[mode].description}
+          <div className="session-config-section">
+            <p className="body-regular session-config-description">
+              <span className="session-config-mode-label">{modeConfig[mode].title}:</span> {modeConfig[mode].description}
             </p>
           </div>
 
@@ -348,35 +344,12 @@ export function SessionConfigPage() {
 
           {/* Error message for source loading */}
           {sourceLoadError && (
-            <div style={{
-              marginTop: '12px',
-              marginBottom: '12px',
-              padding: '12px 16px',
-              backgroundColor: 'rgba(239, 68, 68, 0.1)',
-              border: '1px solid rgba(239, 68, 68, 0.3)',
-              borderRadius: '6px',
-              color: '#ef4444',
-              fontSize: '14px',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px'
-            }}>
+            <div className="session-config-error-container">
               <span>⚠️</span>
-              <span style={{ flex: 1 }}>{sourceLoadError}</span>
+              <span className="session-config-error-text">{sourceLoadError}</span>
               <button
                 onClick={() => handleSourceChange(selectedSourceId)}
-                style={{
-                  padding: '4px 12px',
-                  fontSize: '13px',
-                  backgroundColor: 'rgba(239, 68, 68, 0.2)',
-                  color: '#ef4444',
-                  border: '1px solid rgba(239, 68, 68, 0.3)',
-                  borderRadius: '4px',
-                  cursor: 'pointer',
-                  transition: 'background-color 0.2s'
-                }}
-                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(239, 68, 68, 0.3)'}
-                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'rgba(239, 68, 68, 0.2)'}
+                className="session-config-retry-btn"
               >
                 Retry
               </button>

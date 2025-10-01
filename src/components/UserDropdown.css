@@ -1,0 +1,121 @@
+/* UserDropdown Component Styles */
+
+.user-dropdown {
+  position: relative;
+}
+
+.user-dropdown__trigger {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 20px;
+  transition: background 0.2s;
+}
+
+.user-dropdown__trigger:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.user-dropdown__name {
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 13px;
+  font-weight: 400;
+  margin-right: 4px;
+}
+
+.user-dropdown__avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.user-dropdown__arrow {
+  width: 12px;
+  height: 12px;
+  margin-left: 2px;
+  opacity: 0.6;
+  transform: rotate(0deg);
+  transition: transform 0.2s;
+}
+
+.user-dropdown__arrow--open {
+  transform: rotate(180deg);
+}
+
+.user-dropdown__menu {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: 8px;
+  min-width: 200px;
+  background: rgba(42, 42, 42, 0.98);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+  overflow: hidden;
+  z-index: 1000;
+  animation: fadeInScale 0.15s ease-out;
+}
+
+.user-dropdown__user-info {
+  padding: 12px 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.user-dropdown__user-details {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.user-dropdown__avatar--large {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+}
+
+.user-dropdown__user-name {
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.user-dropdown__user-email {
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 12px;
+  margin-top: 2px;
+}
+
+.user-dropdown__sign-out {
+  width: 100%;
+  padding: 10px 16px;
+  background: transparent;
+  border: none;
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 13px;
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.15s;
+}
+
+.user-dropdown__sign-out:hover {
+  background: rgba(255, 255, 255, 0.05);
+  color: rgba(255, 255, 255, 0.95);
+}
+
+@keyframes fadeInScale {
+  from {
+    opacity: 0;
+    transform: scale(0.95) translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}

@@ -31,8 +31,8 @@ export default function HomePage() {
   return (
     <div className="min-h-screen flex items-center justify-center">
       {/* Top navigation */}
-      <nav style={{ position: 'fixed', top: '24px', right: '24px', zIndex: 10 }}>
-        <div style={{ display: 'flex', gap: '20px', alignItems: 'center' }}>
+      <nav className="home-nav">
+        <div className="home-nav-items">
           {user ? (
             <UserDropdown />
           ) : error ? (
@@ -45,11 +45,11 @@ export default function HomePage() {
         </div>
       </nav>
 
-      <div className="w-full px-6 py-10" style={{ maxWidth: '1000px', position: 'relative', zIndex: 1 }}>
-        <h1 className="brand-title text-center mb-4" style={{ fontSize: '48px' }}>
+      <div className="w-full px-6 py-10 home-content-wrapper">
+        <h1 className="brand-title text-center mb-4 home-title">
           MorseAcademy
         </h1>
-        <p className="text-center text-lg mb-16" style={{ color: 'var(--text-accent)' }}>
+        <p className="text-center text-lg mb-16 home-subtitle">
           Flow state learning for morse code mastery
         </p>
 

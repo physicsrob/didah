@@ -5,6 +5,7 @@ import CharactersTab from '../components/settings/CharactersTab'
 import TabbedPanel, { type Tab } from '../components/TabbedPanel'
 import { HeaderBar } from '../components/HeaderBar'
 import '../styles/main.css'
+import '../styles/components.css'
 
 export default function SettingsPage() {
   const { isLoading } = useSettings()
@@ -29,8 +30,8 @@ export default function SettingsPage() {
     <div className="min-h-screen">
       <HeaderBar pageTitle="Settings" />
 
-      <div className="container" style={{ margin: '0 auto', padding: '0 16px' }}>
-        <div style={{ maxWidth: '672px', margin: '0 auto' }}>
+      <div className="container container-centered">
+        <div className="container-narrow">
           <TabbedPanel
             tabs={tabs}
             activeTab={activeTab}

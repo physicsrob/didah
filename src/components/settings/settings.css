@@ -1,0 +1,23 @@
+/* Settings Component Styles */
+
+/* Tone Segmented Control */
+.settings-tone-btn {
+  text-transform: capitalize;
+}
+
+/* Active Characters Preview */
+.settings-active-chars {
+  margin-top: 32px;
+  padding: 16px;
+  background-color: rgba(0, 0, 0, 0.2);
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.settings-active-chars__text {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.settings-active-chars__label {
+  color: rgba(255, 255, 255, 0.9);
+}

@@ -1,5 +1,7 @@
 import { useSettings } from '../../features/settings/hooks/useSettings'
 import { getCharactersByCategory } from '../../core/morse/alphabet'
+import './settings.css'
+import '../../styles/components.css'
 
 export default function CharactersTab() {
   const { settings, updateSetting } = useSettings()
@@ -19,62 +21,44 @@ export default function CharactersTab() {
   return (
     <div>
       <div className="settings-row">
-        <label className="checkbox-label" style={{ margin: 0, width: '100%', justifyContent: 'space-between' }}>
+        <label className="checkbox-label checkbox-row">
           <span>Include Numbers (0-9)</span>
           <input
             type="checkbox"
+            className="checkbox-input"
             checked={settings.includeNumbers}
             onChange={(e) => updateSetting('includeNumbers', e.target.checked)}
-            style={{
-              width: '20px',
-              height: '20px',
-              accentColor: 'var(--color-blue-primary)',
-            }}
           />
         </label>
       </div>
 
       <div className="settings-row">
-        <label className="checkbox-label" style={{ margin: 0, width: '100%', justifyContent: 'space-between' }}>
+        <label className="checkbox-label checkbox-row">
           <span>Include Standard Punctuation (. , ? / =)</span>
           <input
             type="checkbox"
+            className="checkbox-input"
             checked={settings.includeStdPunct}
             onChange={(e) => updateSetting('includeStdPunct', e.target.checked)}
-            style={{
-              width: '20px',
-              height: '20px',
-              accentColor: 'var(--color-blue-primary)',
-            }}
           />
         </label>
       </div>
 
       <div className="settings-row">
-        <label className="checkbox-label" style={{ margin: 0, width: '100%', justifyContent: 'space-between' }}>
+        <label className="checkbox-label checkbox-row">
           <span>Include Advanced Punctuation (: ; ! @ # $ etc.)</span>
           <input
             type="checkbox"
+            className="checkbox-input"
             checked={settings.includeAdvPunct}
             onChange={(e) => updateSetting('includeAdvPunct', e.target.checked)}
-            style={{
-              width: '20px',
-              height: '20px',
-              accentColor: 'var(--color-blue-primary)',
-            }}
           />
         </label>
       </div>
 
-      <div style={{
-        marginTop: '32px',
-        padding: '16px',
-        backgroundColor: 'rgba(0, 0, 0, 0.2)',
-        borderRadius: '6px',
-        border: '1px solid rgba(255, 255, 255, 0.1)'
-      }}>
-        <p className="body-small" style={{ color: 'rgba(255, 255, 255, 0.7)' }}>
-          <strong style={{ color: 'rgba(255, 255, 255, 0.9)' }}>Active characters:</strong> {buildAlphabet().join(' ')}
+      <div className="settings-active-chars">
+        <p className="body-small settings-active-chars__text">
+          <strong className="settings-active-chars__label">Active characters:</strong> {buildAlphabet().join(' ')}
         </p>
       </div>
     </div>

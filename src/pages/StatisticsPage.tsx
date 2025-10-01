@@ -9,6 +9,7 @@ import { HeaderBar } from '../components/HeaderBar'
 import TabbedPanel, { type Tab } from '../components/TabbedPanel'
 import '../styles/main.css'
 import '../styles/statistics.css'
+import '../styles/components.css'
 
 export default function StatisticsPage() {
   const [activeTab, setActiveTab] = useState('time')
@@ -26,8 +27,8 @@ export default function StatisticsPage() {
     <div className="min-h-screen">
       <HeaderBar pageTitle="Statistics" />
 
-      <div className="w-full px-6 py-4 max-w-xl" style={{ margin: '0 auto' }}>
-        <div className="mb-6" style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end' }}>
+      <div className="w-full px-6 py-4 max-w-xl container-centered">
+        <div className="mb-6 flex-end-container">
           <TimeWindowSelector value={timeWindow} onChange={setTimeWindow} />
         </div>
 

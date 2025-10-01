@@ -4,6 +4,8 @@ import { useSettings } from '../../features/settings/hooks/useSettings'
 import { useAudio } from '../../contexts/useAudio'
 import { DEFAULT_WPM } from '../../core/config/defaults'
 import { BuzzerFeedback, DEFAULT_BUZZER_CONFIG } from '../../features/session/services/feedback/buzzerFeedback'
+import './settings.css'
+import '../../styles/components.css'
 
 export default function AudioTab() {
   const { settings, updateSetting } = useSettings()
@@ -97,8 +99,7 @@ export default function AudioTab() {
               <button
                 key={tone}
                 onClick={() => handleToneChange(tone)}
-                className={settings.tone === tone ? 'segmented-btn active' : 'segmented-btn'}
-                style={{ textTransform: 'capitalize' }}
+                className={`segmented-btn settings-tone-btn ${settings.tone === tone ? 'active' : ''}`}
               >
                 {tone}
               </button>
@@ -112,6 +113,7 @@ export default function AudioTab() {
         <div className="settings-control">
           <input
             type="range"
+            className="slider-input"
             value={settings.frequency}
             onChange={(e) => {
               const value = parseInt(e.target.value)
@@ -120,23 +122,8 @@ export default function AudioTab() {
             min="500"
             max="1000"
             step="10"
-            style={{
-              flex: 1,
-              height: '4px',
-              background: 'rgba(255, 255, 255, 0.2)',
-              borderRadius: '2px',
-              outline: 'none',
-              WebkitAppearance: 'none',
-              appearance: 'none'
-            }}
           />
-          <span style={{
-            color: '#4dabf7',
-            fontSize: '16px',
-            fontWeight: '500',
-            minWidth: '80px',
-            textAlign: 'right'
-          }}>
+          <span className="slider-value">
             {settings.frequency} Hz
           </span>
         </div>
@@ -147,6 +134,7 @@ export default function AudioTab() {
         <div className="settings-control">
           <input
             type="range"
+            className="slider-input"
             value={settings.volume}
             onChange={(e) => {
               const value = parseFloat(e.target.value)
@@ -155,23 +143,8 @@ export default function AudioTab() {
             min="0"
             max="1"
             step="0.05"
-            style={{
-              flex: 1,
-              height: '4px',
-              background: 'rgba(255, 255, 255, 0.2)',
-              borderRadius: '2px',
-              outline: 'none',
-              WebkitAppearance: 'none',
-              appearance: 'none'
-            }}
           />
-          <span style={{
-            color: '#4dabf7',
-            fontSize: '16px',
-            fontWeight: '500',
-            minWidth: '80px',
-            textAlign: 'right'
-          }}>
+          <span className="slider-value">
             {Math.round(settings.volume * 100)}%
           </span>
         </div>
@@ -182,6 +155,7 @@ export default function AudioTab() {
         <div className="settings-control">
           <input
             type="range"
+            className="slider-input"
             value={settings.buzzerVolume}
             onChange={(e) => {
               const value = parseFloat(e.target.value)
@@ -190,23 +164,8 @@ export default function AudioTab() {
             min="0"
             max="1"
             step="0.05"
-            style={{
-              flex: 1,
-              height: '4px',
-              background: 'rgba(255, 255, 255, 0.2)',
-              borderRadius: '2px',
-              outline: 'none',
-              WebkitAppearance: 'none',
-              appearance: 'none'
-            }}
           />
-          <span style={{
-            color: '#4dabf7',
-            fontSize: '16px',
-            fontWeight: '500',
-            minWidth: '80px',
-            textAlign: 'right'
-          }}>
+          <span className="slider-value">
             {Math.round(settings.buzzerVolume * 100)}%
           </span>
         </div>

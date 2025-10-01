@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import type { ReactNode } from 'react'
 import { useAuth } from '../../../hooks/useAuth'
 import { settingsStore } from '../store/settingsStore'
+import '../../../styles/components.css'
 
 interface SettingsProviderProps {
   children: ReactNode
@@ -66,21 +67,7 @@ export function SettingsProvider({ children }: SettingsProviderProps) {
   if (error) {
     return (
       <>
-        <div style={{
-          position: 'fixed',
-          top: '20px',
-          left: '50%',
-          transform: 'translateX(-50%)',
-          zIndex: 9999,
-          backgroundColor: 'rgba(251, 146, 60, 0.95)',
-          color: 'white',
-          padding: '12px 20px',
-          borderRadius: '8px',
-          boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
-          fontSize: '14px',
-          maxWidth: '500px',
-          textAlign: 'center'
-        }}>
+        <div className="warning-banner-fixed">
           📡 {error}
         </div>
         {children}

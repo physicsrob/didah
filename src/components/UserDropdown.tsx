@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
 import { useAuth } from '../hooks/useAuth'
+import './UserDropdown.css'
 
 export function UserDropdown() {
   const { user, signOut } = useAuth()
@@ -26,51 +27,22 @@ export function UserDropdown() {
   if (!user) return null
 
   return (
-    <div ref={dropdownRef} style={{ position: 'relative' }}>
+    <div ref={dropdownRef} className="user-dropdown">
       {/* Trigger Button */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: '8px',
-          background: 'transparent',
-          border: 'none',
-          cursor: 'pointer',
-          padding: '4px',
-          borderRadius: '20px',
-          transition: 'background 0.2s',
-        }}
-        onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255, 255, 255, 0.05)'}
-        onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+        className="user-dropdown__trigger"
       >
-        <span style={{
-          color: 'rgba(255, 255, 255, 0.9)',
-          fontSize: '13px',
-          fontWeight: '400',
-          marginRight: '4px'
-        }}>
+        <span className="user-dropdown__name">
           {user.name}
         </span>
         <img
           src={user.picture}
           alt={user.name}
-          style={{
-            width: '32px',
-            height: '32px',
-            borderRadius: '50%',
-            border: '1px solid rgba(255, 255, 255, 0.15)'
-          }}
+          className="user-dropdown__avatar"
         />
         <svg
-          style={{
-            width: '12px',
-            height: '12px',
-            marginLeft: '2px',
-            opacity: 0.6,
-            transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)',
-            transition: 'transform 0.2s'
-          }}
+          className={`user-dropdown__arrow ${isOpen ? 'user-dropdown__arrow--open' : ''}`}
           fill="white"
           viewBox="0 0 20 20"
         >
@@ -80,49 +52,20 @@ export function UserDropdown() {
 
       {/* Dropdown Menu */}
       {isOpen && (
-        <div style={{
-          position: 'absolute',
-          top: '100%',
-          right: 0,
-          marginTop: '8px',
-          minWidth: '200px',
-          background: 'rgba(42, 42, 42, 0.98)',
-          backdropFilter: 'blur(10px)',
-          border: '1px solid rgba(255, 255, 255, 0.1)',
-          borderRadius: '8px',
-          boxShadow: '0 4px 20px rgba(0, 0, 0, 0.5)',
-          overflow: 'hidden',
-          zIndex: 1000,
-          animation: 'fadeInScale 0.15s ease-out'
-        }}>
+        <div className="user-dropdown__menu">
           {/* User Info Section */}
-          <div style={{
-            padding: '12px 16px',
-            borderBottom: '1px solid rgba(255, 255, 255, 0.08)'
-          }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <div className="user-dropdown__user-info">
+            <div className="user-dropdown__user-details">
               <img
                 src={user.picture}
                 alt={user.name}
-                style={{
-                  width: '36px',
-                  height: '36px',
-                  borderRadius: '50%',
-                }}
+                className="user-dropdown__avatar--large"
               />
               <div>
-                <div style={{
-                  color: 'rgba(255, 255, 255, 0.9)',
-                  fontSize: '14px',
-                  fontWeight: '500'
-                }}>
+                <div className="user-dropdown__user-name">
                   {user.name}
                 </div>
-                <div style={{
-                  color: 'rgba(255, 255, 255, 0.5)',
-                  fontSize: '12px',
-                  marginTop: '2px'
-                }}>
+                <div className="user-dropdown__user-email">
                   {user.email}
                 </div>
               </div>
@@ -135,44 +78,12 @@ export function UserDropdown() {
               signOut()
               setIsOpen(false)
             }}
-            style={{
-              width: '100%',
-              padding: '10px 16px',
-              background: 'transparent',
-              border: 'none',
-              color: 'rgba(255, 255, 255, 0.8)',
-              fontSize: '13px',
-              cursor: 'pointer',
-              textAlign: 'left',
-              transition: 'background 0.15s',
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.background = 'rgba(255, 255, 255, 0.05)'
-              e.currentTarget.style.color = 'rgba(255, 255, 255, 0.95)'
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.background = 'transparent'
-              e.currentTarget.style.color = 'rgba(255, 255, 255, 0.8)'
-            }}
+            className="user-dropdown__sign-out"
           >
             Sign out
           </button>
         </div>
       )}
-
-      {/* Animation styles */}
-      <style>{`
-        @keyframes fadeInScale {
-          from {
-            opacity: 0;
-            transform: scale(0.95) translateY(-10px);
-          }
-          to {
-            opacity: 1;
-            transform: scale(1) translateY(0);
-          }
-        }
-      `}</style>
     </div>
   )
 }

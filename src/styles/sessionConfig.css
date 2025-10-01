@@ -1,0 +1,80 @@
+/* SessionConfigPage Styles */
+
+.session-config-section {
+  margin-bottom: 40px;
+}
+
+.session-config-description {
+  color: rgba(255, 255, 255, 0.7);
+  margin-bottom: 24px;
+}
+
+.session-config-mode-label {
+  font-weight: 600;
+}
+
+.session-config-error-container {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  background-color: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  border-radius: 6px;
+  margin-bottom: 16px;
+}
+
+.session-config-error-text {
+  flex: 1;
+  color: var(--color-error);
+  font-size: 14px;
+}
+
+.session-config-retry-btn {
+  padding: 8px 12px;
+  background-color: rgba(77, 171, 247, 0.1);
+  border: 1px solid var(--color-blue-primary);
+  border-radius: 4px;
+  color: var(--color-blue-primary);
+  font-size: 13px;
+  cursor: pointer;
+  transition: background-color 0.15s;
+  white-space: nowrap;
+}
+
+.session-config-retry-btn:hover {
+  background-color: rgba(77, 171, 247, 0.2);
+}
+
+.session-config-source-select-container {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.session-config-source-select {
+  flex: 1;
+}
+
+.speed-tier-label {
+  display: inline-block;
+  padding: 4px 8px;
+  background-color: rgba(77, 171, 247, 0.15);
+  border-radius: 4px;
+  color: var(--color-blue-primary);
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.feedback-checkbox-container {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.feedback-checkbox-label {
+  flex: 1;
+  text-transform: capitalize;
+  cursor: pointer;
+}

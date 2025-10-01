@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react'
+import './GoogleSignInButton.css'
 
 interface GoogleSignInButtonProps {
   onCredentialResponse: (response: google.CredentialResponse) => void
@@ -41,7 +42,7 @@ export const GoogleSignInButton: React.FC<GoogleSignInButtonProps> = ({ onCreden
     }
   }, [onCredentialResponse])
 
-  return <div ref={buttonRef} style={{ display: 'inline-block', verticalAlign: 'middle' }} />
+  return <div ref={buttonRef} className="google-signin-wrapper" />
 }
 
 export default GoogleSignInButton
