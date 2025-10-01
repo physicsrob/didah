@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import type { SessionConfig, SessionMode, SpeedTier } from '../core/types/domain';
 import type { FeedbackMode } from '../features/settings/store/types';
@@ -82,6 +82,46 @@ export function SessionConfigPage() {
   const includeStdPunct = settings?.includeStdPunct ?? true;
   const includeAdvPunct = settings?.includeAdvPunct ?? false;
 
+  // Helper function to load source content (consolidates duplicate logic)
+  const loadSourceContent = useCallback(async (
+    sourceId: string,
+    options: { setError?: boolean } = {}
+  ): Promise<SourceContent | null> => {
+    // Random letters is always available locally
+    if (sourceId === 'random_letters') {
+      return null; // null means use local random generator
+    }
+
+    // Find the source object to get its backendId
+    const source = availableSources.find(s => s.id === sourceId);
+    if (!source) {
+      console.error(`Source not found: ${sourceId}`);
+      if (options.setError) {
+        setSourceLoadError(`Source not found: ${sourceId}`);
+      }
+      return null;
+    }
+
+    try {
+      const content = await fetchSourceContent(source.backendId, source.requiresAuth ?? false);
+      if (content) {
+        // Override the content ID with the frontend ID for proper source factory detection
+        return { ...content, id: sourceId };
+      } else {
+        if (options.setError) {
+          setSourceLoadError(`Failed to load "${source.name}". Please try again or select a different source.`);
+        }
+        return null;
+      }
+    } catch (error) {
+      console.error(`Failed to fetch source ${source.backendId}:`, error);
+      if (options.setError) {
+        setSourceLoadError(`Failed to load "${source.name}". Please try again or select a different source.`);
+      }
+      return null;
+    }
+  }, [availableSources]);
+
   // Redirect to home if mode is invalid (no valid navigation state)
   useEffect(() => {
     if (validatedMode === null) {
@@ -134,36 +174,11 @@ export function SessionConfigPage() {
 
     setSourceLoadError(null); // Clear any previous errors
 
-    // Random letters is always available locally
-    if (selectedSourceId === 'random_letters') {
-      setSourceContent(null); // null means use local random generator
-      return;
-    }
-
-    // Find the source object to get its backendId
-    const source = availableSources.find(s => s.id === selectedSourceId);
-    if (!source) {
-      console.error(`Source not found: ${selectedSourceId}`);
-      return;
-    }
-
-    // Always fetch fresh content (even on mount/reload)
-    fetchSourceContent(source.backendId, source.requiresAuth ?? false)
+    loadSourceContent(selectedSourceId, { setError: true })
       .then(content => {
-        if (content) {
-          // Override the content ID with the frontend ID for proper source factory detection
-          setSourceContent({ ...content, id: selectedSourceId });
-        } else {
-          setSourceLoadError(`Failed to load "${source.name}". Please try again or select a different source.`);
-          setSourceContent(null);
-        }
-      })
-      .catch(error => {
-        console.error(`Failed to fetch source ${source.backendId}:`, error);
-        setSourceLoadError(`Failed to load "${source.name}". Please try again or select a different source.`);
-        setSourceContent(null);
+        setSourceContent(content);
       });
-  }, [selectedSourceId, availableSources]);
+  }, [selectedSourceId, loadSourceContent]);
 
   // Save settings to centralized store when they change
   useEffect(() => {
@@ -217,34 +232,8 @@ export function SessionConfigPage() {
     setSelectedSourceId(sourceId);
     setSourceLoadError(null); // Clear any previous errors
 
-    // Random letters is always available locally
-    if (sourceId === 'random_letters') {
-      setSourceContent(null); // null means use local random generator
-      return;
-    }
-
-    // Find the source object to get its backendId
-    const source = availableSources.find(s => s.id === sourceId);
-    if (!source) {
-      console.error(`Source not found: ${sourceId}`);
-      return;
-    }
-
-    try {
-      const content = await fetchSourceContent(source.backendId, source.requiresAuth ?? false);
-      if (content) {
-        // Override the content ID with the frontend ID for proper source factory detection
-        setSourceContent({ ...content, id: sourceId });
-      } else {
-        // fetchSourceContent returns null on error
-        setSourceLoadError(`Failed to load "${source.name}". Please try again or select a different source.`);
-        setSourceContent(null);
-      }
-    } catch (error) {
-      console.error(`Failed to fetch source ${source.backendId}:`, error);
-      setSourceLoadError(`Failed to load "${source.name}". Please try again or select a different source.`);
-      setSourceContent(null);
-    }
+    const content = await loadSourceContent(sourceId, { setError: true });
+    setSourceContent(content);
   };
 
   // Build effective alphabet based on toggles
@@ -283,20 +272,7 @@ export function SessionConfigPage() {
     };
 
     // Fetch fresh content for each new session (except random_letters which is generated locally)
-    let freshContent = null;
-    if (selectedSourceId !== 'random_letters') {
-      const source = availableSources.find(s => s.id === selectedSourceId);
-      if (source) {
-        try {
-          const content = await fetchSourceContent(source.backendId, source.requiresAuth ?? false);
-          // Override the content ID with the frontend ID for proper source factory detection
-          freshContent = content ? { ...content, id: selectedSourceId } : null;
-        } catch (error) {
-          console.error('Failed to fetch fresh content, using cached:', error);
-          freshContent = sourceContent; // Fall back to cached content if fetch fails
-        }
-      }
-    }
+    const freshContent = await loadSourceContent(selectedSourceId, { setError: false }) || sourceContent;
 
     // Navigate to session with config and fresh content
     navigate('/session', { state: { config, sourceContent: freshContent } });
