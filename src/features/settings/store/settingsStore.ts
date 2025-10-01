@@ -64,8 +64,7 @@ class SettingsStore {
     value: UserSettings[K]
   ): Promise<void> {
     if (!this.settings) {
-      console.warn('Settings not initialized')
-      return
+      throw new Error('Settings not initialized. Cannot update settings before initialization.')
     }
 
     // 1. Optimistic update
@@ -79,8 +78,7 @@ class SettingsStore {
 
   async updateSettings(updates: Partial<UserSettings>): Promise<void> {
     if (!this.settings) {
-      console.warn('Settings not initialized')
-      return
+      throw new Error('Settings not initialized. Cannot update settings before initialization.')
     }
 
     // 1. Optimistic update
