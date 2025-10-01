@@ -7,6 +7,7 @@
 
 import type { KVNamespace } from '@cloudflare/workers-types';
 import { getUserIdFromToken } from '../shared/auth';
+import { validateSessionStatistics } from '../shared/types';
 
 interface Env {
   KV: KVNamespace;
@@ -39,6 +40,11 @@ export async function onRequestPost(context: { request: Request; env: Env }): Pr
   try {
     // Parse the statistics from request body
     const stats = await context.request.json();
+
+    // Validate the statistics structure
+    if (!validateSessionStatistics(stats)) {
+      return new Response('Invalid statistics format', { status: 400 });
+    }
 
     // Extract date from stats (should be provided by client)
     const date = stats.date || new Date().toISOString().split('T')[0];

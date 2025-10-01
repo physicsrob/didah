@@ -188,3 +188,240 @@ export function validateSettings(settings: unknown): settings is UserSettings {
 
   return true
 }
+
+// Validation function for session statistics
+export function validateSessionStatistics(stats: unknown): stats is SessionStatistics {
+  if (!stats || typeof stats !== 'object') {
+    return false
+  }
+
+  const s = stats as Record<string, unknown>
+
+  // Validate top-level required fields
+  const requiredFields: (keyof SessionStatistics)[] = [
+    'startedAt', 'endedAt', 'durationMs', 'config',
+    'overallAccuracy', 'timeoutPercentage', 'effectiveWpm',
+    'totalCharacters', 'correctCount', 'incorrectCount', 'timeoutCount',
+    'characterStats', 'confusionMatrix',
+    'meanRecognitionTimeMs', 'medianRecognitionTimeMs'
+  ]
+
+  for (const field of requiredFields) {
+    if (!(field in s)) {
+      return false
+    }
+  }
+
+  // Validate timestamps and durations
+  if (typeof s.startedAt !== 'number' || s.startedAt < 0) {
+    return false
+  }
+
+  if (typeof s.endedAt !== 'number' || s.endedAt < 0) {
+    return false
+  }
+
+  if (typeof s.durationMs !== 'number' || s.durationMs < 0) {
+    return false
+  }
+
+  if (s.timestamp !== undefined && (typeof s.timestamp !== 'number' || s.timestamp < 0)) {
+    return false
+  }
+
+  // Validate percentages (0-100)
+  if (typeof s.overallAccuracy !== 'number' || s.overallAccuracy < 0 || s.overallAccuracy > 100) {
+    return false
+  }
+
+  if (typeof s.timeoutPercentage !== 'number' || s.timeoutPercentage < 0 || s.timeoutPercentage > 100) {
+    return false
+  }
+
+  // Validate WPM (reasonable range)
+  if (typeof s.effectiveWpm !== 'number' || s.effectiveWpm < 0 || s.effectiveWpm > 200) {
+    return false
+  }
+
+  // Validate counts (non-negative integers)
+  if (typeof s.totalCharacters !== 'number' || s.totalCharacters < 0 || !Number.isInteger(s.totalCharacters)) {
+    return false
+  }
+
+  if (typeof s.correctCount !== 'number' || s.correctCount < 0 || !Number.isInteger(s.correctCount)) {
+    return false
+  }
+
+  if (typeof s.incorrectCount !== 'number' || s.incorrectCount < 0 || !Number.isInteger(s.incorrectCount)) {
+    return false
+  }
+
+  if (typeof s.timeoutCount !== 'number' || s.timeoutCount < 0 || !Number.isInteger(s.timeoutCount)) {
+    return false
+  }
+
+  // Validate timing metrics (non-negative)
+  if (typeof s.meanRecognitionTimeMs !== 'number' || s.meanRecognitionTimeMs < 0) {
+    return false
+  }
+
+  if (typeof s.medianRecognitionTimeMs !== 'number' || s.medianRecognitionTimeMs < 0) {
+    return false
+  }
+
+  // Validate config object
+  if (!s.config || typeof s.config !== 'object') {
+    return false
+  }
+
+  const config = s.config as Record<string, unknown>
+
+  const configRequiredFields = [
+    'mode', 'lengthMs', 'wpm', 'speedTier', 'sourceId',
+    'replay', 'feedback', 'effectiveAlphabet'
+  ]
+
+  for (const field of configRequiredFields) {
+    if (!(field in config)) {
+      return false
+    }
+  }
+
+  // Validate config fields
+  const validModes: SessionMode[] = ['practice', 'listen', 'live-copy']
+  if (!validModes.includes(config.mode as SessionMode)) {
+    return false
+  }
+
+  if (typeof config.lengthMs !== 'number' || config.lengthMs < 0) {
+    return false
+  }
+
+  if (typeof config.wpm !== 'number' || config.wpm < 5 || config.wpm > 100) {
+    return false
+  }
+
+  const validSpeedTiers: SpeedTier[] = ['slow', 'medium', 'fast', 'lightning']
+  if (!validSpeedTiers.includes(config.speedTier as SpeedTier)) {
+    return false
+  }
+
+  if (typeof config.sourceId !== 'string' || !config.sourceId) {
+    return false
+  }
+
+  if (config.sourceName !== undefined && typeof config.sourceName !== 'string') {
+    return false
+  }
+
+  if (typeof config.replay !== 'boolean') {
+    return false
+  }
+
+  if (!['buzzer', 'flash', 'both', 'none'].includes(config.feedback as string)) {
+    return false
+  }
+
+  if (!Array.isArray(config.effectiveAlphabet)) {
+    return false
+  }
+
+  // Validate effectiveAlphabet contains only strings
+  for (const char of config.effectiveAlphabet) {
+    if (typeof char !== 'string' || char.length !== 1) {
+      return false
+    }
+  }
+
+  // Validate characterStats is an object (Record)
+  if (!s.characterStats || typeof s.characterStats !== 'object' || Array.isArray(s.characterStats)) {
+    return false
+  }
+
+  // Validate each character stat entry
+  const charStats = s.characterStats as Record<string, unknown>
+  for (const [char, stat] of Object.entries(charStats)) {
+    if (typeof char !== 'string' || char.length !== 1) {
+      return false
+    }
+
+    if (!stat || typeof stat !== 'object') {
+      return false
+    }
+
+    const cs = stat as Record<string, unknown>
+
+    // Validate CharacterStatistics fields
+    if (cs.char !== char) {
+      return false
+    }
+
+    if (typeof cs.attempts !== 'number' || cs.attempts < 0 || !Number.isInteger(cs.attempts)) {
+      return false
+    }
+
+    if (typeof cs.correct !== 'number' || cs.correct < 0 || !Number.isInteger(cs.correct)) {
+      return false
+    }
+
+    if (typeof cs.incorrect !== 'number' || cs.incorrect < 0 || !Number.isInteger(cs.incorrect)) {
+      return false
+    }
+
+    if (typeof cs.timeout !== 'number' || cs.timeout < 0 || !Number.isInteger(cs.timeout)) {
+      return false
+    }
+
+    if (typeof cs.accuracy !== 'number' || cs.accuracy < 0 || cs.accuracy > 100) {
+      return false
+    }
+
+    if (!Array.isArray(cs.recognitionTimes)) {
+      return false
+    }
+
+    for (const time of cs.recognitionTimes as unknown[]) {
+      if (typeof time !== 'number' || time < 0) {
+        return false
+      }
+    }
+
+    if (typeof cs.meanRecognitionTimeMs !== 'number' || cs.meanRecognitionTimeMs < 0) {
+      return false
+    }
+
+    if (typeof cs.medianRecognitionTimeMs !== 'number' || cs.medianRecognitionTimeMs < 0) {
+      return false
+    }
+  }
+
+  // Validate confusionMatrix is an object (Record)
+  if (!s.confusionMatrix || typeof s.confusionMatrix !== 'object' || Array.isArray(s.confusionMatrix)) {
+    return false
+  }
+
+  // Validate confusion matrix structure
+  const confusionMatrix = s.confusionMatrix as Record<string, unknown>
+  for (const [expected, confusions] of Object.entries(confusionMatrix)) {
+    if (typeof expected !== 'string' || expected.length !== 1) {
+      return false
+    }
+
+    if (!confusions || typeof confusions !== 'object' || Array.isArray(confusions)) {
+      return false
+    }
+
+    const confusionRecord = confusions as Record<string, unknown>
+    for (const [actual, count] of Object.entries(confusionRecord)) {
+      if (typeof actual !== 'string' || actual.length !== 1) {
+        return false
+      }
+
+      if (typeof count !== 'number' || count < 0 || !Number.isInteger(count)) {
+        return false
+      }
+    }
+  }
+
+  return true
+}
