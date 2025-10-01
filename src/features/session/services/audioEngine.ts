@@ -127,6 +127,13 @@ export class AudioEngine {
   }
 
   /**
+   * Get the audio context
+   */
+  getAudioContext(): AudioContext | null {
+    return this.audioContext;
+  }
+
+  /**
    * Dispose of the audio context
    */
   dispose(): void {

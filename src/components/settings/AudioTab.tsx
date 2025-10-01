@@ -69,7 +69,7 @@ export default function AudioTab() {
       try {
         await initializeAudio()
         const audioEngine = getAudioEngine()
-        const audioContext = (audioEngine as unknown as { audioContext?: AudioContext }).audioContext
+        const audioContext = audioEngine.getAudioContext()
 
         if (audioContext) {
           const buzzer = new BuzzerFeedback({

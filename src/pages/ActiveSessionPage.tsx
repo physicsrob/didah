@@ -86,7 +86,7 @@ export function ActiveSessionPage() {
     }
 
     if (fb && audioEngine) {
-      const audioContext = (audioEngine as unknown as { audioContext?: AudioContext }).audioContext;
+      const audioContext = audioEngine.getAudioContext();
       if (audioContext && 'initialize' in fb) {
         (fb as { initialize: (ctx: AudioContext) => void }).initialize(audioContext);
       }
