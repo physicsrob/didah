@@ -9,12 +9,21 @@ import { useAuth } from '../hooks/useAuth';
 import { HeaderBar } from '../components/HeaderBar';
 import '../styles/main.css';
 
+// Type guard for validating SessionMode
+function isValidSessionMode(value: unknown): value is SessionMode {
+  return value === 'practice' || value === 'listen' || value === 'live-copy';
+}
+
 export function SessionConfigPage() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Get mode from navigation state (set by HomePage)
-  const mode: SessionMode = (location.state as { mode?: SessionMode })?.mode || 'practice';
+  // Validate and extract mode from navigation state
+  const navigationState = location.state as { mode?: unknown } | null;
+  const validatedMode: SessionMode | null =
+    navigationState && isValidSessionMode(navigationState.mode)
+      ? navigationState.mode
+      : null;
 
   // Mode-specific configuration
   const modeConfig = {
@@ -72,6 +81,13 @@ export function SessionConfigPage() {
   const includeNumbers = settings?.includeNumbers ?? true;
   const includeStdPunct = settings?.includeStdPunct ?? true;
   const includeAdvPunct = settings?.includeAdvPunct ?? false;
+
+  // Redirect to home if mode is invalid (no valid navigation state)
+  useEffect(() => {
+    if (validatedMode === null) {
+      navigate('/');
+    }
+  }, [validatedMode, navigate]);
 
   // Load settings into local state when they become available
   useEffect(() => {
@@ -286,6 +302,13 @@ export function SessionConfigPage() {
     navigate('/session', { state: { config, sourceContent: freshContent } });
   };
 
+  // Redirect if mode is invalid (will happen via useEffect)
+  if (validatedMode === null) {
+    return null;
+  }
+
+  // After validation, mode is guaranteed to be non-null
+  const mode: SessionMode = validatedMode;
 
   // Show loading state while settings are loading
   if (settingsLoading || !settings) {
