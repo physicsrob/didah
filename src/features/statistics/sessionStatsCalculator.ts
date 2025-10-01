@@ -26,6 +26,14 @@ export class SessionStatsCalculator {
       eventTypes: events.map(e => e.type)
     });
 
+    // Validate required events exist
+    if (!sessionStart) {
+      throw new Error('Cannot calculate statistics: session start event is missing');
+    }
+    if (!sessionEnd) {
+      throw new Error('Cannot calculate statistics: session end event is missing');
+    }
+
     // Initialize counters and maps
     const characterStats = new Map<string, CharacterStatistics>();
     const confusionMatrix = new Map<string, Map<string, number>>();
@@ -69,11 +77,11 @@ export class SessionStatsCalculator {
     const medianRecognitionTimeMs = this.calculateMedian(recognitionTimes);
 
     // Use session duration for effective WPM calculation
-    const durationMs = (sessionEnd?.at || 0) - (sessionStart?.at || 0);
+    const durationMs = sessionEnd.at - sessionStart.at;
 
     console.log('[Stats Debug] Duration calculation:', {
-      startTime: sessionStart?.at,
-      endTime: sessionEnd?.at,
+      startTime: sessionStart.at,
+      endTime: sessionEnd.at,
       durationMs,
       durationSeconds: durationMs / 1000,
       correctCount,
@@ -88,9 +96,9 @@ export class SessionStatsCalculator {
     );
 
     return {
-      startedAt: sessionStart?.at || 0,
-      endedAt: sessionEnd?.at || 0,
-      durationMs: (sessionEnd?.at || 0) - (sessionStart?.at || 0),
+      startedAt: sessionStart.at,
+      endedAt: sessionEnd.at,
+      durationMs: sessionEnd.at - sessionStart.at,
       config: {
         mode: config.mode,
         lengthMs: config.lengthMs,

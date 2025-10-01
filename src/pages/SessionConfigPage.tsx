@@ -78,14 +78,14 @@ export function SessionConfigPage() {
     if (settings && !settingsLoading) {
       // Convert settings duration (60/120/300) to minutes (1/2/5)
       setDuration((settings.defaultDuration / 60) as 1 | 2 | 5);
-      setSpeedTier(settings.defaultSpeedTier || 'slow');
-      setSelectedSourceId(settings.defaultSourceId || 'random_letters');
-      setWpm(settings.wpm || 15);
-      setEffectiveWpm(settings.effectiveWpm || 10);
-      setExtraWordSpacing(settings.extraWordSpacing || 0);
+      setSpeedTier(settings.defaultSpeedTier);
+      setSelectedSourceId(settings.defaultSourceId);
+      setWpm(settings.wpm);
+      setEffectiveWpm(settings.effectiveWpm);
+      setExtraWordSpacing(settings.extraWordSpacing);
 
       // Direct assignment - feedbackMode is stored as-is now
-      setFeedbackMode(settings.feedbackMode || 'flash');
+      setFeedbackMode(settings.feedbackMode);
     }
   }, [settings, settingsLoading]);
 

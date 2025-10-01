@@ -70,7 +70,12 @@ export function ActiveSessionPage() {
 
   // Create feedback
   const feedback = useMemo(() => {
-    const feedbackType = config?.feedback || 'flash';
+    // If no config, return null (component will redirect anyway)
+    if (!config) {
+      return null;
+    }
+
+    const feedbackType = config.feedback;
 
     // Don't create any feedback for 'none' or when only using flash
     if (feedbackType === 'none' || feedbackType === 'flash') {
@@ -94,7 +99,7 @@ export function ActiveSessionPage() {
     }
 
     return fb;
-  }, [config?.feedback, audioEngine, settings]);
+  }, [config, audioEngine, settings]);
 
   // Create character source
   const source = useMemo(() => {
@@ -135,9 +140,9 @@ export function ActiveSessionPage() {
       },
       replayDuration: 1500,
       isPaused: () => isPausedRef.current,  // Pass pause state checker
-      extraWordSpacing: config?.extraWordSpacing || 0  // Pass extra word spacing for listen/live-copy modes
+      extraWordSpacing: config?.extraWordSpacing ?? 0  // Pass extra word spacing for listen/live-copy modes
     });
-  }, [audioEngine, feedback, config?.mode, config?.replay, config?.feedback, config?.extraWordSpacing]);
+  }, [audioEngine, feedback, config?.mode, config?.replay, config?.extraWordSpacing]);
 
   // Create session runner
   const runner = useMemo(() => createSessionRunner({ clock, io, input, source }), [clock, io, input, source]);

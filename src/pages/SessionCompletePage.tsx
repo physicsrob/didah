@@ -22,12 +22,7 @@ export function SessionCompletePage() {
   const liveCopyTyped = location.state?.liveCopyTyped as string | null;
   const liveCopyTransmitted = location.state?.liveCopyTransmitted as string[] | null;
 
-  // Extract what we need from fullStatistics
-  const accuracy = fullStatistics?.overallAccuracy || 0;
-  const totalChars = fullStatistics?.totalCharacters || 0;
-  const sourceName = fullStatistics?.config.sourceName;
-
-  // Save statistics when the component mounts
+  // Save statistics when the component mounts (before early return to satisfy React hooks rules)
   useEffect(() => {
     if (fullStatistics && isAuthenticated) {
       saveSessionStats(fullStatistics)
@@ -42,18 +37,12 @@ export function SessionCompletePage() {
     }
   }, [fullStatistics, isAuthenticated, saveSessionStats]);
 
-  // Get source display name
-  const getSourceDisplay = () => {
-    // Use the source name passed from ActiveSessionPage
-    return sourceName || 'Unknown';
-  };
-
   // Navigation handlers
   const handleBackToMenu = () => {
     navigate('/');
   };
 
-  // Handle missing data (shouldn't happen but good to be safe)
+  // Handle missing data - validate early before using any values
   if (!fullStatistics) {
     return (
       <div className="completion-wrapper">
@@ -70,6 +59,16 @@ export function SessionCompletePage() {
       </div>
     );
   }
+
+  // Extract values from fullStatistics (safe now since we've validated it exists)
+  const accuracy = fullStatistics.overallAccuracy;
+  const totalChars = fullStatistics.totalCharacters;
+  const sourceName = fullStatistics.config.sourceName;
+
+  // Get source display name
+  const getSourceDisplay = () => {
+    return sourceName || 'Unknown';
+  };
 
   // Navigation handler for session again - defined after fullStatistics check
   const handleSessionAgain = () => {
@@ -110,12 +109,12 @@ export function SessionCompletePage() {
 
             <div className="stat-item">
               <span className="stat-label">Characters Transmitted</span>
-              <span className="stat-value">{liveCopyTransmitted?.length || 0}</span>
+              <span className="stat-value">{liveCopyTransmitted?.length ?? 'N/A'}</span>
             </div>
 
             <div className="stat-item">
               <span className="stat-label">Characters Typed</span>
-              <span className="stat-value">{liveCopyTyped?.length || 0}</span>
+              <span className="stat-value">{liveCopyTyped?.length ?? 'N/A'}</span>
             </div>
 
             <div className="stat-item">
