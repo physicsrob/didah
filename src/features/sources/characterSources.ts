@@ -5,6 +5,12 @@
 import type { CharacterSource } from '../session/runtime/sessionProgram';
 import type { FullPost } from './types';
 
+/**
+ * Maximum attempts to find a valid character before throwing an error.
+ * Prevents stack overflow from long sequences of invalid characters (URLs, emojis, etc.)
+ */
+const MAX_SKIP_ATTEMPTS = 10000;
+
 function stripUrls(text: string): string {
   return text
     .replace(/https?:\/\/[^\s]+/g, '')
@@ -35,32 +41,39 @@ export class ArraySource implements CharacterSource {
   }
 
   next(): string {
-    // If we've reached the end of current item
-    if (this.currentCharIndex >= this.currentText.length) {
-      // Move to next item
-      this.currentItemIndex = (this.currentItemIndex + 1) % this.items.length;
-      this.currentText = this.items[this.currentItemIndex] || '';
-      this.currentCharIndex = 0;
-      // Note: separator is already part of the text, so no need to return it here
-      return this.next(); // Get first char of next item
+    let attempts = 0;
+
+    while (attempts < MAX_SKIP_ATTEMPTS) {
+      attempts++;
+
+      // If we've reached the end of current item
+      if (this.currentCharIndex >= this.currentText.length) {
+        // Move to next item
+        this.currentItemIndex = (this.currentItemIndex + 1) % this.items.length;
+        this.currentText = this.items[this.currentItemIndex] || '';
+        this.currentCharIndex = 0;
+        continue; // Try again with next item
+      }
+
+      // Get next character from current item
+      const char = this.currentText[this.currentCharIndex];
+      this.currentCharIndex++;
+
+      // Handle whitespace
+      if (char === ' ' || /\s/.test(char)) {
+        return ' ';
+      }
+
+      // Check if character is allowed
+      const upperChar = char.toUpperCase();
+      if (this.allowedChars.has(upperChar)) {
+        return upperChar;
+      }
+
+      // Character not allowed, continue to next iteration
     }
 
-    // Get next character from current item
-    const char = this.currentText[this.currentCharIndex];
-    this.currentCharIndex++;
-
-    // Handle whitespace
-    if (char === ' ' || /\s/.test(char)) {
-      return ' ';
-    }
-
-    // Check if character is allowed
-    const upperChar = char.toUpperCase();
-    if (!this.allowedChars.has(upperChar)) {
-      return this.next(); // Recursively get next valid character
-    }
-
-    return upperChar;
+    throw new Error(`ArraySource: Failed to find valid character after ${MAX_SKIP_ATTEMPTS} attempts. Check that source text contains valid characters from the allowed alphabet.`);
   }
 
   reset(): void {
@@ -87,27 +100,35 @@ export class ContinuousTextSource implements CharacterSource {
   }
 
   next(): string {
-    // If we've reached the end of current word
-    if (this.currentCharIndex >= this.currentWord.length) {
-      // Move to next word
-      this.currentWordIndex = (this.currentWordIndex + 1) % this.words.length;
-      this.currentWord = this.words[this.currentWordIndex] || '';
-      this.currentCharIndex = 0;
+    let attempts = 0;
 
-      // Return space between words
-      return ' ';
+    while (attempts < MAX_SKIP_ATTEMPTS) {
+      attempts++;
+
+      // If we've reached the end of current word
+      if (this.currentCharIndex >= this.currentWord.length) {
+        // Move to next word
+        this.currentWordIndex = (this.currentWordIndex + 1) % this.words.length;
+        this.currentWord = this.words[this.currentWordIndex] || '';
+        this.currentCharIndex = 0;
+
+        // Return space between words
+        return ' ';
+      }
+
+      // Get next character from current word
+      const char = this.currentWord[this.currentCharIndex].toUpperCase();
+      this.currentCharIndex++;
+
+      // Check if alphanumeric
+      if (/[A-Z0-9]/.test(char)) {
+        return char;
+      }
+
+      // Character not alphanumeric, continue to next iteration
     }
 
-    // Get next character from current word
-    const char = this.currentWord[this.currentCharIndex].toUpperCase();
-    this.currentCharIndex++;
-
-    // Skip non-alphanumeric characters (but preserve spaces)
-    if (!/[A-Z0-9]/.test(char)) {
-      return this.next(); // Recursively get next valid character
-    }
-
-    return char;
+    throw new Error(`ContinuousTextSource: Failed to find valid character after ${MAX_SKIP_ATTEMPTS} attempts. Check that source text contains alphanumeric characters.`);
   }
 
   reset(): void {
@@ -179,31 +200,39 @@ export class FullPostSource implements CharacterSource {
   }
 
   next(): string {
-    // If we've reached the end of current item
-    if (this.currentCharIndex >= this.currentText.length) {
-      // Move to next item
-      this.currentItemIndex = (this.currentItemIndex + 1) % this.items.length;
-      this.currentText = this.items[this.currentItemIndex] || '';
-      this.currentCharIndex = 0;
-      return this.next(); // Get first char of next item
+    let attempts = 0;
+
+    while (attempts < MAX_SKIP_ATTEMPTS) {
+      attempts++;
+
+      // If we've reached the end of current item
+      if (this.currentCharIndex >= this.currentText.length) {
+        // Move to next item
+        this.currentItemIndex = (this.currentItemIndex + 1) % this.items.length;
+        this.currentText = this.items[this.currentItemIndex] || '';
+        this.currentCharIndex = 0;
+        continue; // Try again with next item
+      }
+
+      // Get next character from current item
+      const char = this.currentText[this.currentCharIndex];
+      this.currentCharIndex++;
+
+      // Handle whitespace
+      if (char === ' ' || /\s/.test(char)) {
+        return ' ';
+      }
+
+      // Check if character is allowed
+      const upperChar = char.toUpperCase();
+      if (this.allowedChars.has(upperChar)) {
+        return upperChar;
+      }
+
+      // Character not allowed, continue to next iteration
     }
 
-    // Get next character from current item
-    const char = this.currentText[this.currentCharIndex];
-    this.currentCharIndex++;
-
-    // Handle whitespace
-    if (char === ' ' || /\s/.test(char)) {
-      return ' ';
-    }
-
-    // Check if character is allowed
-    const upperChar = char.toUpperCase();
-    if (!this.allowedChars.has(upperChar)) {
-      return this.next(); // Recursively get next valid character
-    }
-
-    return upperChar;
+    throw new Error(`FullPostSource: Failed to find valid character after ${MAX_SKIP_ATTEMPTS} attempts. Check that source text contains valid characters from the allowed alphabet.`);
   }
 
   reset(): void {
