@@ -1,15 +1,17 @@
 import { useSettings } from '../../features/settings/hooks/useSettings'
+import { getCharactersByCategory } from '../../core/morse/alphabet'
 
 export default function CharactersTab() {
   const { settings, updateSetting } = useSettings()
 
   const buildAlphabet = () => {
     if (!settings) return []
-    let alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
-    if (settings.includeNumbers) alphabet += '0123456789'
-    if (settings.includeStdPunct) alphabet += '.,?/='
-    if (settings.includeAdvPunct) alphabet += ':;!@#$%^&*()+-_[]{}|\\<>\'"`~'
-    return alphabet.split('')
+    const { letters, numbers, standardPunctuation, advancedPunctuation } = getCharactersByCategory()
+    const chars: string[] = [...letters]
+    if (settings.includeNumbers) chars.push(...numbers)
+    if (settings.includeStdPunct) chars.push(...standardPunctuation)
+    if (settings.includeAdvPunct) chars.push(...advancedPunctuation)
+    return chars
   }
 
   if (!settings) return null

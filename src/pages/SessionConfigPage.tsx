@@ -7,6 +7,7 @@ import type { TextSource as ApiTextSource, SourceContent } from '../features/sou
 import { useSettings } from '../features/settings/hooks/useSettings';
 import { useAuth } from '../hooks/useAuth';
 import { HeaderBar } from '../components/HeaderBar';
+import { getCharactersByCategory } from '../core/morse/alphabet';
 import '../styles/main.css';
 
 // Type guard for validating SessionMode
@@ -238,11 +239,12 @@ export function SessionConfigPage() {
 
   // Build effective alphabet based on toggles
   const buildAlphabet = () => {
-    let alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-    if (includeNumbers) alphabet += '0123456789';
-    if (includeStdPunct) alphabet += '.,?/=';
-    if (includeAdvPunct) alphabet += ':;!@#$%^&*()+-_[]{}|\\<>\'"`~';
-    return alphabet.split('');
+    const { letters, numbers, standardPunctuation, advancedPunctuation } = getCharactersByCategory();
+    const chars: string[] = [...letters];
+    if (includeNumbers) chars.push(...numbers);
+    if (includeStdPunct) chars.push(...standardPunctuation);
+    if (includeAdvPunct) chars.push(...advancedPunctuation);
+    return chars;
   };
 
   const handleStartSession = async () => {

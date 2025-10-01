@@ -85,14 +85,20 @@ export function isMorseCharacter(char: string): boolean {
 
 /**
  * Get all available characters by category
+ * Derives punctuation lists from MORSE_ALPHABET to maintain single source of truth
  */
 export function getCharactersByCategory() {
   const chars = Object.keys(MORSE_ALPHABET);
 
+  // Define which punctuation is "standard" vs "advanced"
+  const standardPunct = [',', '.', '/', '=', '?'];
+
   return {
     letters: chars.filter(c => /[A-Z]/.test(c)),
     numbers: chars.filter(c => /[0-9]/.test(c)),
-    standardPunctuation: [',', '.', '/', '=', '?'],
-    advancedPunctuation: [':', ';', '(', ')', '"', "'", '-', '+', '@'],
+    standardPunctuation: standardPunct,
+    advancedPunctuation: chars.filter(c =>
+      !/[A-Z0-9]/.test(c) && !standardPunct.includes(c)
+    ),
   };
 }

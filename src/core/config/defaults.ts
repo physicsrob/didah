@@ -6,12 +6,17 @@
  */
 
 import type { SessionConfig } from '../types/domain';
+import { getCharactersByCategory } from '../morse/alphabet';
 
 /**
  * Default WPM (Words Per Minute) for Morse code practice
  * Set to moderate speed for learning
  */
 export const DEFAULT_WPM = 15;
+
+// Build default alphabet from character categories
+const { letters, numbers, standardPunctuation } = getCharactersByCategory();
+const DEFAULT_ALPHABET = [...letters, ...numbers, ...standardPunctuation];
 
 /**
  * Default session configuration used when starting a new practice session
@@ -23,7 +28,7 @@ export const DEFAULT_SESSION_CONFIG: SessionConfig = {
   sourceName: 'Random Letters',
   feedback: 'both',
   replay: true,
-  effectiveAlphabet: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789.,?/='.split(''),
+  effectiveAlphabet: DEFAULT_ALPHABET,
   wpm: DEFAULT_WPM,
   effectiveWpm: DEFAULT_WPM, // Default to standard timing (same as wpm)
   lengthMs: 60000, // 1 minute
