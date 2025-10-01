@@ -88,7 +88,7 @@ export class SessionStatsCalculator {
       totalCharacters: totalCharacters
     });
 
-    const effectiveWpm = this.calculateEffectiveWpm(
+    const achievedWpm = this.calculateAchievedWpm(
       correctCount,
       incorrectCount,
       durationMs,
@@ -112,7 +112,7 @@ export class SessionStatsCalculator {
       },
       overallAccuracy,
       timeoutPercentage,
-      effectiveWpm,
+      achievedWpm,
       totalCharacters,
       correctCount,
       incorrectCount,
@@ -197,19 +197,19 @@ export class SessionStatsCalculator {
   }
 
   /**
-   * Calculate effective WPM based on net correct characters:
-   * Effective WPM = ((Correct characters - Incorrect characters) / Time in seconds) * 12
+   * Calculate achieved WPM based on net correct characters:
+   * Achieved WPM = ((Correct characters - Incorrect characters) / Time in seconds) * 12
    *
    * Timeouts are not included in the numerator - they naturally slow you down
    * by increasing time without adding characters.
    */
-  private calculateEffectiveWpm(
+  private calculateAchievedWpm(
     correctCount: number,
     incorrectCount: number,
     sessionDurationMs: number,
     mode: string
   ): number {
-    // For listen mode, effective WPM doesn't make sense as there's no user input
+    // For listen mode, achieved WPM doesn't make sense as there's no user input
     if (mode === 'listen') {
       return 0;
     }
@@ -221,17 +221,17 @@ export class SessionStatsCalculator {
     const sessionDurationSeconds = sessionDurationMs / 1000;
 
     // Calculate net correct characters: correct - incorrect
-    const effectiveCharacters = correctCount - incorrectCount;
+    const achievedCharacters = correctCount - incorrectCount;
 
     // Don't allow negative WPM
-    if (effectiveCharacters <= 0) return 0;
+    if (achievedCharacters <= 0) return 0;
 
-    // Standard CW formula with error penalty: (effective characters per second) * 12
+    // Standard CW formula with error penalty: (achieved characters per second) * 12
     // The factor 12 comes from: (60 seconds/minute) / (5 characters/word)
-    const charactersPerSecond = effectiveCharacters / sessionDurationSeconds;
-    const effectiveWpm = charactersPerSecond * 12;
+    const charactersPerSecond = achievedCharacters / sessionDurationSeconds;
+    const achievedWpm = charactersPerSecond * 12;
 
-    return Math.round(effectiveWpm);
+    return Math.round(achievedWpm);
   }
 
   /**

@@ -12,7 +12,7 @@ const createConfig = (): SessionConfig => ({
   mode: 'practice',
   lengthMs: 60000,
   wpm: 20,
-  effectiveWpm: 20,
+  farnsworthWpm: 20,
   speedTier: 'medium',
   sourceId: 'random_letters',
   sourceName: 'Random Letters',
@@ -98,7 +98,7 @@ describe('SessionStatsCalculator', () => {
       expect(stats.durationMs).toBe(5000);
       expect(stats.totalCharacters).toBe(0);
       expect(stats.overallAccuracy).toBe(0);
-      expect(stats.effectiveWpm).toBe(0);
+      expect(stats.achievedWpm).toBe(0);
     });
   });
 });

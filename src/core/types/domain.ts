@@ -8,7 +8,7 @@ export type SessionConfig = {
   mode: SessionMode;
   lengthMs: number;
   wpm: number;
-  effectiveWpm: number; // For Farnsworth timing (when equal to wpm, standard timing is used)
+  farnsworthWpm: number; // For Farnsworth timing (when equal to wpm, standard timing is used)
   speedTier: SpeedTier;
   sourceId: string;
   sourceName: string;  // Display name of the source

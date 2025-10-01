@@ -51,7 +51,7 @@ export function SessionConfigPage() {
   const [speedTier, setSpeedTier] = useState<SpeedTier>('slow');
   const [selectedSourceId, setSelectedSourceId] = useState<string>('random_letters');
   const [wpm, setWpm] = useState(15);
-  const [effectiveWpm, setEffectiveWpm] = useState(10);
+  const [farnsworthWpm, setFarnsworthWpm] = useState(10);
   const [extraWordSpacing, setExtraWordSpacing] = useState(0);
 
   // Text source state
@@ -138,7 +138,7 @@ export function SessionConfigPage() {
       setSpeedTier(settings.defaultSpeedTier);
       setSelectedSourceId(settings.defaultSourceId);
       setWpm(settings.wpm);
-      setEffectiveWpm(settings.effectiveWpm);
+      setFarnsworthWpm(settings.farnsworthWpm);
       setExtraWordSpacing(settings.extraWordSpacing);
 
       // Direct assignment - feedbackMode is stored as-is now
@@ -195,7 +195,7 @@ export function SessionConfigPage() {
         settings.defaultSpeedTier !== speedTier ||
         settings.defaultSourceId !== selectedSourceId ||
         settings.wpm !== wpm ||
-        settings.effectiveWpm !== effectiveWpm ||
+        settings.farnsworthWpm !== farnsworthWpm ||
         settings.extraWordSpacing !== extraWordSpacing ||
         settings.feedbackMode !== feedbackMode;
 
@@ -213,8 +213,8 @@ export function SessionConfigPage() {
         if (settings.wpm !== wpm) {
           updateSetting('wpm', wpm);
         }
-        if (settings.effectiveWpm !== effectiveWpm) {
-          updateSetting('effectiveWpm', effectiveWpm);
+        if (settings.farnsworthWpm !== farnsworthWpm) {
+          updateSetting('farnsworthWpm', farnsworthWpm);
         }
         if (settings.extraWordSpacing !== extraWordSpacing) {
           updateSetting('extraWordSpacing', extraWordSpacing);
@@ -226,7 +226,7 @@ export function SessionConfigPage() {
     }, 300); // 300ms debounce
 
     return () => clearTimeout(timer);
-  }, [duration, speedTier, selectedSourceId, wpm, effectiveWpm, extraWordSpacing, feedbackMode, settings, settingsLoading, updateSetting]);
+  }, [duration, speedTier, selectedSourceId, wpm, farnsworthWpm, extraWordSpacing, feedbackMode, settings, settingsLoading, updateSetting]);
 
   // Handle source selection
   const handleSourceChange = async (sourceId: string) => {
@@ -263,7 +263,7 @@ export function SessionConfigPage() {
       mode,
       lengthMs: duration * 60 * 1000,
       wpm,
-      effectiveWpm,
+      farnsworthWpm,
       speedTier,
       sourceId: selectedSourceId,
       sourceName,
@@ -435,9 +435,9 @@ export function SessionConfigPage() {
                 onChange={(e) => {
                   const newWpm = Number(e.target.value);
                   setWpm(newWpm);
-                  // If effective WPM is greater than character WPM, cap it
-                  if (effectiveWpm > newWpm) {
-                    setEffectiveWpm(newWpm);
+                  // If Farnsworth WPM is greater than character WPM, cap it
+                  if (farnsworthWpm > newWpm) {
+                    setFarnsworthWpm(newWpm);
                   }
                 }}
                 style={{
@@ -462,17 +462,17 @@ export function SessionConfigPage() {
             </div>
           </div>
 
-          {/* Effective Speed - Only show for listen and live-copy modes */}
+          {/* Farnsworth Speed - Only show for listen and live-copy modes */}
           {(mode === 'listen' || mode === 'live-copy') && (
             <div className="settings-row">
-              <div className="settings-label">Effective Speed</div>
+              <div className="settings-label">Farnsworth Speed</div>
               <div className="settings-control">
                 <input
                   type="range"
                   min="5"
                   max={wpm} // Cannot exceed character speed
-                  value={effectiveWpm}
-                  onChange={(e) => setEffectiveWpm(Number(e.target.value))}
+                  value={farnsworthWpm}
+                  onChange={(e) => setFarnsworthWpm(Number(e.target.value))}
                   style={{
                     flex: 1,
                     height: '4px',
@@ -490,7 +490,7 @@ export function SessionConfigPage() {
                   minWidth: '80px',
                   textAlign: 'right'
                 }}>
-                  {effectiveWpm} WPM{effectiveWpm === wpm ? ' (std)' : ''}
+                  {farnsworthWpm} WPM{farnsworthWpm === wpm ? ' (std)' : ''}
                 </span>
               </div>
             </div>

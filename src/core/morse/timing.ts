@@ -56,31 +56,31 @@ export function getInterCharacterSpacingMs(wpm: number): number {
 
 /**
  * Calculate Farnsworth inter-character spacing
- * When characterWpm > effectiveWpm, extends spacing to slow down overall rate
- * When characterWpm = effectiveWpm, returns standard 3-dit spacing
+ * When characterWpm > farnsworthWpm, extends spacing to slow down overall rate
+ * When characterWpm = farnsworthWpm, returns standard 3-dit spacing
  *
  * Uses the ARRL Farnsworth formula:
  * Total character time = (60 / (W × 5)) seconds
  * Inter-character spacing = Total time - Character duration - Standard spacing
- * Where W = effective WPM
+ * Where W = farnsworth WPM
  */
-export function calculateFarnsworthSpacingMs(characterWpm: number, effectiveWpm: number): number {
-  if (characterWpm <= 0 || effectiveWpm <= 0) {
+export function calculateFarnsworthSpacingMs(characterWpm: number, farnsworthWpm: number): number {
+  if (characterWpm <= 0 || farnsworthWpm <= 0) {
     throw new Error("WPM values must be positive");
   }
 
-  if (effectiveWpm > characterWpm) {
-    throw new Error("Effective WPM cannot exceed character WPM");
+  if (farnsworthWpm > characterWpm) {
+    throw new Error("Farnsworth WPM cannot exceed character WPM");
   }
 
   // When speeds are equal, use standard spacing
-  if (characterWpm === effectiveWpm) {
+  if (characterWpm === farnsworthWpm) {
     return getInterCharacterSpacingMs(characterWpm);
   }
 
   // ARRL Farnsworth formula:
-  // Total time per character at effective speed (including all spacing)
-  const totalTimePerCharMs = (60 / (effectiveWpm * 5)) * 1000; // Convert to ms
+  // Total time per character at farnsworth speed (including all spacing)
+  const totalTimePerCharMs = (60 / (farnsworthWpm * 5)) * 1000; // Convert to ms
 
   // Average character duration at character speed (assuming 10 units per average character)
   // Standard word "PARIS" = 50 units, 5 chars = 10 units average
@@ -96,15 +96,15 @@ export function calculateFarnsworthSpacingMs(characterWpm: number, effectiveWpm:
 
 /**
  * Calculate timing for Listen mode character reveal
- * Uses Farnsworth spacing when effectiveWpm < characterWpm
+ * Uses Farnsworth spacing when farnsworthWpm < characterWpm
  * Falls back to standard spacing when speeds are equal
  * Split as 66% before reveal, 34% after reveal
  */
-export function getListenModeTimingMs(characterWpm: number, effectiveWpm: number): {
+export function getListenModeTimingMs(characterWpm: number, farnsworthWpm: number): {
   preRevealDelayMs: number;
   postRevealDelayMs: number;
 } {
-  const totalSpacingMs = calculateFarnsworthSpacingMs(characterWpm, effectiveWpm);
+  const totalSpacingMs = calculateFarnsworthSpacingMs(characterWpm, farnsworthWpm);
 
   return {
     preRevealDelayMs: Math.round(0.66 * totalSpacingMs),

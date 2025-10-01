@@ -7,7 +7,7 @@ export type ToneSetting = 'soft' | 'normal' | 'hard'
 export type UserSettings = {
   // Core settings
   wpm: number
-  effectiveWpm: number  // For Farnsworth timing
+  farnsworthWpm: number  // For Farnsworth timing
   frequency: number  // Audio frequency in Hz
   volume: number  // Audio volume (0.0 to 1.0)
   buzzerVolume: number  // Buzzer volume (0.0 to 1.0)
@@ -29,7 +29,7 @@ export type UserSettings = {
 
 export const DEFAULT_USER_SETTINGS: UserSettings = {
   wpm: 15,
-  effectiveWpm: 10,  // Default to slower effective speed for Farnsworth
+  farnsworthWpm: 10,  // Default to slower effective speed for Farnsworth
   frequency: 600,  // Default to 600 Hz (common for Morse code)
   volume: 0.2,  // 20% volume
   buzzerVolume: 0.15,  // 15% volume for error feedback
@@ -91,7 +91,7 @@ export type SessionStatistics = {
   // Overall Metrics
   overallAccuracy: number        // 0-100 percentage (excludes timeouts)
   timeoutPercentage: number      // 0-100 percentage of timeouts
-  effectiveWpm: number           // Adjusted for accuracy and timing
+  achievedWpm: number            // Achieved WPM (adjusted for accuracy and timing)
   totalCharacters: number
   correctCount: number
   incorrectCount: number
@@ -117,7 +117,7 @@ export function validateSettings(settings: unknown): settings is UserSettings {
   const s = settings as Record<string, unknown>
 
   const requiredFields: (keyof UserSettings)[] = [
-    'wpm', 'effectiveWpm', 'frequency', 'volume', 'buzzerVolume', 'tone',
+    'wpm', 'farnsworthWpm', 'frequency', 'volume', 'buzzerVolume', 'tone',
     'includeNumbers', 'includeStdPunct', 'includeAdvPunct', 'extraWordSpacing',
     'defaultDuration', 'defaultMode', 'defaultSpeedTier', 'defaultSourceId',
     'feedbackMode'
@@ -134,7 +134,7 @@ export function validateSettings(settings: unknown): settings is UserSettings {
     return false
   }
 
-  if (typeof s.effectiveWpm !== 'number' || s.effectiveWpm < 5 || s.effectiveWpm > 100) {
+  if (typeof s.farnsworthWpm !== 'number' || s.farnsworthWpm < 5 || s.farnsworthWpm > 100) {
     return false
   }
 
@@ -200,7 +200,7 @@ export function validateSessionStatistics(stats: unknown): stats is SessionStati
   // Validate top-level required fields
   const requiredFields: (keyof SessionStatistics)[] = [
     'startedAt', 'endedAt', 'durationMs', 'config',
-    'overallAccuracy', 'timeoutPercentage', 'effectiveWpm',
+    'overallAccuracy', 'timeoutPercentage', 'achievedWpm',
     'totalCharacters', 'correctCount', 'incorrectCount', 'timeoutCount',
     'characterStats', 'confusionMatrix',
     'meanRecognitionTimeMs', 'medianRecognitionTimeMs'
@@ -239,7 +239,7 @@ export function validateSessionStatistics(stats: unknown): stats is SessionStati
   }
 
   // Validate WPM (reasonable range)
-  if (typeof s.effectiveWpm !== 'number' || s.effectiveWpm < 0 || s.effectiveWpm > 200) {
+  if (typeof s.achievedWpm !== 'number' || s.achievedWpm < 0 || s.achievedWpm > 200) {
     return false
   }
 

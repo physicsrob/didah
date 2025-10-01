@@ -229,7 +229,7 @@ export async function runListenEmission(
   }
 
   // Get listen mode timing with Farnsworth support
-  const { preRevealDelayMs, postRevealDelayMs } = getListenModeTimingMs(cfg.wpm, cfg.effectiveWpm);
+  const { preRevealDelayMs, postRevealDelayMs } = getListenModeTimingMs(cfg.wpm, cfg.farnsworthWpm);
 
   // Wait before revealing character
   await clock.sleep(preRevealDelayMs, sessionSignal);
@@ -263,6 +263,6 @@ export async function runLiveCopyEmission(
 
   // Add inter-character spacing for Live Copy mode with Farnsworth support
   // This simulates real Morse transmission timing
-  const interCharSpacingMs = calculateFarnsworthSpacingMs(cfg.wpm, cfg.effectiveWpm);
+  const interCharSpacingMs = calculateFarnsworthSpacingMs(cfg.wpm, cfg.farnsworthWpm);
   await clock.sleep(interCharSpacingMs, sessionSignal);
 }

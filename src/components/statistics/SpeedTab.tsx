@@ -80,7 +80,7 @@ export default function SpeedTab({ timeWindow }: SpeedTabProps) {
         <div className="card p-6">
           <SessionGraph
             sessions={sessions}
-            dataKey="effectiveWpm"
+            dataKey="achievedWpm"
             yLabel="WPM"
             yDomain={[0, 30]}
             timeWindow={timeWindow}

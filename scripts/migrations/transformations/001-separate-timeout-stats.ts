@@ -10,7 +10,7 @@ import type { SessionStatistics } from '../../../src/core/types/statistics';
 
 export const migration: Migration = {
   id: '001-separate-timeout-stats',
-  description: 'Separate timeout percentage from accuracy calculation and update effective WPM formula',
+  description: 'Separate timeout percentage from accuracy calculation and update achieved WPM formula',
 
   /**
    * Check if this session needs migration
@@ -44,11 +44,11 @@ export const migration: Migration = {
       ? (session.timeoutCount / session.totalCharacters) * 100
       : 0;
 
-    // Calculate new effective WPM (correct - incorrect)
-    const effectiveCharacters = session.correctCount - session.incorrectCount;
+    // Calculate new achieved WPM (correct - incorrect)
+    const achievedCharacters = session.correctCount - session.incorrectCount;
     const durationSeconds = session.durationMs / 1000;
-    const effectiveWpm = effectiveCharacters > 0 && durationSeconds > 0
-      ? Math.round((effectiveCharacters / durationSeconds) * 12)
+    const achievedWpm = achievedCharacters > 0 && durationSeconds > 0
+      ? Math.round((achievedCharacters / durationSeconds) * 12)
       : 0;
 
     // Return updated session
@@ -56,7 +56,7 @@ export const migration: Migration = {
       ...session,
       overallAccuracy: newAccuracy,
       timeoutPercentage,
-      effectiveWpm
+      achievedWpm
     } as SessionStatistics;
   },
 

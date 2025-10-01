@@ -68,6 +68,8 @@ When working on this project:
 - **Run quality checks** before committing (`npm run check`)
 - **Deploy with** `npm run deploy` to push changes to production
 - **Read brand.md before modifying HTML/CSS** to ensure consistent styling and branding
+- **IMPORTANT** Never provide implementation time estimates. Don't say how long it will take to implement or fix something!
+
 
 ## Code Philosophy
 

@@ -146,7 +146,7 @@ export default function HistoryTab({ timeWindow }: HistoryTabProps) {
                       {session.config.sourceName || session.config.sourceId || 'Unknown'}
                     </td>
                     <td className="wpm-cell">
-                      {session.config.mode === 'listen' ? '-' : session.effectiveWpm.toFixed(1)}
+                      {session.config.mode === 'listen' ? '-' : session.achievedWpm.toFixed(1)}
                     </td>
                     <td className="accuracy-cell">
                       {session.config.mode === 'listen' ? (

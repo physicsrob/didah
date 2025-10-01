@@ -30,7 +30,7 @@ export const DEFAULT_SESSION_CONFIG: SessionConfig = {
   replay: true,
   effectiveAlphabet: DEFAULT_ALPHABET,
   wpm: DEFAULT_WPM,
-  effectiveWpm: DEFAULT_WPM, // Default to standard timing (same as wpm)
+  farnsworthWpm: DEFAULT_WPM, // Default to standard timing (same as wpm)
   lengthMs: 60000, // 1 minute
   extraWordSpacing: 0,
 };

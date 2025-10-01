@@ -8,7 +8,7 @@ import {
 
 describe('Farnsworth Spacing', () => {
   describe('calculateFarnsworthSpacingMs', () => {
-    it('returns standard spacing when character and effective WPM are equal', () => {
+    it('returns standard spacing when character and farnsworth WPM are equal', () => {
       const standardSpacing = getInterCharacterSpacingMs(20); // 3 dits = 180ms at 20 WPM
       const farnsworthSpacing = calculateFarnsworthSpacingMs(20, 20);
 
@@ -16,7 +16,7 @@ describe('Farnsworth Spacing', () => {
       expect(farnsworthSpacing).toBe(180); // 3 dits at 20 WPM
     });
 
-    it('returns standard spacing for multiple WPM values when character and effective are equal', () => {
+    it('returns standard spacing for multiple WPM values when character and farnsworth are equal', () => {
       const testCases = [5, 10, 15, 20, 25, 30, 35, 40];
 
       testCases.forEach(wpm => {
@@ -29,22 +29,22 @@ describe('Farnsworth Spacing', () => {
       });
     });
 
-    it('has smooth transition when effective WPM is slightly below character WPM', () => {
-      // Small changes in effective WPM should produce small changes in spacing
+    it('has smooth transition when farnsworth WPM is slightly below character WPM', () => {
+      // Small changes in farnsworth WPM should produce small changes in spacing
       // This test would have caught the previous bug where the formula produced
       // massive jumps (600%+) for small WPM differences
 
       // Test larger differences where we expect to see changes
       const testCases = [
-        { char: 20, effective1: 20, effective2: 15 },  // Bigger gap to see change
-        { char: 25, effective1: 25, effective2: 20 },
-        { char: 30, effective1: 30, effective2: 25 },
-        { char: 15, effective1: 15, effective2: 10 },
+        { char: 20, farnsworth1: 20, farnsworth2: 15 },  // Bigger gap to see change
+        { char: 25, farnsworth1: 25, farnsworth2: 20 },
+        { char: 30, farnsworth1: 30, farnsworth2: 25 },
+        { char: 15, farnsworth1: 15, farnsworth2: 10 },
       ];
 
-      testCases.forEach(({ char, effective1, effective2 }) => {
-        const spacing1 = calculateFarnsworthSpacingMs(char, effective1);
-        const spacing2 = calculateFarnsworthSpacingMs(char, effective2);
+      testCases.forEach(({ char, farnsworth1, farnsworth2 }) => {
+        const spacing1 = calculateFarnsworthSpacingMs(char, farnsworth1);
+        const spacing2 = calculateFarnsworthSpacingMs(char, farnsworth2);
 
         const difference = spacing2 - spacing1;
         const percentChange = (difference / spacing1) * 100;
@@ -58,8 +58,8 @@ describe('Farnsworth Spacing', () => {
       });
     });
 
-    it('returns extended spacing when effective WPM is lower than character WPM', () => {
-      // Character at 20 WPM, effective at 10 WPM
+    it('returns extended spacing when farnsworth WPM is lower than character WPM', () => {
+      // Character at 20 WPM, farnsworth at 10 WPM
       const spacing = calculateFarnsworthSpacingMs(20, 10);
       const standardSpacing = getInterCharacterSpacingMs(20); // 180ms
 
@@ -101,9 +101,9 @@ describe('Farnsworth Spacing', () => {
       expect(() => calculateFarnsworthSpacingMs(20, -5)).toThrow('WPM values must be positive');
     });
 
-    it('throws error when effective WPM exceeds character WPM', () => {
-      expect(() => calculateFarnsworthSpacingMs(15, 20)).toThrow('Effective WPM cannot exceed character WPM');
-      expect(() => calculateFarnsworthSpacingMs(10, 15)).toThrow('Effective WPM cannot exceed character WPM');
+    it('throws error when farnsworth WPM exceeds character WPM', () => {
+      expect(() => calculateFarnsworthSpacingMs(15, 20)).toThrow('Farnsworth WPM cannot exceed character WPM');
+      expect(() => calculateFarnsworthSpacingMs(10, 15)).toThrow('Farnsworth WPM cannot exceed character WPM');
     });
   });
 
@@ -120,7 +120,7 @@ describe('Farnsworth Spacing', () => {
       expect(timing.postRevealDelayMs).toBeCloseTo(61, 0);  // ~34% of 180
     });
 
-    it('uses Farnsworth timing when effective WPM is lower', () => {
+    it('uses Farnsworth timing when farnsworth WPM is lower', () => {
       const timing = getListenModeTimingMs(20, 10);
       const totalDelay = timing.preRevealDelayMs + timing.postRevealDelayMs;
 
@@ -140,8 +140,8 @@ describe('Farnsworth Spacing', () => {
         [30, 25],
       ];
 
-      configs.forEach(([charWpm, effectiveWpm]) => {
-        const timing = getListenModeTimingMs(charWpm, effectiveWpm);
+      configs.forEach(([charWpm, farnsworthWpm]) => {
+        const timing = getListenModeTimingMs(charWpm, farnsworthWpm);
         const total = timing.preRevealDelayMs + timing.postRevealDelayMs;
 
         const preRatio = timing.preRevealDelayMs / total;
@@ -158,7 +158,7 @@ describe('Farnsworth Spacing', () => {
 
   describe('Farnsworth timing in practice', () => {
     it('provides reasonable timing for beginner settings', () => {
-      // Beginner: 18 WPM characters, 5 WPM effective
+      // Beginner: 18 WPM characters, 5 WPM farnsworth
       const charDitMs = wpmToDitMs(18); // 66.67ms
       const spacing = calculateFarnsworthSpacingMs(18, 5);
 
@@ -172,14 +172,14 @@ describe('Farnsworth Spacing', () => {
       // while still hearing them at a realistic speed
     });
 
-    it('gradually reduces spacing as effective WPM approaches character WPM', () => {
+    it('gradually reduces spacing as farnsworth WPM approaches character WPM', () => {
       const charWpm = 20;
 
-      // Track how spacing decreases as effective WPM increases
+      // Track how spacing decreases as farnsworth WPM increases
       const spacings = [
-        calculateFarnsworthSpacingMs(charWpm, 5),   // Very slow effective
-        calculateFarnsworthSpacingMs(charWpm, 10),  // Slow effective
-        calculateFarnsworthSpacingMs(charWpm, 15),  // Medium effective
+        calculateFarnsworthSpacingMs(charWpm, 5),   // Very slow farnsworth
+        calculateFarnsworthSpacingMs(charWpm, 10),  // Slow farnsworth
+        calculateFarnsworthSpacingMs(charWpm, 15),  // Medium farnsworth
         calculateFarnsworthSpacingMs(charWpm, 18),  // Close to character
         calculateFarnsworthSpacingMs(charWpm, 20),  // Standard (same as character)
       ];

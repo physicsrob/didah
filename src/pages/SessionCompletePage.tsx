@@ -155,8 +155,8 @@ export function SessionCompletePage() {
 
                   {fullStatistics.config.mode === 'practice' && (
                     <div className="stat-item">
-                      <span className="stat-label">Effective WPM</span>
-                      <span className="stat-value">{fullStatistics.effectiveWpm}</span>
+                      <span className="stat-label">Achieved WPM</span>
+                      <span className="stat-value">{fullStatistics.achievedWpm}</span>
                     </div>
                   )}
 

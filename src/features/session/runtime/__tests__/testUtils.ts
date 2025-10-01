@@ -130,7 +130,7 @@ export function createTestConfig(overrides?: Partial<SessionConfig>): SessionCon
   return {
     mode: 'practice' as const,
     wpm: 20,
-    effectiveWpm: 20,  // Default to same as wpm for standard timing
+    farnsworthWpm: 20,  // Default to same as wpm for standard timing
     speedTier: 'medium' as const,
     lengthMs: 60000,
     sourceId: 'test_source',
