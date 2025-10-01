@@ -43,7 +43,7 @@ export const TestTiming = {
  * Helper to calculate character duration with timeout for a speed tier
  */
 export function getCharTimeout(char: string, speedTier: keyof typeof TestTiming.windows, wpm = TEST_WPM): number {
-  return calculateCharacterDurationMs(char, wpm) + TestTiming.windows[speedTier];
+  return calculateCharacterDurationMs(char, wpm, 0) + TestTiming.windows[speedTier];
 }
 
 /**
@@ -51,7 +51,7 @@ export function getCharTimeout(char: string, speedTier: keyof typeof TestTiming.
  * Note: speedTier is ignored as Listen mode now uses standard 3-dit spacing
  */
 export function getListenSequence(char: string, wpm = TEST_WPM) {
-  const charDuration = calculateCharacterDurationMs(char, wpm);
+  const charDuration = calculateCharacterDurationMs(char, wpm, 0);
   const delays = getListenModeTimingMs(wpm, wpm);  // Use same wpm for both (standard timing)
 
   return {

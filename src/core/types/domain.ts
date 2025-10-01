@@ -15,7 +15,7 @@ export type SessionConfig = {
   feedback: "buzzer" | "flash" | "both" | "none";
   replay: boolean;
   effectiveAlphabet: string[]; // based on toggles
-  extraWordSpacing?: number; // Extra space characters to add between words (0-5, for listen/live-copy only)
+  extraWordSpacing: number; // Extra space characters to add between words (0-5, for listen/live-copy only)
 };
 
 export type OutcomeEvent =

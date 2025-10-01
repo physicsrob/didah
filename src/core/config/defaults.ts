@@ -27,6 +27,7 @@ export const DEFAULT_SESSION_CONFIG: SessionConfig = {
   wpm: DEFAULT_WPM,
   effectiveWpm: DEFAULT_WPM, // Default to standard timing (same as wpm)
   lengthMs: 60000, // 1 minute
+  extraWordSpacing: 0,
 };
 
 /**

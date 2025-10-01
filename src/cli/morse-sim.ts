@@ -35,7 +35,8 @@ const config: SessionConfig = {
   sourceId: 'random_letters',
   sourceName: 'Random Letters',
   feedback: 'none',
-  effectiveAlphabet: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789.,?'.split('')
+  effectiveAlphabet: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789.,?'.split(''),
+  extraWordSpacing: 0
 };
 
 // Create mock IO

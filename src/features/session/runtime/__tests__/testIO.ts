@@ -25,7 +25,7 @@ export class TestIO implements IO {
   // ============= IO Implementation =============
 
   async playChar(char: string, wpm: number): Promise<void> {
-    const duration = calculateCharacterDurationMs(char, wpm);
+    const duration = calculateCharacterDurationMs(char, wpm, 0);
     await this.clock.sleep(duration);
   }
 
@@ -47,7 +47,7 @@ export class TestIO implements IO {
 
   async replay(char: string, wpm: number): Promise<void> {
     this.replayedChars.add(char);
-    const duration = calculateCharacterDurationMs(char, wpm);
+    const duration = calculateCharacterDurationMs(char, wpm, 0);
     await this.clock.sleep(duration);
   }
 

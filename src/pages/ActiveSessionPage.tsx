@@ -120,8 +120,8 @@ export function ActiveSessionPage() {
     return createIOAdapter({
       audioEngine,
       feedback: feedback || undefined,
-      feedbackType: config?.feedback,
-      mode: config?.mode,  // Pass the mode so IO adapter knows when to apply extra spacing
+      feedbackType: config?.feedback ?? 'none',
+      mode: config?.mode ?? 'practice',  // Pass the mode so IO adapter knows when to apply extra spacing
       onReveal: (char: string) => {
         // Don't show replays when paused
         if (config?.mode === 'practice' && config?.replay && !isPausedRef.current) {
@@ -140,7 +140,7 @@ export function ActiveSessionPage() {
       },
       replayDuration: 1500,
       isPaused: () => isPausedRef.current,  // Pass pause state checker
-      extraWordSpacing: config?.extraWordSpacing ?? 0  // Pass extra word spacing for listen/live-copy modes
+      extraWordSpacing: config?.extraWordSpacing ?? 0  // Pass extra word spacing for listen/live-copy modes, 0 if config not loaded yet
     });
   }, [audioEngine, feedback, config?.mode, config?.replay, config?.extraWordSpacing]);
 

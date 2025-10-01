@@ -106,7 +106,7 @@ export class StatisticsAPI {
   /**
    * Future: Fetch accuracy data
    */
-  async getAccuracy(days: number = 30): Promise<AccuracyData[]> {
+  async getAccuracy(days: number): Promise<AccuracyData[]> {
     // Placeholder for future implementation
     if (!this.authToken) {
       return [];
@@ -134,7 +134,7 @@ export class StatisticsAPI {
   /**
    * Future: Fetch speed data
    */
-  async getSpeed(days: number = 30): Promise<SpeedData[]> {
+  async getSpeed(days: number): Promise<SpeedData[]> {
     // Placeholder for future implementation
     if (!this.authToken) {
       return [];

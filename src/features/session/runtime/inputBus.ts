@@ -115,7 +115,7 @@ export class TestInputBus extends SimpleInputBus {
   /**
    * Simulate typing a string of characters with timing
    */
-  typeString(text: string, startAt: number, intervalMs: number = 100): void {
+  typeString(text: string, startAt: number, intervalMs: number): void {
     for (let i = 0; i < text.length; i++) {
       this.type(text[i], startAt + i * intervalMs);
     }

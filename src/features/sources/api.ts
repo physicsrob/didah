@@ -51,7 +51,7 @@ export async function fetchSources(): Promise<TextSource[]> {
 /**
  * Fetch content for a specific source
  */
-export async function fetchSourceContent(id: string, requiresAuth: boolean = false): Promise<SourceContent | null> {
+export async function fetchSourceContent(id: string, requiresAuth: boolean): Promise<SourceContent | null> {
   try {
     const headers: HeadersInit = {
       'Cache-Control': 'no-store'

@@ -222,8 +222,7 @@ export function createSessionRunner(deps: SessionRunnerDeps): SessionRunner {
     const emissionStartTime = deps.clock.now();
 
     // Calculate total emission duration: character audio + inter-character spacing
-    // Use extraWordSpacing from config (default 0 if not set)
-    const charAudioDurationMs = calculateCharacterDurationMs(char, config.wpm, config.extraWordSpacing || 0);
+    const charAudioDurationMs = calculateCharacterDurationMs(char, config.wpm, config.extraWordSpacing);
     const interCharSpacingMs = getInterCharacterSpacingMs(config.wpm);
     const totalEmissionDurationMs = charAudioDurationMs + interCharSpacingMs;
 

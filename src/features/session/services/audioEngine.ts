@@ -67,7 +67,7 @@ export class AudioEngine {
   /**
    * Play a character's Morse pattern
    */
-  async playCharacter(char: string, wpm: number, extraWordSpacing: number = 0): Promise<void> {
+  async playCharacter(char: string, wpm: number, extraWordSpacing: number): Promise<void> {
     if (!this.audioContext) {
       throw new Error('Audio context not initialized');
     }

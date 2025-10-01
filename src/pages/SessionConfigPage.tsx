@@ -132,7 +132,7 @@ export function SessionConfigPage() {
     }
 
     // Always fetch fresh content (even on mount/reload)
-    fetchSourceContent(source.backendId, source.requiresAuth)
+    fetchSourceContent(source.backendId, source.requiresAuth ?? false)
       .then(content => {
         if (content) {
           // Override the content ID with the frontend ID for proper source factory detection
@@ -215,7 +215,7 @@ export function SessionConfigPage() {
     }
 
     try {
-      const content = await fetchSourceContent(source.backendId, source.requiresAuth);
+      const content = await fetchSourceContent(source.backendId, source.requiresAuth ?? false);
       if (content) {
         // Override the content ID with the frontend ID for proper source factory detection
         setSourceContent({ ...content, id: sourceId });
@@ -272,7 +272,7 @@ export function SessionConfigPage() {
       const source = availableSources.find(s => s.id === selectedSourceId);
       if (source) {
         try {
-          const content = await fetchSourceContent(source.backendId, source.requiresAuth);
+          const content = await fetchSourceContent(source.backendId, source.requiresAuth ?? false);
           // Override the content ID with the frontend ID for proper source factory detection
           freshContent = content ? { ...content, id: selectedSourceId } : null;
         } catch (error) {

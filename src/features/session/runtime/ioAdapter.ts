@@ -14,16 +14,16 @@ import { debug } from '../../../core/debug';
 export type IOAdapterConfig = {
   audioEngine: AudioEngine;
   feedback?: Feedback;
-  feedbackType?: 'buzzer' | 'flash' | 'both' | 'none'; // Track the feedback type
+  feedbackType: 'buzzer' | 'flash' | 'both' | 'none'; // Track the feedback type
   onReveal?: (char: string) => void;
   onHide?: () => void;
   onLog?: (event: LogEvent) => void;
   onSnapshot?: (snapshot: SessionSnapshot) => void;
   onFlash?: (type: 'error' | 'warning' | 'success') => void; // Flash callback
-  replayDuration?: number; // ms to show replay overlay
+  replayDuration: number; // ms to show replay overlay
   isPaused?: () => boolean; // Check if session is paused
-  extraWordSpacing?: number; // Extra word spacing for listen/live-copy modes
-  mode?: SessionMode; // Session mode
+  extraWordSpacing: number; // Extra word spacing for listen/live-copy modes
+  mode: SessionMode; // Session mode
 };
 
 /**
@@ -39,10 +39,10 @@ export function createIOAdapter(config: IOAdapterConfig): IO {
     onLog,
     onSnapshot,
     onFlash,
-    replayDuration = 1000,
+    replayDuration,
     isPaused,
-    extraWordSpacing = 0,
-    mode = 'practice'
+    extraWordSpacing,
+    mode
   } = config;
 
   return {

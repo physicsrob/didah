@@ -19,6 +19,7 @@ const createConfig = (): SessionConfig => ({
   replay: false,
   feedback: 'flash',
   effectiveAlphabet: ['A', 'B', 'C'],
+  extraWordSpacing: 0,
 });
 
 describe('SessionStatsCalculator', () => {

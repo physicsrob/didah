@@ -21,7 +21,7 @@ export default function AudioTab() {
       try {
         await initializeAudio()
         const audioEngine = getAudioEngine()
-        await audioEngine.playCharacter('?', DEFAULT_WPM)
+        await audioEngine.playCharacter('?', DEFAULT_WPM, 0)
       } catch (error) {
         console.error('Failed to play preview:', error)
       }
@@ -34,7 +34,7 @@ export default function AudioTab() {
     try {
       await initializeAudio()
       const audioEngine = getAudioEngine()
-      await audioEngine.playCharacter('?', DEFAULT_WPM)
+      await audioEngine.playCharacter('?', DEFAULT_WPM, 0)
     } catch (error) {
       console.error('Failed to play preview:', error)
     }
@@ -51,7 +51,7 @@ export default function AudioTab() {
       try {
         await initializeAudio()
         const audioEngine = getAudioEngine()
-        await audioEngine.playCharacter('?', DEFAULT_WPM)
+        await audioEngine.playCharacter('?', DEFAULT_WPM, 0)
       } catch (error) {
         console.error('Failed to play preview:', error)
       }

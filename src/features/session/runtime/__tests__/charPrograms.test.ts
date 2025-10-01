@@ -335,7 +335,7 @@ describe('runListenEmission', () => {
 
       // Total time should be consistent across all speed tiers
       // Character duration + 3 dits of spacing (split 66/34)
-      const charDuration = calculateCharacterDurationMs('G', config.wpm);
+      const charDuration = calculateCharacterDurationMs('G', config.wpm, 0);
       const expectedSpacing = wpmToDitMs(config.wpm) * 3;
       const expectedTotal = charDuration + expectedSpacing;
 
@@ -369,7 +369,7 @@ describe('runListenEmission', () => {
     );
 
     // Calculate audio duration
-    const charDuration = calculateCharacterDurationMs('H', config.wpm);
+    const charDuration = calculateCharacterDurationMs('H', config.wpm, 0);
 
     // Advance past audio, then abort during pre-reveal delay
     await advanceAndFlush(clock, charDuration);

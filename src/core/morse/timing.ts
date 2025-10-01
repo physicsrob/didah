@@ -142,9 +142,9 @@ export function getSpacingMs(wpm: number) {
  * Includes the time for all dits/dahs plus intra-symbol spacing
  * @param char The character to calculate duration for
  * @param wpm Words per minute
- * @param extraWordSpacing Additional space characters worth of time to add to word spacing (0-5, default 0)
+ * @param extraWordSpacing Additional space characters worth of time to add to word spacing (0-5)
  */
-export function calculateCharacterDurationMs(char: string, wpm: number, extraWordSpacing: number = 0): number {
+export function calculateCharacterDurationMs(char: string, wpm: number, extraWordSpacing: number): number {
   // Handle space character (4 dits of silence + extra word spacing)
   // Each extra space adds 7 dits (the standard inter-word spacing)
   if (char === ' ') {

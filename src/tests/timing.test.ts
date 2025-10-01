@@ -89,50 +89,50 @@ describe('Morse Timing Engine', () => {
   describe('calculateCharacterDurationMs', () => {
     it('calculates correct duration for single element characters', () => {
       // E = . (1 dit, no intra-symbol spacing)
-      expect(calculateCharacterDurationMs('E', 20)).toBe(60); // 60ms dit
-      expect(calculateCharacterDurationMs('e', 20)).toBe(60); // case insensitive
+      expect(calculateCharacterDurationMs('E', 20, 0)).toBe(60); // 60ms dit
+      expect(calculateCharacterDurationMs('e', 20, 0)).toBe(60); // case insensitive
 
       // T = - (3 dits, no intra-symbol spacing)
-      expect(calculateCharacterDurationMs('T', 20)).toBe(180); // 3 * 60ms
+      expect(calculateCharacterDurationMs('T', 20, 0)).toBe(180); // 3 * 60ms
     });
 
     it('calculates correct duration for multi-element characters', () => {
       // A = .- (1 dit + 1 spacing + 3 dits = 5 dits total)
-      expect(calculateCharacterDurationMs('A', 20)).toBe(300); // 5 * 60ms
+      expect(calculateCharacterDurationMs('A', 20, 0)).toBe(300); // 5 * 60ms
 
       // N = -. (3 dits + 1 spacing + 1 dit = 5 dits total)
-      expect(calculateCharacterDurationMs('N', 20)).toBe(300); // 5 * 60ms
+      expect(calculateCharacterDurationMs('N', 20, 0)).toBe(300); // 5 * 60ms
 
       // C = -.-. (3 + 1 + 1 + 1 + 3 + 1 + 1 = 11 dits total)
-      expect(calculateCharacterDurationMs('C', 20)).toBe(660); // 11 * 60ms
+      expect(calculateCharacterDurationMs('C', 20, 0)).toBe(660); // 11 * 60ms
     });
 
     it('calculates correct duration for numbers', () => {
       // 5 = ..... (5 dits + 4 spacing = 9 dits total)
-      expect(calculateCharacterDurationMs('5', 20)).toBe(540); // 9 * 60ms
+      expect(calculateCharacterDurationMs('5', 20, 0)).toBe(540); // 9 * 60ms
 
       // 0 = ----- (15 dits + 4 spacing = 19 dits total)
-      expect(calculateCharacterDurationMs('0', 20)).toBe(1140); // 19 * 60ms
+      expect(calculateCharacterDurationMs('0', 20, 0)).toBe(1140); // 19 * 60ms
     });
 
     it('scales correctly with different WPM values', () => {
       // Same character should scale proportionally
-      expect(calculateCharacterDurationMs('A', 10)).toBe(600); // 5 * 120ms (120ms dit at 10 WPM)
-      expect(calculateCharacterDurationMs('A', 40)).toBe(150); // 5 * 30ms (30ms dit at 40 WPM)
+      expect(calculateCharacterDurationMs('A', 10, 0)).toBe(600); // 5 * 120ms (120ms dit at 10 WPM)
+      expect(calculateCharacterDurationMs('A', 40, 0)).toBe(150); // 5 * 30ms (30ms dit at 40 WPM)
     });
 
     it('returns 0 for unknown characters', () => {
-      expect(calculateCharacterDurationMs('$', 20)).toBe(0);
-      expect(calculateCharacterDurationMs('', 20)).toBe(0);
-      expect(calculateCharacterDurationMs('未知', 20)).toBe(0);
+      expect(calculateCharacterDurationMs('$', 20, 0)).toBe(0);
+      expect(calculateCharacterDurationMs('', 20, 0)).toBe(0);
+      expect(calculateCharacterDurationMs('未知', 20, 0)).toBe(0);
     });
 
     it('handles punctuation correctly', () => {
       // . = .-.-.- (1+1+3+1+1+1+3+1+1+1+3 = 17 dits total)
-      expect(calculateCharacterDurationMs('.', 20)).toBe(1020); // 17 * 60ms
+      expect(calculateCharacterDurationMs('.', 20, 0)).toBe(1020); // 17 * 60ms
 
       // , = --..-- (3+1+3+1+1+1+1+1+3+1+3 = 19 dits total)
-      expect(calculateCharacterDurationMs(',', 20)).toBe(1140); // 19 * 60ms
+      expect(calculateCharacterDurationMs(',', 20, 0)).toBe(1140); // 19 * 60ms
     });
   });
 
@@ -157,10 +157,10 @@ describe('Morse Timing Engine', () => {
 
       // Verify that our calculated durations match what AudioEngine would produce
       // E should take 1 dit (no spacing needed for single element)
-      expect(calculateCharacterDurationMs('E', wpm)).toBe(ditMs);
+      expect(calculateCharacterDurationMs('E', wpm, 0)).toBe(ditMs);
 
       // A should take dit + spacing + dah = 1 + 1 + 3 = 5 dits
-      expect(calculateCharacterDurationMs('A', wpm)).toBe(5 * ditMs);
+      expect(calculateCharacterDurationMs('A', wpm, 0)).toBe(5 * ditMs);
 
       // These durations should be what the scheduler uses for accurate timing
     });
