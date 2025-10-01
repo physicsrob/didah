@@ -142,7 +142,7 @@ export function ActiveSessionPage() {
       isPaused: () => isPausedRef.current,  // Pass pause state checker
       extraWordSpacing: config?.extraWordSpacing ?? 0  // Pass extra word spacing for listen/live-copy modes, 0 if config not loaded yet
     });
-  }, [audioEngine, feedback, config?.mode, config?.replay, config?.extraWordSpacing]);
+  }, [audioEngine, feedback, config?.mode, config?.replay, config?.feedback, config?.extraWordSpacing]);
 
   // Create session runner
   const runner = useMemo(() => createSessionRunner({ clock, io, input, source }), [clock, io, input, source]);
