@@ -406,7 +406,7 @@ export function ActiveSessionPage() {
       {/* Main Display Area */}
       {(sessionPhase === 'countdown' || sessionPhase === 'active') && (
         <div className="session-display-area">
-          {mode && config?.mode === 'practice' ? (
+          {mode && (config?.mode === 'practice' || config?.mode === 'listen') ? (
             mode.renderDisplay({ snapshot })
           ) : (
             <CharacterDisplay

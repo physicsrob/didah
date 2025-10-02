@@ -5,6 +5,7 @@
  */
 
 import { practiceMode } from '../practice';
+import { listenMode } from '../listen';
 import type { SessionMode } from '../../../../core/types/domain';
 import type { ModeDefinition } from './types';
 
@@ -14,6 +15,7 @@ import type { ModeDefinition } from './types';
  */
 export const MODE_REGISTRY: Partial<Record<SessionMode, ModeDefinition>> = {
   'practice': practiceMode,
+  'listen': listenMode,
 };
 
 /**

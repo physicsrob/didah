@@ -5,7 +5,7 @@
 import type { Clock } from './clock';
 import type { IO, SessionSnapshot } from './io';
 import type { InputBus } from './inputBus';
-import { runPracticeEmission, runListenEmission, runLiveCopyEmission } from './charPrograms';
+import { runPracticeEmission, runLiveCopyEmission } from './charPrograms';
 import type { SessionConfig } from '../../../core/types/domain';
 import { calculateCharacterDurationMs, getInterCharacterSpacingMs } from '../../../core/morse/timing';
 import { debug } from '../../../core/debug';
@@ -289,32 +289,6 @@ export function createSessionRunner(deps: SessionRunnerDeps): SessionRunner {
     }
   }
 
-  // Handle listen mode emission - play Morse then reveal character
-  async function handleListenMode(
-    config: SessionConfig,
-    char: string,
-    startTime: number,
-    signal: AbortSignal
-  ): Promise<void> {
-    await runListenEmission(
-      config,
-      char,
-      deps.io,
-      deps.clock,
-      signal
-    );
-
-    // For listen mode, add to history after emission
-    const historyItem = { char, result: 'listen' as const };
-    snapshot.previous = [...snapshot.previous, historyItem];
-    snapshot.currentChar = null;
-
-    // Update remaining time
-    updateRemainingTime(startTime, config);
-
-    // Publish snapshot
-    publish();
-  }
 
   // Handle live-copy mode emission - transmission only, no input handling
   async function handleLiveCopyMode(
@@ -382,7 +356,7 @@ export function createSessionRunner(deps: SessionRunnerDeps): SessionRunner {
         try {
           // Run emission based on mode
           // Try to use new mode system, fall back to old for unmigrated modes
-          if (config.mode === 'practice') {
+          if (config.mode === 'practice' || config.mode === 'listen') {
             const mode = getMode(config.mode);
             const ctx: HandlerContext = {
               ...deps,
@@ -398,10 +372,6 @@ export function createSessionRunner(deps: SessionRunnerDeps): SessionRunner {
           } else {
             // Old switch statement for unmigrated modes
             switch (config.mode) {
-              case 'listen':
-                await handleListenMode(config, char, startTime, signal);
-                break;
-
               case 'live-copy':
                 await handleLiveCopyMode(config, char, startTime, signal);
                 break;
