@@ -1,6 +1,6 @@
 # Mode Architecture Refactor Plan
 
-**Status**: 🟢 In Progress - Phase 1 Complete, ready for Phase 2
+**Status**: 🟢 In Progress - Phase 1 & 2 Complete, ready for Phase 3
 **Author**: Claude Code
 **Date**: 2025-10-01
 **Estimated Effort**: 4-6 hours
@@ -848,7 +848,7 @@ git commit -m "refactor: migrate Practice mode to new architecture
 
 ---
 
-### Phase 2: Listen Mode (60 minutes)
+### Phase 2: Listen Mode (60 minutes) ✅ COMPLETE
 
 Listen mode is simpler (no input, no stats, no replay), so it should go faster.
 
