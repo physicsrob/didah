@@ -9,6 +9,8 @@ import { runPracticeEmission, runListenEmission, runLiveCopyEmission } from './c
 import type { SessionConfig } from '../../../core/types/domain';
 import { calculateCharacterDurationMs, getInterCharacterSpacingMs } from '../../../core/morse/timing';
 import { debug } from '../../../core/debug';
+import { getMode } from '../modes/shared/registry';
+import type { HandlerContext } from '../modes/shared/types';
 
 /**
  * Character source interface
@@ -242,7 +244,10 @@ export function createSessionRunner(deps: SessionRunnerDeps): SessionRunner {
     snapshot.remainingMs = Math.max(0, config.lengthMs - newElapsed);
   }
 
+  // DEPRECATED: Moved to modes/practice/handler.ts
   // Handle practice mode emission - user types what they hear
+  // @ts-expect-error - unused during migration, will be deleted in Phase 4
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   async function handlePracticeMode(
     config: SessionConfig,
     char: string,
@@ -376,18 +381,31 @@ export function createSessionRunner(deps: SessionRunnerDeps): SessionRunner {
 
         try {
           // Run emission based on mode
-          switch (config.mode) {
-            case 'practice':
-              await handlePracticeMode(config, char, startTime, signal);
-              break;
+          // Try to use new mode system, fall back to old for unmigrated modes
+          if (config.mode === 'practice') {
+            const mode = getMode(config.mode);
+            const ctx: HandlerContext = {
+              ...deps,
+              snapshot,
+              updateSnapshot: (updates) => {
+                snapshot = { ...snapshot, ...updates };
+              },
+              updateStats,
+              updateRemainingTime,
+              publish,
+            };
+            await mode.handleCharacter(config, char, startTime, ctx, signal);
+          } else {
+            // Old switch statement for unmigrated modes
+            switch (config.mode) {
+              case 'listen':
+                await handleListenMode(config, char, startTime, signal);
+                break;
 
-            case 'listen':
-              await handleListenMode(config, char, startTime, signal);
-              break;
-
-            case 'live-copy':
-              await handleLiveCopyMode(config, char, startTime, signal);
-              break;
+              case 'live-copy':
+                await handleLiveCopyMode(config, char, startTime, signal);
+                break;
+            }
           }
 
         } catch (error) {

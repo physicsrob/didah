@@ -24,6 +24,7 @@ import { CharacterDisplay } from '../components/CharacterDisplay';
 import type { DisplayCharacter } from '../components/CharacterDisplay';
 import { historyToDisplay } from '../components/CharacterDisplay.transformations';
 import { SessionStatsCalculator } from '../features/statistics/sessionStatsCalculator';
+import { getMode } from '../features/session/modes/shared/registry';
 import '../styles/main.css';
 import '../styles/activeSession.css';
 
@@ -38,6 +39,16 @@ export function ActiveSessionPage() {
   // Get config, source content, and source name from navigation state
   const config = location.state?.config;
   const sourceContent = location.state?.sourceContent as SourceContent | null;
+
+  // Get mode definition if migrated
+  const mode = useMemo(() => {
+    if (!config) return null;
+    try {
+      return getMode(config.mode);
+    } catch {
+      return null; // Mode not yet migrated
+    }
+  }, [config]);
 
   // Check if audio is actually ready
   const audioActuallyReady = isAudioReady();
@@ -395,13 +406,17 @@ export function ActiveSessionPage() {
       {/* Main Display Area */}
       {(sessionPhase === 'countdown' || sessionPhase === 'active') && (
         <div className="session-display-area">
-          <CharacterDisplay
-            characters={
-              config?.mode === 'live-copy'
-                ? liveCopyDisplay
-                : historyToDisplay(snapshot.previous)
-            }
-          />
+          {mode && config?.mode === 'practice' ? (
+            mode.renderDisplay({ snapshot })
+          ) : (
+            <CharacterDisplay
+              characters={
+                config?.mode === 'live-copy'
+                  ? liveCopyDisplay
+                  : historyToDisplay(snapshot.previous)
+              }
+            />
+          )}
         </div>
       )}
 
