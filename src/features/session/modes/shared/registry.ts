@@ -6,26 +6,32 @@
 
 import { practiceMode } from '../practice';
 import { listenMode } from '../listen';
+import { liveCopyMode } from '../liveCopy';
 import type { SessionMode } from '../../../../core/types/domain';
 import type { ModeDefinition } from './types';
 
 /**
- * Temporary: Partial registry during incremental migration
- * Will become Record<SessionMode, ModeDefinition> once all modes are migrated
+ * Type-safe mode registry
+ *
+ * TypeScript enforces:
+ * - All SessionMode values have a registered mode
+ * - All registered modes implement ModeDefinition
+ * - Cannot add a mode without registering it here
  */
-export const MODE_REGISTRY: Partial<Record<SessionMode, ModeDefinition>> = {
+export const MODE_REGISTRY: Record<SessionMode, ModeDefinition> = {
   'practice': practiceMode,
   'listen': listenMode,
+  'live-copy': liveCopyMode,
 };
 
 /**
  * Get a mode definition safely
- * @throws if mode is not yet migrated
+ * @throws if mode is not registered (should never happen with proper types)
  */
 export function getMode(mode: SessionMode): ModeDefinition {
   const def = MODE_REGISTRY[mode];
   if (!def) {
-    throw new Error(`Mode not yet migrated: ${mode}`);
+    throw new Error(`Unknown mode: ${mode}`);
   }
   return def;
 }
