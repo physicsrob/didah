@@ -2,15 +2,44 @@
  * IO port abstraction for all side effects
  */
 
+/**
+ * History item for Practice mode
+ * Tracks character and user's response result
+ */
 export interface HistoryItem {
   char: string;
-  result: 'correct' | 'incorrect' | 'timeout' | 'listen';
+  result: 'correct' | 'incorrect' | 'timeout';
 }
 
-export type SessionSnapshot = {
-  phase: 'idle' | 'running' | 'paused' | 'ended';
-  currentChar: string | null;
+/**
+ * Practice mode state
+ */
+export interface PracticeState {
   previous: HistoryItem[];
+  stats: {
+    correct: number;
+    incorrect: number;
+    timeout: number;
+    accuracy: number; // percentage
+  };
+}
+
+/**
+ * Live Copy mode state
+ */
+export interface LiveCopyState {
+  typedString: string;
+}
+
+/**
+ * Session snapshot - observable state of the current session
+ *
+ * Contains universal state (all modes) and mode-specific state.
+ * Mode-specific fields are optional and only present when that mode is active.
+ */
+export type SessionSnapshot = {
+  // Universal state (all modes)
+  phase: 'idle' | 'running' | 'paused' | 'ended';
   startedAt: number | null;
   remainingMs: number;
   emissions: Array<{
@@ -18,13 +47,10 @@ export type SessionSnapshot = {
     startTime: number;
     duration: number; // Total emission duration (character audio + inter-character spacing)
   }>; // Track all emitted characters with timing
-  stats?: {
-    correct: number;
-    incorrect: number;
-    timeout: number;
-    accuracy: number; // percentage
-  };
-  liveCopyTyped?: string; // Live Copy mode: user typed string
+
+  // Mode-specific state
+  practiceState?: PracticeState;
+  liveCopyState?: LiveCopyState;
 };
 
 import type { SessionConfig } from '../../../core/types/domain';

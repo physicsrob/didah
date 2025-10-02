@@ -96,17 +96,9 @@ export function createSessionRunner(deps: SessionRunnerDeps): SessionRunner {
   const subscribers = new Set<(snapshot: SessionSnapshot) => void>();
   let snapshot: SessionSnapshot = {
     phase: 'idle',
-    currentChar: null,
-    previous: [],
     startedAt: null,
     remainingMs: 0,
-    emissions: [],
-    stats: {
-      correct: 0,
-      incorrect: 0,
-      timeout: 0,
-      accuracy: 0
-    }
+    emissions: []
   };
   let abortController: AbortController | null = null;
   let sessionPromise: Promise<void> | null = null;
@@ -120,11 +112,16 @@ export function createSessionRunner(deps: SessionRunnerDeps): SessionRunner {
   // Publish snapshot to all subscribers
   const publish = () => {
     // Create a new object so React detects the change (deep clone)
-    const snapshotCopy = {
+    const snapshotCopy: SessionSnapshot = {
       ...snapshot,
-      previous: [...snapshot.previous],
       emissions: [...snapshot.emissions],
-      stats: snapshot.stats ? { ...snapshot.stats } : undefined
+      practiceState: snapshot.practiceState ? {
+        previous: [...snapshot.practiceState.previous],
+        stats: { ...snapshot.practiceState.stats }
+      } : undefined,
+      liveCopyState: snapshot.liveCopyState ? {
+        typedString: snapshot.liveCopyState.typedString
+      } : undefined
     };
     if (deps.io.snapshot) {
       deps.io.snapshot(snapshotCopy);
@@ -132,26 +129,27 @@ export function createSessionRunner(deps: SessionRunnerDeps): SessionRunner {
     subscribers.forEach(fn => fn(snapshotCopy));
   };
 
-  // Update stats from outcome
+  // Update stats from outcome (Practice mode only)
   const updateStats = (outcome: 'correct' | 'timeout' | 'incorrect') => {
-    if (!snapshot.stats) {
-      snapshot.stats = { correct: 0, incorrect: 0, timeout: 0, accuracy: 0 };
+    if (!snapshot.practiceState) {
+      throw new Error('updateStats called but practiceState not initialized');
     }
 
     switch (outcome) {
       case 'correct':
-        snapshot.stats.correct++;
+        snapshot.practiceState.stats.correct++;
         break;
       case 'timeout':
-        snapshot.stats.timeout++;
+        snapshot.practiceState.stats.timeout++;
         break;
       case 'incorrect':
-        snapshot.stats.incorrect++;
+        snapshot.practiceState.stats.incorrect++;
         break;
     }
 
-    const total = snapshot.stats.correct + snapshot.stats.timeout + snapshot.stats.incorrect;
-    snapshot.stats.accuracy = total > 0 ? (snapshot.stats.correct / total) * 100 : 0;
+    const stats = snapshot.practiceState.stats;
+    const total = stats.correct + stats.timeout + stats.incorrect;
+    stats.accuracy = total > 0 ? (stats.correct / total) * 100 : 0;
   };
 
   // Initialize session state and reset pause tracking
@@ -162,21 +160,25 @@ export function createSessionRunner(deps: SessionRunnerDeps): SessionRunner {
     totalPausedMs = 0;
     pauseResolver = null;
 
-    // Initialize session state
+    // Initialize session state with mode-specific state
     snapshot = {
       phase: 'running',
-      currentChar: null,
-      previous: [],
       startedAt: startTime,
       remainingMs: config.lengthMs,
       emissions: [],
-      stats: {
-        correct: 0,
-        incorrect: 0,
-        timeout: 0,
-        accuracy: 0
-      },
-      liveCopyTyped: config.mode === 'live-copy' ? '' : undefined
+      // Initialize mode-specific state based on mode
+      practiceState: config.mode === 'practice' ? {
+        previous: [],
+        stats: {
+          correct: 0,
+          incorrect: 0,
+          timeout: 0,
+          accuracy: 0
+        }
+      } : undefined,
+      liveCopyState: config.mode === 'live-copy' ? {
+        typedString: ''
+      } : undefined
     };
     publish();
 
@@ -223,8 +225,6 @@ export function createSessionRunner(deps: SessionRunnerDeps): SessionRunner {
   // Prepare for a new character emission by updating snapshot with character and timing info.
   // Records the character, start time, and calculated duration for statistics tracking.
   function prepareEmission(char: string, config: SessionConfig): void {
-    snapshot.currentChar = char;
-
     // Record emission timing (for all modes)
     const emissionStartTime = deps.clock.now();
 
@@ -259,7 +259,6 @@ export function createSessionRunner(deps: SessionRunnerDeps): SessionRunner {
     });
 
     snapshot.phase = 'ended';
-    snapshot.currentChar = null;
     publish();
   }
 

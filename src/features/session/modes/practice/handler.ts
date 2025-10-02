@@ -30,10 +30,15 @@ export async function handlePracticeCharacter(
   ctx.updateStats(outcome);
 
   // Update history IMMEDIATELY
+  if (!ctx.snapshot.practiceState) {
+    throw new Error('Practice mode handler called but practiceState not initialized');
+  }
   const historyItem = { char, result: outcome as 'correct' | 'incorrect' | 'timeout' };
   ctx.updateSnapshot({
-    previous: [...ctx.snapshot.previous, historyItem],
-    currentChar: null,
+    practiceState: {
+      ...ctx.snapshot.practiceState,
+      previous: [...ctx.snapshot.practiceState.previous, historyItem],
+    }
   });
 
   // Update remaining time

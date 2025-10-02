@@ -19,7 +19,7 @@ import { historyToDisplay } from '../../../../components/CharacterDisplay.transf
 export function PracticeDisplay({ snapshot }: { snapshot: SessionSnapshot }) {
   return (
     <CharacterDisplay
-      characters={historyToDisplay(snapshot.previous)}
+      characters={historyToDisplay(snapshot.practiceState?.previous || [])}
     />
   );
 }

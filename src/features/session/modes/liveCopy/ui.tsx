@@ -20,7 +20,7 @@ export function LiveCopyDisplay({
 }: {
   snapshot: SessionSnapshot;
 }) {
-  const typedString = snapshot.liveCopyTyped || '';
+  const typedString = snapshot.liveCopyState?.typedString || '';
   const characters: DisplayCharacter[] = typedString.split('').map((char, i) => ({
     text: char,
     status: 'neutral' as const,
@@ -61,16 +61,20 @@ export function useLiveCopyInput(
       // Handle backspace
       if (e.key === 'Backspace') {
         e.preventDefault();
-        const current = snapshotRef.current.liveCopyTyped || '';
-        updateSnapshot({ liveCopyTyped: current.slice(0, -1) });
+        const current = snapshotRef.current.liveCopyState?.typedString || '';
+        updateSnapshot({
+          liveCopyState: { typedString: current.slice(0, -1) }
+        });
         return;
       }
 
       // Handle character input
       if (e.key.length === 1) {
         e.preventDefault();
-        const current = snapshotRef.current.liveCopyTyped || '';
-        updateSnapshot({ liveCopyTyped: current + e.key.toUpperCase() });
+        const current = snapshotRef.current.liveCopyState?.typedString || '';
+        updateSnapshot({
+          liveCopyState: { typedString: current + e.key.toUpperCase() }
+        });
       }
     };
 

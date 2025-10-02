@@ -18,9 +18,7 @@ export async function handleLiveCopyCharacter(
 ): Promise<void> {
   await runLiveCopyEmission(config, char, ctx.io, ctx.clock, signal);
 
-  // Clear current character after emission
-  ctx.updateSnapshot({ currentChar: null });
-
+  // Live Copy mode only updates timing
   ctx.updateRemainingTime(startTime, config);
   ctx.publish();
 }

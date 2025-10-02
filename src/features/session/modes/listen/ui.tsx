@@ -8,19 +8,20 @@
 
 import type { SessionSnapshot } from '../../runtime/io';
 import type { InputBus } from '../../runtime/inputBus';
-import { CharacterDisplay } from '../../../../components/CharacterDisplay';
-import { historyToDisplay } from '../../../../components/CharacterDisplay.transformations';
+import { CharacterDisplay, type DisplayCharacter } from '../../../../components/CharacterDisplay';
 
 /**
  * Display component for Listen mode
- * Shows character history with 'listen' result (no correct/incorrect)
+ * Shows emitted characters with neutral status (no correct/incorrect feedback)
  */
 export function ListenDisplay({ snapshot }: { snapshot: SessionSnapshot }) {
-  return (
-    <CharacterDisplay
-      characters={historyToDisplay(snapshot.previous)}
-    />
-  );
+  const characters: DisplayCharacter[] = snapshot.emissions.map((e, i) => ({
+    text: e.char,
+    status: 'neutral' as const,
+    key: i
+  }));
+
+  return <CharacterDisplay characters={characters} />;
 }
 
 /**

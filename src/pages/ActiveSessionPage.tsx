@@ -48,13 +48,10 @@ export function ActiveSessionPage() {
 
   const [snapshot, setSnapshot] = useState<SessionSnapshot>({
     phase: 'idle',
-    currentChar: null,
-    previous: [],
     startedAt: null,
     remainingMs: 0,
     emissions: [],
-    stats: { correct: 0, incorrect: 0, timeout: 0, accuracy: 0 },
-    // liveCopyTyped will be initialized by sessionProgram.ts when session starts
+    // Mode-specific state will be initialized by sessionProgram.ts when session starts
   });
 
   const [replayOverlay, setReplayOverlay] = useState<string | null>(null);
@@ -181,7 +178,7 @@ export function ActiveSessionPage() {
       navigate('/session-complete', {
         state: {
           fullStatistics,
-          liveCopyTyped: config.mode === 'live-copy' ? snapshot.liveCopyTyped : null,
+          liveCopyTyped: config.mode === 'live-copy' ? snapshot.liveCopyState?.typedString : null,
           liveCopyTransmitted: config.mode === 'live-copy' ? snapshot.emissions.map(e => e.char) : null
         }
       });
@@ -192,7 +189,7 @@ export function ActiveSessionPage() {
     } else {
       doNavigate();
     }
-  }, [navigate, config, snapshot.liveCopyTyped, snapshot.emissions]);
+  }, [navigate, config, snapshot.liveCopyState?.typedString, snapshot.emissions]);
 
   // Subscribe to session snapshots
   useEffect(() => {

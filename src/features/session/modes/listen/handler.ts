@@ -18,13 +18,7 @@ export async function handleListenCharacter(
 ): Promise<void> {
   await runListenEmission(config, char, ctx.io, ctx.clock, signal);
 
-  // For listen mode, add to history after emission
-  const historyItem = { char, result: 'listen' as const };
-  ctx.updateSnapshot({
-    previous: [...ctx.snapshot.previous, historyItem],
-    currentChar: null,
-  });
-
+  // Listen mode displays emissions directly, no need to maintain separate history
   ctx.updateRemainingTime(startTime, config);
   ctx.publish();
 }
