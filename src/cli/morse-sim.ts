@@ -10,7 +10,8 @@ import { parseArgs } from './args';
 import { createMockIO } from './mockIO';
 import { InstantClock, RealtimeClock } from './clocks';
 import { SimpleInputBus } from '../features/session/runtime/inputBus';
-import { runPracticeEmission, runListenEmission } from '../features/session/runtime/charPrograms';
+import { runPracticeEmission } from '../features/session/modes/practice';
+import { runListenEmission } from '../features/session/modes/listen';
 import type { SessionConfig } from '../core/types/domain';
 
 // Parse command line arguments

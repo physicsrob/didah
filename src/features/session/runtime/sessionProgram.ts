@@ -5,7 +5,6 @@
 import type { Clock } from './clock';
 import type { IO, SessionSnapshot } from './io';
 import type { InputBus } from './inputBus';
-import { runPracticeEmission } from './charPrograms';
 import type { SessionConfig } from '../../../core/types/domain';
 import { calculateCharacterDurationMs, getInterCharacterSpacingMs } from '../../../core/morse/timing';
 import { debug } from '../../../core/debug';
@@ -243,52 +242,6 @@ export function createSessionRunner(deps: SessionRunnerDeps): SessionRunner {
     const newElapsed = (deps.clock.now() - startTime) - totalPausedMs;
     snapshot.remainingMs = Math.max(0, config.lengthMs - newElapsed);
   }
-
-  // DEPRECATED: Moved to modes/practice/handler.ts
-  // Handle practice mode emission - user types what they hear
-  // @ts-expect-error - unused during migration, will be deleted in Phase 4
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  async function handlePracticeMode(
-    config: SessionConfig,
-    char: string,
-    startTime: number,
-    signal: AbortSignal
-  ): Promise<void> {
-    const outcome = await runPracticeEmission(
-      config,
-      char,
-      deps.io,
-      deps.input,
-      deps.clock,
-      signal
-    );
-    updateStats(outcome);
-
-    // Update history IMMEDIATELY
-    const historyItem = { char, result: outcome as 'correct' | 'incorrect' | 'timeout' };
-    snapshot.previous = [...snapshot.previous, historyItem];
-    snapshot.currentChar = null;
-
-    // Update remaining time
-    updateRemainingTime(startTime, config);
-
-    // Publish immediately so UI updates right away
-    publish();
-
-    // Handle replay AFTER history update (for incorrect or timeout)
-    if (config.replay && (outcome === 'incorrect' || outcome === 'timeout') && deps.io.replay) {
-      debug.log(`[Session] Replaying character '${char}' after ${outcome}`);
-      await deps.io.replay(char, config.wpm);
-    }
-
-    // Add inter-character spacing after any incorrect or timeout (with or without replay)
-    if (outcome === 'incorrect' || outcome === 'timeout') {
-      const interCharSpacingMs = getInterCharacterSpacingMs(config.wpm);
-      debug.log(`[Spacing] Adding post-error spacing: ${interCharSpacingMs}ms (3 dits)`);
-      await deps.clock.sleep(interCharSpacingMs, signal);
-    }
-  }
-
 
   // Perform session cleanup when session ends
   function cleanupSession(): void {
