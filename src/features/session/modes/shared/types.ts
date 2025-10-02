@@ -61,6 +61,8 @@ export interface ModeDefinition {
     input: InputBus,
     sessionPhase: 'waiting' | 'countdown' | 'active',
     isPaused: boolean,
+    snapshot: SessionSnapshot,
+    updateSnapshot: (updates: Partial<SessionSnapshot>) => void,
     onPause?: () => void
-  ): void | string; // Allow returning state for modes that need it
+  ): void;
 }

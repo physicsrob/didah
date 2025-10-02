@@ -24,6 +24,7 @@ export type SessionSnapshot = {
     timeout: number;
     accuracy: number; // percentage
   };
+  liveCopyTyped?: string; // Live Copy mode: user typed string
 };
 
 import type { SessionConfig } from '../../../core/types/domain';

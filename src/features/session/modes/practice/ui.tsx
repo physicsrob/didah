@@ -32,6 +32,8 @@ export function usePracticeInput(
   input: InputBus,
   sessionPhase: 'waiting' | 'countdown' | 'active',
   isPaused: boolean,
+  _snapshot: SessionSnapshot,
+  _updateSnapshot: (updates: Partial<SessionSnapshot>) => void,
   onPause?: () => void
 ) {
   useEffect(() => {

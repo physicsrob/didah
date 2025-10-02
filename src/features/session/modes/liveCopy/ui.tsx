@@ -6,8 +6,9 @@
 
 /* eslint-disable react-refresh/only-export-components */
 
-import { useState, useEffect, useMemo } from 'react';
+import { useRef, useEffect } from 'react';
 import type { SessionSnapshot } from '../../runtime/io';
+import type { InputBus } from '../../runtime/inputBus';
 import { CharacterDisplay, type DisplayCharacter } from '../../../../components/CharacterDisplay';
 
 /**
@@ -15,18 +16,16 @@ import { CharacterDisplay, type DisplayCharacter } from '../../../../components/
  * Shows what the user has typed (no corrections until session end)
  */
 export function LiveCopyDisplay({
-  typedString
+  snapshot
 }: {
   snapshot: SessionSnapshot;
-  typedString?: string;
 }) {
-  const characters = useMemo((): DisplayCharacter[] => {
-    return (typedString || '').split('').map((char, i) => ({
-      text: char,
-      status: 'neutral' as const,
-      key: i
-    }));
-  }, [typedString]);
+  const typedString = snapshot.liveCopyTyped || '';
+  const characters: DisplayCharacter[] = typedString.split('').map((char, i) => ({
+    text: char,
+    status: 'neutral' as const,
+    key: i
+  }));
 
   return <CharacterDisplay characters={characters} />;
 }
@@ -34,15 +33,19 @@ export function LiveCopyDisplay({
 /**
  * Keyboard input hook for Live Copy mode
  * Manages typed string with backspace support
- * Returns the typed string for the mode to use
+ * Updates snapshot directly via updateSnapshot
  */
 export function useLiveCopyInput(
-  _input: unknown, // Not used for Live Copy - it manages its own state
+  _input: InputBus,
   sessionPhase: 'waiting' | 'countdown' | 'active',
   isPaused: boolean,
+  snapshot: SessionSnapshot,
+  updateSnapshot: (updates: Partial<SessionSnapshot>) => void,
   onPause?: () => void
-): string {
-  const [typedString, setTypedString] = useState('');
+): void {
+  // Keep ref to avoid stale closures
+  const snapshotRef = useRef(snapshot);
+  snapshotRef.current = snapshot;
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -58,20 +61,20 @@ export function useLiveCopyInput(
       // Handle backspace
       if (e.key === 'Backspace') {
         e.preventDefault();
-        setTypedString(prev => prev.slice(0, -1));
+        const current = snapshotRef.current.liveCopyTyped || '';
+        updateSnapshot({ liveCopyTyped: current.slice(0, -1) });
         return;
       }
 
       // Handle character input
       if (e.key.length === 1) {
         e.preventDefault();
-        setTypedString(prev => prev + e.key.toUpperCase());
+        const current = snapshotRef.current.liveCopyTyped || '';
+        updateSnapshot({ liveCopyTyped: current + e.key.toUpperCase() });
       }
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [sessionPhase, isPaused, onPause]);
-
-  return typedString;
+  }, [sessionPhase, isPaused, updateSnapshot, onPause]);
 }

@@ -71,6 +71,11 @@ export interface SessionRunner {
    * Get current session snapshot
    */
   getSnapshot(): SessionSnapshot;
+
+  /**
+   * Update snapshot from UI (for mode-specific state)
+   */
+  updateSnapshot(updates: Partial<SessionSnapshot>): void;
 }
 
 /**
@@ -170,7 +175,8 @@ export function createSessionRunner(deps: SessionRunnerDeps): SessionRunner {
         incorrect: 0,
         timeout: 0,
         accuracy: 0
-      }
+      },
+      liveCopyTyped: config.mode === 'live-copy' ? '' : undefined
     };
     publish();
 
@@ -390,6 +396,11 @@ export function createSessionRunner(deps: SessionRunnerDeps): SessionRunner {
 
     getSnapshot(): SessionSnapshot {
       return snapshot;
+    },
+
+    updateSnapshot(updates: Partial<SessionSnapshot>): void {
+      snapshot = { ...snapshot, ...updates };
+      publish();
     }
   };
 }

@@ -54,6 +54,7 @@ export function ActiveSessionPage() {
     remainingMs: 0,
     emissions: [],
     stats: { correct: 0, incorrect: 0, timeout: 0, accuracy: 0 },
+    // liveCopyTyped will be initialized by sessionProgram.ts when session starts
   });
 
   const [replayOverlay, setReplayOverlay] = useState<string | null>(null);
@@ -166,12 +167,8 @@ export function ActiveSessionPage() {
   // Mode-specific keyboard input
   // Note: 'paused' is treated as 'active' for mode purposes (isPaused flag handles the pause state)
   const modeSessionPhase: 'waiting' | 'countdown' | 'active' = sessionPhase === 'paused' ? 'active' : sessionPhase;
-  const modeInputResult = mode?.useKeyboardInput(input, modeSessionPhase, isPaused, handlePause);
-
-  // Live Copy mode returns typed string
-  const liveCopyTyped = config?.mode === 'live-copy' && typeof modeInputResult === 'string'
-    ? modeInputResult
-    : '';
+  // Safe: mode guaranteed non-null here (config check at line 52 returns early if !config, getMode throws if invalid)
+  mode!.useKeyboardInput(input, modeSessionPhase, isPaused, snapshot, runner.updateSnapshot, handlePause);
 
   // Navigate to completion page with full statistics
   const navigateToCompletion = useCallback((delay: number = 0) => {
@@ -184,7 +181,7 @@ export function ActiveSessionPage() {
       navigate('/session-complete', {
         state: {
           fullStatistics,
-          liveCopyTyped: config.mode === 'live-copy' ? liveCopyTyped : null,
+          liveCopyTyped: config.mode === 'live-copy' ? snapshot.liveCopyTyped : null,
           liveCopyTransmitted: config.mode === 'live-copy' ? snapshot.emissions.map(e => e.char) : null
         }
       });
@@ -195,7 +192,7 @@ export function ActiveSessionPage() {
     } else {
       doNavigate();
     }
-  }, [navigate, config, liveCopyTyped, snapshot.emissions]);
+  }, [navigate, config, snapshot.liveCopyTyped, snapshot.emissions]);
 
   // Subscribe to session snapshots
   useEffect(() => {
@@ -339,10 +336,7 @@ export function ActiveSessionPage() {
       {/* Main Display Area */}
       {(sessionPhase === 'countdown' || sessionPhase === 'active') && (
         <div className="session-display-area">
-          {mode?.renderDisplay({
-            snapshot,
-            ...(config.mode === 'live-copy' && { typedString: liveCopyTyped })
-          })}
+          {mode?.renderDisplay({ snapshot })}
         </div>
       )}
 
