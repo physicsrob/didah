@@ -16,15 +16,9 @@ import {
   calculateCharacterDurationMs,
 } from '../../../../core/morse/timing';
 import { debug } from '../../../../core/debug';
+import { isValidChar } from '../shared/utils';
 
 export type PracticeOutcome = 'correct' | 'incorrect' | 'timeout';
-
-/**
- * Check if a key is a valid morse character
- */
-function isValidChar(key: string): boolean {
-  return /^[A-Za-z0-9.,/=?;:'"+@()\s-]$/.test(key);
-}
 
 /**
  * Run a Practice mode emission
