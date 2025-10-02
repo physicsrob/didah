@@ -1,9 +1,9 @@
 import { useContext } from 'react';
-import { AudioContext } from './AudioContextType';
+import { AudioContext } from '../contexts/AudioContext';
 
 export function useAudio() {
   const context = useContext(AudioContext);
-  if (!context) {
+  if (context === undefined) {
     throw new Error('useAudio must be used within AudioProvider');
   }
   return context;

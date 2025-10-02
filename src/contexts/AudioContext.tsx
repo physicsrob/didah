@@ -1,7 +1,16 @@
-import React, { useRef, useCallback, useEffect } from 'react';
-import { AudioEngine } from '../features/session/services/audioEngine';
-import { AudioContext } from './AudioContextType';
+import React, { useRef, useCallback, useEffect, createContext } from 'react';
+import type { AudioEngine } from '../features/session/services/audioEngine';
+import { AudioEngine as AudioEngineClass } from '../features/session/services/audioEngine';
 import { useSettings } from '../features/settings/hooks/useSettings';
+
+interface AudioContextValue {
+  initializeAudio: () => Promise<boolean>;
+  getAudioEngine: () => AudioEngine;
+  isAudioReady: () => boolean;
+}
+
+const AudioContext = createContext<AudioContextValue | undefined>(undefined);
+export { AudioContext };
 
 export function AudioProvider({ children }: { children: React.ReactNode }) {
   const audioEngineRef = useRef<AudioEngine | null>(null);
@@ -13,7 +22,7 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
       if (!settings) {
         throw new Error('Settings must be loaded before AudioEngine can be created');
       }
-      audioEngineRef.current = new AudioEngine({
+      audioEngineRef.current = new AudioEngineClass({
         frequency: settings.frequency,
         volume: settings.volume,
         tone: settings.tone

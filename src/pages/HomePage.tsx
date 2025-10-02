@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router-dom'
 import type { SessionMode } from '../core/types/domain'
-import { useAudio } from '../contexts/useAudio'
+import { useAudio } from '../hooks/useAudio'
 import { useAuth } from '../hooks/useAuth'
 import GoogleSignInButton from '../components/GoogleSignInButton'
 import { UserDropdown } from '../components/UserDropdown'

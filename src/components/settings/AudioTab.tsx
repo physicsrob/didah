@@ -1,7 +1,7 @@
 import { useRef } from 'react'
 import type { ToneSetting } from '../../core/types/domain'
 import { useSettings } from '../../features/settings/hooks/useSettings'
-import { useAudio } from '../../contexts/useAudio'
+import { useAudio } from '../../hooks/useAudio'
 import { DEFAULT_WPM } from '../../core/config/defaults'
 import { BuzzerFeedback, DEFAULT_BUZZER_CONFIG } from '../../features/session/services/feedback/buzzerFeedback'
 import './settings.css'
