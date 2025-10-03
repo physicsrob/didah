@@ -4,8 +4,6 @@
  * React components and hooks for Listen mode interface.
  */
 
-/* eslint-disable react-refresh/only-export-components */
-
 import type { SessionSnapshot } from '../../runtime/io';
 import { CharacterDisplay, type DisplayCharacter } from '../../../../components/CharacterDisplay';
 
