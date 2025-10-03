@@ -27,6 +27,5 @@ export const wordPracticeMode: ModeDefinition = {
 };
 
 // Re-export for testing
-export { runWordPracticeEmission } from './emission';
 export { handleWordPracticeWord } from './handler';
 export { WordPracticeDisplay, useWordPracticeInput } from './ui';

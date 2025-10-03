@@ -7,8 +7,10 @@
 
 import type { SessionConfig } from '../../../../core/types/domain';
 import type { HandlerContext } from '../shared/types';
+import type { WordPracticeState } from '../../runtime/io';
 import { playWordAudio, waitForWordClick } from './emission';
 import { debug } from '../../../../core/debug';
+import { shuffleArray } from '../../../../core/utils/array';
 
 /**
  * Flash duration for visual feedback (green/red)
@@ -16,15 +18,23 @@ import { debug } from '../../../../core/debug';
 const FLASH_DURATION_MS = 500;
 
 /**
- * Shuffle array (Fisher-Yates algorithm)
+ * Helper to update word practice state
+ * Reduces verbosity by handling the spread and optional field preservation
  */
-function shuffleArray<T>(array: T[]): T[] {
-  const shuffled = [...array];
-  for (let i = shuffled.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+function updateWordPracticeState(
+  ctx: HandlerContext,
+  updates: Partial<WordPracticeState>
+): void {
+  if (!ctx.snapshot.wordPracticeState) {
+    throw new Error('Word Practice state not initialized');
   }
-  return shuffled;
+
+  ctx.updateSnapshot({
+    wordPracticeState: {
+      ...ctx.snapshot.wordPracticeState,
+      ...updates
+    }
+  });
 }
 
 /**
@@ -34,9 +44,9 @@ function shuffleArray<T>(array: T[]): T[] {
 function parseWordEntry(char: string): { word: string; distractors: string[] } {
   try {
     return JSON.parse(char);
-  } catch {
-    // Fallback: treat as regular word with no distractors
-    return { word: char, distractors: [] };
+  } catch (error) {
+    // Fail loudly if parsing fails - this indicates a bug in the word source
+    throw new Error(`Failed to parse word entry: ${char}. Expected JSON format with word and distractors. Error: ${error}`);
   }
 }
 
@@ -89,16 +99,13 @@ export async function handleWordPracticeWord(
     debug.log(`[WordPractice Handler] Shuffled button order:`, buttonWords);
 
     // Set state to playing (buttons hidden)
-    ctx.updateSnapshot({
-      wordPracticeState: {
-        ...ctx.snapshot.wordPracticeState!,
-        currentWord: word,
-        distractors,
-        buttonWords,  // Store shuffled order
-        isPlaying: true,
-        flashResult: null,
-        clickedWord: null
-      }
+    updateWordPracticeState(ctx, {
+      currentWord: word,
+      distractors,
+      buttonWords,  // Store shuffled order
+      isPlaying: true,
+      flashResult: null,
+      clickedWord: null
     });
     ctx.publish();
     debug.log(`[WordPractice Handler] State set to playing, buttons hidden`);
@@ -110,14 +117,11 @@ export async function handleWordPracticeWord(
 
     // Audio complete - show buttons
     debug.log(`[WordPractice Handler] Setting isPlaying=false, buttons should appear`);
-    ctx.updateSnapshot({
-      wordPracticeState: {
-        ...ctx.snapshot.wordPracticeState!,
-        currentWord: word,  // Preserve the current word
-        distractors: distractors,  // Preserve the distractors
-        buttonWords: buttonWords,  // Preserve the shuffled button order
-        isPlaying: false
-      }
+    updateWordPracticeState(ctx, {
+      currentWord: word,
+      distractors,
+      buttonWords,
+      isPlaying: false
     });
     ctx.publish();
     debug.log(`[WordPractice Handler] State published with isPlaying=false. Current state:`, ctx.snapshot.wordPracticeState);
@@ -160,20 +164,17 @@ export async function handleWordPracticeWord(
     const newSuccesses = currentStats.successes + (isCorrect ? 1 : 0);
     const newAccuracy = newAttempts > 0 ? (newSuccesses / newAttempts) * 100 : 0;
 
-    // Flash result with clicked word (preserve currentWord, distractors, and buttonWords!)
-    ctx.updateSnapshot({
-      wordPracticeState: {
-        ...ctx.snapshot.wordPracticeState!,
-        currentWord: word,  // MUST preserve for buttons to stay visible during flash
-        distractors: distractors,  // MUST preserve for buttons to stay visible during flash
-        buttonWords: buttonWords,  // MUST preserve to keep button order stable during flash
-        flashResult: isCorrect ? 'correct' : 'incorrect',
-        clickedWord: clickedWord,
-        stats: {
-          attempts: newAttempts,
-          successes: newSuccesses,
-          accuracy: newAccuracy
-        }
+    // Flash result with clicked word (preserve currentWord, distractors, buttonWords for button visibility)
+    updateWordPracticeState(ctx, {
+      currentWord: word,
+      distractors,
+      buttonWords,
+      flashResult: isCorrect ? 'correct' : 'incorrect',
+      clickedWord: clickedWord,
+      stats: {
+        attempts: newAttempts,
+        successes: newSuccesses,
+        accuracy: newAccuracy
       }
     });
     ctx.publish();
@@ -183,15 +184,12 @@ export async function handleWordPracticeWord(
     await ctx.clock.sleep(FLASH_DURATION_MS, signal);
 
     // Clear flash and clicked word (keep word/distractors/buttonWords if replaying)
-    ctx.updateSnapshot({
-      wordPracticeState: {
-        ...ctx.snapshot.wordPracticeState!,
-        currentWord: isCorrect ? null : word,  // Clear if correct, keep if retrying
-        distractors: isCorrect ? [] : distractors,  // Clear if correct, keep if retrying
-        buttonWords: isCorrect ? [] : buttonWords,  // Clear if correct, keep same order if retrying
-        flashResult: null,
-        clickedWord: null
-      }
+    updateWordPracticeState(ctx, {
+      currentWord: isCorrect ? null : word,  // Clear if correct, keep if retrying
+      distractors: isCorrect ? [] : distractors,  // Clear if correct, keep if retrying
+      buttonWords: isCorrect ? [] : buttonWords,  // Clear if correct, keep same order if retrying
+      flashResult: null,
+      clickedWord: null
     });
     ctx.publish();
     debug.log(`[WordPractice Handler] Flash cleared, isCorrect: ${isCorrect}`);
@@ -204,14 +202,11 @@ export async function handleWordPracticeWord(
   ctx.updateRemainingTime(startTime, config);
 
   // Clear current word (ready for next)
-  ctx.updateSnapshot({
-    wordPracticeState: {
-      ...ctx.snapshot.wordPracticeState!,
-      currentWord: null,
-      distractors: [],
-      buttonWords: [],
-      isPlaying: false
-    }
+  updateWordPracticeState(ctx, {
+    currentWord: null,
+    distractors: [],
+    buttonWords: [],
+    isPlaying: false
   });
   ctx.publish();
 }

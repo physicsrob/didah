@@ -1,4 +1,6 @@
 import { SOURCES } from '../sources';
+import { shuffleArray } from '../../shared/utils';
+import { TOP_100_WORDS } from '../word-sources/wordData';
 
 // Build RSS feed map from sources
 const RSS_FEEDS: Record<string, string> = {};
@@ -8,20 +10,8 @@ for (const source of SOURCES) {
   }
 }
 
-// Word frequency data for common words generation
-const COMMON_WORDS = [
-  "the", "be", "to", "of", "and", "a", "in", "that", "have", "i",
-  "it", "for", "not", "on", "with", "he", "as", "you", "do", "at",
-  "this", "but", "his", "by", "from", "they", "we", "say", "her", "she",
-  "or", "an", "will", "my", "one", "all", "would", "there", "their", "what",
-  "so", "up", "out", "if", "about", "who", "get", "which", "go", "me",
-  "when", "make", "can", "like", "time", "no", "just", "him", "know", "take",
-  "people", "into", "year", "your", "good", "some", "could", "them", "see", "other",
-  "than", "then", "now", "look", "only", "come", "its", "over", "think", "also",
-  "back", "after", "use", "two", "how", "work", "first", "well", "way", "even",
-  "new", "want", "because", "any", "these", "give", "day", "most", "us", "find"
-];
-
+// Use word frequency data from word-sources
+const COMMON_WORDS = TOP_100_WORDS;
 const EASY_WORDS = COMMON_WORDS.filter(w => w.length <= 4);
 
 /**
@@ -82,18 +72,6 @@ function extractTitles(rssText: string, limit: number = 50): string[] {
   // Skip first title (usually feed name) but don't shuffle here
   const items = titles.slice(1, limit + 1);
   return items;
-}
-
-/**
- * Shuffle an array in place
- */
-function shuffleArray<T>(array: T[]): T[] {
-  const shuffled = [...array]; // Create a copy
-  for (let i = shuffled.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
-  }
-  return shuffled;
 }
 
 /**

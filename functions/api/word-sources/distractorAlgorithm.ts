@@ -4,6 +4,8 @@
  * Groups words by simplified Morse similarity patterns to generate confusable distractors.
  */
 
+import { shuffleArray } from '../../shared/utils';
+
 /**
  * Simplified letter mapping based on Morse code confusion patterns
  */
@@ -65,18 +67,6 @@ export function indexWordsByStartAndLength(words: string[]): Map<string, string[
   }
 
   return index;
-}
-
-/**
- * Shuffle array in place
- */
-function shuffleArray<T>(array: T[]): T[] {
-  const shuffled = [...array];
-  for (let i = shuffled.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
-  }
-  return shuffled;
 }
 
 /**
