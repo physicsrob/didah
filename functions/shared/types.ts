@@ -21,7 +21,8 @@ export type UserSettings = {
   defaultDuration: 60 | 120 | 300
   defaultMode: SessionMode
   defaultSpeedTier: SpeedTier
-  defaultSourceId: string
+  defaultSourceId: string  // For text modes (Practice, Listen, Live Copy)
+  defaultWordSourceId: string  // For Word Practice mode
 
   // Active mode settings
   feedbackMode: FeedbackMode
@@ -42,6 +43,7 @@ export const DEFAULT_USER_SETTINGS: UserSettings = {
   defaultMode: 'practice',
   defaultSpeedTier: 'slow',
   defaultSourceId: 'random_letters',
+  defaultWordSourceId: 'top-100',
   feedbackMode: 'replay'  // Default to replay (both + replay)
 }
 
@@ -119,7 +121,7 @@ export function validateSettings(settings: unknown): settings is UserSettings {
   const requiredFields: (keyof UserSettings)[] = [
     'wpm', 'farnsworthWpm', 'frequency', 'volume', 'buzzerVolume', 'tone',
     'includeNumbers', 'includeStdPunct', 'includeAdvPunct', 'extraWordSpacing',
-    'defaultDuration', 'defaultMode', 'defaultSpeedTier', 'defaultSourceId',
+    'defaultDuration', 'defaultMode', 'defaultSpeedTier', 'defaultSourceId', 'defaultWordSourceId',
     'feedbackMode'
   ]
 
@@ -183,6 +185,10 @@ export function validateSettings(settings: unknown): settings is UserSettings {
   }
 
   if (typeof s.defaultSourceId !== 'string' || !s.defaultSourceId) {
+    return false
+  }
+
+  if (typeof s.defaultWordSourceId !== 'string' || !s.defaultWordSourceId) {
     return false
   }
 

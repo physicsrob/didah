@@ -55,10 +55,14 @@ export function SessionConfigPage() {
   // Session configuration state - default values before settings load
   const [duration, setDuration] = useState<1 | 2 | 5>(1);
   const [speedTier, setSpeedTier] = useState<SpeedTier>('slow');
-  const [selectedSourceId, setSelectedSourceId] = useState<string>('random_letters');
+  const [selectedTextSourceId, setSelectedTextSourceId] = useState<string>('random_letters');
+  const [selectedWordSourceId, setSelectedWordSourceId] = useState<string>('top-100');
   const [wpm, setWpm] = useState(15);
   const [farnsworthWpm, setFarnsworthWpm] = useState(10);
   const [extraWordSpacing, setExtraWordSpacing] = useState(0);
+
+  // Computed: current source ID based on mode
+  const selectedSourceId = validatedMode === 'word-practice' ? selectedWordSourceId : selectedTextSourceId;
 
   // Text source state
   const [availableSources, setAvailableSources] = useState<ApiTextSource[]>([]);
@@ -162,7 +166,8 @@ export function SessionConfigPage() {
       // Convert settings duration (60/120/300) to minutes (1/2/5)
       setDuration((settings.defaultDuration / 60) as 1 | 2 | 5);
       setSpeedTier(settings.defaultSpeedTier);
-      setSelectedSourceId(settings.defaultSourceId);
+      setSelectedTextSourceId(settings.defaultSourceId);
+      setSelectedWordSourceId(settings.defaultWordSourceId);
       setWpm(settings.wpm);
       setFarnsworthWpm(settings.farnsworthWpm);
       setExtraWordSpacing(settings.extraWordSpacing);
@@ -203,9 +208,10 @@ export function SessionConfigPage() {
     fetchWordSources()
       .then(sources => {
         setAvailableWordSources(sources);
-        // Set default word source if none selected
-        if (!selectedSourceId || !sources.find(s => s.id === selectedSourceId)) {
-          setSelectedSourceId(sources[0]?.id || 'top-100');
+        // Only set default if current word source is invalid
+        // This preserves the user's selection of top-1000, etc.
+        if (!sources.find(s => s.id === selectedWordSourceId)) {
+          setSelectedWordSourceId(sources[0]?.id || 'top-100');
         }
       })
       .catch(error => {
@@ -216,7 +222,7 @@ export function SessionConfigPage() {
         setWordSourcesLoading(false);
       });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [validatedMode]); // Only run when mode changes, not when selectedSourceId changes
+  }, [validatedMode]); // Only run when mode changes, not when selectedWordSourceId changes
 
   // Fetch content when selectedSourceId changes or on mount
   useEffect(() => {
@@ -247,7 +253,8 @@ export function SessionConfigPage() {
       const needsUpdate =
         settings.defaultDuration !== durationInSeconds ||
         settings.defaultSpeedTier !== speedTier ||
-        settings.defaultSourceId !== selectedSourceId ||
+        settings.defaultSourceId !== selectedTextSourceId ||
+        settings.defaultWordSourceId !== selectedWordSourceId ||
         settings.wpm !== wpm ||
         settings.farnsworthWpm !== farnsworthWpm ||
         settings.extraWordSpacing !== extraWordSpacing ||
@@ -261,8 +268,11 @@ export function SessionConfigPage() {
         if (settings.defaultSpeedTier !== speedTier) {
           updateSetting('defaultSpeedTier', speedTier);
         }
-        if (settings.defaultSourceId !== selectedSourceId) {
-          updateSetting('defaultSourceId', selectedSourceId);
+        if (settings.defaultSourceId !== selectedTextSourceId) {
+          updateSetting('defaultSourceId', selectedTextSourceId);
+        }
+        if (settings.defaultWordSourceId !== selectedWordSourceId) {
+          updateSetting('defaultWordSourceId', selectedWordSourceId);
         }
         if (settings.wpm !== wpm) {
           updateSetting('wpm', wpm);
@@ -280,11 +290,16 @@ export function SessionConfigPage() {
     }, 300); // 300ms debounce
 
     return () => clearTimeout(timer);
-  }, [duration, speedTier, selectedSourceId, wpm, farnsworthWpm, extraWordSpacing, feedbackMode, settings, settingsLoading, updateSetting]);
+  }, [duration, speedTier, selectedTextSourceId, selectedWordSourceId, wpm, farnsworthWpm, extraWordSpacing, feedbackMode, settings, settingsLoading, updateSetting]);
 
   // Handle source selection
   const handleSourceChange = async (sourceId: string) => {
-    setSelectedSourceId(sourceId);
+    // Update appropriate source state based on mode
+    if (validatedMode === 'word-practice') {
+      setSelectedWordSourceId(sourceId);
+    } else {
+      setSelectedTextSourceId(sourceId);
+    }
     setSourceLoadError(null); // Clear any previous errors
 
     const content = await loadSourceContent(sourceId, { setError: true });
