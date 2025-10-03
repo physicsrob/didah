@@ -19,25 +19,15 @@ import './wordPractice.css';
 export function WordPracticeDisplay({ snapshot }: { snapshot: SessionSnapshot }) {
   const state = snapshot.wordPracticeState;
 
-  const { currentWord, buttonWords, flashResult, clickedWord } = state || {};
-
-  // Debug logging
-  console.log('[WordPractice UI] Render - state:', state);
-  console.log('[WordPractice UI] currentWord:', currentWord, 'buttonWords:', buttonWords, 'isPlaying:', state?.isPlaying);
+  const { buttonWords, flashResult, clickedWord } = state || {};
 
   // Show nothing while playing or if no current word
   if (!state || state.isPlaying || !state.currentWord) {
-    console.log('[WordPractice UI] Returning empty - state check:', {
-      hasState: !!state,
-      isPlaying: state?.isPlaying,
-      hasCurrentWord: !!state?.currentWord
-    });
     return <div className="word-practice-display"></div>;
   }
 
   // Use pre-shuffled button order from state (shuffled once in handler, stable across renders)
   const buttons = buttonWords || [];
-  console.log('[WordPractice UI] Rendering buttons:', buttons);
 
   return (
     <div className="word-practice-display">
@@ -76,10 +66,8 @@ function WordButton({
   const isClickedButton = clickedWord === word;
   if (isClickedButton && flashResult === 'correct') {
     className += ' word-practice-button-flash-correct';
-    console.log(`[WordButton] Applying CORRECT flash to button '${word}'`);
   } else if (isClickedButton && flashResult === 'incorrect') {
     className += ' word-practice-button-flash-incorrect';
-    console.log(`[WordButton] Applying INCORRECT flash to button '${word}'`);
   }
 
   return (

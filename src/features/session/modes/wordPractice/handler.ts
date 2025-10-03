@@ -11,6 +11,11 @@ import { playWordAudio, waitForWordClick } from './emission';
 import { debug } from '../../../../core/debug';
 
 /**
+ * Flash duration for visual feedback (green/red)
+ */
+const FLASH_DURATION_MS = 500;
+
+/**
  * Shuffle array (Fisher-Yates algorithm)
  */
 function shuffleArray<T>(array: T[]): T[] {
@@ -61,26 +66,13 @@ export async function handleWordPracticeWord(
   ctx: HandlerContext,
   signal: AbortSignal
 ): Promise<void> {
+  // Verify state is initialized
+  if (!ctx.snapshot.wordPracticeState) {
+    throw new Error('Word Practice mode handler called but wordPracticeState not initialized');
+  }
+
   // Parse word entry
   const { word, distractors } = parseWordEntry(char);
-  // Initialize word practice state if not present
-  if (!ctx.snapshot.wordPracticeState) {
-    ctx.updateSnapshot({
-      wordPracticeState: {
-        currentWord: null,
-        distractors: [],
-        buttonWords: [],
-        isPlaying: false,
-        flashResult: null,
-        clickedWord: null,
-        stats: {
-          attempts: 0,
-          successes: 0,
-          accuracy: 0
-        }
-      }
-    });
-  }
 
   let isCorrect = false;
 
@@ -187,8 +179,8 @@ export async function handleWordPracticeWord(
     ctx.publish();
     debug.log(`[WordPractice Handler] Flash state published - flashResult: ${isCorrect ? 'correct' : 'incorrect'}, clickedWord: ${clickedWord}`);
 
-    // Wait 500ms for flash
-    await ctx.clock.sleep(500, signal);
+    // Wait for flash
+    await ctx.clock.sleep(FLASH_DURATION_MS, signal);
 
     // Clear flash and clicked word (keep word/distractors/buttonWords if replaying)
     ctx.updateSnapshot({
