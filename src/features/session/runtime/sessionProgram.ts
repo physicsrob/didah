@@ -121,6 +121,11 @@ export function createSessionRunner(deps: SessionRunnerDeps): SessionRunner {
       } : undefined,
       liveCopyState: snapshot.liveCopyState ? {
         typedString: snapshot.liveCopyState.typedString
+      } : undefined,
+      wordPracticeState: snapshot.wordPracticeState ? {
+        ...snapshot.wordPracticeState,
+        distractors: [...snapshot.wordPracticeState.distractors],
+        stats: { ...snapshot.wordPracticeState.stats }
       } : undefined
     };
     if (deps.io.snapshot) {
@@ -178,6 +183,19 @@ export function createSessionRunner(deps: SessionRunnerDeps): SessionRunner {
       } : undefined,
       liveCopyState: config.mode === 'live-copy' ? {
         typedString: ''
+      } : undefined,
+      wordPracticeState: config.mode === 'word-practice' ? {
+        currentWord: null,
+        distractors: [],
+        buttonWords: [],
+        isPlaying: false,
+        flashResult: null,
+        clickedWord: null,
+        stats: {
+          attempts: 0,
+          successes: 0,
+          accuracy: 0
+        }
       } : undefined
     };
     publish();

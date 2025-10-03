@@ -34,6 +34,23 @@ export interface LiveCopyState {
 }
 
 /**
+ * Word Practice mode state
+ */
+export interface WordPracticeState {
+  currentWord: string | null;  // Word being played/tested
+  distractors: string[];        // Distractor words for current trial
+  buttonWords: string[];        // Pre-shuffled button order (to prevent re-shuffle on render)
+  isPlaying: boolean;           // True while word audio is playing
+  flashResult: 'correct' | 'incorrect' | null;  // Visual feedback state
+  clickedWord: string | null;   // Word that was clicked (for flash targeting)
+  stats: {
+    attempts: number;
+    successes: number;
+    accuracy: number; // percentage
+  };
+}
+
+/**
  * Session snapshot - observable state of the current session
  *
  * Contains universal state (all modes) and mode-specific state.
@@ -53,6 +70,7 @@ export type SessionSnapshot = {
   // Mode-specific state
   practiceState?: PracticeState;
   liveCopyState?: LiveCopyState;
+  wordPracticeState?: WordPracticeState;
 };
 
 import type { SessionConfig } from '../../../core/types/domain';

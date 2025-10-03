@@ -1,6 +1,6 @@
 // Shared types for API functions
 export type FeedbackMode = 'flash' | 'buzzer' | 'replay' | 'off'
-export type SessionMode = 'practice' | 'listen' | 'live-copy'
+export type SessionMode = 'practice' | 'listen' | 'live-copy' | 'word-practice'
 export type SpeedTier = 'slow' | 'medium' | 'fast' | 'lightning'
 export type ToneSetting = 'soft' | 'normal' | 'hard'
 
@@ -163,7 +163,7 @@ export function validateSettings(settings: unknown): settings is UserSettings {
     return false
   }
 
-  const validModes: SessionMode[] = ['practice', 'listen', 'live-copy']
+  const validModes: SessionMode[] = ['practice', 'listen', 'live-copy', 'word-practice']
   if (!validModes.includes(s.defaultMode as SessionMode)) {
     return false
   }
@@ -288,7 +288,7 @@ export function validateSessionStatistics(stats: unknown): stats is SessionStati
   }
 
   // Validate config fields
-  const validModes: SessionMode[] = ['practice', 'listen', 'live-copy']
+  const validModes: SessionMode[] = ['practice', 'listen', 'live-copy', 'word-practice']
   if (!validModes.includes(config.mode as SessionMode)) {
     return false
   }

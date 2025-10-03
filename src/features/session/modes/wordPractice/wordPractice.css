@@ -1,0 +1,102 @@
+/**
+ * Word Practice Mode Styles
+ */
+
+.word-practice-display {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2rem;
+  padding: 2rem;
+  min-height: 400px;
+}
+
+.word-practice-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  width: 100%;
+  max-width: 400px;
+}
+
+.word-practice-button {
+  padding: 1.5rem 2rem;
+  font-size: 1.5rem;
+  font-weight: 600;
+  border: 3px solid rgba(74, 171, 247, 0.5); /* More visible border */
+  border-radius: 12px;
+  background: rgba(26, 32, 44, 0.8); /* Darker, more visible background */
+  color: #ffffff; /* White text */
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: var(--font-mono);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3); /* Add shadow for depth */
+}
+
+.word-practice-button:hover:not(:disabled) {
+  border-color: rgba(74, 171, 247, 1);
+  background: rgba(38, 48, 64, 1);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(74, 171, 247, 0.3);
+}
+
+.word-practice-button:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.word-practice-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.word-practice-button-flash-correct {
+  background: #22c55e !important; /* Bright green */
+  border-color: #22c55e !important;
+  color: white !important;
+  animation: flash-correct 500ms ease;
+}
+
+.word-practice-button-flash-incorrect {
+  background: #ef4444 !important; /* Bright red */
+  border-color: #ef4444 !important;
+  color: white !important;
+  animation: flash-incorrect 500ms ease;
+}
+
+.word-practice-stats {
+  font-size: 1.25rem;
+  color: var(--color-text-secondary);
+  font-family: var(--font-mono);
+  text-align: center;
+}
+
+@keyframes flash-correct {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+@keyframes flash-incorrect {
+  0% {
+    transform: scale(1);
+  }
+  25% {
+    transform: translateX(-10px);
+  }
+  50% {
+    transform: translateX(10px);
+  }
+  75% {
+    transform: translateX(-5px);
+  }
+  100% {
+    transform: translateX(0);
+  }
+}

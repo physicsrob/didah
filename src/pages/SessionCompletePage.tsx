@@ -175,9 +175,15 @@ export function SessionCompletePage() {
                 <div className="setting-item">
                   <span className="setting-label">Mode</span>
                   <span className="setting-value">
-                    {fullStatistics.config.mode === 'practice' ? 'Active Practice' :
-                     fullStatistics.config.mode === 'listen' ? 'Passive Listening' :
-                     fullStatistics.config.mode === 'live-copy' ? 'Live Copy' : fullStatistics.config.mode}
+                    {(() => {
+                      const modeNames = {
+                        'practice': 'Active Practice',
+                        'listen': 'Passive Listening',
+                        'live-copy': 'Live Copy',
+                        'word-practice': 'Word Practice'
+                      };
+                      return modeNames[fullStatistics.config.mode] || fullStatistics.config.mode;
+                    })()}
                   </span>
                 </div>
 

@@ -65,3 +65,49 @@ export async function fetchSourceContent(id: string, requiresAuth: boolean): Pro
   const data: SourceContent = await response.json();
   return data;
 }
+
+/**
+ * Word source from word-sources API
+ */
+export interface WordSourceInfo {
+  id: string;
+  name: string;
+  wordCount: number;
+}
+
+/**
+ * Word sources response
+ */
+export interface WordSourcesResponse {
+  sources: WordSourceInfo[];
+}
+
+/**
+ * Fetch list of available word sources
+ */
+export async function fetchWordSources(): Promise<WordSourceInfo[]> {
+  const response = await fetch('/api/word-sources');
+  if (!response.ok) {
+    throw new Error(`Failed to fetch word sources: ${response.status}`);
+  }
+  const data: WordSourcesResponse = await response.json();
+  return data.sources;
+}
+
+/**
+ * Fetch content for a specific word source
+ */
+export async function fetchWordSourceContent(id: string): Promise<SourceContent> {
+  const response = await fetch(`/api/word-sources/${id}`, {
+    cache: 'no-store'
+  });
+  if (!response.ok) {
+    throw new Error(`Failed to fetch word source content: ${response.status}`);
+  }
+  const data = await response.json();
+  // Transform to SourceContent format expected by source factory
+  return {
+    id: data.id,
+    items: data.words // WordEntry[] becomes items
+  };
+}

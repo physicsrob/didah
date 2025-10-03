@@ -93,6 +93,16 @@ export default function HomePage() {
                 Real-time copying like actual CW. Characters stream continuously with no feedback until the session ends.
               </div>
             </div>
+            <div
+              className="mode-card"
+              onClick={() => handleModeSelect('word-practice')}
+            >
+              <div className="mode-card-icon">📝</div>
+              <div className="mode-card-title">Word Practice</div>
+              <div className="mode-card-description">
+                Multiple choice word recognition. Select the correct word from 3 options to build whole-word fluency.
+              </div>
+            </div>
           </div>
 
           {/* Utility buttons */}

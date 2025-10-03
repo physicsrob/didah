@@ -2,8 +2,8 @@ import { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import type { SessionConfig, SessionMode, SpeedTier } from '../core/types/domain';
 import type { FeedbackMode } from '../features/settings/store/types';
-import { fetchSources, fetchSourceContent } from '../features/sources';
-import type { TextSource as ApiTextSource, SourceContent } from '../features/sources';
+import { fetchSources, fetchSourceContent, fetchWordSources, fetchWordSourceContent } from '../features/sources';
+import type { TextSource as ApiTextSource, SourceContent, WordSourceInfo as ApiWordSource } from '../features/sources';
 import { useSettings } from '../features/settings/hooks/useSettings';
 import { useAuth } from '../hooks/useAuth';
 import { HeaderBar } from '../components/HeaderBar';
@@ -14,7 +14,7 @@ import '../styles/components.css';
 
 // Type guard for validating SessionMode
 function isValidSessionMode(value: unknown): value is SessionMode {
-  return value === 'practice' || value === 'listen' || value === 'live-copy';
+  return value === 'practice' || value === 'listen' || value === 'live-copy' || value === 'word-practice';
 }
 
 export function SessionConfigPage() {
@@ -41,6 +41,10 @@ export function SessionConfigPage() {
     'live-copy': {
       title: 'Live Copy Mode',
       description: 'Real-time continuous copying like actual CW. Characters stream at a constant rate - keep up or fall behind!'
+    },
+    'word-practice': {
+      title: 'Word Practice Mode',
+      description: 'Multiple choice word recognition - select the word you hear from 3 options. Build whole-word fluency!'
     }
   };
 
@@ -61,6 +65,10 @@ export function SessionConfigPage() {
   const [sourceContent, setSourceContent] = useState<SourceContent | null>(null);
   const [sourcesLoading, setSourcesLoading] = useState(true);
   const [sourceLoadError, setSourceLoadError] = useState<string | null>(null);
+
+  // Word source state (for word-practice mode)
+  const [availableWordSources, setAvailableWordSources] = useState<ApiWordSource[]>([]);
+  const [wordSourcesLoading, setWordSourcesLoading] = useState(false);
 
   // Single source of truth for feedback configuration
   const [feedbackMode, setFeedbackMode] = useState<FeedbackMode>('flash');
@@ -95,7 +103,30 @@ export function SessionConfigPage() {
       return null; // null means use local random generator
     }
 
-    // Find the source object to get its backendId
+    // Word sources (for word-practice mode)
+    if (validatedMode === 'word-practice') {
+      const wordSource = availableWordSources.find(s => s.id === sourceId);
+      if (!wordSource) {
+        console.error(`Word source not found: ${sourceId}`);
+        if (options.setError) {
+          setSourceLoadError(`Word source not found: ${sourceId}`);
+        }
+        return null;
+      }
+
+      try {
+        const content = await fetchWordSourceContent(sourceId);
+        return content;
+      } catch (error) {
+        console.error(`Failed to fetch word source ${sourceId}:`, error);
+        if (options.setError) {
+          setSourceLoadError(`Failed to load "${wordSource.name}". Please try again or select a different source.`);
+        }
+        return null;
+      }
+    }
+
+    // Text sources (for other modes)
     const source = availableSources.find(s => s.id === sourceId);
     if (!source) {
       console.error(`Source not found: ${sourceId}`);
@@ -116,7 +147,7 @@ export function SessionConfigPage() {
       }
       return null;
     }
-  }, [availableSources]);
+  }, [availableSources, availableWordSources, validatedMode]);
 
   // Redirect to home if mode is invalid (no valid navigation state)
   useEffect(() => {
@@ -164,9 +195,37 @@ export function SessionConfigPage() {
       });
   }, [user]);
 
+  // Fetch available word sources when in word-practice mode
+  useEffect(() => {
+    if (validatedMode !== 'word-practice') return;
+
+    setWordSourcesLoading(true);
+    fetchWordSources()
+      .then(sources => {
+        setAvailableWordSources(sources);
+        // Set default word source if none selected
+        if (!selectedSourceId || !sources.find(s => s.id === selectedSourceId)) {
+          setSelectedSourceId(sources[0]?.id || 'top-100');
+        }
+      })
+      .catch(error => {
+        console.error('Failed to fetch word sources:', error);
+        setAvailableWordSources([]);
+      })
+      .finally(() => {
+        setWordSourcesLoading(false);
+      });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [validatedMode]); // Only run when mode changes, not when selectedSourceId changes
+
   // Fetch content when selectedSourceId changes or on mount
   useEffect(() => {
     if (!selectedSourceId) return;
+
+    // For word-practice mode, wait until word sources are loaded
+    if (validatedMode === 'word-practice' && wordSourcesLoading) {
+      return;
+    }
 
     setSourceLoadError(null); // Clear any previous errors
 
@@ -174,7 +233,7 @@ export function SessionConfigPage() {
       .then(content => {
         setSourceContent(content);
       });
-  }, [selectedSourceId, loadSourceContent]);
+  }, [selectedSourceId, loadSourceContent, validatedMode, wordSourcesLoading]);
 
   // Save settings to centralized store when they change
   useEffect(() => {
@@ -310,9 +369,11 @@ export function SessionConfigPage() {
             </p>
           </div>
 
-          {/* Text Source */}
+          {/* Text Source or Word Source */}
           <div className="settings-row">
-            <div className="settings-label">Text Source</div>
+            <div className="settings-label">
+              {mode === 'word-practice' ? 'Word Source' : 'Text Source'}
+            </div>
             <div className="settings-control">
               <select
                 style={{
@@ -327,16 +388,28 @@ export function SessionConfigPage() {
                 }}
                 value={selectedSourceId}
                 onChange={(e) => handleSourceChange(e.target.value)}
-                disabled={sourcesLoading}
+                disabled={mode === 'word-practice' ? wordSourcesLoading : sourcesLoading}
               >
-                {sourcesLoading ? (
-                  <option>Loading sources...</option>
+                {mode === 'word-practice' ? (
+                  wordSourcesLoading ? (
+                    <option>Loading word sources...</option>
+                  ) : (
+                    availableWordSources.map(source => (
+                      <option key={source.id} value={source.id}>
+                        {source.name} ({source.wordCount} words)
+                      </option>
+                    ))
+                  )
                 ) : (
-                  availableSources.map(source => (
-                    <option key={source.id} value={source.id}>
-                      {source.name}
-                    </option>
-                  ))
+                  sourcesLoading ? (
+                    <option>Loading sources...</option>
+                  ) : (
+                    availableSources.map(source => (
+                      <option key={source.id} value={source.id}>
+                        {source.name}
+                      </option>
+                    ))
+                  )
                 )}
               </select>
             </div>
@@ -428,8 +501,8 @@ export function SessionConfigPage() {
             </div>
           </div>
 
-          {/* Farnsworth Speed - Only show for listen and live-copy modes */}
-          {(mode === 'listen' || mode === 'live-copy') && (
+          {/* Farnsworth Speed - Only show for listen, live-copy, and word-practice modes */}
+          {(mode === 'listen' || mode === 'live-copy' || mode === 'word-practice') && (
             <div className="settings-row">
               <div className="settings-label">Farnsworth Speed</div>
               <div className="settings-control">

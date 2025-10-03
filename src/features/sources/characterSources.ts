@@ -6,6 +6,14 @@ import type { CharacterSource } from '../session/runtime/sessionProgram';
 import type { FullPost } from './types';
 
 /**
+ * Word entry with distractors (from word-sources API)
+ */
+export interface WordEntry {
+  word: string;
+  distractors: string[];
+}
+
+/**
  * Maximum attempts to find a valid character before throwing an error.
  * Prevents stack overflow from long sequences of invalid characters (URLs, emojis, etc.)
  */
@@ -239,5 +247,36 @@ export class FullPostSource implements CharacterSource {
     this.currentItemIndex = 0;
     this.currentCharIndex = 0;
     this.currentText = this.items[0] || '';
+  }
+}
+
+/**
+ * Source for Word Practice mode
+ * Returns JSON-encoded word entries with pre-calculated distractors
+ */
+export class WordSource implements CharacterSource {
+  private wordEntries: WordEntry[];
+  private currentIndex: number = 0;
+
+  constructor(wordEntries: WordEntry[]) {
+    if (!wordEntries || wordEntries.length === 0) {
+      throw new Error('WordSource requires at least one word entry');
+    }
+    this.wordEntries = wordEntries;
+  }
+
+  next(): string {
+    // Get current word entry
+    const entry = this.wordEntries[this.currentIndex];
+
+    // Move to next (cycle through)
+    this.currentIndex = (this.currentIndex + 1) % this.wordEntries.length;
+
+    // Return JSON-encoded entry
+    return JSON.stringify(entry);
+  }
+
+  reset(): void {
+    this.currentIndex = 0;
   }
 }

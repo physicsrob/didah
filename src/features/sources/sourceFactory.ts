@@ -4,7 +4,7 @@
 
 import type { CharacterSource } from '../session/runtime/sessionProgram';
 import type { SourceContent, FullPost } from './types';
-import { ArraySource, ContinuousTextSource, LocalRandomSource, FullPostSource } from './characterSources';
+import { ArraySource, ContinuousTextSource, LocalRandomSource, FullPostSource, WordSource, type WordEntry } from './characterSources';
 
 /**
  * Check if items are FullPost objects
@@ -15,6 +15,17 @@ function isFullPostArray(items: unknown[]): items is FullPost[] {
          items[0] !== null &&
          'title' in items[0] &&
          'body' in items[0];
+}
+
+/**
+ * Check if items are WordEntry objects
+ */
+function isWordEntryArray(items: unknown[]): items is WordEntry[] {
+  return items.length > 0 &&
+         typeof items[0] === 'object' &&
+         items[0] !== null &&
+         'word' in items[0] &&
+         'distractors' in items[0];
 }
 
 /**
@@ -32,6 +43,11 @@ export function createCharacterSource(
 
   // Determine source type based on content
   const { id, items } = content;
+
+  // Word Practice sources - return WordSource
+  if (isWordEntryArray(items)) {
+    return new WordSource(items);
+  }
 
   // Word sources come as a single long string
   if (id.includes('words') || id === 'random_letters') {

@@ -7,6 +7,7 @@
 import { practiceMode } from '../practice';
 import { listenMode } from '../listen';
 import { liveCopyMode } from '../liveCopy';
+import { wordPracticeMode } from '../wordPractice';
 import type { SessionMode } from '../../../../core/types/domain';
 import type { ModeDefinition } from './types';
 
@@ -22,6 +23,7 @@ export const MODE_REGISTRY: Record<SessionMode, ModeDefinition> = {
   'practice': practiceMode,
   'listen': listenMode,
   'live-copy': liveCopyMode,
+  'word-practice': wordPracticeMode,
 };
 
 /**
