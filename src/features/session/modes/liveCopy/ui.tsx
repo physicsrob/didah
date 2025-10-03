@@ -8,7 +8,7 @@
 
 import { useRef, useEffect } from 'react';
 import type { SessionSnapshot } from '../../runtime/io';
-import type { InputBus } from '../../runtime/inputBus';
+import type { UIContext } from '../shared/types';
 import { CharacterDisplay, type DisplayCharacter } from '../../../../components/CharacterDisplay';
 
 /**
@@ -35,14 +35,9 @@ export function LiveCopyDisplay({
  * Manages typed string with backspace support
  * Updates snapshot directly via updateSnapshot
  */
-export function useLiveCopyInput(
-  _input: InputBus,
-  sessionPhase: 'waiting' | 'countdown' | 'active',
-  isPaused: boolean,
-  snapshot: SessionSnapshot,
-  updateSnapshot: (updates: Partial<SessionSnapshot>) => void,
-  onPause?: () => void
-): void {
+export function useLiveCopyInput(context: UIContext): void {
+  const { sessionPhase, isPaused, snapshot, updateSnapshot, onPause } = context;
+
   // Keep ref to avoid stale closures
   const snapshotRef = useRef(snapshot);
   snapshotRef.current = snapshot;

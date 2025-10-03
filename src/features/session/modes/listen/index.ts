@@ -8,7 +8,7 @@
 
 import type { ModeDefinition } from '../shared/types';
 import { handleListenCharacter } from './handler';
-import { ListenDisplay, useListenInput } from './ui';
+import { ListenDisplay } from './ui';
 
 export const listenMode: ModeDefinition = {
   id: 'listen',
@@ -24,10 +24,10 @@ export const listenMode: ModeDefinition = {
   // Implementation
   handleCharacter: handleListenCharacter,
   renderDisplay: ListenDisplay,
-  useKeyboardInput: useListenInput,
+  // No keyboard input needed for Listen mode
 };
 
 // Re-export for testing and advanced usage
 export { runListenEmission } from './emission';
 export { handleListenCharacter } from './handler';
-export { ListenDisplay, useListenInput } from './ui';
+export { ListenDisplay } from './ui';

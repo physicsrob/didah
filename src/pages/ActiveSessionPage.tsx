@@ -164,8 +164,15 @@ export function ActiveSessionPage() {
   // Mode-specific keyboard input
   // Note: 'paused' is treated as 'active' for mode purposes (isPaused flag handles the pause state)
   const modeSessionPhase: 'waiting' | 'countdown' | 'active' = sessionPhase === 'paused' ? 'active' : sessionPhase;
-  // Safe: mode guaranteed non-null here (config check at line 52 returns early if !config, getMode throws if invalid)
-  mode!.useKeyboardInput(input, modeSessionPhase, isPaused, snapshot, runner.updateSnapshot, handlePause);
+  // Use optional chaining since useKeyboardInput is optional (Listen mode doesn't define it)
+  mode?.useKeyboardInput?.({
+    input,
+    sessionPhase: modeSessionPhase,
+    isPaused,
+    snapshot,
+    updateSnapshot: runner.updateSnapshot,
+    onPause: handlePause
+  });
 
   // Navigate to completion page with full statistics
   const navigateToCompletion = useCallback((delay: number = 0) => {

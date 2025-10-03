@@ -28,6 +28,8 @@ export interface PracticeState {
  * Live Copy mode state
  */
 export interface LiveCopyState {
+  // Note: This is not UI state. Fundamentally the typedString is the response from the
+  // user. In the very near future we will be using this to evaluate how the user performed.
   typedString: string;
 }
 

@@ -8,7 +8,7 @@
 
 import { useEffect } from 'react';
 import type { SessionSnapshot } from '../../runtime/io';
-import type { InputBus } from '../../runtime/inputBus';
+import type { UIContext } from '../shared/types';
 import { CharacterDisplay } from '../../../../components/CharacterDisplay';
 import { historyToDisplay } from '../../../../components/CharacterDisplay.transformations';
 
@@ -28,14 +28,9 @@ export function PracticeDisplay({ snapshot }: { snapshot: SessionSnapshot }) {
  * Keyboard input hook for Practice mode
  * Captures single-character input and forwards to InputBus
  */
-export function usePracticeInput(
-  input: InputBus,
-  sessionPhase: 'waiting' | 'countdown' | 'active',
-  isPaused: boolean,
-  _snapshot: SessionSnapshot,
-  _updateSnapshot: (updates: Partial<SessionSnapshot>) => void,
-  onPause?: () => void
-) {
+export function usePracticeInput(context: UIContext) {
+  const { input, sessionPhase, isPaused, onPause } = context;
+
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       // Handle pause
