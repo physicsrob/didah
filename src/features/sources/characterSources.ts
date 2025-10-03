@@ -4,6 +4,7 @@
 
 import type { CharacterSource } from '../session/runtime/sessionProgram';
 import type { FullPost } from './types';
+import { shuffleArray } from '../../core/utils/array';
 
 /**
  * Word entry with distractors (from word-sources API)
@@ -262,7 +263,8 @@ export class WordSource implements CharacterSource {
     if (!wordEntries || wordEntries.length === 0) {
       throw new Error('WordSource requires at least one word entry');
     }
-    this.wordEntries = wordEntries;
+    // Shuffle word entries to avoid always seeing high-frequency words first
+    this.wordEntries = shuffleArray(wordEntries);
   }
 
   next(): string {
