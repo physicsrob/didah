@@ -1,23 +1,24 @@
 /**
- * Character emission programs for Practice and Listen modes
+ * Practice Mode - Emission Logic
+ *
+ * Handles audio playback and input racing for Practice mode.
+ * Returns outcome: correct | incorrect | timeout
  */
 
-import type { Clock } from './clock';
-import type { IO } from './io';
-import type { InputBus, KeyEvent } from './inputBus';
-import { select, waitForEvent, clockTimeout } from './select';
-import { getActiveWindowMs, getListenModeTimingMs, wpmToDitMs, calculateCharacterDurationMs, calculateFarnsworthSpacingMs } from '../../../core/morse/timing';
-import { debug } from '../../../core/debug';
-import type { SessionConfig } from '../../../core/types/domain';
+import type { SessionConfig } from '../../../../core/types/domain';
+import type { IO } from '../../runtime/io';
+import type { InputBus, KeyEvent } from '../../runtime/inputBus';
+import type { Clock } from '../../runtime/clock';
+import { select, waitForEvent, clockTimeout } from '../../runtime/select';
+import {
+  getActiveWindowMs,
+  wpmToDitMs,
+  calculateCharacterDurationMs,
+} from '../../../../core/morse/timing';
+import { debug } from '../../../../core/debug';
+import { isValidChar } from '../shared/utils';
 
 export type PracticeOutcome = 'correct' | 'incorrect' | 'timeout';
-
-/**
- * Check if a key is a valid morse character
- */
-function isValidChar(key: string): boolean {
-  return /^[A-Za-z0-9.,/=?;:'"+@()\s-]$/.test(key);
-}
 
 /**
  * Run a Practice mode emission
@@ -197,72 +198,4 @@ export async function runPracticeEmission(
     sessionSignal.removeEventListener('abort', linkAbort);
     charScope.abort();
   }
-}
-
-/**
- * Run a Listen mode emission
- * - Play audio (wait for completion)
- * - Wait standard spacing before reveal
- * - Reveal character
- * - Wait standard spacing after reveal
- */
-export async function runListenEmission(
-  cfg: SessionConfig,
-  char: string,
-  io: IO,
-  clock: Clock,
-  sessionSignal: AbortSignal
-): Promise<void> {
-  const emissionStart = clock.now();
-
-  // Hide any previous character
-  io.hide();
-
-  // Log emission start
-  io.log({ type: 'emission', at: emissionStart, char });
-
-  // Play audio and wait for completion
-  try {
-    await io.playChar(char, cfg.wpm);
-  } catch (error) {
-    debug.warn(`Audio failed for char: ${char}`, error);
-  }
-
-  // Get listen mode timing with Farnsworth support
-  const { preRevealDelayMs, postRevealDelayMs } = getListenModeTimingMs(cfg.wpm, cfg.farnsworthWpm);
-
-  // Wait before revealing character
-  await clock.sleep(preRevealDelayMs, sessionSignal);
-
-  // Reveal character
-  io.reveal(char);
-
-  // Wait after revealing character
-  await clock.sleep(postRevealDelayMs, sessionSignal);
-}
-
-/**
- * Run a Live Copy mode emission
- * - Play audio (wait for completion)
- * - Add standard inter-character spacing
- * - No input handling (UI owns that)
- */
-export async function runLiveCopyEmission(
-  cfg: SessionConfig,
-  char: string,
-  io: IO,
-  clock: Clock,
-  sessionSignal: AbortSignal
-): Promise<void> {
-  // Play audio and wait for completion (similar to Listen mode)
-  try {
-    await io.playChar(char, cfg.wpm);
-  } catch (error) {
-    debug.warn(`Audio failed for char: ${char}`, error);
-  }
-
-  // Add inter-character spacing for Live Copy mode with Farnsworth support
-  // This simulates real Morse transmission timing
-  const interCharSpacingMs = calculateFarnsworthSpacingMs(cfg.wpm, cfg.farnsworthWpm);
-  await clock.sleep(interCharSpacingMs, sessionSignal);
 }

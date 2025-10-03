@@ -5,10 +5,11 @@
 import type { Clock } from './clock';
 import type { IO, SessionSnapshot } from './io';
 import type { InputBus } from './inputBus';
-import { runPracticeEmission, runListenEmission, runLiveCopyEmission } from './charPrograms';
 import type { SessionConfig } from '../../../core/types/domain';
 import { calculateCharacterDurationMs, getInterCharacterSpacingMs } from '../../../core/morse/timing';
 import { debug } from '../../../core/debug';
+import { getMode } from '../modes/shared/registry';
+import type { HandlerContext } from '../modes/shared/types';
 
 /**
  * Character source interface
@@ -70,6 +71,11 @@ export interface SessionRunner {
    * Get current session snapshot
    */
   getSnapshot(): SessionSnapshot;
+
+  /**
+   * Update snapshot from UI (for mode-specific state)
+   */
+  updateSnapshot(updates: Partial<SessionSnapshot>): void;
 }
 
 /**
@@ -90,17 +96,9 @@ export function createSessionRunner(deps: SessionRunnerDeps): SessionRunner {
   const subscribers = new Set<(snapshot: SessionSnapshot) => void>();
   let snapshot: SessionSnapshot = {
     phase: 'idle',
-    currentChar: null,
-    previous: [],
     startedAt: null,
     remainingMs: 0,
-    emissions: [],
-    stats: {
-      correct: 0,
-      incorrect: 0,
-      timeout: 0,
-      accuracy: 0
-    }
+    emissions: []
   };
   let abortController: AbortController | null = null;
   let sessionPromise: Promise<void> | null = null;
@@ -114,11 +112,16 @@ export function createSessionRunner(deps: SessionRunnerDeps): SessionRunner {
   // Publish snapshot to all subscribers
   const publish = () => {
     // Create a new object so React detects the change (deep clone)
-    const snapshotCopy = {
+    const snapshotCopy: SessionSnapshot = {
       ...snapshot,
-      previous: [...snapshot.previous],
       emissions: [...snapshot.emissions],
-      stats: snapshot.stats ? { ...snapshot.stats } : undefined
+      practiceState: snapshot.practiceState ? {
+        previous: [...snapshot.practiceState.previous],
+        stats: { ...snapshot.practiceState.stats }
+      } : undefined,
+      liveCopyState: snapshot.liveCopyState ? {
+        typedString: snapshot.liveCopyState.typedString
+      } : undefined
     };
     if (deps.io.snapshot) {
       deps.io.snapshot(snapshotCopy);
@@ -126,26 +129,27 @@ export function createSessionRunner(deps: SessionRunnerDeps): SessionRunner {
     subscribers.forEach(fn => fn(snapshotCopy));
   };
 
-  // Update stats from outcome
+  // Update stats from outcome (Practice mode only)
   const updateStats = (outcome: 'correct' | 'timeout' | 'incorrect') => {
-    if (!snapshot.stats) {
-      snapshot.stats = { correct: 0, incorrect: 0, timeout: 0, accuracy: 0 };
+    if (!snapshot.practiceState) {
+      throw new Error('updateStats called but practiceState not initialized');
     }
 
     switch (outcome) {
       case 'correct':
-        snapshot.stats.correct++;
+        snapshot.practiceState.stats.correct++;
         break;
       case 'timeout':
-        snapshot.stats.timeout++;
+        snapshot.practiceState.stats.timeout++;
         break;
       case 'incorrect':
-        snapshot.stats.incorrect++;
+        snapshot.practiceState.stats.incorrect++;
         break;
     }
 
-    const total = snapshot.stats.correct + snapshot.stats.timeout + snapshot.stats.incorrect;
-    snapshot.stats.accuracy = total > 0 ? (snapshot.stats.correct / total) * 100 : 0;
+    const stats = snapshot.practiceState.stats;
+    const total = stats.correct + stats.timeout + stats.incorrect;
+    stats.accuracy = total > 0 ? (stats.correct / total) * 100 : 0;
   };
 
   // Initialize session state and reset pause tracking
@@ -156,20 +160,25 @@ export function createSessionRunner(deps: SessionRunnerDeps): SessionRunner {
     totalPausedMs = 0;
     pauseResolver = null;
 
-    // Initialize session state
+    // Initialize session state with mode-specific state
     snapshot = {
       phase: 'running',
-      currentChar: null,
-      previous: [],
       startedAt: startTime,
       remainingMs: config.lengthMs,
       emissions: [],
-      stats: {
-        correct: 0,
-        incorrect: 0,
-        timeout: 0,
-        accuracy: 0
-      }
+      // Initialize mode-specific state based on mode
+      practiceState: config.mode === 'practice' ? {
+        previous: [],
+        stats: {
+          correct: 0,
+          incorrect: 0,
+          timeout: 0,
+          accuracy: 0
+        }
+      } : undefined,
+      liveCopyState: config.mode === 'live-copy' ? {
+        typedString: ''
+      } : undefined
     };
     publish();
 
@@ -216,8 +225,6 @@ export function createSessionRunner(deps: SessionRunnerDeps): SessionRunner {
   // Prepare for a new character emission by updating snapshot with character and timing info.
   // Records the character, start time, and calculated duration for statistics tracking.
   function prepareEmission(char: string, config: SessionConfig): void {
-    snapshot.currentChar = char;
-
     // Record emission timing (for all modes)
     const emissionStartTime = deps.clock.now();
 
@@ -242,100 +249,6 @@ export function createSessionRunner(deps: SessionRunnerDeps): SessionRunner {
     snapshot.remainingMs = Math.max(0, config.lengthMs - newElapsed);
   }
 
-  // Handle practice mode emission - user types what they hear
-  async function handlePracticeMode(
-    config: SessionConfig,
-    char: string,
-    startTime: number,
-    signal: AbortSignal
-  ): Promise<void> {
-    const outcome = await runPracticeEmission(
-      config,
-      char,
-      deps.io,
-      deps.input,
-      deps.clock,
-      signal
-    );
-    updateStats(outcome);
-
-    // Update history IMMEDIATELY
-    const historyItem = { char, result: outcome as 'correct' | 'incorrect' | 'timeout' };
-    snapshot.previous = [...snapshot.previous, historyItem];
-    snapshot.currentChar = null;
-
-    // Update remaining time
-    updateRemainingTime(startTime, config);
-
-    // Publish immediately so UI updates right away
-    publish();
-
-    // Handle replay AFTER history update (for incorrect or timeout)
-    if (config.replay && (outcome === 'incorrect' || outcome === 'timeout') && deps.io.replay) {
-      debug.log(`[Session] Replaying character '${char}' after ${outcome}`);
-      await deps.io.replay(char, config.wpm);
-    }
-
-    // Add inter-character spacing after any incorrect or timeout (with or without replay)
-    if (outcome === 'incorrect' || outcome === 'timeout') {
-      const interCharSpacingMs = getInterCharacterSpacingMs(config.wpm);
-      debug.log(`[Spacing] Adding post-error spacing: ${interCharSpacingMs}ms (3 dits)`);
-      await deps.clock.sleep(interCharSpacingMs, signal);
-    }
-  }
-
-  // Handle listen mode emission - play Morse then reveal character
-  async function handleListenMode(
-    config: SessionConfig,
-    char: string,
-    startTime: number,
-    signal: AbortSignal
-  ): Promise<void> {
-    await runListenEmission(
-      config,
-      char,
-      deps.io,
-      deps.clock,
-      signal
-    );
-
-    // For listen mode, add to history after emission
-    const historyItem = { char, result: 'listen' as const };
-    snapshot.previous = [...snapshot.previous, historyItem];
-    snapshot.currentChar = null;
-
-    // Update remaining time
-    updateRemainingTime(startTime, config);
-
-    // Publish snapshot
-    publish();
-  }
-
-  // Handle live-copy mode emission - transmission only, no input handling
-  async function handleLiveCopyMode(
-    config: SessionConfig,
-    char: string,
-    startTime: number,
-    signal: AbortSignal
-  ): Promise<void> {
-    await runLiveCopyEmission(
-      config,
-      char,
-      deps.io,
-      deps.clock,
-      signal
-    );
-
-    // Clear current character after emission
-    snapshot.currentChar = null;
-
-    // Update remaining time
-    updateRemainingTime(startTime, config);
-
-    // Publish immediately so UI can update
-    publish();
-  }
-
   // Perform session cleanup when session ends
   function cleanupSession(): void {
     // Log session end BEFORE publishing 'ended' phase
@@ -346,7 +259,6 @@ export function createSessionRunner(deps: SessionRunnerDeps): SessionRunner {
     });
 
     snapshot.phase = 'ended';
-    snapshot.currentChar = null;
     publish();
   }
 
@@ -375,20 +287,23 @@ export function createSessionRunner(deps: SessionRunnerDeps): SessionRunner {
         prepareEmission(char, config);
 
         try {
-          // Run emission based on mode
-          switch (config.mode) {
-            case 'practice':
-              await handlePracticeMode(config, char, startTime, signal);
-              break;
+          // Get mode implementation
+          const mode = getMode(config.mode);
 
-            case 'listen':
-              await handleListenMode(config, char, startTime, signal);
-              break;
+          // Create handler context
+          const ctx: HandlerContext = {
+            ...deps,
+            snapshot,
+            updateSnapshot: (updates) => {
+              snapshot = { ...snapshot, ...updates };
+            },
+            updateStats,
+            updateRemainingTime,
+            publish,
+          };
 
-            case 'live-copy':
-              await handleLiveCopyMode(config, char, startTime, signal);
-              break;
-          }
+          // Delegate to mode handler
+          await mode.handleCharacter(config, char, startTime, ctx, signal);
 
         } catch (error) {
           // Handle abort
@@ -480,6 +395,11 @@ export function createSessionRunner(deps: SessionRunnerDeps): SessionRunner {
 
     getSnapshot(): SessionSnapshot {
       return snapshot;
+    },
+
+    updateSnapshot(updates: Partial<SessionSnapshot>): void {
+      snapshot = { ...snapshot, ...updates };
+      publish();
     }
   };
 }

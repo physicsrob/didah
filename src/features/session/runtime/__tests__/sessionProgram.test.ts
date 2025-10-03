@@ -30,8 +30,8 @@ describe('SessionRunner', () => {
   it('starts in idle state', () => {
     const snapshot = runner.getSnapshot();
     expect(snapshot.phase).toBe('idle');
-    expect(snapshot.currentChar).toBeNull();
-    expect(snapshot.previous).toEqual([]);
+    expect(snapshot.practiceState).toBeUndefined();
+    expect(snapshot.liveCopyState).toBeUndefined();
   });
 
   it('transitions to running when started', async () => {
@@ -106,10 +106,10 @@ describe('SessionRunner', () => {
     // Wait for processing
     await new Promise(resolve => setTimeout(resolve, 50));
 
-    // Check that character moved to previous
+    // Check that character moved to previous (Practice mode)
     const latestSnapshot = snapshots[snapshots.length - 1];
-    expect(latestSnapshot.previous.some(item => item.char === 'A')).toBe(true);
-    expect(latestSnapshot.stats?.correct).toBe(1);
+    expect(latestSnapshot.practiceState?.previous.some(item => item.char === 'A')).toBe(true);
+    expect(latestSnapshot.practiceState?.stats.correct).toBe(1);
 
     runner.stop();
   });
@@ -216,8 +216,8 @@ describe('SessionRunner', () => {
 
     // Check first character was processed correctly
     let snapshot = runner.getSnapshot();
-    expect(snapshot.stats?.correct).toBe(1);
-    expect(snapshot.previous.some(item => item.char === 'A' && item.result === 'correct')).toBe(true);
+    expect(snapshot.practiceState?.stats.correct).toBe(1);
+    expect(snapshot.practiceState?.previous.some(item => item.char === 'A' && item.result === 'correct')).toBe(true);
 
     // Now let's trigger a timeout for 'B'
     // Advance through audio for 'B'
@@ -232,12 +232,12 @@ describe('SessionRunner', () => {
     await advanceAndFlush(clock, TestTiming.interChar);
 
     snapshot = runner.getSnapshot();
-    expect(snapshot.stats?.correct).toBe(1);
-    expect(snapshot.stats?.timeout).toBe(1);
-    expect(snapshot.previous.some(item => item.char === 'B' && item.result === 'timeout')).toBe(true);
+    expect(snapshot.practiceState?.stats.correct).toBe(1);
+    expect(snapshot.practiceState?.stats.timeout).toBe(1);
+    expect(snapshot.practiceState?.previous.some(item => item.char === 'B' && item.result === 'timeout')).toBe(true);
 
     // The accuracy should be 50% (1 correct out of 2)
-    const accuracy = snapshot.stats?.accuracy || 0;
+    const accuracy = snapshot.practiceState?.stats.accuracy || 0;
     expect(accuracy).toBeCloseTo(50, 0);
 
     // Advance clock to allow any ongoing operations to complete

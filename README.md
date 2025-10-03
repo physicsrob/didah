@@ -72,6 +72,7 @@ npm run deploy      # Deploy to Cloudflare Pages
   /core           # Domain logic (timing, alphabet, types)
   /features
     /session
+      /modes      # Mode implementations (Practice, Listen, Live Copy)
       /runtime    # Main session orchestration
       /services   # Audio engine, feedback
     /sources      # Text source providers
@@ -79,14 +80,45 @@ npm run deploy      # Deploy to Cloudflare Pages
   /tests          # Test files
 ```
 
+### Architecture
+
+#### Mode System
+
+Session modes are organized as self-contained, feature-first modules. Each mode contains all its logic in one directory:
+
+```
+src/features/session/modes/
+  practice/       # Practice mode implementation
+    emission.ts   # Pure timing and input logic
+    handler.ts    # Session integration
+    ui.tsx        # React components
+    index.ts      # Mode definition
+    __tests__/    # Mode-specific tests
+  listen/         # Listen mode implementation
+  liveCopy/       # Live Copy mode implementation
+  shared/         # Mode interfaces and registry
+    types.ts      # ModeDefinition interface
+    registry.ts   # Type-safe mode registry
+    README.md     # Mode implementation guide
+```
+
+**Benefits**:
+- **Locality of behavior** - All mode code in one directory
+- **Safe mode addition** - Type-enforced registration prevents missing implementations
+- **Better testing** - Test mode logic independently of React
+- **Easier onboarding** - Clear pattern to follow for new modes
+
+See `src/features/session/modes/shared/README.md` for a detailed guide on implementing new modes.
+
 ### Testing
 
 Tests use Vitest and focus on core logic:
 - Timing calculations (`src/tests/timing.test.ts`)
+- Mode implementations (`src/features/session/modes/*/tests__/`)
 - Runtime session logic (`src/features/session/runtime/__tests__/`)
 - Audio engine integration (`src/tests/audioEngine.integration.test.ts`)
 
-Currently ~32 tests passing.
+Currently 57 tests passing.
 
 ## Tech Stack
 

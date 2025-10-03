@@ -20,10 +20,8 @@ import { createFeedback } from '../features/session/services/feedback/index.js';
 import { useAudio } from '../hooks/useAudio';
 import { debug } from '../core/debug';
 import { useSettings } from '../features/settings/hooks/useSettings';
-import { CharacterDisplay } from '../components/CharacterDisplay';
-import type { DisplayCharacter } from '../components/CharacterDisplay';
-import { historyToDisplay } from '../components/CharacterDisplay.transformations';
 import { SessionStatsCalculator } from '../features/statistics/sessionStatsCalculator';
+import { getMode } from '../features/session/modes/shared/registry';
 import '../styles/main.css';
 import '../styles/activeSession.css';
 
@@ -39,17 +37,21 @@ export function ActiveSessionPage() {
   const config = location.state?.config;
   const sourceContent = location.state?.sourceContent as SourceContent | null;
 
+  // Get mode definition
+  const mode = useMemo(() => {
+    if (!config) return null;
+    return getMode(config.mode);
+  }, [config]);
+
   // Check if audio is actually ready
   const audioActuallyReady = isAudioReady();
 
   const [snapshot, setSnapshot] = useState<SessionSnapshot>({
     phase: 'idle',
-    currentChar: null,
-    previous: [],
     startedAt: null,
     remainingMs: 0,
     emissions: [],
-    stats: { correct: 0, incorrect: 0, timeout: 0, accuracy: 0 },
+    // Mode-specific state will be initialized by sessionProgram.ts when session starts
   });
 
   const [replayOverlay, setReplayOverlay] = useState<string | null>(null);
@@ -59,9 +61,6 @@ export function ActiveSessionPage() {
   const [isPaused, setIsPaused] = useState(false);
   const isPausedRef = useRef(false);  // Use ref to avoid recreating IO adapter
   const eventCollector = useRef<LogEvent[]>([]);  // Collect events for statistics
-
-  // Live Copy mode - simple typed string
-  const [liveCopyTyped, setLiveCopyTyped] = useState('');
 
   // Create runtime dependencies
   const clock = useMemo(() => new SystemClock(), []);
@@ -147,6 +146,34 @@ export function ActiveSessionPage() {
   // Create session runner
   const runner = useMemo(() => createSessionRunner({ clock, io, input, source }), [clock, io, input, source]);
 
+  // Handle pause/resume
+  const handlePause = useCallback(() => {
+    runner.pause();
+    setIsPaused(true);
+    isPausedRef.current = true;
+    // Hide any active replay overlay when pausing
+    setReplayOverlay(null);
+  }, [runner]);
+
+  const handleResume = useCallback(() => {
+    runner.resume();
+    setIsPaused(false);
+    isPausedRef.current = false;
+  }, [runner]);
+
+  // Mode-specific keyboard input
+  // Note: 'paused' is treated as 'active' for mode purposes (isPaused flag handles the pause state)
+  const modeSessionPhase: 'waiting' | 'countdown' | 'active' = sessionPhase === 'paused' ? 'active' : sessionPhase;
+  // Use optional chaining since useKeyboardInput is optional (Listen mode doesn't define it)
+  mode?.useKeyboardInput?.({
+    input,
+    sessionPhase: modeSessionPhase,
+    isPaused,
+    snapshot,
+    updateSnapshot: runner.updateSnapshot,
+    onPause: handlePause
+  });
+
   // Navigate to completion page with full statistics
   const navigateToCompletion = useCallback((delay: number = 0) => {
     // Calculate comprehensive statistics
@@ -158,7 +185,7 @@ export function ActiveSessionPage() {
       navigate('/session-complete', {
         state: {
           fullStatistics,
-          liveCopyTyped: config.mode === 'live-copy' ? liveCopyTyped : null,
+          liveCopyTyped: config.mode === 'live-copy' ? snapshot.liveCopyState?.typedString : null,
           liveCopyTransmitted: config.mode === 'live-copy' ? snapshot.emissions.map(e => e.char) : null
         }
       });
@@ -169,7 +196,7 @@ export function ActiveSessionPage() {
     } else {
       doNavigate();
     }
-  }, [navigate, config, liveCopyTyped, snapshot.emissions]);
+  }, [navigate, config, snapshot.liveCopyState?.typedString, snapshot.emissions]);
 
   // Subscribe to session snapshots
   useEffect(() => {
@@ -186,78 +213,6 @@ export function ActiveSessionPage() {
       return () => unsub();
     }
   }, [runner, config, navigateToCompletion]);
-
-  // Handle pause/resume
-  const handlePause = useCallback(() => {
-    runner.pause();
-    setIsPaused(true);
-    isPausedRef.current = true;
-    // Hide any active replay overlay when pausing
-    setReplayOverlay(null);
-  }, [runner]);
-
-  const handleResume = useCallback(() => {
-    runner.resume();
-    setIsPaused(false);
-    isPausedRef.current = false;
-  }, [runner]);
-
-  // Handle keyboard input for Practice mode
-  useEffect(() => {
-    if (config?.mode === 'live-copy') return;
-
-    const handleKeyDown = (e: KeyboardEvent) => {
-      // Handle pause/resume
-      if (e.key === 'Escape') {
-        if (sessionPhase === 'active' && snapshot.phase === 'running') {
-          handlePause();
-        }
-        return;
-      }
-
-      // Only capture input during active session
-      if (sessionPhase === 'active' && !isPaused && e.key.length === 1) {
-        input.push({ at: performance.now(), key: e.key });
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [input, config?.mode, sessionPhase, isPaused, snapshot.phase, handlePause]);
-
-  // Handle keyboard input for Live Copy mode
-  useEffect(() => {
-    if (config?.mode !== 'live-copy') return;
-
-    const handleKeyDown = (e: KeyboardEvent) => {
-      // Handle pause/resume
-      if (e.key === 'Escape') {
-        if (sessionPhase === 'active' && snapshot.phase === 'running') {
-          handlePause();
-        }
-        return;
-      }
-
-      // Only capture input during active session
-      if (sessionPhase !== 'active' || isPaused || snapshot.phase !== 'running') return;
-
-      // Handle backspace
-      if (e.key === 'Backspace') {
-        e.preventDefault();
-        setLiveCopyTyped(prev => prev.slice(0, -1));
-        return;
-      }
-
-      // Handle character input
-      if (e.key.length === 1) {
-        e.preventDefault();
-        setLiveCopyTyped(prev => prev + e.key.toUpperCase());
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [config?.mode, sessionPhase, isPaused, snapshot.phase, handlePause]);
 
   const handleEndSession = useCallback(() => {
     // Stop the runner
@@ -301,7 +256,6 @@ export function ActiveSessionPage() {
       }
 
       setSessionPhase('active');
-      setLiveCopyTyped('');
     };
 
     runCountdown();
@@ -335,15 +289,6 @@ export function ActiveSessionPage() {
       runner.stop();
     };
   }, [runner]);
-
-  // Convert Live Copy typed string to display characters
-  const liveCopyDisplay = useMemo((): DisplayCharacter[] => {
-    return liveCopyTyped.split('').map((char, i) => ({
-      text: char,
-      status: 'neutral' as const,
-      key: i
-    }));
-  }, [liveCopyTyped]);
 
   if (!config) {
     return null;
@@ -395,13 +340,7 @@ export function ActiveSessionPage() {
       {/* Main Display Area */}
       {(sessionPhase === 'countdown' || sessionPhase === 'active') && (
         <div className="session-display-area">
-          <CharacterDisplay
-            characters={
-              config?.mode === 'live-copy'
-                ? liveCopyDisplay
-                : historyToDisplay(snapshot.previous)
-            }
-          />
+          {mode?.renderDisplay({ snapshot })}
         </div>
       )}
 
