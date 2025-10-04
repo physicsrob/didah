@@ -31,8 +31,13 @@ export async function onRequestGet(context: { request: Request; env: Env }) {
     try {
       userId = await getUserIdFromToken(authHeader, clientId)
     } catch (error) {
-      console.error('Token validation failed:', error)
-      return new Response(JSON.stringify({ error: 'Invalid token' }), {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+      console.error('Token validation failed:', errorMessage)
+      console.error('Full error:', error)
+      return new Response(JSON.stringify({
+        error: 'Invalid token',
+        details: errorMessage
+      }), {
         status: 401,
         headers: { 'Content-Type': 'application/json' }
       })
@@ -102,8 +107,13 @@ export async function onRequestPut(context: { request: Request; env: Env }) {
     try {
       userId = await getUserIdFromToken(authHeader, clientId)
     } catch (error) {
-      console.error('Token validation failed:', error)
-      return new Response(JSON.stringify({ error: 'Invalid token' }), {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+      console.error('Token validation failed:', errorMessage)
+      console.error('Full error:', error)
+      return new Response(JSON.stringify({
+        error: 'Invalid token',
+        details: errorMessage
+      }), {
         status: 401,
         headers: { 'Content-Type': 'application/json' }
       })

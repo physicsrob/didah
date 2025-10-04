@@ -34,13 +34,16 @@ export async function verifyGoogleToken(token: string, expectedClientId: string)
     const response = await fetch(`https://oauth2.googleapis.com/tokeninfo?id_token=${cleanToken}`)
 
     if (!response.ok) {
-      throw new Error('Token verification failed')
+      const errorText = await response.text()
+      console.error('Google tokeninfo error:', response.status, errorText)
+      throw new Error(`Token verification failed: ${response.status} - ${errorText}`)
     }
 
     const tokenInfo = await response.json() as TokenInfoResponse
 
     // Check for error in response
     if (tokenInfo.error_description) {
+      console.error('Google tokeninfo returned error:', tokenInfo.error_description)
       throw new Error(tokenInfo.error_description)
     }
 
@@ -57,6 +60,10 @@ export async function verifyGoogleToken(token: string, expectedClientId: string)
 
     // Validate audience (must match our client ID)
     if (tokenInfo.aud !== expectedClientId) {
+      console.error('Token audience mismatch:', {
+        expected: expectedClientId,
+        received: tokenInfo.aud
+      })
       throw new Error('Invalid token audience')
     }
 
