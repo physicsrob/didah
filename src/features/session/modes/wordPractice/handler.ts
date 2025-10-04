@@ -150,6 +150,11 @@ export async function handleWordPracticeWord(
       });
       ctx.publish();
 
+      // Check if session was aborted (paused/stopped) before retrying
+      if (signal.aborted) {
+        throw new DOMException('Aborted', 'AbortError');
+      }
+
       // Continue loop to retry (loop will play audio again)
       continue;
     }
