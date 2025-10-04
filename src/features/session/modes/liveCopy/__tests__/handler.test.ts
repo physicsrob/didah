@@ -61,6 +61,9 @@ describe('handleLiveCopyCharacter - integration', () => {
       },
       publish: () => {
         publishCalled = true;
+      },
+      waitIfPaused: async () => {
+        // No-op for tests - pause not tested here
       }
     };
   });

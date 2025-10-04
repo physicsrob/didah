@@ -319,6 +319,7 @@ export function createSessionRunner(deps: SessionRunnerDeps): SessionRunner {
             updateStats,
             updateRemainingTime,
             publish,
+            waitIfPaused: waitForResume,
           };
 
           // Delegate to mode handler

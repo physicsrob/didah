@@ -88,6 +88,9 @@ export async function handleWordPracticeWord(
 
   // Retry loop - keep trying until correct or session ends
   while (!isCorrect) {
+    // Check if paused and wait for resume before starting new trial
+    await ctx.waitIfPaused();
+
     const emissionStart = ctx.clock.now();
     debug.log(`[WordPractice Handler] Starting trial for word '${word}'`);
 
@@ -150,7 +153,7 @@ export async function handleWordPracticeWord(
       });
       ctx.publish();
 
-      // Check if session was aborted (paused/stopped) before retrying
+      // Check if session was stopped before retrying
       if (signal.aborted) {
         throw new DOMException('Aborted', 'AbortError');
       }
