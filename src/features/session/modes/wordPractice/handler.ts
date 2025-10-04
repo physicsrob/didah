@@ -103,7 +103,7 @@ export async function handleWordPracticeWord(
     ctx.io.log({ type: 'emission', at: emissionStart, char: word });
 
     // On first trial: hide buttons during audio playback
-    // On retry (timeout/incorrect): keep buttons visible during replay
+    // On retry (timeout/incorrect): show buttons before and during replay
     if (isFirstTrial) {
       updateWordPracticeState(ctx, {
         currentWord: word,
@@ -115,6 +115,18 @@ export async function handleWordPracticeWord(
       });
       ctx.publish();
       debug.log(`[WordPractice Handler] First trial - buttons hidden during audio`);
+    } else {
+      // Retry - show buttons before playing audio
+      updateWordPracticeState(ctx, {
+        currentWord: word,
+        distractors,
+        buttonWords,
+        isPlaying: false,
+        flashResult: null,
+        clickedWord: null
+      });
+      ctx.publish();
+      debug.log(`[WordPractice Handler] Retry - buttons visible during replay`);
     }
 
     // Play word audio
@@ -122,16 +134,18 @@ export async function handleWordPracticeWord(
     await playWordAudio(word, ctx.io, ctx.clock, config, signal);
     debug.log(`[WordPractice Handler] Audio complete`);
 
-    // Audio complete - show buttons (or keep them shown if replay)
-    debug.log(`[WordPractice Handler] Setting isPlaying=false, buttons visible`);
-    updateWordPracticeState(ctx, {
-      currentWord: word,
-      distractors,
-      buttonWords,
-      isPlaying: false
-    });
-    ctx.publish();
-    debug.log(`[WordPractice Handler] State published with isPlaying=false. Current state:`, ctx.snapshot.wordPracticeState);
+    // Audio complete - show buttons
+    if (isFirstTrial) {
+      debug.log(`[WordPractice Handler] Setting isPlaying=false, buttons now visible`);
+      updateWordPracticeState(ctx, {
+        currentWord: word,
+        distractors,
+        buttonWords,
+        isPlaying: false
+      });
+      ctx.publish();
+      debug.log(`[WordPractice Handler] State published with isPlaying=false. Current state:`, ctx.snapshot.wordPracticeState);
+    }
 
     // Wait for button click (or timeout)
     debug.log(`[WordPractice Handler] Waiting for button click...`);
