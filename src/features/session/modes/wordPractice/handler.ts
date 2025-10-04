@@ -138,7 +138,7 @@ export async function handleWordPracticeWord(
 
     // Handle timeout
     if (outcome.type === 'timeout') {
-      debug.log(`[WordPractice Handler] Timeout - replaying word '${word}'`);
+      debug.log(`[WordPractice Handler] Timeout - will replay word '${word}'`);
 
       // Increment timeout counter
       const currentStats = ctx.snapshot.wordPracticeState!.stats;
@@ -150,18 +150,7 @@ export async function handleWordPracticeWord(
       });
       ctx.publish();
 
-      // Hide buttons and replay audio
-      updateWordPracticeState(ctx, {
-        currentWord: word,
-        distractors: [],
-        buttonWords: [],
-        isPlaying: true
-      });
-      ctx.publish();
-
-      await playWordAudio(word, ctx.io, ctx.clock, config, signal);
-
-      // Continue loop to retry
+      // Continue loop to retry (loop will play audio again)
       continue;
     }
 
