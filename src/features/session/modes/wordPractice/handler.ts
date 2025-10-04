@@ -84,7 +84,12 @@ export async function handleWordPracticeWord(
   // Parse word entry
   const { word, distractors } = parseWordEntry(char);
 
+  // Shuffle button order ONCE for this word (stays same across retries)
+  const buttonWords = shuffleArray([word, ...distractors]);
+  debug.log(`[WordPractice Handler] Shuffled button order:`, buttonWords);
+
   let isCorrect = false;
+  let isFirstTrial = true;
 
   // Retry loop - keep trying until correct or session ends
   while (!isCorrect) {
@@ -92,34 +97,33 @@ export async function handleWordPracticeWord(
     await ctx.waitIfPaused();
 
     const emissionStart = ctx.clock.now();
-    debug.log(`[WordPractice Handler] Starting trial for word '${word}'`);
+    debug.log(`[WordPractice Handler] Starting trial for word '${word}' (first: ${isFirstTrial})`);
 
     // Log emission event (for statistics)
     ctx.io.log({ type: 'emission', at: emissionStart, char: word });
 
-    // Shuffle button order ONCE per trial (not on every render)
-    const buttonWords = shuffleArray([word, ...distractors]);
-    debug.log(`[WordPractice Handler] Shuffled button order:`, buttonWords);
-
-    // Set state to playing (buttons hidden)
-    updateWordPracticeState(ctx, {
-      currentWord: word,
-      distractors,
-      buttonWords,  // Store shuffled order
-      isPlaying: true,
-      flashResult: null,
-      clickedWord: null
-    });
-    ctx.publish();
-    debug.log(`[WordPractice Handler] State set to playing, buttons hidden`);
+    // On first trial: hide buttons during audio playback
+    // On retry (timeout/incorrect): keep buttons visible during replay
+    if (isFirstTrial) {
+      updateWordPracticeState(ctx, {
+        currentWord: word,
+        distractors,
+        buttonWords,
+        isPlaying: true,
+        flashResult: null,
+        clickedWord: null
+      });
+      ctx.publish();
+      debug.log(`[WordPractice Handler] First trial - buttons hidden during audio`);
+    }
 
     // Play word audio
     debug.log(`[WordPractice Handler] Playing audio for '${word}'`);
     await playWordAudio(word, ctx.io, ctx.clock, config, signal);
     debug.log(`[WordPractice Handler] Audio complete`);
 
-    // Audio complete - show buttons
-    debug.log(`[WordPractice Handler] Setting isPlaying=false, buttons should appear`);
+    // Audio complete - show buttons (or keep them shown if replay)
+    debug.log(`[WordPractice Handler] Setting isPlaying=false, buttons visible`);
     updateWordPracticeState(ctx, {
       currentWord: word,
       distractors,
@@ -152,6 +156,9 @@ export async function handleWordPracticeWord(
         }
       });
       ctx.publish();
+
+      // Mark that we've completed the first trial
+      isFirstTrial = false;
 
       // Check if session was stopped before retrying
       if (signal.aborted) {
@@ -224,6 +231,9 @@ export async function handleWordPracticeWord(
     });
     ctx.publish();
     debug.log(`[WordPractice Handler] Flash cleared, isCorrect: ${isCorrect}`);
+
+    // Mark that we've completed the first trial
+    isFirstTrial = false;
 
     // If incorrect, loop will replay the word
     // If correct, loop will exit
