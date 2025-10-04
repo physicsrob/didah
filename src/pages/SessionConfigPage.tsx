@@ -325,8 +325,10 @@ export function SessionConfigPage() {
 
     const { feedback, replay } = getFeedbackConfig();
 
-    // Find the source name from availableSources
-    const sourceName = availableSources.find(s => s.id === selectedSourceId)?.name || 'Unknown';
+    // Find the source name from the appropriate sources array based on mode
+    const sourceName = mode === 'word-practice'
+      ? availableWordSources.find(s => s.id === selectedSourceId)?.name || 'Unknown'
+      : availableSources.find(s => s.id === selectedSourceId)?.name || 'Unknown';
 
     const config: SessionConfig = {
       mode,
