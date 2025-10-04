@@ -38,8 +38,11 @@
 }
 
 .mode-carousel-container {
-  overflow: hidden;
+  overflow-x: hidden;
+  overflow-y: visible;
   width: 100%;
+  padding: 12px 0;
+  margin: -12px 0;
 }
 
 .mode-carousel-track {
