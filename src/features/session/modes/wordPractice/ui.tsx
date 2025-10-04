@@ -38,7 +38,7 @@ export function WordPracticeDisplay({ snapshot }: { snapshot: SessionSnapshot })
             word={word}
             flashResult={flashResult ?? null}
             clickedWord={clickedWord ?? null}
-            disabled={flashResult !== null && flashResult !== undefined}
+            disabled={false}
           />
         ))}
       </div>
