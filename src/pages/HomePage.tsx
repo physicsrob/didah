@@ -4,8 +4,36 @@ import { useAudio } from '../hooks/useAudio'
 import { useAuth } from '../hooks/useAuth'
 import GoogleSignInButton from '../components/GoogleSignInButton'
 import { UserDropdown } from '../components/UserDropdown'
+import { ModeCarousel } from '../components/ModeCarousel'
 import '../styles/main.css'
 import '../styles/homePage.css'
+
+const MODES = [
+  {
+    mode: 'practice' as SessionMode,
+    icon: '⌨️',
+    title: 'Practice',
+    description: 'Interactive training where you type what you hear. Control your own pacing and get immediate feedback on errors.'
+  },
+  {
+    mode: 'listen' as SessionMode,
+    icon: '🎧',
+    title: 'Listen',
+    description: 'Passive learning where characters are revealed after playing. Perfect for familiarizing yourself with patterns.'
+  },
+  {
+    mode: 'live-copy' as SessionMode,
+    icon: '⚡',
+    title: 'Live Copy',
+    description: 'Real-time copying like actual CW. Characters stream continuously with no feedback until the session ends.'
+  },
+  {
+    mode: 'word-practice' as SessionMode,
+    icon: '📝',
+    title: 'Word Practice',
+    description: 'Multiple choice word recognition. Select the correct word from 3 options to build whole-word fluency.'
+  }
+];
 
 export default function HomePage() {
   const navigate = useNavigate()
@@ -61,49 +89,8 @@ export default function HomePage() {
         )}
 
         <div className="flex flex-col gap-8 items-center">
-          {/* Mode selection cards */}
-          <div className="mode-cards-container">
-            <div
-              className="mode-card"
-              onClick={() => handleModeSelect('practice')}
-            >
-              <div className="mode-card-icon">⌨️</div>
-              <div className="mode-card-title">Practice</div>
-              <div className="mode-card-description">
-                Interactive training where you type what you hear. Control your own pacing and get immediate feedback on errors.
-              </div>
-            </div>
-            <div
-              className="mode-card"
-              onClick={() => handleModeSelect('listen')}
-            >
-              <div className="mode-card-icon">🎧</div>
-              <div className="mode-card-title">Listen</div>
-              <div className="mode-card-description">
-                Passive learning where characters are revealed after playing. Perfect for familiarizing yourself with patterns.
-              </div>
-            </div>
-            <div
-              className="mode-card"
-              onClick={() => handleModeSelect('live-copy')}
-            >
-              <div className="mode-card-icon">⚡</div>
-              <div className="mode-card-title">Live Copy</div>
-              <div className="mode-card-description">
-                Real-time copying like actual CW. Characters stream continuously with no feedback until the session ends.
-              </div>
-            </div>
-            <div
-              className="mode-card"
-              onClick={() => handleModeSelect('word-practice')}
-            >
-              <div className="mode-card-icon">📝</div>
-              <div className="mode-card-title">Word Practice</div>
-              <div className="mode-card-description">
-                Multiple choice word recognition. Select the correct word from 3 options to build whole-word fluency.
-              </div>
-            </div>
-          </div>
+          {/* Mode selection carousel */}
+          <ModeCarousel modes={MODES} onModeSelect={handleModeSelect} />
 
           {/* Utility buttons */}
           <div className="flex gap-5 w-full">
