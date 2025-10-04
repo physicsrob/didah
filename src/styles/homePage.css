@@ -175,58 +175,32 @@
   transform: scale(1.3);
 }
 
-/* Responsive - adjust for mobile */
-@media (max-width: 768px) {
+/* Responsive - disable carousel on smaller screens */
+@media (max-width: 1024px) {
+  /* Hide carousel controls */
+  .carousel-arrow,
+  .carousel-indicators {
+    display: none;
+  }
+
+  /* Reset carousel to show all cards */
+  .mode-carousel-container {
+    overflow: visible;
+  }
+
+  .mode-carousel-track {
+    transform: none !important;
+    flex-wrap: wrap;
+    gap: 16px;
+  }
+
   .mode-carousel-track .mode-card {
-    flex: 0 0 100%;
-  }
-
-  .carousel-arrow {
-    width: 40px;
-    height: 40px;
-    font-size: 28px;
-  }
-
-  .carousel-arrow-left {
-    left: -8px;
-  }
-
-  .carousel-arrow-right {
-    right: -8px;
+    flex: 0 0 calc(50% - 8px);
   }
 }
 
-/* For very small screens, move arrows below carousel */
-@media (max-width: 480px) {
-  .carousel-arrow {
-    position: static;
-    transform: none;
-  }
-
-  .carousel-arrow:hover:not(:disabled) {
-    transform: scale(1.1);
-  }
-
-  .carousel-arrow:active:not(:disabled) {
-    transform: scale(1.05);
-  }
-
-  .mode-carousel-wrapper {
-    padding-bottom: 60px;
-  }
-
-  .carousel-arrow-left,
-  .carousel-arrow-right {
-    position: absolute;
-    bottom: 0;
-    top: auto;
-  }
-
-  .carousel-arrow-left {
-    left: calc(50% - 60px);
-  }
-
-  .carousel-arrow-right {
-    right: calc(50% - 60px);
+@media (max-width: 768px) {
+  .mode-carousel-track .mode-card {
+    flex: 0 0 100%;
   }
 }
