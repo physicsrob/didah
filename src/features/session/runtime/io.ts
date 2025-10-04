@@ -46,6 +46,7 @@ export interface WordPracticeState {
   stats: {
     attempts: number;
     successes: number;
+    timeouts: number;
     accuracy: number; // percentage
   };
 }

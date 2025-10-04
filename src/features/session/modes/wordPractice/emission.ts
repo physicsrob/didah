@@ -11,6 +11,16 @@ import type { InputBus, KeyEvent } from '../../runtime/inputBus';
 import type { Clock } from '../../runtime/clock';
 import { calculateFarnsworthSpacingMs } from '../../../../core/morse/timing';
 import { debug } from '../../../../core/debug';
+import { select, clockTimeout } from '../../runtime/select';
+
+/**
+ * Button timeout: 1.5 seconds to click a button
+ */
+const BUTTON_TIMEOUT_MS = 1500;
+
+export type WordClickOutcome =
+  | { type: 'click'; clickedWord: string; isCorrect: boolean }
+  | { type: 'timeout' };
 
 /**
  * Play a word character by character with Farnsworth timing
@@ -40,31 +50,44 @@ async function playWord(
 }
 
 /**
- * Wait for button click and return outcome
+ * Wait for button click and return outcome (click or timeout)
  */
 async function waitForClick(
   word: string,
   distractors: string[],
   input: InputBus,
+  clock: Clock,
   signal: AbortSignal
-): Promise<{ clickedWord: string; isCorrect: boolean }> {
+): Promise<WordClickOutcome> {
   // Create all possible button words (correct + distractors)
   const allWords = [word, ...distractors];
 
-  // Wait for button click (sent as InputBus event with key = clicked word)
-  const clickEvent = await input.takeUntil(
-    (e: KeyEvent) => {
-      // Accept any of the valid button words
-      return allWords.includes(e.key);
+  // Race: button click vs timeout
+  const result = await select<WordClickOutcome>([
+    // Arm 0: Wait for button click
+    {
+      run: async (armSignal) => {
+        const clickEvent = await input.takeUntil(
+          (e: KeyEvent) => allWords.includes(e.key),
+          armSignal
+        );
+        const clickedWord = clickEvent.key;
+        debug.log(`[WordPractice Input] Button clicked: '${clickedWord}'`);
+        const isCorrect = clickedWord === word;
+        return { type: 'click', clickedWord, isCorrect } as const;
+      }
     },
-    signal
-  );
+    // Arm 1: Timeout after 1.5s
+    clockTimeout(clock, BUTTON_TIMEOUT_MS, { type: 'timeout' } as const)
+  ], signal);
 
-  const clickedWord = clickEvent.key;
-  debug.log(`[WordPractice Input] Button clicked: '${clickedWord}'`);
+  const outcome = result.value;
 
-  const isCorrect = clickedWord === word;
-  return { clickedWord, isCorrect };
+  if (outcome.type === 'timeout') {
+    debug.log(`[WordPractice Input] Timeout at ${clock.now()}ms for '${word}'`);
+  }
+
+  return outcome;
 }
 
 /**
@@ -87,7 +110,8 @@ export async function waitForWordClick(
   word: string,
   distractors: string[],
   input: InputBus,
+  clock: Clock,
   signal: AbortSignal
-): Promise<{ clickedWord: string; isCorrect: boolean }> {
-  return waitForClick(word, distractors, input, signal);
+): Promise<WordClickOutcome> {
+  return waitForClick(word, distractors, input, clock, signal);
 }

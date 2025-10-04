@@ -194,6 +194,7 @@ export function createSessionRunner(deps: SessionRunnerDeps): SessionRunner {
         stats: {
           attempts: 0,
           successes: 0,
+          timeouts: 0,
           accuracy: 0
         }
       } : undefined

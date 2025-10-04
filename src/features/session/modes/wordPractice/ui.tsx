@@ -14,16 +14,25 @@ import './wordPractice.css';
 
 /**
  * Display component for Word Practice mode
- * Shows 3 buttons with word choices (pre-shuffled by handler)
+ * Shows 3 buttons with word choices (pre-shuffled by handler) and stats
  */
 export function WordPracticeDisplay({ snapshot }: { snapshot: SessionSnapshot }) {
   const state = snapshot.wordPracticeState;
 
-  const { buttonWords, flashResult, clickedWord } = state || {};
+  const { buttonWords, flashResult, clickedWord, stats } = state || {};
 
   // Show nothing while playing or if no current word
   if (!state || state.isPlaying || !state.currentWord) {
-    return <div className="word-practice-display"></div>;
+    return (
+      <div className="word-practice-display">
+        {stats && (
+          <div className="word-practice-stats">
+            Accuracy: {stats.accuracy.toFixed(0)}% ({stats.successes}/{stats.attempts})
+            {stats.timeouts > 0 && <span> • Timeouts: {stats.timeouts}</span>}
+          </div>
+        )}
+      </div>
+    );
   }
 
   // Use pre-shuffled button order from state (shuffled once in handler, stable across renders)
@@ -42,6 +51,12 @@ export function WordPracticeDisplay({ snapshot }: { snapshot: SessionSnapshot })
           />
         ))}
       </div>
+      {stats && (
+        <div className="word-practice-stats">
+          Accuracy: {stats.accuracy.toFixed(0)}% ({stats.successes}/{stats.attempts})
+          {stats.timeouts > 0 && <span> • Timeouts: {stats.timeouts}</span>}
+        </div>
+      )}
     </div>
   );
 }

@@ -126,14 +126,47 @@ export async function handleWordPracticeWord(
     ctx.publish();
     debug.log(`[WordPractice Handler] State published with isPlaying=false. Current state:`, ctx.snapshot.wordPracticeState);
 
-    // Wait for button click
+    // Wait for button click (or timeout)
     debug.log(`[WordPractice Handler] Waiting for button click...`);
-    const { clickedWord, isCorrect: correct } = await waitForWordClick(
+    const outcome = await waitForWordClick(
       word,
       distractors,
       ctx.input,
+      ctx.clock,
       signal
     );
+
+    // Handle timeout
+    if (outcome.type === 'timeout') {
+      debug.log(`[WordPractice Handler] Timeout - replaying word '${word}'`);
+
+      // Increment timeout counter
+      const currentStats = ctx.snapshot.wordPracticeState!.stats;
+      updateWordPracticeState(ctx, {
+        stats: {
+          ...currentStats,
+          timeouts: currentStats.timeouts + 1
+        }
+      });
+      ctx.publish();
+
+      // Hide buttons and replay audio
+      updateWordPracticeState(ctx, {
+        currentWord: word,
+        distractors: [],
+        buttonWords: [],
+        isPlaying: true
+      });
+      ctx.publish();
+
+      await playWordAudio(word, ctx.io, ctx.clock, config, signal);
+
+      // Continue loop to retry
+      continue;
+    }
+
+    // Handle button click
+    const { clickedWord, isCorrect: correct } = outcome;
     debug.log(`[WordPractice Handler] Button clicked: '${clickedWord}', correct: ${correct}`);
 
     isCorrect = correct;
@@ -174,6 +207,7 @@ export async function handleWordPracticeWord(
       stats: {
         attempts: newAttempts,
         successes: newSuccesses,
+        timeouts: currentStats.timeouts,
         accuracy: newAccuracy
       }
     });
