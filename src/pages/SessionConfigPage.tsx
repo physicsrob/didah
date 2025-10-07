@@ -14,7 +14,7 @@ import '../styles/components.css';
 
 // Type guard for validating SessionMode
 function isValidSessionMode(value: unknown): value is SessionMode {
-  return value === 'practice' || value === 'listen' || value === 'live-copy' || value === 'word-practice';
+  return value === 'practice' || value === 'listen' || value === 'live-copy' || value === 'word-practice' || value === 'runner';
 }
 
 export function SessionConfigPage() {
@@ -45,6 +45,10 @@ export function SessionConfigPage() {
     'word-practice': {
       title: 'Word Practice Mode',
       description: 'Multiple choice word recognition - select the word you hear from 3 options. Build whole-word fluency!'
+    },
+    'runner': {
+      title: 'Morse Runner',
+      description: 'Endless runner mini-game - type letters to jump over obstacles! Progress through 10 levels with increasing speed and difficulty.'
     }
   };
 
@@ -332,7 +336,7 @@ export function SessionConfigPage() {
 
     const config: SessionConfig = {
       mode,
-      lengthMs: duration * 60 * 1000,
+      lengthMs: mode === 'runner' ? Number.MAX_SAFE_INTEGER : duration * 60 * 1000,
       wpm,
       farnsworthWpm,
       speedTier,
@@ -446,38 +450,40 @@ export function SessionConfigPage() {
             </div>
           )}
 
-          {/* Duration */}
-          <div className="settings-row">
-            <div className="settings-label">Duration</div>
-            <div className="settings-control">
-              <input
-                type="range"
-                min="1"
-                max="5"
-                step="1"
-                value={duration}
-                onChange={(e) => setDuration(Number(e.target.value) as 1 | 2 | 5)}
-                style={{
-                  flex: 1,
-                  height: '4px',
-                  background: 'rgba(255, 255, 255, 0.2)',
-                  borderRadius: '2px',
-                  outline: 'none',
-                  WebkitAppearance: 'none',
-                  appearance: 'none'
-                }}
-              />
-              <span style={{
-                color: '#4dabf7',
-                fontSize: '16px',
-                fontWeight: '500',
-                minWidth: '60px',
-                textAlign: 'right'
-              }}>
-                {duration} min
-              </span>
+          {/* Duration - hidden for runner mode (endless practice) */}
+          {mode !== 'runner' && (
+            <div className="settings-row">
+              <div className="settings-label">Duration</div>
+              <div className="settings-control">
+                <input
+                  type="range"
+                  min="1"
+                  max="5"
+                  step="1"
+                  value={duration}
+                  onChange={(e) => setDuration(Number(e.target.value) as 1 | 2 | 5)}
+                  style={{
+                    flex: 1,
+                    height: '4px',
+                    background: 'rgba(255, 255, 255, 0.2)',
+                    borderRadius: '2px',
+                    outline: 'none',
+                    WebkitAppearance: 'none',
+                    appearance: 'none'
+                  }}
+                />
+                <span style={{
+                  color: '#4dabf7',
+                  fontSize: '16px',
+                  fontWeight: '500',
+                  minWidth: '60px',
+                  textAlign: 'right'
+                }}>
+                  {duration} min
+                </span>
+              </div>
             </div>
-          </div>
+          )}
 
           {/* Character Speed */}
           <div className="settings-row">

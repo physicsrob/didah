@@ -333,7 +333,9 @@ export function ActiveSessionPage() {
               <div className="info-source">{getSourceDisplay()}</div>
             </div>
           </div>
-          <div className="timer">{formatTime(snapshot.remainingMs)}</div>
+          {config.mode !== 'runner' && (
+            <div className="timer">{formatTime(snapshot.remainingMs)}</div>
+          )}
         </div>
       )}
 

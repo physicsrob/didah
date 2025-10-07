@@ -32,6 +32,12 @@ const MODES = [
     icon: '📝',
     title: 'Word Practice',
     description: 'Multiple choice word recognition. Select the correct word from 3 options to build whole-word fluency.'
+  },
+  {
+    mode: 'runner' as SessionMode,
+    icon: '🏃',
+    title: 'Morse Runner',
+    description: 'Endless runner mini-game! Type letters to jump over obstacles. Progress through 10 levels with increasing speed.'
   }
 ];
 

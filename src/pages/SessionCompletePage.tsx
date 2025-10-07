@@ -180,7 +180,8 @@ export function SessionCompletePage() {
                         'practice': 'Active Practice',
                         'listen': 'Passive Listening',
                         'live-copy': 'Live Copy',
-                        'word-practice': 'Word Practice'
+                        'word-practice': 'Word Practice',
+                        'runner': 'Morse Runner'
                       };
                       return modeNames[fullStatistics.config.mode] || fullStatistics.config.mode;
                     })()}
