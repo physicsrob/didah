@@ -16,6 +16,7 @@ export type SessionConfig = {
   replay: boolean;
   effectiveAlphabet: string[]; // based on toggles
   extraWordSpacing: number; // Extra space characters to add between words (0-5, for listen/live-copy only)
+  startingLevel?: number; // Starting level for runner mode (1-10)
 };
 
 export type OutcomeEvent =

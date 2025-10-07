@@ -79,7 +79,7 @@ function resizeCanvas(canvas: HTMLCanvasElement): void {
 // eslint-disable-next-line react-refresh/only-export-components
 export function useRunnerInput(context: UIContext): void {
   const gameRef = useRef<Game | null>(null);
-  const { input, sessionPhase, isPaused, onPause } = context;
+  const { input, sessionPhase, isPaused, onPause, snapshot } = context;
 
   // Game initialization effect
   useEffect(() => {
@@ -109,7 +109,13 @@ export function useRunnerInput(context: UIContext): void {
     // Register globally so handler can access it
     registerRunnerGame(game);
 
-    game.start().catch((error) => {
+    game.start().then(() => {
+      // Set starting level if specified in config
+      const startingLevel = snapshot.runnerState?.startingLevel;
+      if (startingLevel && startingLevel > 1) {
+        game.getEngine().advanceToLevel(startingLevel);
+      }
+    }).catch((error) => {
       console.error('Failed to start runner game:', error);
     });
 
@@ -128,7 +134,7 @@ export function useRunnerInput(context: UIContext): void {
         gameRef.current = null;
       }
     };
-  }, [sessionPhase]);
+  }, [sessionPhase, snapshot.runnerState?.startingLevel]);
 
   // Keyboard input effect
   useEffect(() => {

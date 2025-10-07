@@ -90,7 +90,8 @@ export async function handleRunnerCharacter(
     }
 
     // User pressed SPACE - reset game and continue
-    engine.reset();
+    const startingLevel = ctx.snapshot.runnerState?.startingLevel || 1;
+    engine.reset(startingLevel);
     // Continue to next character (downtime will happen below)
   } else {
     // Successfully cleared obstacle - increment count and check level progression
@@ -117,7 +118,8 @@ export async function handleRunnerCharacter(
         }
 
         // User pressed SPACE - reset and start over
-        engine.reset();
+        const startingLevel = ctx.snapshot.runnerState?.startingLevel || 1;
+        engine.reset(startingLevel);
       } else {
         // Advance to next level
         engine.advanceToLevel(currentLevel + 1);

@@ -64,6 +64,7 @@ export function SessionConfigPage() {
   const [wpm, setWpm] = useState(15);
   const [farnsworthWpm, setFarnsworthWpm] = useState(10);
   const [extraWordSpacing, setExtraWordSpacing] = useState(0);
+  const [startingLevel, setStartingLevel] = useState<number>(1);
 
   // Computed: current source ID based on mode
   const selectedSourceId = validatedMode === 'word-practice' ? selectedWordSourceId : selectedTextSourceId;
@@ -346,6 +347,7 @@ export function SessionConfigPage() {
       replay,
       effectiveAlphabet: buildAlphabet(),
       extraWordSpacing,
+      ...(mode === 'runner' && { startingLevel }),
     };
 
     // Fetch fresh content for each new session (except random_letters which is generated locally)
@@ -485,44 +487,80 @@ export function SessionConfigPage() {
             </div>
           )}
 
-          {/* Character Speed */}
-          <div className="settings-row">
-            <div className="settings-label">Character Speed</div>
-            <div className="settings-control">
-              <input
-                type="range"
-                min="5"
-                max="40"
-                value={wpm}
-                onChange={(e) => {
-                  const newWpm = Number(e.target.value);
-                  setWpm(newWpm);
-                  // If Farnsworth WPM is greater than character WPM, cap it
-                  if (farnsworthWpm > newWpm) {
-                    setFarnsworthWpm(newWpm);
-                  }
-                }}
-                style={{
-                  flex: 1,
-                  height: '4px',
-                  background: 'rgba(255, 255, 255, 0.2)',
-                  borderRadius: '2px',
-                  outline: 'none',
-                  WebkitAppearance: 'none',
-                  appearance: 'none'
-                }}
-              />
-              <span style={{
-                color: '#4dabf7',
-                fontSize: '16px',
-                fontWeight: '500',
-                minWidth: '80px',
-                textAlign: 'right'
-              }}>
-                {wpm} WPM
-              </span>
+          {/* Character Speed - hidden for runner mode (uses level-based WPM) */}
+          {mode !== 'runner' && (
+            <div className="settings-row">
+              <div className="settings-label">Character Speed</div>
+              <div className="settings-control">
+                <input
+                  type="range"
+                  min="5"
+                  max="40"
+                  value={wpm}
+                  onChange={(e) => {
+                    const newWpm = Number(e.target.value);
+                    setWpm(newWpm);
+                    // If Farnsworth WPM is greater than character WPM, cap it
+                    if (farnsworthWpm > newWpm) {
+                      setFarnsworthWpm(newWpm);
+                    }
+                  }}
+                  style={{
+                    flex: 1,
+                    height: '4px',
+                    background: 'rgba(255, 255, 255, 0.2)',
+                    borderRadius: '2px',
+                    outline: 'none',
+                    WebkitAppearance: 'none',
+                    appearance: 'none'
+                  }}
+                />
+                <span style={{
+                  color: '#4dabf7',
+                  fontSize: '16px',
+                  fontWeight: '500',
+                  minWidth: '80px',
+                  textAlign: 'right'
+                }}>
+                  {wpm} WPM
+                </span>
+              </div>
             </div>
-          </div>
+          )}
+
+          {/* Starting Level - only for runner mode */}
+          {mode === 'runner' && (
+            <div className="settings-row">
+              <div className="settings-label">Starting Level</div>
+              <div className="settings-control">
+                <input
+                  type="range"
+                  min="1"
+                  max="10"
+                  value={startingLevel}
+                  onChange={(e) => setStartingLevel(Number(e.target.value))}
+                  style={{
+                    flex: 1,
+                    height: '4px',
+                    background: 'rgba(255, 255, 255, 0.2)',
+                    borderRadius: '2px',
+                    outline: 'none',
+                    WebkitAppearance: 'none',
+                    appearance: 'none'
+                  }}
+                />
+                <span style={{
+                  color: '#4dabf7',
+                  fontSize: '16px',
+                  fontWeight: '500',
+                  minWidth: '80px',
+                  textAlign: 'right'
+                }}>
+                  Level {startingLevel}
+                </span>
+              </div>
+            </div>
+          )}
 
           {/* Farnsworth Speed - Only show for listen, live-copy, and word-practice modes */}
           {(mode === 'listen' || mode === 'live-copy' || mode === 'word-practice') && (

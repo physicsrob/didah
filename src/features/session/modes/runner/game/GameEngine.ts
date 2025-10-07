@@ -393,9 +393,11 @@ export class GameEngine {
 
   /**
    * Resets the game to initial state.
+   * @param startingLevel - Optional starting level (1-10), defaults to 1
    */
-  reset(): void {
-    this.config = LEVEL_CONFIGS[0]; // Reset to level 1
+  reset(startingLevel: number = 1): void {
+    const level = Math.max(1, Math.min(10, startingLevel)); // Clamp to 1-10
+    this.config = LEVEL_CONFIGS[level - 1]; // Array is 0-indexed
     this.state = {
       character: {
         y: GROUND_Y,
@@ -408,7 +410,7 @@ export class GameEngine {
       scrollOffset: 0,
       currentTime: 0,
       isGameOver: false,
-      currentLevel: 1,
+      currentLevel: level,
       charactersCleared: 0,
       isGameComplete: false,
       failedCharacter: null
