@@ -1,5 +1,4 @@
 import { useState, useEffect, useCallback } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
 import type { SessionConfig, SessionMode, SpeedTier } from '../core/types/domain';
 import type { FeedbackMode } from '../features/settings/store/types';
 import { fetchSources, fetchSourceContent, fetchWordSources, fetchWordSourceContent } from '../features/sources';
@@ -12,21 +11,12 @@ import '../styles/main.css';
 import '../styles/sessionConfig.css';
 import '../styles/components.css';
 
-// Type guard for validating SessionMode
-function isValidSessionMode(value: unknown): value is SessionMode {
-  return value === 'practice' || value === 'listen' || value === 'live-copy' || value === 'word-practice' || value === 'runner';
-}
+type SessionConfigPageProps = {
+  mode: SessionMode;
+  onStart: (config: SessionConfig, sourceContent: SourceContent) => void;
+};
 
-export function SessionConfigPage() {
-  const navigate = useNavigate();
-  const location = useLocation();
-
-  // Validate and extract mode from navigation state
-  const navigationState = location.state as { mode?: unknown } | null;
-  const validatedMode: SessionMode | null =
-    navigationState && isValidSessionMode(navigationState.mode)
-      ? navigationState.mode
-      : null;
+export function SessionConfigPage({ mode, onStart }: SessionConfigPageProps) {
 
   // Mode-specific configuration
   const modeConfig = {
@@ -67,7 +57,7 @@ export function SessionConfigPage() {
   const [startingLevel, setStartingLevel] = useState<number>(1);
 
   // Computed: current source ID based on mode
-  const selectedSourceId = validatedMode === 'word-practice' ? selectedWordSourceId : selectedTextSourceId;
+  const selectedSourceId = mode === 'word-practice' ? selectedWordSourceId : selectedTextSourceId;
 
   // Text source state
   const [availableSources, setAvailableSources] = useState<ApiTextSource[]>([]);
@@ -118,7 +108,7 @@ export function SessionConfigPage() {
     options: { setError?: boolean } = {}
   ): Promise<SourceContent | null> => {
     // Word sources (for word-practice mode)
-    if (validatedMode === 'word-practice') {
+    if (mode === 'word-practice') {
       const wordSource = availableWordSources.find(s => s.id === sourceId);
       if (!wordSource) {
         console.error(`Word source not found: ${sourceId}`);
@@ -169,14 +159,7 @@ export function SessionConfigPage() {
       }
       return null;
     }
-  }, [availableSources, availableWordSources, validatedMode, buildAlphabet]);
-
-  // Redirect to home if mode is invalid (no valid navigation state)
-  useEffect(() => {
-    if (validatedMode === null) {
-      navigate('/');
-    }
-  }, [validatedMode, navigate]);
+  }, [availableSources, availableWordSources, mode, buildAlphabet]);
 
   // Load settings into local state when they become available
   useEffect(() => {
@@ -220,7 +203,7 @@ export function SessionConfigPage() {
 
   // Fetch available word sources when in word-practice mode
   useEffect(() => {
-    if (validatedMode !== 'word-practice') return;
+    if (mode !== 'word-practice') return;
 
     setWordSourcesLoading(true);
     fetchWordSources()
@@ -240,19 +223,19 @@ export function SessionConfigPage() {
         setWordSourcesLoading(false);
       });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [validatedMode]); // Only run when mode changes, not when selectedWordSourceId changes
+  }, [mode]); // Only run when mode changes, not when selectedWordSourceId changes
 
   // Fetch content when selectedSourceId changes or on mount
   useEffect(() => {
     if (!selectedSourceId) return;
 
     // For word-practice mode, wait until word sources are loaded
-    if (validatedMode === 'word-practice' && wordSourcesLoading) {
+    if (mode === 'word-practice' && wordSourcesLoading) {
       return;
     }
 
     // For other modes, wait until text sources are loaded
-    if (validatedMode !== 'word-practice' && sourcesLoading) {
+    if (mode !== 'word-practice' && sourcesLoading) {
       return;
     }
 
@@ -262,7 +245,7 @@ export function SessionConfigPage() {
       .then(content => {
         setSourceContent(content);
       });
-  }, [selectedSourceId, loadSourceContent, validatedMode, wordSourcesLoading, sourcesLoading]);
+  }, [selectedSourceId, loadSourceContent, mode, wordSourcesLoading, sourcesLoading]);
 
   // Save settings to centralized store when they change
   useEffect(() => {
@@ -318,7 +301,7 @@ export function SessionConfigPage() {
   // Handle source selection
   const handleSourceChange = async (sourceId: string) => {
     // Update appropriate source state based on mode
-    if (validatedMode === 'word-practice') {
+    if (mode === 'word-practice') {
       setSelectedWordSourceId(sourceId);
     } else {
       setSelectedTextSourceId(sourceId);
@@ -361,17 +344,11 @@ export function SessionConfigPage() {
     // Fetch fresh content for each new session (except random_letters which is generated locally)
     const freshContent = await loadSourceContent(selectedSourceId, { setError: false }) || sourceContent;
 
-    // Navigate to session with config and fresh content
-    navigate('/session', { state: { config, sourceContent: freshContent } });
+    // Call onStart callback with config and fresh content
+    if (freshContent) {
+      onStart(config, freshContent);
+    }
   };
-
-  // Redirect if mode is invalid (will happen via useEffect)
-  if (validatedMode === null) {
-    return null;
-  }
-
-  // After validation, mode is guaranteed to be non-null
-  const mode: SessionMode = validatedMode;
 
   // Show loading state while settings are loading
   if (settingsLoading || !settings) {

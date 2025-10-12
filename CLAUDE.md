@@ -31,10 +31,10 @@ npm run deploy      # Deploy to Cloudflare Pages
 ## Architecture
 - **Core Domain**: `src/core/` - Timing engine, alphabet, types
 - **Runtime System**: `src/features/session/runtime/` - Session orchestration
+- **Modes**: `src/features/session/modes/` - Mode implementations (Practice, Listen, Live Copy, Word Practice, Runner)
 - **Services**: `src/features/session/services/` - Audio, feedback
 - **Pages**: `src/pages/` - React components
 - **API Functions**: `functions/api/` - Cloudflare Pages Functions
-- **Live Copy**: `src/features/session/livecopy/` - Live Copy mode evaluation
 
 ## Styling Approach
 
@@ -52,10 +52,14 @@ npm run deploy      # Deploy to Cloudflare Pages
 - `src/core/morse/timing.ts` - Morse timing calculations (WPM → dit length)
 - `src/core/morse/alphabet.ts` - Character to Morse pattern mappings
 - `src/features/session/runtime/sessionProgram.ts` - Main session orchestrator
-- `src/features/session/runtime/charPrograms.ts` - Practice/Listen/Live Copy mode logic
-- `src/features/session/livecopy/evaluator.ts` - Live Copy evaluation engine
-- `src/pages/ActiveSessionPage.tsx` - Session UI (all modes)
+- `src/features/session/modes/shared/registry.ts` - Mode registry and type-safe mode system
+- `src/features/session/modes/practice/` - Practice mode implementation
+- `src/features/session/modes/listen/` - Listen mode implementation
+- `src/features/session/modes/liveCopy/` - Live Copy mode (evaluation logic not yet implemented)
+- `src/pages/SessionPage.tsx` - Session container managing config → active → complete phases
+- `src/pages/ActiveSessionPage.tsx` - Active session UI (all modes)
 - `src/pages/SessionConfigPage.tsx` - Session configuration UI
+- `src/pages/SessionCompletePage.tsx` - Session results display
 
 # Import Context
 @spec.md
@@ -64,6 +68,7 @@ npm run deploy      # Deploy to Cloudflare Pages
 # Instructions for AI Assistants
 
 When working on this project:
+- **Dev server is likely already running** - The user probably has `npm run dev` running in another terminal. Check before starting it.
 - **Run tests** after implementing core logic (`npm test`)
 - **Run quality checks** before committing (`npm run check`)
 - **Deploy with** `npm run deploy` to push changes to production
