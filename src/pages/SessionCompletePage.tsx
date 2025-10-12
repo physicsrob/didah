@@ -5,22 +5,22 @@
  */
 
 import { useEffect } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import type { SessionStatisticsWithMaps } from '../core/types/statistics';
 import { useStatsAPI } from '../features/statistics/useStatsAPI';
 import { debug } from '../core/debug';
 import '../styles/main.css';
 import '../styles/sessionComplete.css';
 
-export function SessionCompletePage() {
+type SessionCompletePageProps = {
+  statistics: SessionStatisticsWithMaps;
+  onRestart: () => void;
+};
+
+export function SessionCompletePage({ statistics: fullStatistics, onRestart }: SessionCompletePageProps) {
   const navigate = useNavigate();
-  const location = useLocation();
   const { saveSessionStats, isAuthenticated } = useStatsAPI();
 
-  // Get session data from navigation state
-  const fullStatistics = location.state?.fullStatistics as SessionStatisticsWithMaps | undefined;
-  const liveCopyTyped = location.state?.liveCopyTyped as string | null;
-  const liveCopyTransmitted = location.state?.liveCopyTransmitted as string[] | null;
 
   // Save statistics when the component mounts (before early return to satisfy React hooks rules)
   useEffect(() => {
@@ -42,25 +42,7 @@ export function SessionCompletePage() {
     navigate('/');
   };
 
-  // Handle missing data - validate early before using any values
-  if (!fullStatistics) {
-    return (
-      <div className="completion-wrapper">
-        <div className="completion-container">
-          <div className="content-area">
-          <div className="error-message">
-            <h2>Session data not found</h2>
-            <button className="btn btn-primary" onClick={handleBackToMenu}>
-              Back to Menu
-            </button>
-          </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  // Extract values from fullStatistics (safe now since we've validated it exists)
+  // Extract values from fullStatistics
   const accuracy = fullStatistics.overallAccuracy;
   const totalChars = fullStatistics.totalCharacters;
   const sourceName = fullStatistics.config.sourceName;
@@ -70,9 +52,9 @@ export function SessionCompletePage() {
     return sourceName || 'Unknown';
   };
 
-  // Navigation handler for session again - defined after fullStatistics check
+  // Handler for session again
   const handleSessionAgain = () => {
-    navigate('/session-config', { state: { mode: fullStatistics.config.mode } });
+    onRestart();
   };
 
   // Get button text based on mode
@@ -101,37 +83,6 @@ export function SessionCompletePage() {
 
       {/* Main content */}
       <div className="content-area">
-        {/* Special handling for Live Copy mode */}
-        {fullStatistics.config.mode === 'live-copy' ? (
-          <div className="live-copy-results-container">
-            <h2 className="section-title">Live Copy Results</h2>
-            <div className="completion-message">Session Complete!</div>
-
-            <div className="stat-item">
-              <span className="stat-label">Characters Transmitted</span>
-              <span className="stat-value">{liveCopyTransmitted?.length ?? 'N/A'}</span>
-            </div>
-
-            <div className="stat-item">
-              <span className="stat-label">Characters Typed</span>
-              <span className="stat-value">{liveCopyTyped?.length ?? 'N/A'}</span>
-            </div>
-
-            <div className="stat-item">
-              <span className="stat-label">Speed</span>
-              <span className="stat-value">{fullStatistics.config.wpm} WPM</span>
-            </div>
-
-            <div className="action-buttons">
-              <button className="btn btn-primary" onClick={handleBackToMenu}>
-                Back to Menu
-              </button>
-              <button className="btn btn-secondary" onClick={handleSessionAgain}>
-                {getSessionAgainText()}
-              </button>
-            </div>
-          </div>
-        ) : (
           <>
             {/* Two column summary - hide results for listen mode */}
             <div className="session-summary">
@@ -221,7 +172,6 @@ export function SessionCompletePage() {
               </button>
             </div>
           </>
-        )}
       </div>
       </div>
     </div>

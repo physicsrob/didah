@@ -50,8 +50,8 @@ export default function HomePage() {
     // Initialize audio while we have user gesture context
     await initializeAudio()
 
-    // Navigate to session configuration page with pre-selected mode
-    navigate('/session-config', { state: { mode } })
+    // Navigate to session page for the selected mode
+    navigate(`/session/${mode}`)
   }
 
   const handleStatistics = () => {

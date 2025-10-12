@@ -1,8 +1,6 @@
 import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom'
 import { useEffect } from 'react'
-import { ActiveSessionPage } from './pages/ActiveSessionPage'
-import { SessionCompletePage } from './pages/SessionCompletePage'
-import { SessionConfigPage } from './pages/SessionConfigPage'
+import { SessionPage } from './pages/SessionPage'
 import HomePage from './pages/HomePage'
 import StatisticsPage from './pages/StatisticsPage'
 import SettingsPage from './pages/SettingsPage'
@@ -14,16 +12,14 @@ import { checkLocalStorage } from './utils/localStorage'
 
 function AppContent() {
   const location = useLocation()
-  const showAnimation = location.pathname !== '/session'
+  const showAnimation = !location.pathname.startsWith('/session')
 
   return (
     <>
       {showAnimation && <MorseBackgroundAnimation />}
       <Routes>
         <Route path="/" element={<HomePage />} />
-        <Route path="/session-config" element={<SessionConfigPage />} />
-        <Route path="/session" element={<ActiveSessionPage />} />
-        <Route path="/session-complete" element={<SessionCompletePage />} />
+        <Route path="/session/:mode" element={<SessionPage />} />
         <Route path="/statistics" element={<StatisticsPage />} />
         <Route path="/settings" element={<SettingsPage />} />
       </Routes>
