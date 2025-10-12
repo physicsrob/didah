@@ -52,13 +52,6 @@ export interface WordPracticeState {
 }
 
 /**
- * Runner mode state
- */
-export interface RunnerState {
-  startingLevel: number;  // Level to start at (1-10)
-}
-
-/**
  * Session snapshot - observable state of the current session
  *
  * Contains universal state (all modes) and mode-specific state.
@@ -79,7 +72,6 @@ export type SessionSnapshot = {
   practiceState?: PracticeState;
   liveCopyState?: LiveCopyState;
   wordPracticeState?: WordPracticeState;
-  runnerState?: RunnerState;
 };
 
 import type { SessionConfig } from '../../../core/types/domain';

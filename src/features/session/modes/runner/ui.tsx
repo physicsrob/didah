@@ -79,12 +79,17 @@ function resizeCanvas(canvas: HTMLCanvasElement): void {
 // eslint-disable-next-line react-refresh/only-export-components
 export function useRunnerInput(context: UIContext): void {
   const gameRef = useRef<Game | null>(null);
-  const { input, sessionPhase, isPaused, onPause, snapshot } = context;
+  const { input, sessionPhase, isPaused, onPause, config } = context;
 
-  // Game initialization effect
+  // Game initialization effect - runs when session becomes active
   useEffect(() => {
     // Only initialize when session becomes active
     if (sessionPhase !== 'active') {
+      return;
+    }
+
+    // Don't recreate if already exists
+    if (gameRef.current) {
       return;
     }
 
@@ -92,10 +97,6 @@ export function useRunnerInput(context: UIContext): void {
 
     if (!canvas) {
       console.error('[Runner] Canvas element not found!');
-      return;
-    }
-
-    if (gameRef.current) {
       return;
     }
 
@@ -107,10 +108,10 @@ export function useRunnerInput(context: UIContext): void {
     gameRef.current = game;
 
     // Start game (idempotent - safe to call multiple times)
+    const startingLevel = config.startingLevel || 1;
     game.start().then(() => {
       // Set starting level if specified in config
-      const startingLevel = snapshot.runnerState?.startingLevel;
-      if (startingLevel && startingLevel > 1) {
+      if (startingLevel > 1) {
         game.getEngine().advanceToLevel(startingLevel);
       }
     }).catch((error) => {
@@ -123,16 +124,22 @@ export function useRunnerInput(context: UIContext): void {
     };
     window.addEventListener('resize', handleResize);
 
-    // Cleanup on unmount
+    // Cleanup only resize listener (not the game)
     return () => {
       window.removeEventListener('resize', handleResize);
+    };
+  }, [sessionPhase, config.startingLevel]);
+
+  // Game cleanup effect - only runs on unmount
+  useEffect(() => {
+    return () => {
       unregisterRunnerGame();
       if (gameRef.current) {
         gameRef.current.destroy();
         gameRef.current = null;
       }
     };
-  }, [sessionPhase, snapshot.runnerState?.startingLevel]);
+  }, []);
 
   // Sync pause state with game
   useEffect(() => {

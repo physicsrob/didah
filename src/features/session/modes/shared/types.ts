@@ -42,6 +42,7 @@ export interface UIContext {
   snapshot: SessionSnapshot;
   updateSnapshot: (updates: Partial<SessionSnapshot>) => void;
   onPause?: () => void;
+  config: SessionConfig;
 }
 
 /**

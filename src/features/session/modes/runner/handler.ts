@@ -102,7 +102,7 @@ export async function handleRunnerCharacter(
     }
 
     // User pressed SPACE - reset game and continue
-    const startingLevel = ctx.snapshot.runnerState?.startingLevel || 1;
+    const startingLevel = config.startingLevel || 1;
     engine.reset(startingLevel);
     // Continue to next character (downtime will happen below)
   } else {
@@ -130,7 +130,7 @@ export async function handleRunnerCharacter(
         }
 
         // User pressed SPACE - reset and start over
-        const startingLevel = ctx.snapshot.runnerState?.startingLevel || 1;
+        const startingLevel = config.startingLevel || 1;
         engine.reset(startingLevel);
       } else {
         // Advance to next level

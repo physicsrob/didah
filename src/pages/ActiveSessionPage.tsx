@@ -171,7 +171,8 @@ export function ActiveSessionPage() {
     isPaused,
     snapshot,
     updateSnapshot: runner.updateSnapshot,
-    onPause: handlePause
+    onPause: handlePause,
+    config
   });
 
   // Navigate to completion page with full statistics

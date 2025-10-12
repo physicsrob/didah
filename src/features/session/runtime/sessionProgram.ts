@@ -197,9 +197,6 @@ export function createSessionRunner(deps: SessionRunnerDeps): SessionRunner {
           timeouts: 0,
           accuracy: 0
         }
-      } : undefined,
-      runnerState: config.mode === 'runner' ? {
-        startingLevel: config.startingLevel || 1
       } : undefined
     };
     publish();
