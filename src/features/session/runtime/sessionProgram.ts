@@ -286,10 +286,13 @@ export function createSessionRunner(deps: SessionRunnerDeps): SessionRunner {
     const startTime = deps.clock.now();
     initializeSession(startTime, config);
 
+    // Quit request flag (allows handlers to signal they want to end the session)
+    let quitRequested = false;
+
     try {
 
       // Main session loop
-      while (!signal.aborted) {
+      while (!signal.aborted && !quitRequested) {
         // Check if paused and wait for resume
         await waitForResume();
 
@@ -320,6 +323,9 @@ export function createSessionRunner(deps: SessionRunnerDeps): SessionRunner {
             updateRemainingTime,
             publish,
             waitIfPaused: waitForResume,
+            requestQuit: () => {
+              quitRequested = true;
+            },
           };
 
           // Delegate to mode handler

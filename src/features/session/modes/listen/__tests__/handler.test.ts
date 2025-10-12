@@ -61,6 +61,9 @@ describe('handleListenCharacter - integration', () => {
       },
       waitIfPaused: async () => {
         // No-op for tests - pause not tested here
+      },
+      requestQuit: () => {
+        // No-op for tests - quit not tested here
       }
     };
   });

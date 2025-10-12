@@ -29,6 +29,7 @@ export interface HandlerContext extends ModeDeps {
   updateRemainingTime(startTime: number, config: SessionConfig): void;
   publish(): void;
   waitIfPaused(): Promise<void>;
+  requestQuit(): void;
 }
 
 /**
