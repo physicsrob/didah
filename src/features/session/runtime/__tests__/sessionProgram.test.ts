@@ -3,7 +3,7 @@
  */
 
 import { describe, it, expect, beforeEach } from 'vitest';
-import { createSessionRunner, RandomCharSource } from '../sessionProgram';
+import { createSessionRunner, type CharacterSource } from '../sessionProgram';
 import { FakeClock } from '../clock';
 import { TestInputBus } from '../inputBus';
 import { TestIO } from './testIO';
@@ -12,18 +12,37 @@ import { advanceAndFlush, createTestConfig, flushPromises } from './testUtils';
 import { TestTiming, getListenSequence } from './timingTestHelpers';
 import { calculateCharacterDurationMs } from '../../../../core/morse/timing';
 
+/**
+ * Simple test character source for predictable tests
+ */
+class TestCharSource implements CharacterSource {
+  private readonly chars: string[];
+
+  constructor(alphabet: string = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789') {
+    this.chars = alphabet.split('');
+  }
+
+  next(): string {
+    return this.chars[Math.floor(Math.random() * this.chars.length)];
+  }
+
+  reset(): void {
+    // No state to reset for random source
+  }
+}
+
 describe('SessionRunner', () => {
   let clock: FakeClock;
   let io: TestIO;
   let input: TestInputBus;
-  let source: RandomCharSource;
+  let source: TestCharSource;
   let runner: ReturnType<typeof createSessionRunner>;
 
   beforeEach(() => {
     clock = new FakeClock();
     io = new TestIO(clock);
     input = new TestInputBus();
-    source = new RandomCharSource('ABC'); // Simple alphabet for predictable tests
+    source = new TestCharSource('ABC'); // Simple alphabet for predictable tests
     runner = createSessionRunner({ clock, io, input, source });
   });
 

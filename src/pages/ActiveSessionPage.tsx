@@ -13,7 +13,6 @@ import { SimpleInputBus } from '../features/session/runtime/inputBus.js';
 import { createIOAdapter } from '../features/session/runtime/ioAdapter.js';
 import type { SessionSnapshot, LogEvent } from '../features/session/runtime/io.js';
 import { createSessionRunner } from '../features/session/runtime/sessionProgram.js';
-import { RandomCharSource } from '../features/session/runtime/sessionProgram.js';
 import { createCharacterSource } from '../features/sources';
 import type { SourceContent } from '../features/sources';
 import { createFeedback } from '../features/session/services/feedback/index.js';
@@ -37,11 +36,15 @@ export function ActiveSessionPage() {
   const config = location.state?.config;
   const sourceContent = location.state?.sourceContent as SourceContent | null;
 
-  // Get mode definition
-  const mode = useMemo(() => {
-    if (!config) return null;
-    return getMode(config.mode);
-  }, [config]);
+  // Redirect to config page if no config or sourceContent provided
+  useEffect(() => {
+    if (!config || !sourceContent) {
+      navigate('/session-config');
+    }
+  }, [config, sourceContent, navigate]);
+
+  // Get mode definition (will be null if config missing, component will not render)
+  const mode = config ? getMode(config.mode) : null;
 
   // Check if audio is actually ready
   const audioActuallyReady = isAudioReady();
@@ -69,10 +72,7 @@ export function ActiveSessionPage() {
 
   // Create feedback
   const feedback = useMemo(() => {
-    // If no config, return null (component will redirect anyway)
-    if (!config) {
-      return null;
-    }
+    if (!config) return null;
 
     const feedbackType = config.feedback;
 
@@ -102,28 +102,21 @@ export function ActiveSessionPage() {
 
   // Create character source
   const source = useMemo(() => {
-    // If no config, return a dummy source (component will redirect anyway)
-    if (!config?.effectiveAlphabet) {
-      return new RandomCharSource('ABCDEFGHIJKLMNOPQRSTUVWXYZ');
-    }
-
-    if (sourceContent) {
-      return createCharacterSource(sourceContent, config.effectiveAlphabet);
-    } else {
-      return new RandomCharSource(config.effectiveAlphabet.join(''));
-    }
-  }, [sourceContent, config?.effectiveAlphabet]);
+    if (!config || !sourceContent) return null;
+    return createCharacterSource(sourceContent, config.effectiveAlphabet);
+  }, [sourceContent, config]);
 
   // Create IO adapter
   const io = useMemo(() => {
+    if (!config) return null;
     return createIOAdapter({
       audioEngine,
       feedback: feedback || undefined,
-      feedbackType: config?.feedback ?? 'none',
-      mode: config?.mode ?? 'practice',  // Pass the mode so IO adapter knows when to apply extra spacing
+      feedbackType: config.feedback,
+      mode: config.mode,
       onReveal: (char: string) => {
         // Don't show replays when paused
-        if (config?.mode === 'practice' && config?.replay && !isPausedRef.current) {
+        if (config.mode === 'practice' && config.replay && !isPausedRef.current) {
           setReplayOverlay(char);
         }
       },
@@ -135,19 +128,23 @@ export function ActiveSessionPage() {
         setFeedbackFlash(type);
       },
       onLog: (event: LogEvent) => {
-        eventCollector.current.push(event);  // Collect events for statistics
+        eventCollector.current.push(event);
       },
       replayDuration: 1500,
-      isPaused: () => isPausedRef.current,  // Pass pause state checker
-      extraWordSpacing: config?.extraWordSpacing ?? 0  // Pass extra word spacing for listen/live-copy modes, 0 if config not loaded yet
+      isPaused: () => isPausedRef.current,
+      extraWordSpacing: config.extraWordSpacing
     });
-  }, [audioEngine, feedback, config?.mode, config?.replay, config?.feedback, config?.extraWordSpacing]);
+  }, [audioEngine, feedback, config]);
 
   // Create session runner
-  const runner = useMemo(() => createSessionRunner({ clock, io, input, source }), [clock, io, input, source]);
+  const runner = useMemo(() => {
+    if (!io || !source) return null;
+    return createSessionRunner({ clock, io, input, source });
+  }, [clock, io, input, source]);
 
   // Handle pause/resume
   const handlePause = useCallback(() => {
+    if (!runner) return;
     runner.pause();
     setIsPaused(true);
     isPausedRef.current = true;
@@ -156,6 +153,7 @@ export function ActiveSessionPage() {
   }, [runner]);
 
   const handleResume = useCallback(() => {
+    if (!runner) return;
     runner.resume();
     setIsPaused(false);
     isPausedRef.current = false;
@@ -165,18 +163,22 @@ export function ActiveSessionPage() {
   // Note: 'paused' is treated as 'active' for mode purposes (isPaused flag handles the pause state)
   const modeSessionPhase: 'waiting' | 'countdown' | 'active' = sessionPhase === 'paused' ? 'active' : sessionPhase;
   // Use optional chaining since useKeyboardInput is optional (Listen mode doesn't define it)
-  mode?.useKeyboardInput?.({
-    input,
-    sessionPhase: modeSessionPhase,
-    isPaused,
-    snapshot,
-    updateSnapshot: runner.updateSnapshot,
-    onPause: handlePause,
-    config
-  });
+  if (mode && runner && config) {
+    mode.useKeyboardInput?.({
+      input,
+      sessionPhase: modeSessionPhase,
+      isPaused,
+      snapshot,
+      updateSnapshot: runner.updateSnapshot,
+      onPause: handlePause,
+      config
+    });
+  }
 
   // Navigate to completion page with full statistics
   const navigateToCompletion = useCallback((delay: number = 0) => {
+    if (!config) return;
+
     // Calculate comprehensive statistics
     const calculator = new SessionStatsCalculator();
     const fullStatistics = calculator.calculateStats(eventCollector.current, config);
@@ -201,21 +203,23 @@ export function ActiveSessionPage() {
 
   // Subscribe to session snapshots
   useEffect(() => {
-    if (config) {
-      const unsub = runner.subscribe((snap) => {
-        setSnapshot(snap);
+    if (!runner) return;
 
-        // Navigate to completion page when session ends
-        if (snap.phase === 'ended') {
-          // Wait a moment for the last stats to be visible
-          navigateToCompletion(500);
-        }
-      });
-      return () => unsub();
-    }
-  }, [runner, config, navigateToCompletion]);
+    const unsub = runner.subscribe((snap) => {
+      setSnapshot(snap);
+
+      // Navigate to completion page when session ends
+      if (snap.phase === 'ended') {
+        // Wait a moment for the last stats to be visible
+        navigateToCompletion(500);
+      }
+    });
+    return () => unsub();
+  }, [runner, navigateToCompletion]);
 
   const handleEndSession = useCallback(() => {
+    if (!runner) return;
+
     // Stop the runner
     runner.stop();
     // Navigate immediately to completion page
@@ -229,13 +233,6 @@ export function ActiveSessionPage() {
       setSessionPhase('countdown');
     }
   };
-
-  // Redirect to config page if no config provided
-  useEffect(() => {
-    if (!config) {
-      navigate('/session-config');
-    }
-  }, [config, navigate]);
 
   // Auto-start countdown if audio is ready
   useEffect(() => {
@@ -264,7 +261,7 @@ export function ActiveSessionPage() {
 
   // Start session when active
   useEffect(() => {
-    if (sessionPhase !== 'active' || !config) return;
+    if (sessionPhase !== 'active' || !runner || !config) return;
     runner.start(config);
   }, [sessionPhase, runner, config]);
 
@@ -286,18 +283,19 @@ export function ActiveSessionPage() {
 
   // Cleanup
   useEffect(() => {
+    if (!runner) return;
     return () => {
       runner.stop();
     };
   }, [runner]);
 
-  if (!config) {
+  // Early return if required data is missing (redirect effect will handle navigation)
+  if (!config || !sourceContent || !mode) {
     return null;
   }
 
   const getSourceDisplay = () => {
-    // Use the source name from config
-    return config?.sourceName || 'Unknown';
+    return config.sourceName || 'Unknown';
   };
 
   return (
@@ -343,7 +341,7 @@ export function ActiveSessionPage() {
       {/* Main Display Area */}
       {(sessionPhase === 'countdown' || sessionPhase === 'active') && (
         <div className="session-display-area">
-          {mode?.renderDisplay({ snapshot })}
+          {mode.renderDisplay({ snapshot })}
         </div>
       )}
 

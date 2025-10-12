@@ -20,25 +20,6 @@ export interface CharacterSource {
 }
 
 /**
- * Simple random character source for testing
- */
-export class RandomCharSource implements CharacterSource {
-  private readonly chars: string[];
-
-  constructor(alphabet: string = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789') {
-    this.chars = alphabet.split('');
-  }
-
-  next(): string {
-    return this.chars[Math.floor(Math.random() * this.chars.length)];
-  }
-
-  reset(): void {
-    // No state to reset for random source
-  }
-}
-
-/**
  * Session runner interface
  */
 export interface SessionRunner {
