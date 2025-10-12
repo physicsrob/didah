@@ -210,6 +210,31 @@ Returns text content from a specific source.
 - `hackernews` - Hacker News headlines
 - `bbc_news` - BBC News headlines
 
+#### GET `/api/distractors?word={word}`
+Generates confusable distractor words for a given word based on Morse code similarity patterns. Used for multiple-choice word practice.
+
+```json
+// Example: /api/distractors?word=the
+{
+  "word": "the",
+  "distractors": ["tie", "top"]
+}
+
+// Error: /api/distractors?word=xylophone
+{
+  "error": "Unable to generate distractors for this word",
+  "details": "Not enough similar words found in word list"
+}
+```
+
+**Parameters:**
+- `word` (required) - Word to generate distractors for (letters only)
+
+**Algorithm:**
+- Uses TOP_1000_WORDS as distractor pool
+- Groups words by Morse similarity patterns
+- Returns 2 confusable words or 404 if unable
+
 
 ## License
 
