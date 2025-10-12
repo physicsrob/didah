@@ -97,8 +97,8 @@ export async function handleRunnerCharacter(
     );
 
     if (restartEvent.key.toLowerCase() === 'q') {
-      // User wants to quit - end session by returning
-      return;
+      // User wants to quit - end session by throwing AbortError
+      throw new DOMException('User quit', 'AbortError');
     }
 
     // User pressed SPACE - reset game and continue
@@ -125,8 +125,8 @@ export async function handleRunnerCharacter(
         );
 
         if (completeEvent.key.toLowerCase() === 'q') {
-          // User wants to quit - end session
-          return;
+          // User wants to quit - end session by throwing AbortError
+          throw new DOMException('User quit', 'AbortError');
         }
 
         // User pressed SPACE - reset and start over
