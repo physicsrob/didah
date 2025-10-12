@@ -83,30 +83,36 @@ export async function handleRunnerCharacter(
   // Handle input
   engine.handleInput(keyEvent.key.toUpperCase());
 
-  // Wait for jump to complete (if jumping)
-  while (engine.getState().character.state === 'jumping') {
-    await ctx.clock.sleep(50, signal); // Check every 50ms
-  }
-
-  // Check if game over
+  // Check if game over happened
   if (engine.getState().isGameOver) {
-    // Wait for restart (SPACE) or quit (Q)
-    const restartEvent = await ctx.input.takeUntil(
-      (event) => event.key === ' ' || event.key.toLowerCase() === 'q',
-      signal
-    );
+    // Determine which key to use for restart/quit decision
+    let actionKey: string;
+    if (keyEvent.key === ' ' || keyEvent.key.toLowerCase() === 'q') {
+      // The key that caused game over is Q or SPACE - use it
+      actionKey = keyEvent.key;
+    } else {
+      // Different key caused game over - wait for explicit Q or SPACE
+      const restartEvent = await ctx.input.takeUntil(
+        (event) => event.key === ' ' || event.key.toLowerCase() === 'q',
+        signal
+      );
+      actionKey = restartEvent.key;
+    }
 
-    if (restartEvent.key.toLowerCase() === 'q') {
-      // User wants to quit - request session end
+    // Handle the action
+    if (actionKey.toLowerCase() === 'q') {
       ctx.requestQuit();
       return;
     }
 
-    // User pressed SPACE - reset game and continue
+    // Must be SPACE - reset and continue
     const startingLevel = config.startingLevel || 1;
     engine.reset(startingLevel);
-    // Continue to next character (downtime will happen below)
   } else {
+    // Not game over - wait for jump to complete
+    while (engine.getState().character.state === 'jumping') {
+      await ctx.clock.sleep(50, signal);
+    }
     // Successfully cleared obstacle - increment count and check level progression
     engine.incrementCharacterCount();
 
