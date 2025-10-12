@@ -102,16 +102,21 @@ export function SessionConfigPage() {
   const includeStdPunct = settings?.includeStdPunct ?? true;
   const includeAdvPunct = settings?.includeAdvPunct ?? false;
 
+  // Build effective alphabet based on toggles
+  const buildAlphabet = useCallback(() => {
+    const { letters, numbers, standardPunctuation, advancedPunctuation } = getCharactersByCategory();
+    const chars: string[] = [...letters];
+    if (includeNumbers) chars.push(...numbers);
+    if (includeStdPunct) chars.push(...standardPunctuation);
+    if (includeAdvPunct) chars.push(...advancedPunctuation);
+    return chars;
+  }, [includeNumbers, includeStdPunct, includeAdvPunct]);
+
   // Helper function to load source content (consolidates duplicate logic)
   const loadSourceContent = useCallback(async (
     sourceId: string,
     options: { setError?: boolean } = {}
   ): Promise<SourceContent | null> => {
-    // Random letters is always available locally
-    if (sourceId === 'random_letters') {
-      return null; // null means use local random generator
-    }
-
     // Word sources (for word-practice mode)
     if (validatedMode === 'word-practice') {
       const wordSource = availableWordSources.find(s => s.id === sourceId);
@@ -146,7 +151,15 @@ export function SessionConfigPage() {
     }
 
     try {
-      const content = await fetchSourceContent(source.backendId, source.requiresAuth ?? false);
+      // For random sources, pass alphabet parameter
+      let alphabet: string | undefined;
+      if (source.backendId === 'random_letters') {
+        alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+      } else if (source.backendId === 'random_characters') {
+        alphabet = buildAlphabet().join('');
+      }
+
+      const content = await fetchSourceContent(source.backendId, source.requiresAuth ?? false, alphabet);
       // Override the content ID with the frontend ID for proper source factory detection
       return { ...content, id: sourceId };
     } catch (error) {
@@ -156,7 +169,7 @@ export function SessionConfigPage() {
       }
       return null;
     }
-  }, [availableSources, availableWordSources, validatedMode]);
+  }, [availableSources, availableWordSources, validatedMode, buildAlphabet]);
 
   // Redirect to home if mode is invalid (no valid navigation state)
   useEffect(() => {
@@ -238,13 +251,18 @@ export function SessionConfigPage() {
       return;
     }
 
+    // For other modes, wait until text sources are loaded
+    if (validatedMode !== 'word-practice' && sourcesLoading) {
+      return;
+    }
+
     setSourceLoadError(null); // Clear any previous errors
 
     loadSourceContent(selectedSourceId, { setError: true })
       .then(content => {
         setSourceContent(content);
       });
-  }, [selectedSourceId, loadSourceContent, validatedMode, wordSourcesLoading]);
+  }, [selectedSourceId, loadSourceContent, validatedMode, wordSourcesLoading, sourcesLoading]);
 
   // Save settings to centralized store when they change
   useEffect(() => {
@@ -311,19 +329,9 @@ export function SessionConfigPage() {
     setSourceContent(content);
   };
 
-  // Build effective alphabet based on toggles
-  const buildAlphabet = () => {
-    const { letters, numbers, standardPunctuation, advancedPunctuation } = getCharactersByCategory();
-    const chars: string[] = [...letters];
-    if (includeNumbers) chars.push(...numbers);
-    if (includeStdPunct) chars.push(...standardPunctuation);
-    if (includeAdvPunct) chars.push(...advancedPunctuation);
-    return chars;
-  };
-
   const handleStartSession = async () => {
-    // Don't start if there's a source loading error (unless using random_letters)
-    if (sourceLoadError && selectedSourceId !== 'random_letters') {
+    // Don't start if there's a source loading error
+    if (sourceLoadError) {
       console.warn('Cannot start session: source loading error');
       return;
     }

@@ -1,6 +1,7 @@
 // Shared source configuration
 export const SOURCES = [
   { id: 'random_letters', name: 'Random Letters', type: 'generated' },
+  { id: 'random_characters', name: 'Random Characters', type: 'generated' },
   { id: 'common_words', name: 'Common Words', type: 'generated' },
   { id: 'confusing_characters', name: 'Confusing Characters', type: 'generated', requiresAuth: true },
   { id: 'reddit_popular', name: 'Reddit Popular', type: 'rss', url: 'https://www.reddit.com/r/popular.rss' },

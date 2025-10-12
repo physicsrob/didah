@@ -27,10 +27,22 @@ export async function handleRunnerCharacter(
   ctx: HandlerContext,
   signal: AbortSignal
 ): Promise<void> {
+  // Skip spaces - they have no place in the runner game
+  if (char === ' ') {
+    return;
+  }
+
   const game = getRunnerGame();
   if (!game) {
     console.error('[Runner] Game not initialized');
     return;
+  }
+
+  // Wait for game to be ready (game loop started)
+  if (!game.isReady()) {
+    console.log('[Runner] Waiting for game to be ready...');
+    await game.waitUntilReady(signal);
+    console.log('[Runner] Game is now ready');
   }
 
   const engine = game.getEngine();

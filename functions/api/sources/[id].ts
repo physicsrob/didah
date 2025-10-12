@@ -15,14 +15,16 @@ const COMMON_WORDS = TOP_100_WORDS;
 const EASY_WORDS = COMMON_WORDS.filter(w => w.length <= 4);
 
 /**
- * Generate random letters
+ * Generate random characters from given alphabet
  */
-function generateRandomLetters(count: number): string {
-  const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+function generateRandomCharacters(alphabet: string, count: number): string {
+  if (!alphabet || alphabet.length === 0) {
+    throw new Error('Alphabet cannot be empty');
+  }
   let result = '';
   for (let i = 0; i < count; i++) {
     if (i > 0 && i % 5 === 0) result += ' '; // Group by 5
-    result += letters[Math.floor(Math.random() * letters.length)];
+    result += alphabet[Math.floor(Math.random() * alphabet.length)];
   }
   return result;
 }
@@ -99,6 +101,7 @@ interface CloudflareContext {
   params: {
     id: string;
   };
+  request: Request;
   env?: {
     KV?: KVNamespace;
   };
@@ -112,13 +115,29 @@ export async function onRequestGet(context: CloudflareContext) {
     return Response.json({ error: 'Source ID required' }, { status: 400 });
   }
 
+  // Extract query parameters
+  const url = new URL(context.request.url);
+  const alphabet = url.searchParams.get('alphabet');
+
   try {
     let items: string[] | Array<{title: string, body: string}> = [];
 
     switch (id) {
       case 'random_letters':
-        items = [generateRandomLetters(100)];
+      case 'random_characters': {
+        // Use provided alphabet or default to A-Z for random_letters
+        const defaultAlphabet = id === 'random_letters' ? 'ABCDEFGHIJKLMNOPQRSTUVWXYZ' : '';
+        const sourceAlphabet = alphabet || defaultAlphabet;
+
+        if (!sourceAlphabet) {
+          return Response.json({
+            error: 'Alphabet parameter required for random_characters'
+          }, { status: 400 });
+        }
+
+        items = [generateRandomCharacters(sourceAlphabet, 100)];
         break;
+      }
 
       case 'common_words':
         items = [generateCommonWords(100)];

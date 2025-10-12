@@ -81,7 +81,10 @@ export class GameEngine {
    * @param deltaTime - Time elapsed since last update in seconds
    */
   update(deltaTime: number): void {
-    if (this.state.isGameOver) return;
+    if (this.state.isGameOver) {
+      console.log(`[${this.state.currentTime.toFixed(3)}s] ⏸️  Update skipped - game is over`);
+      return;
+    }
 
     // Validate deltaTime
     if (deltaTime < 0 || !isFinite(deltaTime)) {
@@ -158,6 +161,8 @@ export class GameEngine {
     if (this.activeObstacle === null) {
       this.activeObstacle = obstacle;
     }
+
+    console.log(`[${this.state.currentTime.toFixed(3)}s] 🚧 OBSTACLE SPAWNED - letter: "${letter}", x: ${spawnX.toFixed(1)}, size: ${size}, morse ends at: ${obstacle.morseEndTime.toFixed(3)}s, approach: ${approachTime.toFixed(3)}s`);
   }
 
   /**
@@ -310,12 +315,23 @@ export class GameEngine {
     }
 
     // Remove off-screen obstacles
-    this.state.obstacles = this.state.obstacles.filter(
-      obstacle => obstacle.x + obstacle.width > 0
-    );
+    const removed: Obstacle[] = [];
+    this.state.obstacles = this.state.obstacles.filter(obstacle => {
+      const keep = obstacle.x + obstacle.width > 0;
+      if (!keep) {
+        removed.push(obstacle);
+      }
+      return keep;
+    });
+
+    // Log removed obstacles
+    if (removed.length > 0) {
+      console.log(`[${this.state.currentTime.toFixed(3)}s] 🗑️  Removed ${removed.length} off-screen obstacles:`, removed.map(o => `"${o.requiredLetter}" at x=${o.x.toFixed(1)}`).join(', '));
+    }
 
     // Clear active obstacle if it was removed
     if (this.activeObstacle && !this.state.obstacles.includes(this.activeObstacle)) {
+      console.log(`[${this.state.currentTime.toFixed(3)}s] ⚠️  Active obstacle was removed (off-screen)`);
       this.activeObstacle = null;
     }
   }
@@ -350,6 +366,7 @@ export class GameEngine {
    * Handles game over state.
    */
   private gameOver(failedCharacter: string): void {
+    console.log(`[${this.state.currentTime.toFixed(3)}s] 💀 GAME OVER - setting isGameOver=true, failed character: "${failedCharacter}"`);
     this.state.isGameOver = true;
     this.state.character.state = 'dead';
     this.state.failedCharacter = failedCharacter;
@@ -396,6 +413,7 @@ export class GameEngine {
    * @param startingLevel - Optional starting level (1-10), defaults to 1
    */
   reset(startingLevel: number = 1): void {
+    console.log(`[RESET] 🔄 Resetting game to level ${startingLevel}`);
     const level = Math.max(1, Math.min(10, startingLevel)); // Clamp to 1-10
     this.config = LEVEL_CONFIGS[level - 1]; // Array is 0-indexed
     this.state = {

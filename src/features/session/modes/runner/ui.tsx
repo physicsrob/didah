@@ -7,8 +7,8 @@
 import { useEffect, useRef } from 'react';
 import type { SessionSnapshot } from '../../runtime/io';
 import type { UIContext } from '../shared/types';
-import { Game } from './game/Game';
-import { registerRunnerGame, unregisterRunnerGame } from './gameRegistry';
+import type { Game } from './game/Game';
+import { getOrCreateRunnerGame, unregisterRunnerGame } from './gameRegistry';
 import { LOGICAL_WIDTH, LOGICAL_HEIGHT } from './game/constants';
 
 /**
@@ -102,13 +102,11 @@ export function useRunnerInput(context: UIContext): void {
     // Set canvas size
     resizeCanvas(canvas);
 
-    // Create and start game
-    const game = new Game(canvas);
+    // Get or create game (singleton)
+    const game = getOrCreateRunnerGame(canvas);
     gameRef.current = game;
 
-    // Register globally so handler can access it
-    registerRunnerGame(game);
-
+    // Start game (idempotent - safe to call multiple times)
     game.start().then(() => {
       // Set starting level if specified in config
       const startingLevel = snapshot.runnerState?.startingLevel;
@@ -135,6 +133,13 @@ export function useRunnerInput(context: UIContext): void {
       }
     };
   }, [sessionPhase, snapshot.runnerState?.startingLevel]);
+
+  // Sync pause state with game
+  useEffect(() => {
+    if (gameRef.current) {
+      gameRef.current.setPaused(isPaused);
+    }
+  }, [isPaused]);
 
   // Keyboard input effect
   useEffect(() => {

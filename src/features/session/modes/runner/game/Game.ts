@@ -20,6 +20,9 @@ export class Game {
   private renderer: CanvasRenderer;
   private lastTime: number;
   private running: boolean;
+  private paused: boolean;
+  private ready: boolean;
+  private starting: boolean;
 
   /**
    * Creates a new Game instance.
@@ -32,6 +35,9 @@ export class Game {
     this.renderer = new CanvasRenderer(canvas, this.animationManager);
     this.lastTime = 0;
     this.running = false;
+    this.paused = false;
+    this.ready = false;
+    this.starting = false;
   }
 
   /**
@@ -42,10 +48,50 @@ export class Game {
   }
 
   /**
+   * Check if the game is ready (game loop has started).
+   */
+  isReady(): boolean {
+    return this.ready;
+  }
+
+  /**
+   * Wait until the game is ready.
+   * Resolves immediately if already ready, otherwise polls until ready.
+   */
+  async waitUntilReady(signal?: AbortSignal): Promise<void> {
+    if (this.ready) return;
+
+    return new Promise((resolve, reject) => {
+      const checkInterval = setInterval(() => {
+        if (signal?.aborted) {
+          clearInterval(checkInterval);
+          reject(new Error('Aborted while waiting for game ready'));
+        }
+        if (this.ready) {
+          clearInterval(checkInterval);
+          resolve();
+        }
+      }, 50); // Check every 50ms
+    });
+  }
+
+  /**
    * Initializes the game by loading assets and starting the game loop.
+   * Idempotent - safe to call multiple times, will only start once.
+   * Uses synchronous flag to prevent race conditions in async loading.
    * @returns Resolves when game is ready and started
    */
   async start(): Promise<void> {
+    // If already running, ready, or in the process of starting, don't start again
+    if (this.running || this.ready || this.starting) {
+      console.log('[Runner] start() called but already running/ready/starting - ignoring');
+      return;
+    }
+
+    // Set starting flag immediately (synchronously) to prevent race conditions
+    this.starting = true;
+    console.log('[Runner] start() called - initializing game (starting flag set)');
+
     try {
       // Show loading screen
       this.showLoadingScreen();
@@ -55,10 +101,16 @@ export class Game {
 
       // Assets loaded, start game loop
       this.startGameLoop();
+
+      // Clear starting flag
+      this.starting = false;
     } catch (error) {
       console.error('Failed to start game:', error);
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       this.showErrorScreen(errorMessage);
+
+      // Clear starting flag on error
+      this.starting = false;
     }
   }
 
@@ -68,6 +120,8 @@ export class Game {
   private startGameLoop(): void {
     this.running = true;
     this.lastTime = 0;
+    this.ready = true;
+    console.log('[Runner] Game loop started and ready');
     requestAnimationFrame((t) => this.loop(t));
   }
 
@@ -77,6 +131,19 @@ export class Game {
    */
   private loop(currentTime: number): void {
     if (!this.running) return;
+
+    // When paused, keep rendering but don't update game state
+    if (this.paused) {
+      // Just render the current state without updates
+      this.renderer.render(this.engine.getState());
+      requestAnimationFrame((t) => this.loop(t));
+      return;
+    }
+
+    // Initialize lastTime on first frame to prevent huge deltaTime
+    if (this.lastTime === 0) {
+      this.lastTime = currentTime;
+    }
 
     const deltaTime = (currentTime - this.lastTime) / 1000;
     this.lastTime = currentTime;
@@ -96,6 +163,15 @@ export class Game {
 
     // Continue loop
     requestAnimationFrame((t) => this.loop(t));
+  }
+
+  /**
+   * Sets the pause state of the game.
+   * When paused, the game loop continues but doesn't update physics or animation.
+   * @param paused - Whether the game should be paused
+   */
+  setPaused(paused: boolean): void {
+    this.paused = paused;
   }
 
   /**

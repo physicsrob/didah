@@ -4,7 +4,7 @@
 
 import type { CharacterSource } from '../session/runtime/sessionProgram';
 import type { SourceContent, FullPost } from './types';
-import { ArraySource, ContinuousTextSource, LocalRandomSource, FullPostSource, WordSource, type WordEntry } from './characterSources';
+import { ArraySource, ContinuousTextSource, FullPostSource, WordSource, type WordEntry } from './characterSources';
 
 /**
  * Check if items are FullPost objects
@@ -35,10 +35,13 @@ export function createCharacterSource(
   content: SourceContent | null,
   effectiveAlphabet: string[]
 ): CharacterSource {
-  // Fallback to local random source if no content
-  if (!content || !content.items || content.items.length === 0) {
-    const alphabet = effectiveAlphabet.join('');
-    return new LocalRandomSource(alphabet);
+  // Fail fast if no content provided
+  if (!content) {
+    throw new Error('No source content provided to createCharacterSource');
+  }
+
+  if (!content.items || content.items.length === 0) {
+    throw new Error(`Source ${content.id} returned no items`);
   }
 
   // Determine source type based on content
@@ -49,9 +52,9 @@ export function createCharacterSource(
     return new WordSource(items);
   }
 
-  // Word sources come as a single long string
-  if (id.includes('words') || id === 'random_letters') {
-    // Single string of words/letters
+  // Random and word sources come as a single long string
+  if (id.includes('words') || id === 'random_letters' || id === 'random_characters') {
+    // Single string of words/letters/characters
     if (items.length === 1 && typeof items[0] === 'string') {
       return new ContinuousTextSource(items[0]);
     }

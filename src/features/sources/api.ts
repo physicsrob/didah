@@ -43,7 +43,7 @@ export async function fetchSources(): Promise<TextSource[]> {
 /**
  * Fetch content for a specific source
  */
-export async function fetchSourceContent(id: string, requiresAuth: boolean): Promise<SourceContent> {
+export async function fetchSourceContent(id: string, requiresAuth: boolean, alphabet?: string): Promise<SourceContent> {
   const headers: HeadersInit = {
     'Cache-Control': 'no-store'
   };
@@ -55,7 +55,13 @@ export async function fetchSourceContent(id: string, requiresAuth: boolean): Pro
     }
   }
 
-  const response = await fetch(`/api/sources/${id}`, {
+  // Build URL with optional alphabet query param
+  const url = new URL(`/api/sources/${id}`, window.location.origin);
+  if (alphabet) {
+    url.searchParams.set('alphabet', alphabet);
+  }
+
+  const response = await fetch(url.toString(), {
     cache: 'no-store',
     headers
   });

@@ -178,6 +178,11 @@ export class CanvasRenderer {
    * @param obstacles - Array of obstacle objects
    */
   private drawObstacles(obstacles: Obstacle[]): void {
+    // Log first time we try to draw obstacles
+    if (obstacles.length > 0 && !this.rockImage.complete) {
+      console.warn('[RENDER] ⚠️  Trying to draw obstacles but rock image not loaded yet!');
+    }
+
     for (const obstacle of obstacles) {
       if (obstacle.size === ObstacleSize.LARGE) {
         // Draw pit extending from ground to bottom of canvas for large obstacles
@@ -208,13 +213,24 @@ export class CanvasRenderer {
         );
       } else {
         // Draw rock image above ground for small/medium obstacles
-        this.ctx.drawImage(
-          this.rockImage,
-          obstacle.x,
-          GROUND_BOTTOM - obstacle.height,
-          obstacle.width,
-          obstacle.height
-        );
+        if (this.rockImage.complete) {
+          this.ctx.drawImage(
+            this.rockImage,
+            obstacle.x,
+            GROUND_BOTTOM - obstacle.height,
+            obstacle.width,
+            obstacle.height
+          );
+        } else {
+          // Fallback: draw a red rectangle if image not loaded
+          this.ctx.fillStyle = '#ff0000';
+          this.ctx.fillRect(
+            obstacle.x,
+            GROUND_BOTTOM - obstacle.height,
+            obstacle.width,
+            obstacle.height
+          );
+        }
       }
     }
   }
@@ -319,6 +335,14 @@ export class CanvasRenderer {
    * @param morsePlayback - Optional morse playback info { letter: string }
    */
   render(gameState: GameState, morsePlayback?: { letter: string }): void {
+    // Log rendering state every 60 frames (approx 1 second at 60fps)
+    if (Math.random() < 0.016) {
+      console.log(`[RENDER] time: ${gameState.currentTime.toFixed(3)}s, obstacles: ${gameState.obstacles.length}, isGameOver: ${gameState.isGameOver}, char state: ${gameState.character.state}`);
+      if (gameState.obstacles.length > 0) {
+        console.log(`  Obstacles:`, gameState.obstacles.map(o => `"${o.requiredLetter}" at x=${o.x.toFixed(1)}`).join(', '));
+      }
+    }
+
     // Clear canvas
     this.clear();
 
