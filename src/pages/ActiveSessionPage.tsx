@@ -182,10 +182,11 @@ export function ActiveSessionPage({ config, sourceContent, onComplete }: ActiveS
     return () => unsub();
   }, [runner, completeSession]);
 
-  const handleEndSession = useCallback(() => {
-    runner.stop();
-    completeSession();
-  }, [runner, completeSession]);
+  const handleEndSession = useCallback(async () => {
+    // Stop the runner and wait for cleanup to complete
+    // The subscription will call completeSession when it sees phase: 'ended'
+    await runner.stop();
+  }, [runner]);
 
   // Handle click to start when audio not ready
   const handleStartClick = async () => {
@@ -245,7 +246,10 @@ export function ActiveSessionPage({ config, sourceContent, onComplete }: ActiveS
   // Cleanup
   useEffect(() => {
     return () => {
-      runner.stop();
+      // Fire and forget - we don't need to wait during unmount
+      runner.stop().catch(err => {
+        console.error('Error stopping session during cleanup:', err);
+      });
     };
   }, [runner]);
 
