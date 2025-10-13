@@ -21,7 +21,7 @@ export class AnimationManager {
    * @param config - Configuration object
    */
   constructor(config: AnimationConfig = {}) {
-    this.frameBasePath = config.frameBasePath || 'assets/runner/frames/run_';
+    this.frameBasePath = config.frameBasePath || '/assets/runner/frames/run_';
     this.frameCount = config.frameCount || 6;
     this.animationFPS = config.animationFPS || 24;
     this.frameTime = 1 / this.animationFPS; // Time per frame in seconds
