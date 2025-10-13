@@ -6,7 +6,7 @@ This file contains configuration and context for working with Morse Academy usin
 
 A modern web application for learning Morse code with real-time feedback, statistics tracking, and multiple study modes. Built with React + TypeScript + Vite, deployed on Cloudflare Pages.
 
-**Live App:** https://morseacademy.pages.dev
+**Live App:** https://morse.academy
 
 ## Development Commands
 
@@ -62,7 +62,6 @@ npm run deploy      # Deploy to Cloudflare Pages
 - `src/pages/SessionCompletePage.tsx` - Session results display
 
 # Import Context
-@spec.md
 @README.md
 
 # Instructions for AI Assistants
