@@ -181,4 +181,30 @@ describe('handleLiveCopyCharacter - integration', () => {
     const normalSpacing = calculateFarnsworthSpacingMs(config.wpm, config.wpm);
     expect(farnsworthSpacing).toBeGreaterThan(normalSpacing);
   });
+
+  it('logs emission events for evaluation at session end', async () => {
+    const config = createTestConfig({ wpm: 20 });
+    const startTime = clock.now();
+
+    const handlerPromise = handleLiveCopyCharacter(config, 'H', startTime, ctx, signal.signal);
+
+    // Advance through audio
+    const audioDuration = calculateCharacterDurationMs('H', config.wpm, 0);
+    await advanceAndFlush(clock, audioDuration);
+
+    // Advance through spacing
+    const spacing = calculateFarnsworthSpacingMs(config.wpm, config.farnsworthWpm);
+    await advanceAndFlush(clock, spacing);
+
+    await handlerPromise;
+
+    // Should have logged an emission event
+    const emissionEvents = io.getLoggedEvents('emission');
+    expect(emissionEvents).toHaveLength(1);
+    expect(emissionEvents[0]).toMatchObject({
+      type: 'emission',
+      char: 'H'
+    });
+    expect(emissionEvents[0].at).toBeDefined();
+  });
 });

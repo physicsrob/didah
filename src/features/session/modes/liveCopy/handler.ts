@@ -16,6 +16,10 @@ export async function handleLiveCopyCharacter(
   ctx: HandlerContext,
   signal: AbortSignal
 ): Promise<void> {
+  // Log emission event (needed for evaluation at session end)
+  const emissionStart = ctx.clock.now();
+  ctx.io.log({ type: 'emission', at: emissionStart, char });
+
   await runLiveCopyEmission(config, char, ctx.io, ctx.clock, signal);
 
   // Live Copy mode only updates timing

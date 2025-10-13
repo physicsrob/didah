@@ -31,7 +31,7 @@ export interface SessionRunner {
   /**
    * Stop the current session
    */
-  stop(): void;
+  stop(): Promise<void>;
 
   /**
    * Pause the current session (between emissions only)
@@ -354,6 +354,12 @@ export function createSessionRunner(deps: SessionRunnerDeps): SessionRunner {
       isPaused = false;
       pausedAt = null;
       totalPausedMs = 0;
+
+      // If paused, unblock the session loop
+      if (pauseResolver) {
+        pauseResolver();
+        pauseResolver = null;
+      }
 
       if (abortController) {
         abortController.abort();

@@ -22,6 +22,7 @@ import { debug } from '../core/debug';
 import { useSettings } from '../features/settings/hooks/useSettings';
 import { SessionStatsCalculator } from '../features/statistics/sessionStatsCalculator';
 import { getMode } from '../features/session/modes/shared/registry';
+import { evaluateLiveCopy } from '../features/session/modes/liveCopy/evaluator';
 import '../styles/main.css';
 import '../styles/activeSession.css';
 
@@ -155,20 +156,67 @@ export function ActiveSessionPage({ config, sourceContent, onComplete }: ActiveS
 
   // Navigate to completion page with full statistics
   const completeSession = useCallback((delay: number = 0) => {
-    const calculator = new SessionStatsCalculator();
-    const fullStatistics = calculator.calculateStats(eventCollector.current, config);
-    debug.log('Session statistics calculated:', fullStatistics);
+    // For Live Copy mode, evaluate the transcription before calculating stats
+    if (config.mode === 'live-copy' && snapshot.liveCopyState) {
+      const typedString = snapshot.liveCopyState.typedString;
 
-    const doComplete = () => {
-      onComplete(fullStatistics);
-    };
+      // Extract transmitted string from emission events
+      const transmittedString = eventCollector.current
+        .filter(e => e.type === 'emission')
+        .map(e => e.char)
+        .join('');
 
-    if (delay > 0) {
-      setTimeout(doComplete, delay);
+      // Evaluate the transcription
+      const evaluation = evaluateLiveCopy(transmittedString, typedString, eventCollector.current);
+
+      // Append evaluation events to the event log
+      eventCollector.current.push(...evaluation.events);
+
+      debug.log('Live Copy evaluation:', {
+        transmitted: transmittedString,
+        typed: typedString,
+        accuracy: evaluation.metrics.accuracy,
+        diffSegments: evaluation.diffSegments.length
+      });
+
+      // Calculate statistics with evaluation events included
+      const calculator = new SessionStatsCalculator();
+      const baseStatistics = calculator.calculateStats(eventCollector.current, config);
+
+      // Add diff segments to statistics
+      const fullStatistics = {
+        ...baseStatistics,
+        liveCopyDiff: evaluation.diffSegments
+      };
+
+      debug.log('Session statistics calculated:', fullStatistics);
+
+      const doComplete = () => {
+        onComplete(fullStatistics);
+      };
+
+      if (delay > 0) {
+        setTimeout(doComplete, delay);
+      } else {
+        doComplete();
+      }
     } else {
-      doComplete();
+      // Non-Live Copy modes: calculate stats normally
+      const calculator = new SessionStatsCalculator();
+      const fullStatistics = calculator.calculateStats(eventCollector.current, config);
+      debug.log('Session statistics calculated:', fullStatistics);
+
+      const doComplete = () => {
+        onComplete(fullStatistics);
+      };
+
+      if (delay > 0) {
+        setTimeout(doComplete, delay);
+      } else {
+        doComplete();
+      }
     }
-  }, [onComplete, config]);
+  }, [onComplete, config, snapshot]);
 
   // Subscribe to session snapshots
   useEffect(() => {
@@ -182,10 +230,11 @@ export function ActiveSessionPage({ config, sourceContent, onComplete }: ActiveS
     return () => unsub();
   }, [runner, completeSession]);
 
-  const handleEndSession = useCallback(() => {
-    runner.stop();
-    completeSession();
-  }, [runner, completeSession]);
+  const handleEndSession = useCallback(async () => {
+    // Stop the runner and wait for cleanup to complete
+    // The subscription will call completeSession when it sees phase: 'ended'
+    await runner.stop();
+  }, [runner]);
 
   // Handle click to start when audio not ready
   const handleStartClick = async () => {
@@ -245,7 +294,10 @@ export function ActiveSessionPage({ config, sourceContent, onComplete }: ActiveS
   // Cleanup
   useEffect(() => {
     return () => {
-      runner.stop();
+      // Fire and forget - we don't need to wait during unmount
+      runner.stop().catch(err => {
+        console.error('Error stopping session during cleanup:', err);
+      });
     };
   }, [runner]);
 
