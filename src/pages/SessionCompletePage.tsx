@@ -91,7 +91,6 @@ export function SessionCompletePage({ statistics: fullStatistics, onRestart }: S
               {fullStatistics.config.mode !== 'listen' && (
                 <div className="results-section">
                   <h2 className="section-title">Session Results</h2>
-                  <div className="completion-message">Session Complete!</div>
 
                   <div className="stat-item">
                     <span className="stat-label">Accuracy</span>
