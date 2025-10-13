@@ -7,9 +7,9 @@
 import { useEffect, useRef } from 'react';
 import type { SessionSnapshot } from '../../runtime/io';
 import type { UIContext } from '../shared/types';
-import type { Game } from './game/Game';
+import type { Game } from './Game';
 import { getOrCreateRunnerGame, unregisterRunnerGame } from './gameRegistry';
-import { LOGICAL_WIDTH, LOGICAL_HEIGHT } from './game/constants';
+import { LOGICAL_WIDTH, LOGICAL_HEIGHT } from './constants';
 
 /**
  * Display component for runner mode.

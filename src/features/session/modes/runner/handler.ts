@@ -12,7 +12,7 @@ import {
   selectObstacleSize,
   getObstacleDuration,
   CHARACTERS_PER_LEVEL
-} from './game/constants';
+} from './constants';
 import { calculateCharacterDurationMs } from '../../../../core/morse/timing';
 import { isValidChar } from '../shared/utils';
 

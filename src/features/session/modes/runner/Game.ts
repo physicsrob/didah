@@ -1,6 +1,6 @@
 import { GameEngine } from './GameEngine';
-import { AnimationManager } from '../rendering/AnimationManager';
-import { CanvasRenderer } from '../rendering/CanvasRenderer';
+import { AnimationManager } from './AnimationManager';
+import { CanvasRenderer } from './CanvasRenderer';
 import {
   LOGICAL_WIDTH,
   LOGICAL_HEIGHT

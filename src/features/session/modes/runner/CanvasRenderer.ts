@@ -1,5 +1,5 @@
-import type { GameState, Obstacle, Character } from '../game/types';
-import { ObstacleSize } from '../game/types';
+import type { GameState, Obstacle, Character } from './types';
+import { ObstacleSize } from './types';
 import {
   CHARACTER_WIDTH,
   CHARACTER_HEIGHT,
@@ -8,7 +8,7 @@ import {
   GROUND_Y,
   LOGICAL_WIDTH,
   LOGICAL_HEIGHT
-} from '../game/constants';
+} from './constants';
 import { AnimationManager } from './AnimationManager';
 
 /**

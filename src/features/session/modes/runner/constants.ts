@@ -34,48 +34,26 @@ export const OBSTACLE_HEIGHT_VARIANCE = 10 as const; // Random height variation 
 // Animation constants
 export const JUMP_FRAME_INDEX = 4 as const; // Frame index for jumping sprite (run_5.png)
 
-// Default level configuration (Level 1 - Easy)
-export const DEFAULT_LEVEL_CONFIG: LevelConfig = {
-  scrollSpeed: 400,
-  wpm: 10,
-  obstacleSmallFraction: 1.0,
-  obstacleMediumFraction: 0.0,
-  obstacleLargeFraction: 0.0,
-  downtimeMin: 0.5,
-  downtimeMax: 2.0,
-
-  // IMPORTANT: Approach time controls the reaction window, but is auto-capped by obstacle spawn logic:
-  // - SMALL obstacles: Use full approach_time (any reaction speed works)
-  // - MEDIUM obstacles: Effective max 0.8s (requires ≤800ms reaction for 0.4s bonus)
-  // - LARGE obstacles: Effective max 0.5s (requires ≤500ms reaction for 0.6s bonus)
-  // This ensures obstacles arrive at the moment they become unclearable (visual alignment).
-  // To change MEDIUM/LARGE difficulty, modify getBonusAirtime thresholds or OBSTACLE_DURATION_* constants.
-  minApproachTime: 1.0,
-  maxApproachTime: 1.5,
-};
-
-export const LEVEL_CONFIG_10: LevelConfig = {
-  scrollSpeed: 600,
-  wpm: 20,
-  obstacleSmallFraction: 0.0,
-  obstacleMediumFraction: 0.5,
-  obstacleLargeFraction: 0.5,
-  downtimeMin: 0.1,
-  downtimeMax: 0.6,
-
-  // IMPORTANT: Approach time controls the reaction window, but is auto-capped by obstacle spawn logic:
-  // - SMALL obstacles: Use full approach_time (any reaction speed works)
-  // - MEDIUM obstacles: Effective max 0.8s (requires ≤800ms reaction for 0.4s bonus)
-  // - LARGE obstacles: Effective max 0.5s (requires ≤500ms reaction for 0.6s bonus)
-  // This ensures obstacles arrive at the moment they become unclearable (visual alignment).
-  // To change MEDIUM/LARGE difficulty, modify getBonusAirtime thresholds or OBSTACLE_DURATION_* constants.
-  minApproachTime: 0.5,
-  maxApproachTime: 1.0,
-};
-
 // All 10 level configurations (interpolated from level 1 to level 10)
 export const LEVEL_CONFIGS: LevelConfig[] = [
-  DEFAULT_LEVEL_CONFIG, // Level 1
+  { // Level 1
+    scrollSpeed: 400,
+    wpm: 10,
+    obstacleSmallFraction: 1.0,
+    obstacleMediumFraction: 0.0,
+    obstacleLargeFraction: 0.0,
+    downtimeMin: 0.5,
+    downtimeMax: 2.0,
+
+    // IMPORTANT: Approach time controls the reaction window, but is auto-capped by obstacle spawn logic:
+    // - SMALL obstacles: Use full approach_time (any reaction speed works)
+    // - MEDIUM obstacles: Effective max 0.8s (requires ≤800ms reaction for 0.4s bonus)
+    // - LARGE obstacles: Effective max 0.5s (requires ≤500ms reaction for 0.6s bonus)
+    // This ensures obstacles arrive at the moment they become unclearable (visual alignment).
+    // To change MEDIUM/LARGE difficulty, modify getBonusAirtime thresholds or OBSTACLE_DURATION_* constants.
+    minApproachTime: 1.0,
+    maxApproachTime: 1.5,
+  },
   { // Level 2
     scrollSpeed: 422,
     wpm: 11,
@@ -164,8 +142,28 @@ export const LEVEL_CONFIGS: LevelConfig[] = [
     minApproachTime: 0.56,
     maxApproachTime: 1.06,
   },
-  LEVEL_CONFIG_10, // Level 10
+  { // Level 10
+    scrollSpeed: 600,
+    wpm: 20,
+    obstacleSmallFraction: 0.0,
+    obstacleMediumFraction: 0.5,
+    obstacleLargeFraction: 0.5,
+    downtimeMin: 0.1,
+    downtimeMax: 0.6,
+
+    // IMPORTANT: Approach time controls the reaction window, but is auto-capped by obstacle spawn logic:
+    // - SMALL obstacles: Use full approach_time (any reaction speed works)
+    // - MEDIUM obstacles: Effective max 0.8s (requires ≤800ms reaction for 0.4s bonus)
+    // - LARGE obstacles: Effective max 0.5s (requires ≤500ms reaction for 0.6s bonus)
+    // This ensures obstacles arrive at the moment they become unclearable (visual alignment).
+    // To change MEDIUM/LARGE difficulty, modify getBonusAirtime thresholds or OBSTACLE_DURATION_* constants.
+    minApproachTime: 0.5,
+    maxApproachTime: 1.0,
+  },
 ];
+
+// Default level configuration (extracted from Level 1)
+export const DEFAULT_LEVEL_CONFIG: LevelConfig = LEVEL_CONFIGS[0];
 
 // Number of characters to clear per level before advancing
 export const CHARACTERS_PER_LEVEL = [5, 8, 10, 12, 15, 18, 20, 25, 30, 35];

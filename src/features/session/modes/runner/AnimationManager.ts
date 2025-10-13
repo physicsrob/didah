@@ -1,5 +1,5 @@
-import type { AnimationConfig, CharacterState } from '../game/types';
-import { JUMP_FRAME_INDEX } from '../game/constants';
+import type { AnimationConfig, CharacterState } from './types';
+import { JUMP_FRAME_INDEX } from './constants';
 
 /**
  * Manages sprite animation frames with time-based animation cycling.

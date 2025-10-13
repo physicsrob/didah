@@ -4,7 +4,7 @@
  * Allows the handler to access the game created by the UI hook.
  */
 
-import { Game } from './game/Game';
+import { Game } from './Game';
 
 let gameInstance: Game | null = null;
 
