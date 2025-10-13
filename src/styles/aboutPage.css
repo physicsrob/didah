@@ -1,0 +1,61 @@
+/* About Page Styles */
+
+.about-page-container {
+    position: relative;
+    z-index: 1;
+}
+
+.about-content {
+    max-width: 700px;
+    margin: 0 auto;
+    padding: 40px 24px;
+}
+
+.about-heading {
+    font-size: 32px;
+    font-weight: 600;
+    color: var(--color-blue-primary);
+    margin-bottom: 32px;
+    text-align: center;
+    letter-spacing: -0.3px;
+}
+
+.about-paragraph {
+    font-size: 18px;
+    line-height: 1.7;
+    color: var(--text-secondary);
+    margin-bottom: 24px;
+}
+
+.about-signature {
+    margin-top: 48px;
+    font-size: 18px;
+    line-height: 1.6;
+    color: var(--text-secondary);
+    font-style: normal;
+}
+
+.about-signature p {
+    margin: 4px 0;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .about-content {
+        padding: 32px 20px;
+    }
+
+    .about-heading {
+        font-size: 28px;
+        margin-bottom: 24px;
+    }
+
+    .about-paragraph {
+        font-size: 16px;
+    }
+
+    .about-signature {
+        font-size: 16px;
+        margin-top: 40px;
+    }
+}

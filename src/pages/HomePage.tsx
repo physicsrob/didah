@@ -116,6 +116,24 @@ export default function HomePage() {
             </button>
           </div>
         </div>
+
+        {/* Footer */}
+        <footer className="home-footer">
+          <div className="home-footer-content">
+            <button onClick={() => navigate('/about')} className="footer-link">
+              About
+            </button>
+            <span className="footer-separator">•</span>
+            <a
+              href="http://github.com/physicsrob/morseacademy"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="footer-link"
+            >
+              GitHub
+            </a>
+          </div>
+        </footer>
       </div>
     </div>
   )
