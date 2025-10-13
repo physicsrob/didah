@@ -37,12 +37,13 @@ export default function ConfusionTab({ timeWindow }: ConfusionTabProps) {
         const statsAPI = new StatisticsAPI(token);
         const allSessions = await statsAPI.getSessions();
 
-        // Filter to practice mode only (where we have confusion data)
-        const practiceSessions = allSessions.filter(
-          session => session.config?.mode === 'practice'
+        // Filter to character-level recognition modes (where confusion data makes sense)
+        // Excludes: word-practice (word-level), listen (no input), runner (TBD if needed)
+        const relevantSessions = allSessions.filter(
+          session => ['practice', 'live-copy', 'runner'].includes(session.config?.mode)
         );
 
-        setSessions(practiceSessions);
+        setSessions(relevantSessions);
       } catch (err) {
         console.error('Error fetching sessions:', err);
         setError('Failed to load confusion data');
@@ -227,7 +228,7 @@ export default function ConfusionTab({ timeWindow }: ConfusionTabProps) {
             </svg>
             <h3 className="heading-3 mb-2">No Confusion Data</h3>
             <p className="body-regular text-muted">
-              Complete practice sessions to see your confusion patterns
+              Complete sessions to see your confusion patterns
             </p>
           </div>
         </div>

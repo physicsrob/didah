@@ -29,12 +29,12 @@ export default function AccuracyTab({ timeWindow }: AccuracyTabProps) {
         // Fetch all sessions
         const allSessions = await statsAPI.getSessions();
 
-        // Filter to only practice mode sessions
-        const practiceSessions = allSessions.filter(
-          session => session.config?.mode === 'practice'
+        // Filter to performance modes (exclude listen which has no user input)
+        const performanceSessions = allSessions.filter(
+          session => session.config?.mode !== 'listen'
         );
 
-        setSessions(practiceSessions);
+        setSessions(performanceSessions);
       } catch (err) {
         console.error('Error fetching sessions:', err);
         setError('Failed to load session data');
@@ -49,7 +49,7 @@ export default function AccuracyTab({ timeWindow }: AccuracyTabProps) {
   return (
     <div className="space-y-6">
       <div className="text-center mb-6">
-        <h2 className="heading-2">Practice Mode Accuracy</h2>
+        <h2 className="heading-2">Accuracy</h2>
         <p className="body-small text-muted">Your accuracy progression over the last {timeWindow} days</p>
       </div>
 
@@ -107,9 +107,9 @@ export default function AccuracyTab({ timeWindow }: AccuracyTabProps) {
               <circle cx="12" cy="12" r="10" strokeLinecap="round" strokeLinejoin="round"/>
               <path d="M9 11l3 3L22 4" strokeLinecap="round" strokeLinejoin="round" opacity="0.3"/>
             </svg>
-            <h3 className="heading-3 mb-2">No Practice Sessions</h3>
+            <h3 className="heading-3 mb-2">No Sessions Yet</h3>
             <p className="body-regular text-muted">
-              Complete practice sessions to see your accuracy progression
+              Complete sessions to see your accuracy progression
             </p>
           </div>
         </div>

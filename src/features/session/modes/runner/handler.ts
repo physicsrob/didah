@@ -71,6 +71,10 @@ export async function handleRunnerCharacter(
     approachTime
   );
 
+  // Log emission event (for statistics tracking)
+  const emissionStart = ctx.clock.now();
+  ctx.io.log({ type: 'emission', at: emissionStart, char });
+
   // Play morse audio at level's WPM
   await ctx.io.playChar(char, levelWpm);
 
@@ -81,10 +85,19 @@ export async function handleRunnerCharacter(
   );
 
   // Handle input
-  engine.handleInput(keyEvent.key.toUpperCase());
+  const inputTime = ctx.clock.now();
+  const inputKey = keyEvent.key.toUpperCase();
+  engine.handleInput(inputKey);
 
   // Check if game over happened
   if (engine.getState().isGameOver) {
+    // Log incorrect event (wrong character input led to game over)
+    ctx.io.log({
+      type: 'incorrect',
+      at: inputTime,
+      expected: char,
+      got: inputKey
+    });
     // Determine which key to use for restart/quit decision
     let actionKey: string;
     if (keyEvent.key === ' ' || keyEvent.key.toLowerCase() === 'q') {
@@ -113,7 +126,14 @@ export async function handleRunnerCharacter(
     while (engine.getState().character.state === 'jumping') {
       await ctx.clock.sleep(50, signal);
     }
-    // Successfully cleared obstacle - increment count and check level progression
+    // Successfully cleared obstacle - log correct event
+    ctx.io.log({
+      type: 'correct',
+      at: inputTime,
+      char,
+      latencyMs: inputTime - emissionStart
+    });
+    // Increment count and check level progression
     engine.incrementCharacterCount();
 
     const state = engine.getState();
