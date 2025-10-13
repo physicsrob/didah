@@ -10,10 +10,6 @@ for (const source of SOURCES) {
   }
 }
 
-// Use word frequency data
-const COMMON_WORDS = TOP_100_WORDS;
-const EASY_WORDS = COMMON_WORDS.filter(w => w.length <= 4);
-
 /**
  * Generate random characters from given alphabet
  */
@@ -27,23 +23,6 @@ function generateRandomCharacters(alphabet: string, count: number): string {
     result += alphabet[Math.floor(Math.random() * alphabet.length)];
   }
   return result;
-}
-
-/**
- * Generate common words with frequency weighting
- */
-function generateCommonWords(count: number, easyOnly: boolean = false): string {
-  const wordList = easyOnly ? EASY_WORDS : COMMON_WORDS;
-  const words: string[] = [];
-
-  for (let i = 0; i < count; i++) {
-    // Weight earlier words more heavily (they're more common)
-    const maxIndex = Math.min(wordList.length, 30); // Focus on top 30
-    const index = Math.floor(Math.random() * Math.random() * maxIndex);
-    words.push(wordList[index]);
-  }
-
-  return words.join(' ');
 }
 
 /**
@@ -138,14 +117,6 @@ export async function onRequestGet(context: CloudflareContext) {
         items = [generateRandomCharacters(sourceAlphabet, 100)];
         break;
       }
-
-      case 'common_words':
-        items = [generateCommonWords(100)];
-        break;
-
-      case 'common_words_easy':
-        items = [generateCommonWords(100, true)];
-        break;
 
       case 'top-100':
         items = [TOP_100_WORDS.join(' ')];
