@@ -244,3 +244,89 @@
   }
 
 }
+
+/* Live Copy Diff Visualization */
+.live-copy-diff {
+  margin-top: 16px;
+}
+
+.diff-container {
+  font-family: var(--font-mono);
+  font-size: 18px;
+  line-height: 1.8;
+  padding: 20px;
+  background: var(--color-primary-black);
+  border: 1px solid var(--color-tertiary-gray);
+  border-radius: 8px;
+  word-wrap: break-word;
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
+}
+
+.diff-segment {
+  position: relative;
+  padding: 2px 4px;
+  border-radius: 3px;
+}
+
+/* Correct characters - unmarked */
+.diff-segment.diff-correct {
+  color: var(--text-primary);
+}
+
+/* Incorrect characters (what user typed wrong) - strikethrough + error background */
+.diff-segment.diff-incorrect {
+  background-color: rgba(239, 68, 68, 0.2);
+  color: var(--color-error);
+  text-decoration: line-through;
+  text-decoration-color: var(--color-error);
+  text-decoration-thickness: 2px;
+}
+
+/* Missed characters (what should have been typed) - success color */
+.diff-segment.diff-missed {
+  background-color: rgba(34, 197, 94, 0.2);
+  color: var(--color-success);
+  font-weight: 600;
+}
+
+/* Extra characters - addition background */
+.diff-segment.diff-extra {
+  background-color: rgba(59, 130, 246, 0.2);
+  color: var(--color-blue-light);
+}
+
+/* Legend for diff types (optional - can add later if needed) */
+.diff-legend {
+  display: flex;
+  gap: 24px;
+  margin-top: 12px;
+  font-size: 14px;
+  color: var(--text-muted);
+}
+
+.diff-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.diff-legend-marker {
+  width: 16px;
+  height: 16px;
+  border-radius: 3px;
+}
+
+.diff-legend-marker.correct {
+  background: var(--text-primary);
+}
+
+.diff-legend-marker.incorrect {
+  background: rgba(239, 68, 68, 0.2);
+  border: 1px solid var(--color-error);
+}
+
+.diff-legend-marker.extra {
+  background: rgba(59, 130, 246, 0.2);
+  border: 1px solid var(--color-blue-light);
+}

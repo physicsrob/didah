@@ -9,6 +9,7 @@ import { useNavigate } from 'react-router-dom';
 import type { SessionStatisticsWithMaps } from '../core/types/statistics';
 import { useStatsAPI } from '../features/statistics/useStatsAPI';
 import { debug } from '../core/debug';
+import { LiveCopyDiff } from '../components/LiveCopyDiff';
 import '../styles/main.css';
 import '../styles/sessionComplete.css';
 
@@ -161,6 +162,14 @@ export function SessionCompletePage({ statistics: fullStatistics, onRestart }: S
 
               </div>
             </div>
+
+            {/* Live Copy Diff Visualization - only for live-copy mode */}
+            {fullStatistics.config.mode === 'live-copy' && fullStatistics.liveCopyDiff && (
+              <div className="live-copy-results-container">
+                <h2 className="section-title">Your Transcription</h2>
+                <LiveCopyDiff diffSegments={fullStatistics.liveCopyDiff} />
+              </div>
+            )}
 
             {/* Action buttons */}
             <div className="action-buttons">

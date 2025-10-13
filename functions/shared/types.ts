@@ -108,6 +108,13 @@ export type SessionStatistics = {
   // Timing Analysis (only successful recognitions)
   meanRecognitionTimeMs: number
   medianRecognitionTimeMs: number
+
+  // Live Copy Mode - Diff visualization data (optional, only for live-copy mode)
+  liveCopyDiff?: Array<{
+    type: 'correct' | 'incorrect' | 'extra' | 'missed'
+    char: string
+    expectedChar?: string
+  }>
 }
 
 // Validation function for settings
@@ -424,6 +431,34 @@ export function validateSessionStatistics(stats: unknown): stats is SessionStati
       }
 
       if (typeof count !== 'number' || count < 0 || !Number.isInteger(count)) {
+        return false
+      }
+    }
+  }
+
+  // Validate liveCopyDiff if present (optional field for live-copy mode)
+  if (s.liveCopyDiff !== undefined) {
+    if (!Array.isArray(s.liveCopyDiff)) {
+      return false
+    }
+
+    for (const segment of s.liveCopyDiff as unknown[]) {
+      if (!segment || typeof segment !== 'object') {
+        return false
+      }
+
+      const seg = segment as Record<string, unknown>
+
+      if (!['correct', 'incorrect', 'extra', 'missed'].includes(seg.type as string)) {
+        return false
+      }
+
+      if (typeof seg.char !== 'string' || seg.char.length !== 1) {
+        return false
+      }
+
+      // Validate expectedChar if present (optional field)
+      if (seg.expectedChar !== undefined && (typeof seg.expectedChar !== 'string' || seg.expectedChar.length !== 1)) {
         return false
       }
     }
