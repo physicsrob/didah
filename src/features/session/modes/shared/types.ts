@@ -69,7 +69,8 @@ export interface ModeDefinition {
     char: string,
     startTime: number,
     ctx: HandlerContext,
-    signal: AbortSignal
+    signal: AbortSignal,
+    nextChar: string | null
   ): Promise<void>;
 
   // UI components

@@ -75,7 +75,7 @@ describe('handleLiveCopyCharacter - integration', () => {
     const config = createTestConfig({ wpm: 20 });
     const startTime = clock.now();
 
-    const handlerPromise = handleLiveCopyCharacter(config, 'A', startTime, ctx, signal.signal);
+    const handlerPromise = handleLiveCopyCharacter(config, 'A', startTime, ctx, signal.signal, null);
 
     // Advance through audio
     const audioDuration = calculateCharacterDurationMs('A', config.wpm, 0);
@@ -95,7 +95,7 @@ describe('handleLiveCopyCharacter - integration', () => {
     const config = createTestConfig({ wpm: 20, lengthMs: 60000 });
     const startTime = clock.now();
 
-    const handlerPromise = handleLiveCopyCharacter(config, 'B', startTime, ctx, signal.signal);
+    const handlerPromise = handleLiveCopyCharacter(config, 'B', startTime, ctx, signal.signal, null);
 
     // Advance through audio
     const audioDuration = calculateCharacterDurationMs('B', config.wpm, 0);
@@ -115,7 +115,7 @@ describe('handleLiveCopyCharacter - integration', () => {
   it('does not call updateStats (Live Copy mode has no stats during session)', async () => {
     const config = createTestConfig({ wpm: 20 });
 
-    const handlerPromise = handleLiveCopyCharacter(config, 'C', clock.now(), ctx, signal.signal);
+    const handlerPromise = handleLiveCopyCharacter(config, 'C', clock.now(), ctx, signal.signal, null);
 
     const audioDuration = calculateCharacterDurationMs('C', config.wpm, 0);
     await advanceAndFlush(clock, audioDuration);
@@ -136,7 +136,7 @@ describe('handleLiveCopyCharacter - integration', () => {
     const startTime = clock.now();
 
     for (const char of chars) {
-      const handlerPromise = handleLiveCopyCharacter(config, char, startTime, ctx, signal.signal);
+      const handlerPromise = handleLiveCopyCharacter(config, char, startTime, ctx, signal.signal, null);
 
       const audioDuration = calculateCharacterDurationMs(char, config.wpm, 0);
       await advanceAndFlush(clock, audioDuration);
@@ -161,7 +161,7 @@ describe('handleLiveCopyCharacter - integration', () => {
     });
     const startTime = clock.now();
 
-    const handlerPromise = handleLiveCopyCharacter(config, 'G', startTime, ctx, signal.signal);
+    const handlerPromise = handleLiveCopyCharacter(config, 'G', startTime, ctx, signal.signal, null);
 
     // Advance through audio (at full WPM)
     const audioDuration = calculateCharacterDurationMs('G', config.wpm, 0);
@@ -186,7 +186,7 @@ describe('handleLiveCopyCharacter - integration', () => {
     const config = createTestConfig({ wpm: 20 });
     const startTime = clock.now();
 
-    const handlerPromise = handleLiveCopyCharacter(config, 'H', startTime, ctx, signal.signal);
+    const handlerPromise = handleLiveCopyCharacter(config, 'H', startTime, ctx, signal.signal, null);
 
     // Advance through audio
     const audioDuration = calculateCharacterDurationMs('H', config.wpm, 0);

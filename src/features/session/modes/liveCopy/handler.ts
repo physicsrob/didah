@@ -14,7 +14,8 @@ export async function handleLiveCopyCharacter(
   char: string,
   startTime: number,
   ctx: HandlerContext,
-  signal: AbortSignal
+  signal: AbortSignal,
+  _nextChar: string | null
 ): Promise<void> {
   // Log emission event (needed for evaluation at session end)
   const emissionStart = ctx.clock.now();

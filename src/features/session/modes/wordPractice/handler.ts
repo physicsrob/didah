@@ -80,7 +80,8 @@ export async function handleWordPracticeWord(
   char: string,  // Plain word (e.g., "the", "hello")
   startTime: number,
   ctx: HandlerContext,
-  signal: AbortSignal
+  signal: AbortSignal,
+  _nextChar: string | null
 ): Promise<void> {
   // Verify state is initialized
   if (!ctx.snapshot.wordPracticeState) {

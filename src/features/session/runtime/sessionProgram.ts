@@ -16,6 +16,7 @@ import type { HandlerContext } from '../modes/shared/types';
  */
 export interface CharacterSource {
   next(): string;
+  peek(count?: number): string | null;
   reset(): void;
 }
 
@@ -285,8 +286,11 @@ export function createSessionRunner(deps: SessionRunnerDeps): SessionRunner {
           break; // Time's up
         }
 
-        // Get next character and prepare emission
+        // Get next character and peek ahead for pre-spawn capability
         const char = deps.source.next();
+        // Peek ahead up to 10 characters to find the next non-space character
+        const peeked = deps.source.peek(10);
+        const nextChar = peeked?.replace(/\s/g, '')[0] || null;
         prepareEmission(char, config);
 
         try {
@@ -309,8 +313,8 @@ export function createSessionRunner(deps: SessionRunnerDeps): SessionRunner {
             },
           };
 
-          // Delegate to mode handler
-          await mode.handleCharacter(config, char, startTime, ctx, signal);
+          // Delegate to mode handler with peek-ahead capability
+          await mode.handleCharacter(config, char, startTime, ctx, signal, nextChar);
 
         } catch (error) {
           // Handle abort

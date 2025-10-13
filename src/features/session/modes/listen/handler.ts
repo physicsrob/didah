@@ -14,7 +14,8 @@ export async function handleListenCharacter(
   char: string,
   startTime: number,
   ctx: HandlerContext,
-  signal: AbortSignal
+  signal: AbortSignal,
+  _nextChar: string | null
 ): Promise<void> {
   await runListenEmission(config, char, ctx.io, ctx.clock, signal);
 

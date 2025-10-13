@@ -76,6 +76,60 @@ export class ArraySource implements CharacterSource {
     throw new Error(`ArraySource: Failed to find valid character after ${MAX_SKIP_ATTEMPTS} attempts. Check that source text contains valid characters from the allowed alphabet.`);
   }
 
+  peek(count: number = 1): string | null {
+    let tempItemIndex = this.currentItemIndex;
+    let tempCharIndex = this.currentCharIndex;
+    let tempText = this.currentText;
+    let attempts = 0;
+    let result = '';
+
+    // Collect 'count' characters
+    for (let i = 0; i < count; i++) {
+      let found = false;
+
+      while (attempts < MAX_SKIP_ATTEMPTS && !found) {
+        attempts++;
+
+        // If we've reached the end of current item
+        if (tempCharIndex >= tempText.length) {
+          // Move to next item
+          tempItemIndex = (tempItemIndex + 1) % this.items.length;
+          tempText = this.items[tempItemIndex] || '';
+          tempCharIndex = 0;
+          continue; // Try again with next item
+        }
+
+        // Get next character from current item
+        const char = tempText[tempCharIndex];
+        tempCharIndex++;
+
+        // Handle whitespace
+        if (char === ' ' || /\s/.test(char)) {
+          result += ' ';
+          found = true;
+          break;
+        }
+
+        // Check if character is allowed
+        const upperChar = char.toUpperCase();
+        if (this.allowedChars.has(upperChar)) {
+          result += upperChar;
+          found = true;
+          break;
+        }
+
+        // Character not allowed, continue to next iteration
+      }
+
+      // If we couldn't find a character, return what we have so far (or null if nothing)
+      if (!found) {
+        return result.length > 0 ? result : null;
+      }
+    }
+
+    return result.length > 0 ? result : null;
+  }
+
   reset(): void {
     this.currentItemIndex = 0;
     this.currentCharIndex = 0;
@@ -131,6 +185,56 @@ export class ContinuousTextSource implements CharacterSource {
     throw new Error(`ContinuousTextSource: Failed to find valid character after ${MAX_SKIP_ATTEMPTS} attempts. Check that source text contains alphanumeric characters.`);
   }
 
+  peek(count: number = 1): string | null {
+    let tempWordIndex = this.currentWordIndex;
+    let tempCharIndex = this.currentCharIndex;
+    let tempWord = this.currentWord;
+    let attempts = 0;
+    let result = '';
+
+    // Collect 'count' characters
+    for (let i = 0; i < count; i++) {
+      let found = false;
+
+      while (attempts < MAX_SKIP_ATTEMPTS && !found) {
+        attempts++;
+
+        // If we've reached the end of current word
+        if (tempCharIndex >= tempWord.length) {
+          // Move to next word
+          tempWordIndex = (tempWordIndex + 1) % this.words.length;
+          tempWord = this.words[tempWordIndex] || '';
+          tempCharIndex = 0;
+
+          // Return space between words
+          result += ' ';
+          found = true;
+          break;
+        }
+
+        // Get next character from current word
+        const char = tempWord[tempCharIndex].toUpperCase();
+        tempCharIndex++;
+
+        // Check if alphanumeric
+        if (/[A-Z0-9]/.test(char)) {
+          result += char;
+          found = true;
+          break;
+        }
+
+        // Character not alphanumeric, continue to next iteration
+      }
+
+      // If we couldn't find a character, return what we have so far (or null if nothing)
+      if (!found) {
+        return result.length > 0 ? result : null;
+      }
+    }
+
+    return result.length > 0 ? result : null;
+  }
+
   reset(): void {
     this.currentWordIndex = 0;
     this.currentCharIndex = 0;
@@ -160,6 +264,13 @@ export class WordSource implements CharacterSource {
     const word = this.words[this.currentIndex];
     this.currentIndex = (this.currentIndex + 1) % this.words.length;
     return word.toLowerCase();
+  }
+
+  peek(_count: number = 1): string | null {
+    // For WordSource, peek returns the next word (ignoring count since we emit whole words)
+    // Note: count parameter is accepted for interface compatibility but not used
+    const nextIndex = (this.currentIndex + 1) % this.words.length;
+    return this.words[nextIndex]?.toLowerCase() || null;
   }
 
   reset(): void {
@@ -236,6 +347,60 @@ export class FullPostSource implements CharacterSource {
     }
 
     throw new Error(`FullPostSource: Failed to find valid character after ${MAX_SKIP_ATTEMPTS} attempts. Check that source text contains valid characters from the allowed alphabet.`);
+  }
+
+  peek(count: number = 1): string | null {
+    let tempItemIndex = this.currentItemIndex;
+    let tempCharIndex = this.currentCharIndex;
+    let tempText = this.currentText;
+    let attempts = 0;
+    let result = '';
+
+    // Collect 'count' characters
+    for (let i = 0; i < count; i++) {
+      let found = false;
+
+      while (attempts < MAX_SKIP_ATTEMPTS && !found) {
+        attempts++;
+
+        // If we've reached the end of current item
+        if (tempCharIndex >= tempText.length) {
+          // Move to next item
+          tempItemIndex = (tempItemIndex + 1) % this.items.length;
+          tempText = this.items[tempItemIndex] || '';
+          tempCharIndex = 0;
+          continue; // Try again with next item
+        }
+
+        // Get next character from current item
+        const char = tempText[tempCharIndex];
+        tempCharIndex++;
+
+        // Handle whitespace
+        if (char === ' ' || /\s/.test(char)) {
+          result += ' ';
+          found = true;
+          break;
+        }
+
+        // Check if character is allowed
+        const upperChar = char.toUpperCase();
+        if (this.allowedChars.has(upperChar)) {
+          result += upperChar;
+          found = true;
+          break;
+        }
+
+        // Character not allowed, continue to next iteration
+      }
+
+      // If we couldn't find a character, return what we have so far (or null if nothing)
+      if (!found) {
+        return result.length > 0 ? result : null;
+      }
+    }
+
+    return result.length > 0 ? result : null;
   }
 
   reset(): void {

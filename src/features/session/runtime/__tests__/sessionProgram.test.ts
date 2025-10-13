@@ -26,6 +26,11 @@ class TestCharSource implements CharacterSource {
     return this.chars[Math.floor(Math.random() * this.chars.length)];
   }
 
+  peek(): string | null {
+    // For test purposes, just return a random character (or null for simplicity)
+    return this.chars[Math.floor(Math.random() * this.chars.length)] || null;
+  }
+
   reset(): void {
     // No state to reset for random source
   }

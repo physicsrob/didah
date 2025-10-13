@@ -101,3 +101,11 @@ When working on this project:
 - The most important thing is being able to reason about code behavior
 - Example: Throw errors for unexpected states rather than trying to recover
 - Clear failure points make debugging much easier
+
+### Testing Philosophy
+- **Tests should ALWAYS test the expected behavior for the final working application**
+- **Tests should NEVER expect behavior that is buggy**
+- **Tests should NEVER be disabled unless explicitly instructed to do so**
+- **If there is a known bug, tests should FAIL**
+- **We should NEVER have the situation where tests pass yet we know the implementation is not correct**
+- Tests are the specification for correct behavior -- not documentation of current behavior

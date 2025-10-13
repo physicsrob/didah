@@ -69,8 +69,7 @@ export interface LevelConfig {
   obstacleSmallFraction: number;
   obstacleMediumFraction: number;
   obstacleLargeFraction: number;
-  downtimeMin: number;
-  downtimeMax: number;
+  downtime: number;
 
   /**
    * Minimum reaction window after morse ends.

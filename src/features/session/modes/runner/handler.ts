@@ -25,7 +25,8 @@ export async function handleRunnerCharacter(
   char: string,
   startTime: number,
   ctx: HandlerContext,
-  signal: AbortSignal
+  signal: AbortSignal,
+  nextChar: string | null
 ): Promise<void> {
   // Skip spaces - they have no place in the runner game
   if (char === ' ') {
@@ -51,25 +52,37 @@ export async function handleRunnerCharacter(
   // Use level's WPM, not user's configured WPM
   const levelWpm = gameConfig.wpm;
 
-  // Get actual morse duration from timing module (in seconds)
-  const morseDuration = calculateCharacterDurationMs(char, levelWpm, 0) / 1000;
+  // Check if this character's obstacle was already pre-spawned
+  const existingObstacle = engine.getState().obstacles
+    .find(o => o.requiredLetter === char.toUpperCase());
 
-  // Select random approach time and obstacle size
-  const approachTime = randomInRange(gameConfig.minApproachTime, gameConfig.maxApproachTime);
-  const obstacleSize = selectObstacleSize(gameConfig);
-  const obstacleDuration = getObstacleDuration(obstacleSize);
+  if (existingObstacle) {
+    // Already spawned by previous character - just set as active
+    engine.setActiveObstacle(existingObstacle);
+    console.log(`[Runner] Found pre-spawned obstacle for "${char}"`);
+  } else {
+    // First character or pre-spawn didn't happen - spawn normally
 
-  // Calculate spawn distance
-  const spawnDistance = (morseDuration + approachTime) * gameConfig.scrollSpeed;
+    // Get actual morse duration from timing module (in seconds)
+    const morseDuration = calculateCharacterDurationMs(char, levelWpm, 0) / 1000;
 
-  // Spawn obstacle for this character
-  engine.spawnObstacle(
-    char,
-    spawnDistance,
-    obstacleDuration,
-    morseDuration,
-    approachTime
-  );
+    // Select random approach time and obstacle size
+    const approachTime = randomInRange(gameConfig.minApproachTime, gameConfig.maxApproachTime);
+    const obstacleSize = selectObstacleSize(gameConfig);
+    const obstacleDuration = getObstacleDuration(obstacleSize);
+
+    // Calculate spawn distance
+    const spawnDistance = (morseDuration + approachTime) * gameConfig.scrollSpeed;
+
+    // Spawn obstacle for this character
+    engine.spawnObstacle(
+      char,
+      spawnDistance,
+      obstacleDuration,
+      morseDuration,
+      approachTime
+    );
+  }
 
   // Log emission event (for statistics tracking)
   const emissionStart = ctx.clock.now();
@@ -122,10 +135,45 @@ export async function handleRunnerCharacter(
     const startingLevel = config.startingLevel || 1;
     engine.reset(startingLevel);
   } else {
-    // Not game over - wait for jump to complete
+    // Not game over - character is now jumping
+    // PRE-SPAWN NEXT OBSTACLE IMMEDIATELY (while still jumping)
+    if (nextChar && nextChar !== ' ') {
+      // Get jump duration that was just set
+      const jumpDuration = engine.getState().character.jumpDuration!;
+
+      // Calculate time until next character's morse plays
+      const downtimeDuration = gameConfig.downtime;
+      const timeUntilNextMorse = jumpDuration + downtimeDuration;
+
+      // Calculate next character's parameters
+      const nextMorseDuration = calculateCharacterDurationMs(nextChar, levelWpm, 0) / 1000;
+      const nextApproachTime = randomInRange(gameConfig.minApproachTime, gameConfig.maxApproachTime);
+      const nextObstacleSize = selectObstacleSize(gameConfig);
+      const nextObstacleDuration = getObstacleDuration(nextObstacleSize);
+
+      // Calculate adjusted spawn distance
+      const normalSpawnDistance = (nextMorseDuration + nextApproachTime) * gameConfig.scrollSpeed;
+      const offsetDistance = timeUntilNextMorse * gameConfig.scrollSpeed;
+      const adjustedSpawnDistance = normalSpawnDistance + offsetDistance;
+
+      // Pre-spawn next obstacle with time offset
+      engine.spawnObstacle(
+        nextChar,
+        adjustedSpawnDistance,
+        nextObstacleDuration,
+        nextMorseDuration,
+        nextApproachTime,
+        timeUntilNextMorse
+      );
+
+      console.log(`[Runner] Pre-spawned obstacle for next char "${nextChar}", offset: ${timeUntilNextMorse.toFixed(3)}s`);
+    }
+
+    // Wait for jump to complete
     while (engine.getState().character.state === 'jumping') {
       await ctx.clock.sleep(50, signal);
     }
+
     // Successfully cleared obstacle - log correct event
     ctx.io.log({
       type: 'correct',
@@ -176,7 +224,7 @@ export async function handleRunnerCharacter(
   }
 
   // Brief downtime before next character
-  const downtimeDuration = randomInRange(gameConfig.downtimeMin, gameConfig.downtimeMax);
+  const downtimeDuration = gameConfig.downtime;
   await ctx.clock.sleep(downtimeDuration * 1000, signal);
 
   // Update remaining time

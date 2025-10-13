@@ -21,8 +21,7 @@ describe('GameEngine', () => {
     obstacleSmallFraction: 1.0,
     obstacleMediumFraction: 0.0,
     obstacleLargeFraction: 0.0,
-    downtimeMin: 0.5,
-    downtimeMax: 2.0,
+    downtime: 0.5,
     minApproachTime: 1.5,
     maxApproachTime: 2.0,
   };
@@ -34,8 +33,7 @@ describe('GameEngine', () => {
     obstacleSmallFraction: 0.0,
     obstacleMediumFraction: 0.3,
     obstacleLargeFraction: 0.7,
-    downtimeMin: 0.2,
-    downtimeMax: 0.5,
+    downtime: 0.2,
     minApproachTime: 0.5,
     maxApproachTime: 0.8,
   };
@@ -650,6 +648,289 @@ describe('GameEngine', () => {
       const state = engine.getState();
       expect(state.isGameOver).toBe(false);
       expect(state.character.state).toBe('running');
+    });
+  });
+
+  describe('Pre-Spawn Logic', () => {
+    it('should set morseEndTime correctly with time offset', () => {
+      // Spawn with no offset
+      const morseDuration = 0.5;
+      const approachTime = 1.0;
+      const spawnDistance = (morseDuration + approachTime) * easyConfig.scrollSpeed;
+      engine.spawnObstacle('A', spawnDistance, OBSTACLE_DURATION_SMALL, morseDuration, approachTime, 0);
+
+      const state1 = engine.getState();
+      const obstacle1 = state1.obstacles[0];
+      expect(obstacle1.morseEndTime).toBeCloseTo(morseDuration, 2);
+
+      // Now pre-spawn with time offset
+      const timeOffset = 2.0; // Simulating jump + downtime
+      engine.spawnObstacle('B', spawnDistance + 500, OBSTACLE_DURATION_SMALL, morseDuration, approachTime, timeOffset);
+
+      const state2 = engine.getState();
+      const obstacle2 = state2.obstacles[1];
+
+      // morseEndTime should be currentTime + timeOffset + morseDuration
+      // currentTime is still 0, so should be 0 + 2.0 + 0.5 = 2.5
+      expect(obstacle2.morseEndTime).toBeCloseTo(timeOffset + morseDuration, 2);
+    });
+
+    it('should calculate reaction time correctly for pre-spawned obstacle', () => {
+      const morseDuration = 0.5;
+      const approachTime = 1.0;
+      const normalSpawnDistance = (morseDuration + approachTime) * easyConfig.scrollSpeed;
+
+      // Pre-spawn obstacle with 2s time offset (simulating jump + downtime from previous character)
+      const timeOffset = 2.0;
+
+      // IMPORTANT: Must adjust spawn distance to account for obstacle movement during timeOffset
+      const offsetDistance = timeOffset * easyConfig.scrollSpeed;
+      const adjustedSpawnDistance = normalSpawnDistance + offsetDistance;
+
+      engine.spawnObstacle('A', adjustedSpawnDistance, OBSTACLE_DURATION_SMALL, morseDuration, approachTime, timeOffset);
+
+      const state = engine.getState();
+      const obstacle = state.obstacles[0];
+
+      // morseEndTime should be 0 + 2.0 + 0.5 = 2.5
+      expect(obstacle.morseEndTime).toBeCloseTo(2.5, 2);
+
+      // Advance to when morse STARTS playing (at timeOffset = 2.0s)
+      engine.update(timeOffset);
+
+      // Simulate morse playing for morseDuration
+      engine.update(morseDuration);
+
+      // Now we're at T=2.5, morse just ended
+      // React immediately (0ms reaction time)
+      engine.handleInput('A');
+
+      // The reaction time calculation is: currentTime - morseEndTime
+      // currentTime = 2.5, morseEndTime = 2.5, so reaction time should be 0
+      // This should trigger a LARGE bonus jump
+      const jumpState = engine.getState();
+      expect(jumpState.character.state).toBe('jumping');
+    });
+
+    it('should spawn pre-spawned obstacle at adjusted position', () => {
+      // Normal spawn
+      const morseDuration = 0.5;
+      const approachTime = 1.0;
+      const normalSpawnDistance = (morseDuration + approachTime) * easyConfig.scrollSpeed;
+
+      engine.spawnObstacle('A', normalSpawnDistance, OBSTACLE_DURATION_SMALL, morseDuration, approachTime, 0);
+      const obstacle1 = engine.getState().obstacles[0];
+
+      // Pre-spawn with offset
+      const timeOffset = 2.0;
+      const offsetDistance = timeOffset * easyConfig.scrollSpeed;
+      const adjustedSpawnDistance = normalSpawnDistance + offsetDistance;
+
+      engine.spawnObstacle('B', adjustedSpawnDistance, OBSTACLE_DURATION_SMALL, morseDuration, approachTime, timeOffset);
+      const obstacle2 = engine.getState().obstacles[1];
+
+      // Second obstacle should be further right by exactly offsetDistance
+      expect(obstacle2.x - obstacle1.x).toBeCloseTo(offsetDistance, 1);
+    });
+
+    it('should handle two-character sequence with pre-spawning correctly', () => {
+      const morseDuration1 = 0.5;
+      const approachTime1 = 1.0;
+      const spawnDistance1 = (morseDuration1 + approachTime1) * easyConfig.scrollSpeed;
+
+      // Spawn first obstacle normally
+      engine.spawnObstacle('A', spawnDistance1, OBSTACLE_DURATION_SMALL, morseDuration1, approachTime1, 0);
+
+      // Simulate morse playing
+      engine.update(morseDuration1);
+
+      // React fast (300ms after morse ends)
+      engine.update(0.3);
+      engine.handleInput('A');
+
+      const jumpDuration = engine.getState().character.jumpDuration!;
+      const downtime = 0.5; // From easyConfig
+      const timeUntilNextMorse = jumpDuration + downtime;
+
+      // Pre-spawn second obstacle (mimicking handler behavior)
+      const morseDuration2 = 0.6;
+      const approachTime2 = 1.2;
+      const normalSpawnDistance2 = (morseDuration2 + approachTime2) * easyConfig.scrollSpeed;
+      const offsetDistance = timeUntilNextMorse * easyConfig.scrollSpeed;
+      const adjustedSpawnDistance2 = normalSpawnDistance2 + offsetDistance;
+
+      const currentTime = engine.getState().currentTime;
+      engine.spawnObstacle('B', adjustedSpawnDistance2, OBSTACLE_DURATION_SMALL, morseDuration2, approachTime2, timeUntilNextMorse);
+
+      // The second obstacle's morseEndTime should be currentTime + timeOffset + morseDuration
+      const obstacle2 = engine.getState().obstacles.find(o => o.requiredLetter === 'B')!;
+      const expectedMorseStartTime = currentTime + timeUntilNextMorse;
+      const expectedMorseEndTime = expectedMorseStartTime + morseDuration2;
+      expect(obstacle2.morseEndTime).toBeCloseTo(expectedMorseEndTime, 2);
+
+      // Advance through jump and downtime (this brings us to when next morse STARTS)
+      engine.update(jumpDuration + downtime);
+
+      // Now we're at the point where character B's morse STARTS playing
+      const currentTime2 = engine.getState().currentTime;
+      expect(currentTime2).toBeCloseTo(expectedMorseStartTime, 2);
+
+      // Simulate morse playing for B
+      engine.update(morseDuration2);
+
+      // Now we're at expectedMorseEndTime - verify timing
+      const currentTime3 = engine.getState().currentTime;
+      expect(currentTime3).toBeCloseTo(expectedMorseEndTime, 2);
+
+      // Advance to when second obstacle arrives (approachTime2 from morse end)
+      engine.update(approachTime2);
+
+      const obstacle2AfterAdvance = engine.getState().obstacles.find(o => o.requiredLetter === 'B')!;
+      const collisionPoint = CHARACTER_X + CHARACTER_WIDTH;
+
+      // Obstacle should be at or near collision point
+      expect(obstacle2AfterAdvance.x).toBeLessThanOrEqual(collisionPoint + 20);
+      expect(obstacle2AfterAdvance.x).toBeGreaterThanOrEqual(collisionPoint - 20);
+    });
+
+    it('should fail when reacting to pre-spawned obstacle with wrong timing', () => {
+      const morseDuration = 0.5;
+      const approachTime = 1.0;
+      const normalSpawnDistance = (morseDuration + approachTime) * easyConfig.scrollSpeed;
+
+      // Pre-spawn with time offset
+      const timeOffset = 2.0;
+
+      // IMPORTANT: Must adjust spawn distance
+      const offsetDistance = timeOffset * easyConfig.scrollSpeed;
+      const adjustedSpawnDistance = normalSpawnDistance + offsetDistance;
+
+      engine.spawnObstacle('A', adjustedSpawnDistance, OBSTACLE_DURATION_SMALL, morseDuration, approachTime, timeOffset);
+
+      // Advance to when morse STARTS
+      engine.update(timeOffset);
+
+      // React BEFORE the morse ends (should be ignored)
+      // morseEndTime is at 2.5s, we're at 2.0s
+      engine.handleInput('A');
+
+      const state = engine.getState();
+      // Input should be ignored (reaction time is negative)
+      expect(state.character.state).toBe('running');
+      expect(state.isGameOver).toBe(false);
+
+      // Now simulate morse completing
+      engine.update(morseDuration);
+
+      // Now react too late (after approach window)
+      // morseEndTime is at 2.5s, approachTime is 1.0s, so must react by 3.5s
+      // Let's advance to 4.0s (way past the window)
+      engine.update(approachTime + 0.5);
+      engine.handleInput('A');
+
+      const state2 = engine.getState();
+      // Should die from being too slow
+      expect(state2.isGameOver).toBe(true);
+    });
+
+    it('should handle collision timing correctly for pre-spawned obstacle', () => {
+      const morseDuration = 0.5;
+      const approachTime = 1.0;
+      const normalSpawnDistance = (morseDuration + approachTime) * easyConfig.scrollSpeed;
+
+      // Pre-spawn at T=0 with 2s offset
+      const timeOffset = 2.0;
+      const offsetDistance = timeOffset * easyConfig.scrollSpeed;
+      const adjustedSpawnDistance = normalSpawnDistance + offsetDistance;
+
+      engine.spawnObstacle('A', adjustedSpawnDistance, OBSTACLE_DURATION_SMALL, morseDuration, approachTime, timeOffset);
+
+      // morseEndTime = 0 + 2.0 + 0.5 = 2.5
+      // Obstacle should arrive at character at time: 2.5 + 1.0 = 3.5
+
+      // Don't react - let obstacle arrive and collide
+      engine.update(2.5 + approachTime + 0.1); // Past collision time
+
+      const state = engine.getState();
+      expect(state.isGameOver).toBe(true);
+      expect(state.character.state).toBe('dead');
+    });
+
+    it('INTEGRATION: should pre-spawn correctly when mimicking actual handler flow', () => {
+      // This test simulates the ACTUAL handler flow: spawn → jump → WAIT FOR JUMP TO COMPLETE → pre-spawn
+      const morseDuration1 = 0.5;
+      const approachTime1 = 1.0;
+      const spawnDistance1 = (morseDuration1 + approachTime1) * easyConfig.scrollSpeed;
+
+      // Spawn first obstacle normally at T=0
+      engine.spawnObstacle('A', spawnDistance1, OBSTACLE_DURATION_SMALL, morseDuration1, approachTime1, 0);
+
+      // Simulate morse playing
+      engine.update(morseDuration1); // T=0.5
+
+      // Player reacts
+      engine.update(0.3); // T=0.8
+      engine.handleInput('A');
+
+      const jumpDuration = engine.getState().character.jumpDuration!;
+      expect(engine.getState().character.state).toBe('jumping');
+
+      // **KEY**: Handler waits for jump to COMPLETE before pre-spawning
+      // Simulate the handler's while loop: while (character.state === 'jumping') { await sleep(50) }
+      engine.update(jumpDuration); // T=0.8 + 1.657 = 2.457
+
+      // Now jump is complete
+      expect(engine.getState().character.state).toBe('running');
+      const currentTimeAfterJump = engine.getState().currentTime;
+      expect(currentTimeAfterJump).toBeCloseTo(0.8 + jumpDuration, 2); // T=2.457
+
+      // CORRECT: Since jump has already happened, timeOffset should only be downtime
+      const downtime = 0.5;
+      const correctTimeOffset = downtime; // 0.5 ✅ CORRECT!
+
+      // Calculate next character's parameters
+      const morseDuration2 = 0.6;
+      const approachTime2 = 1.2;
+      const normalSpawnDistance2 = (morseDuration2 + approachTime2) * easyConfig.scrollSpeed;
+
+      // Correct pre-spawn calculation:
+      const offsetDistance = correctTimeOffset * easyConfig.scrollSpeed;
+      const adjustedSpawnDistance = normalSpawnDistance2 + offsetDistance;
+
+      engine.spawnObstacle('B', adjustedSpawnDistance, OBSTACLE_DURATION_SMALL, morseDuration2, approachTime2, correctTimeOffset);
+
+      const obstacle2 = engine.getState().obstacles.find(o => o.requiredLetter === 'B')!;
+
+      // Verify morseEndTime is correct:
+      // Next handler starts at: currentTime + downtime = 2.457 + 0.5 = 2.957
+      // Morse ends at: 2.957 + 0.6 = 3.557
+      const expectedMorseEndTime = currentTimeAfterJump + correctTimeOffset + morseDuration2;
+      expect(obstacle2.morseEndTime).toBeCloseTo(expectedMorseEndTime, 2);
+      expect(obstacle2.morseEndTime).toBeCloseTo(3.557, 2);
+
+      // Simulate downtime sleep (handler does this after pre-spawning)
+      engine.update(downtime); // T=2.957
+
+      // Now we're at when the next handler would start
+      const currentTime2 = engine.getState().currentTime;
+      expect(currentTime2).toBeCloseTo(2.957, 2);
+
+      // Simulate morse playing for second character
+      engine.update(morseDuration2); // T=3.557
+
+      // Verify we're at morse end time
+      const currentTime3 = engine.getState().currentTime;
+      expect(currentTime3).toBeCloseTo(expectedMorseEndTime, 2);
+
+      // Advance to when obstacle arrives (approachTime from morse end)
+      engine.update(approachTime2); // T=4.757
+
+      const obstacle2AfterAdvance = engine.getState().obstacles.find(o => o.requiredLetter === 'B')!;
+      const collisionPoint = CHARACTER_X + CHARACTER_WIDTH;
+
+      // Obstacle should be at collision point
+      expect(obstacle2AfterAdvance.x).toBeLessThanOrEqual(collisionPoint + 20);
+      expect(obstacle2AfterAdvance.x).toBeGreaterThanOrEqual(collisionPoint - 20);
     });
   });
 });

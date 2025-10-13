@@ -119,13 +119,15 @@ export class GameEngine {
    * @param obstacleDuration - Duration (width) of obstacle in seconds
    * @param morseDuration - How long the morse code plays
    * @param approachTime - Allowed reaction window after morse ends
+   * @param timeOffset - Time offset for pre-spawned obstacles (seconds, defaults to 0)
    */
   spawnObstacle(
     letter: string,
     spawnDistance: number,
     obstacleDuration: number,
     morseDuration: number,
-    approachTime: number
+    approachTime: number,
+    timeOffset: number = 0
   ): void {
     // Spawn distance is from character's right edge (where collision starts)
     const spawnX = CHARACTER_X + CHARACTER_WIDTH + spawnDistance;
@@ -150,7 +152,7 @@ export class GameEngine {
       spawnTime: this.state.currentTime,
       requiredLetter: letter,
       morseDuration: morseDuration,
-      morseEndTime: this.state.currentTime + morseDuration,
+      morseEndTime: this.state.currentTime + timeOffset + morseDuration,
       approachTime: approachTime,
       size: size
     };
@@ -162,7 +164,8 @@ export class GameEngine {
       this.activeObstacle = obstacle;
     }
 
-    console.log(`[${this.state.currentTime.toFixed(3)}s] 🚧 OBSTACLE SPAWNED - letter: "${letter}", x: ${spawnX.toFixed(1)}, size: ${size}, morse ends at: ${obstacle.morseEndTime.toFixed(3)}s, approach: ${approachTime.toFixed(3)}s`);
+    const offsetInfo = timeOffset > 0 ? `, timeOffset: ${timeOffset.toFixed(3)}s` : '';
+    console.log(`[${this.state.currentTime.toFixed(3)}s] 🚧 OBSTACLE SPAWNED - letter: "${letter}", x: ${spawnX.toFixed(1)}, size: ${size}, morse ends at: ${obstacle.morseEndTime.toFixed(3)}s, approach: ${approachTime.toFixed(3)}s${offsetInfo}`);
   }
 
   /**
