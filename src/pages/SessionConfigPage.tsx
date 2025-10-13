@@ -1,8 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import type { SessionConfig, SessionMode, SpeedTier } from '../core/types/domain';
 import type { FeedbackMode } from '../features/settings/store/types';
-import { fetchSources, fetchSourceContent, fetchWordSources, fetchWordSourceContent } from '../features/sources';
-import type { TextSource as ApiTextSource, SourceContent, WordSourceInfo as ApiWordSource } from '../features/sources';
+import { fetchSources, fetchSourceContent } from '../features/sources';
+import type { TextSource as ApiTextSource, SourceContent } from '../features/sources';
 import { useSettings } from '../features/settings/hooks/useSettings';
 import { useAuth } from '../hooks/useAuth';
 import { HeaderBar } from '../components/HeaderBar';
@@ -49,25 +49,17 @@ export function SessionConfigPage({ mode, onStart }: SessionConfigPageProps) {
   // Session configuration state - default values before settings load
   const [duration, setDuration] = useState<1 | 2 | 5>(1);
   const [speedTier, setSpeedTier] = useState<SpeedTier>('slow');
-  const [selectedTextSourceId, setSelectedTextSourceId] = useState<string>('random_letters');
-  const [selectedWordSourceId, setSelectedWordSourceId] = useState<string>('top-100');
+  const [selectedSourceId, setSelectedSourceId] = useState<string>('random_letters');
   const [wpm, setWpm] = useState(15);
   const [farnsworthWpm, setFarnsworthWpm] = useState(10);
   const [extraWordSpacing, setExtraWordSpacing] = useState(0);
   const [startingLevel, setStartingLevel] = useState<number>(1);
 
-  // Computed: current source ID based on mode
-  const selectedSourceId = mode === 'word-practice' ? selectedWordSourceId : selectedTextSourceId;
-
-  // Text source state
+  // Source state
   const [availableSources, setAvailableSources] = useState<ApiTextSource[]>([]);
   const [sourceContent, setSourceContent] = useState<SourceContent | null>(null);
   const [sourcesLoading, setSourcesLoading] = useState(true);
   const [sourceLoadError, setSourceLoadError] = useState<string | null>(null);
-
-  // Word source state (for word-practice mode)
-  const [availableWordSources, setAvailableWordSources] = useState<ApiWordSource[]>([]);
-  const [wordSourcesLoading, setWordSourcesLoading] = useState(false);
 
   // Single source of truth for feedback configuration
   const [feedbackMode, setFeedbackMode] = useState<FeedbackMode>('flash');
@@ -102,35 +94,11 @@ export function SessionConfigPage({ mode, onStart }: SessionConfigPageProps) {
     return chars;
   }, [includeNumbers, includeStdPunct, includeAdvPunct]);
 
-  // Helper function to load source content (consolidates duplicate logic)
+  // Helper function to load source content
   const loadSourceContent = useCallback(async (
     sourceId: string,
     options: { setError?: boolean } = {}
   ): Promise<SourceContent | null> => {
-    // Word sources (for word-practice mode)
-    if (mode === 'word-practice') {
-      const wordSource = availableWordSources.find(s => s.id === sourceId);
-      if (!wordSource) {
-        console.error(`Word source not found: ${sourceId}`);
-        if (options.setError) {
-          setSourceLoadError(`Word source not found: ${sourceId}`);
-        }
-        return null;
-      }
-
-      try {
-        const content = await fetchWordSourceContent(sourceId);
-        return content;
-      } catch (error) {
-        console.error(`Failed to fetch word source ${sourceId}:`, error);
-        if (options.setError) {
-          setSourceLoadError(`Failed to load "${wordSource.name}". Please try again or select a different source.`);
-        }
-        return null;
-      }
-    }
-
-    // Text sources (for other modes)
     const source = availableSources.find(s => s.id === sourceId);
     if (!source) {
       console.error(`Source not found: ${sourceId}`);
@@ -159,7 +127,7 @@ export function SessionConfigPage({ mode, onStart }: SessionConfigPageProps) {
       }
       return null;
     }
-  }, [availableSources, availableWordSources, mode, buildAlphabet]);
+  }, [availableSources, buildAlphabet]);
 
   // Load settings into local state when they become available
   useEffect(() => {
@@ -167,8 +135,8 @@ export function SessionConfigPage({ mode, onStart }: SessionConfigPageProps) {
       // Convert settings duration (60/120/300) to minutes (1/2/5)
       setDuration((settings.defaultDuration / 60) as 1 | 2 | 5);
       setSpeedTier(settings.defaultSpeedTier);
-      setSelectedTextSourceId(settings.defaultSourceId);
-      setSelectedWordSourceId(settings.defaultWordSourceId);
+      // For word-practice mode, use defaultWordSourceId; otherwise defaultSourceId
+      setSelectedSourceId(mode === 'word-practice' ? settings.defaultWordSourceId : settings.defaultSourceId);
       setWpm(settings.wpm);
       setFarnsworthWpm(settings.farnsworthWpm);
       setExtraWordSpacing(settings.extraWordSpacing);
@@ -176,7 +144,7 @@ export function SessionConfigPage({ mode, onStart }: SessionConfigPageProps) {
       // Direct assignment - feedbackMode is stored as-is now
       setFeedbackMode(settings.feedbackMode);
     }
-  }, [settings, settingsLoading]);
+  }, [settings, settingsLoading, mode]);
 
   // Fetch available sources on mount
   useEffect(() => {
@@ -201,41 +169,12 @@ export function SessionConfigPage({ mode, onStart }: SessionConfigPageProps) {
       });
   }, [user]);
 
-  // Fetch available word sources when in word-practice mode
-  useEffect(() => {
-    if (mode !== 'word-practice') return;
-
-    setWordSourcesLoading(true);
-    fetchWordSources()
-      .then(sources => {
-        setAvailableWordSources(sources);
-        // Only set default if current word source is invalid
-        // This preserves the user's selection of top-1000, etc.
-        if (!sources.find(s => s.id === selectedWordSourceId)) {
-          setSelectedWordSourceId(sources[0]?.id || 'top-100');
-        }
-      })
-      .catch(error => {
-        console.error('Failed to fetch word sources:', error);
-        setAvailableWordSources([]);
-      })
-      .finally(() => {
-        setWordSourcesLoading(false);
-      });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [mode]); // Only run when mode changes, not when selectedWordSourceId changes
-
   // Fetch content when selectedSourceId changes or on mount
   useEffect(() => {
     if (!selectedSourceId) return;
 
-    // For word-practice mode, wait until word sources are loaded
-    if (mode === 'word-practice' && wordSourcesLoading) {
-      return;
-    }
-
-    // For other modes, wait until text sources are loaded
-    if (mode !== 'word-practice' && sourcesLoading) {
+    // Wait until sources are loaded
+    if (sourcesLoading) {
       return;
     }
 
@@ -245,7 +184,7 @@ export function SessionConfigPage({ mode, onStart }: SessionConfigPageProps) {
       .then(content => {
         setSourceContent(content);
       });
-  }, [selectedSourceId, loadSourceContent, mode, wordSourcesLoading, sourcesLoading]);
+  }, [selectedSourceId, loadSourceContent, sourcesLoading]);
 
   // Save settings to centralized store when they change
   useEffect(() => {
@@ -255,12 +194,15 @@ export function SessionConfigPage({ mode, onStart }: SessionConfigPageProps) {
     const timer = setTimeout(() => {
       const durationInSeconds = (duration * 60) as 60 | 120 | 300;
 
+      // For word-practice mode, save to defaultWordSourceId; otherwise defaultSourceId
+      const settingKey = mode === 'word-practice' ? 'defaultWordSourceId' : 'defaultSourceId';
+      const currentSettingValue = mode === 'word-practice' ? settings.defaultWordSourceId : settings.defaultSourceId;
+
       // Check what needs updating
       const needsUpdate =
         settings.defaultDuration !== durationInSeconds ||
         settings.defaultSpeedTier !== speedTier ||
-        settings.defaultSourceId !== selectedTextSourceId ||
-        settings.defaultWordSourceId !== selectedWordSourceId ||
+        currentSettingValue !== selectedSourceId ||
         settings.wpm !== wpm ||
         settings.farnsworthWpm !== farnsworthWpm ||
         settings.extraWordSpacing !== extraWordSpacing ||
@@ -274,11 +216,8 @@ export function SessionConfigPage({ mode, onStart }: SessionConfigPageProps) {
         if (settings.defaultSpeedTier !== speedTier) {
           updateSetting('defaultSpeedTier', speedTier);
         }
-        if (settings.defaultSourceId !== selectedTextSourceId) {
-          updateSetting('defaultSourceId', selectedTextSourceId);
-        }
-        if (settings.defaultWordSourceId !== selectedWordSourceId) {
-          updateSetting('defaultWordSourceId', selectedWordSourceId);
+        if (currentSettingValue !== selectedSourceId) {
+          updateSetting(settingKey, selectedSourceId);
         }
         if (settings.wpm !== wpm) {
           updateSetting('wpm', wpm);
@@ -296,16 +235,11 @@ export function SessionConfigPage({ mode, onStart }: SessionConfigPageProps) {
     }, 300); // 300ms debounce
 
     return () => clearTimeout(timer);
-  }, [duration, speedTier, selectedTextSourceId, selectedWordSourceId, wpm, farnsworthWpm, extraWordSpacing, feedbackMode, settings, settingsLoading, updateSetting]);
+  }, [duration, speedTier, selectedSourceId, wpm, farnsworthWpm, extraWordSpacing, feedbackMode, settings, settingsLoading, updateSetting, mode]);
 
   // Handle source selection
   const handleSourceChange = async (sourceId: string) => {
-    // Update appropriate source state based on mode
-    if (mode === 'word-practice') {
-      setSelectedWordSourceId(sourceId);
-    } else {
-      setSelectedTextSourceId(sourceId);
-    }
+    setSelectedSourceId(sourceId);
     setSourceLoadError(null); // Clear any previous errors
 
     const content = await loadSourceContent(sourceId, { setError: true });
@@ -321,10 +255,8 @@ export function SessionConfigPage({ mode, onStart }: SessionConfigPageProps) {
 
     const { feedback, replay } = getFeedbackConfig();
 
-    // Find the source name from the appropriate sources array based on mode
-    const sourceName = mode === 'word-practice'
-      ? availableWordSources.find(s => s.id === selectedSourceId)?.name || 'Unknown'
-      : availableSources.find(s => s.id === selectedSourceId)?.name || 'Unknown';
+    // Find the source name
+    const sourceName = availableSources.find(s => s.id === selectedSourceId)?.name || 'Unknown';
 
     const config: SessionConfig = {
       mode,
@@ -377,7 +309,7 @@ export function SessionConfigPage({ mode, onStart }: SessionConfigPageProps) {
             </p>
           </div>
 
-          {/* Text Source or Word Source */}
+          {/* Text Source */}
           <div className="settings-row">
             <div className="settings-label">
               {mode === 'word-practice' ? 'Word Source' : 'Text Source'}
@@ -396,28 +328,16 @@ export function SessionConfigPage({ mode, onStart }: SessionConfigPageProps) {
                 }}
                 value={selectedSourceId}
                 onChange={(e) => handleSourceChange(e.target.value)}
-                disabled={mode === 'word-practice' ? wordSourcesLoading : sourcesLoading}
+                disabled={sourcesLoading}
               >
-                {mode === 'word-practice' ? (
-                  wordSourcesLoading ? (
-                    <option>Loading word sources...</option>
-                  ) : (
-                    availableWordSources.map(source => (
-                      <option key={source.id} value={source.id}>
-                        {source.name} ({source.wordCount} words)
-                      </option>
-                    ))
-                  )
+                {sourcesLoading ? (
+                  <option>Loading sources...</option>
                 ) : (
-                  sourcesLoading ? (
-                    <option>Loading sources...</option>
-                  ) : (
-                    availableSources.map(source => (
-                      <option key={source.id} value={source.id}>
-                        {source.name}
-                      </option>
-                    ))
-                  )
+                  availableSources.map(source => (
+                    <option key={source.id} value={source.id}>
+                      {source.name}
+                    </option>
+                  ))
                 )}
               </select>
             </div>

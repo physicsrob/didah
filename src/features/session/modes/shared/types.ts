@@ -54,6 +54,9 @@ export interface ModeDefinition {
   displayName: string;
   description: string;
 
+  // Emission behavior
+  emissionGranularity: 'character' | 'word';
+
   // Config capabilities
   usesSpeedTier: boolean;
   usesFeedback: boolean;

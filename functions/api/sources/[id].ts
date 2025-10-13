@@ -1,6 +1,6 @@
 import { SOURCES } from '../sources';
 import { shuffleArray } from '../../shared/utils';
-import { TOP_100_WORDS } from '../word-sources/wordData';
+import { TOP_100_WORDS, TOP_1000_WORDS } from '../../shared/wordData';
 
 // Build RSS feed map from sources
 const RSS_FEEDS: Record<string, string> = {};
@@ -10,7 +10,7 @@ for (const source of SOURCES) {
   }
 }
 
-// Use word frequency data from word-sources
+// Use word frequency data
 const COMMON_WORDS = TOP_100_WORDS;
 const EASY_WORDS = COMMON_WORDS.filter(w => w.length <= 4);
 
@@ -145,6 +145,14 @@ export async function onRequestGet(context: CloudflareContext) {
 
       case 'common_words_easy':
         items = [generateCommonWords(100, true)];
+        break;
+
+      case 'top-100':
+        items = [TOP_100_WORDS.join(' ')];
+        break;
+
+      case 'top-1000':
+        items = [TOP_1000_WORDS.join(' ')];
         break;
 
       case 'confusing_characters': {

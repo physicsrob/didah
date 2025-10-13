@@ -14,6 +14,9 @@ export const runnerMode: ModeDefinition = {
   displayName: 'Morse Runner',
   description: 'Endless runner mini-game - type letters to jump over obstacles',
 
+  // Emission behavior
+  emissionGranularity: 'character',
+
   // Config capabilities - runner manages everything internally
   usesSpeedTier: false,   // Game has its own speed progression via levels
   usesFeedback: false,    // Game has its own visual/audio feedback

@@ -15,6 +15,9 @@ export const listenMode: ModeDefinition = {
   displayName: 'Listen',
   description: 'Passive listening with delayed reveal',
 
+  // Emission behavior
+  emissionGranularity: 'character',
+
   // Config capabilities
   usesSpeedTier: false,
   usesFeedback: false,

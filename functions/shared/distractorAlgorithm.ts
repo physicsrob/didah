@@ -4,7 +4,7 @@
  * Groups words by simplified Morse similarity patterns to generate confusable distractors.
  */
 
-import { shuffleArray } from '../../shared/utils';
+import { shuffleArray } from './utils';
 
 /**
  * Simplified letter mapping based on Morse code confusion patterns

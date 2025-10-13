@@ -38,15 +38,21 @@ function updateWordPracticeState(
 }
 
 /**
- * Parse word entry from character source
- * Word entries are JSON-encoded as: {"word":"the","distractors":["that","this"]}
+ * Fetch distractors for a word from the distractors API
+ * Returns distractors array or null if unable to fetch
  */
-function parseWordEntry(char: string): { word: string; distractors: string[] } {
+async function fetchDistractors(word: string): Promise<string[] | null> {
   try {
-    return JSON.parse(char);
+    const response = await fetch(`/api/distractors?word=${encodeURIComponent(word)}`);
+    if (!response.ok) {
+      debug.log(`[WordPractice] Unable to get distractors for "${word}": ${response.status}`);
+      return null;
+    }
+    const data = await response.json();
+    return data.distractors;
   } catch (error) {
-    // Fail loudly if parsing fails - this indicates a bug in the word source
-    throw new Error(`Failed to parse word entry: ${char}. Expected JSON format with word and distractors. Error: ${error}`);
+    debug.log(`[WordPractice] Failed to fetch distractors for "${word}":`, error);
+    return null;
   }
 }
 
@@ -71,7 +77,7 @@ function parseWordEntry(char: string): { word: string; distractors: string[] } {
  */
 export async function handleWordPracticeWord(
   config: SessionConfig,
-  char: string,  // JSON-encoded word entry
+  char: string,  // Plain word (e.g., "the", "hello")
   startTime: number,
   ctx: HandlerContext,
   signal: AbortSignal
@@ -81,8 +87,15 @@ export async function handleWordPracticeWord(
     throw new Error('Word Practice mode handler called but wordPracticeState not initialized');
   }
 
-  // Parse word entry
-  const { word, distractors } = parseWordEntry(char);
+  // Fetch distractors from API
+  const word = char.toLowerCase();
+  const distractors = await fetchDistractors(word);
+
+  // Skip this word if we can't get distractors
+  if (distractors === null) {
+    debug.log(`[WordPractice] Skipping word "${word}" - no distractors available`);
+    return;
+  }
 
   // Shuffle button order ONCE for this word (stays same across retries)
   const buttonWords = shuffleArray([word, ...distractors]);

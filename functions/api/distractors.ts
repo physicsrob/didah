@@ -3,12 +3,12 @@
  * GET /api/distractors?word=the
  */
 
-import { TOP_1000_WORDS } from './word-sources/wordData';
+import { TOP_1000_WORDS } from '../shared/wordData';
 import {
   generateDistractors,
   groupWordsBySimplified,
   indexWordsByStartAndLength
-} from './word-sources/distractorAlgorithm';
+} from '../shared/distractorAlgorithm';
 
 interface CloudflareContext {
   request: Request;

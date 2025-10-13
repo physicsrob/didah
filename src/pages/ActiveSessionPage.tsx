@@ -91,8 +91,8 @@ export function ActiveSessionPage({ config, sourceContent, onComplete }: ActiveS
 
   // Create character source
   const source = useMemo(() => {
-    return createCharacterSource(sourceContent, config.effectiveAlphabet);
-  }, [sourceContent, config.effectiveAlphabet]);
+    return createCharacterSource(sourceContent, config.effectiveAlphabet, mode.emissionGranularity);
+  }, [sourceContent, config.effectiveAlphabet, mode.emissionGranularity]);
 
   // Create IO adapter
   const io = useMemo(() => {

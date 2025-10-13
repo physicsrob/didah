@@ -15,6 +15,9 @@ export const liveCopyMode: ModeDefinition = {
   displayName: 'Live Copy',
   description: 'Real-time copying with end-of-session corrections',
 
+  // Emission behavior
+  emissionGranularity: 'character',
+
   // Config capabilities
   usesSpeedTier: false,
   usesFeedback: false,

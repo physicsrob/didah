@@ -14,6 +14,9 @@ export const wordPracticeMode: ModeDefinition = {
   displayName: 'Word Practice',
   description: 'Multiple choice word recognition - select the word you hear from 3 options',
 
+  // Emission behavior
+  emissionGranularity: 'word',
+
   // Config capabilities
   usesSpeedTier: false,   // Uses Farnsworth timing instead
   usesFeedback: false,    // Visual feedback only (green/red flash)

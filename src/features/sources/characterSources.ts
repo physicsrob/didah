@@ -4,15 +4,6 @@
 
 import type { CharacterSource } from '../session/runtime/sessionProgram';
 import type { FullPost } from './types';
-import { shuffleArray } from '../../core/utils/array';
-
-/**
- * Word entry with distractors (from word-sources API)
- */
-export interface WordEntry {
-  word: string;
-  distractors: string[];
-}
 
 /**
  * Maximum attempts to find a valid character before throwing an error.
@@ -147,6 +138,34 @@ export class ContinuousTextSource implements CharacterSource {
   }
 }
 
+/**
+ * Source for word practice mode
+ * Emits whole words instead of individual characters
+ */
+export class WordSource implements CharacterSource {
+  private words: string[];
+  private currentIndex: number = 0;
+
+  constructor(text: string) {
+    // Split text into words and filter out empty strings
+    this.words = text.split(/\s+/).filter(word => word.length > 0);
+
+    if (this.words.length === 0) {
+      throw new Error('WordSource: No valid words found in source text');
+    }
+  }
+
+  next(): string {
+    // Return whole word
+    const word = this.words[this.currentIndex];
+    this.currentIndex = (this.currentIndex + 1) % this.words.length;
+    return word.toLowerCase();
+  }
+
+  reset(): void {
+    this.currentIndex = 0;
+  }
+}
 
 /**
  * Source for Reddit/RSS posts with title and body
@@ -223,37 +242,5 @@ export class FullPostSource implements CharacterSource {
     this.currentItemIndex = 0;
     this.currentCharIndex = 0;
     this.currentText = this.items[0] || '';
-  }
-}
-
-/**
- * Source for Word Practice mode
- * Returns JSON-encoded word entries with pre-calculated distractors
- */
-export class WordSource implements CharacterSource {
-  private wordEntries: WordEntry[];
-  private currentIndex: number = 0;
-
-  constructor(wordEntries: WordEntry[]) {
-    if (!wordEntries || wordEntries.length === 0) {
-      throw new Error('WordSource requires at least one word entry');
-    }
-    // Shuffle word entries to avoid always seeing high-frequency words first
-    this.wordEntries = shuffleArray(wordEntries);
-  }
-
-  next(): string {
-    // Get current word entry
-    const entry = this.wordEntries[this.currentIndex];
-
-    // Move to next (cycle through)
-    this.currentIndex = (this.currentIndex + 1) % this.wordEntries.length;
-
-    // Return JSON-encoded entry
-    return JSON.stringify(entry);
-  }
-
-  reset(): void {
-    this.currentIndex = 0;
   }
 }

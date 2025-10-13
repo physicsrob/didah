@@ -4,7 +4,7 @@
 
 import type { CharacterSource } from '../session/runtime/sessionProgram';
 import type { SourceContent, FullPost } from './types';
-import { ArraySource, ContinuousTextSource, FullPostSource, WordSource, type WordEntry } from './characterSources';
+import { ArraySource, ContinuousTextSource, FullPostSource, WordSource } from './characterSources';
 
 /**
  * Check if items are FullPost objects
@@ -18,22 +18,12 @@ function isFullPostArray(items: unknown[]): items is FullPost[] {
 }
 
 /**
- * Check if items are WordEntry objects
- */
-function isWordEntryArray(items: unknown[]): items is WordEntry[] {
-  return items.length > 0 &&
-         typeof items[0] === 'object' &&
-         items[0] !== null &&
-         'word' in items[0] &&
-         'distractors' in items[0];
-}
-
-/**
  * Create appropriate CharacterSource based on content type
  */
 export function createCharacterSource(
   content: SourceContent | null,
-  effectiveAlphabet: string[]
+  effectiveAlphabet: string[],
+  emissionGranularity: 'character' | 'word'
 ): CharacterSource {
   // Fail fast if no content provided
   if (!content) {
@@ -44,16 +34,31 @@ export function createCharacterSource(
     throw new Error(`Source ${content.id} returned no items`);
   }
 
+  // If word granularity requested, create WordSource from any content
+  if (emissionGranularity === 'word') {
+    // Handle different item formats
+    let text: string;
+
+    if (Array.isArray(content.items)) {
+      // For FullPost arrays, extract titles only
+      if (content.items.length > 0 && typeof content.items[0] === 'object' && 'title' in content.items[0]) {
+        text = (content.items as FullPost[]).map(p => p.title).join(' ');
+      } else {
+        // Regular string array - join with spaces
+        text = content.items.join(' ');
+      }
+    } else {
+      text = String(content.items);
+    }
+
+    return new WordSource(text);
+  }
+
   // Determine source type based on content
   const { id, items } = content;
 
-  // Word Practice sources - return WordSource
-  if (isWordEntryArray(items)) {
-    return new WordSource(items);
-  }
-
   // Random and word sources come as a single long string
-  if (id.includes('words') || id === 'random_letters' || id === 'random_characters') {
+  if (id.includes('words') || id.includes('top-') || id === 'random_letters' || id === 'random_characters') {
     // Single string of words/letters/characters
     if (items.length === 1 && typeof items[0] === 'string') {
       return new ContinuousTextSource(items[0]);

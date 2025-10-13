@@ -14,6 +14,9 @@ export const practiceMode: ModeDefinition = {
   displayName: 'Practice',
   description: 'Interactive training with immediate feedback',
 
+  // Emission behavior
+  emissionGranularity: 'character',
+
   // Config capabilities
   usesSpeedTier: true,
   usesFeedback: true,
