@@ -42,6 +42,7 @@ export class SessionStatsCalculator {
     let correctCount = 0;
     let incorrectCount = 0;
     let timeoutCount = 0;
+    let maxLevel: number | undefined = undefined;
 
     // Process each event
     for (const event of events) {
@@ -59,6 +60,12 @@ export class SessionStatsCalculator {
         case 'timeout':
           timeoutCount++;
           this.updateCharacterStats(characterStats, event.char, 'timeout');
+          break;
+        case 'levelAdvanced':
+          // Track maximum level completed (runner mode)
+          if (maxLevel === undefined || event.level > maxLevel) {
+            maxLevel = event.level;
+          }
           break;
       }
     }
@@ -95,7 +102,7 @@ export class SessionStatsCalculator {
       config.mode
     );
 
-    return {
+    const baseStats = {
       startedAt: sessionStart.at,
       endedAt: sessionEnd.at,
       durationMs: sessionEnd.at - sessionStart.at,
@@ -122,6 +129,13 @@ export class SessionStatsCalculator {
       meanRecognitionTimeMs,
       medianRecognitionTimeMs,
     };
+
+    // Add maxLevel if present (runner mode)
+    if (maxLevel !== undefined) {
+      return { ...baseStats, maxLevel };
+    }
+
+    return baseStats;
   }
 
   /**
@@ -210,7 +224,8 @@ export class SessionStatsCalculator {
     mode: string
   ): number {
     // For listen mode, achieved WPM doesn't make sense as there's no user input
-    if (mode === 'listen') {
+    // For runner mode, WPM doesn't make sense as speed is controlled by game levels
+    if (mode === 'listen' || mode === 'runner') {
       return 0;
     }
 

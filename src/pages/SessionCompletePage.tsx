@@ -72,6 +72,21 @@ export function SessionCompletePage({ statistics: fullStatistics, onRestart }: S
     }
   };
 
+  // Format duration for display
+  const formatDuration = (durationMs: number): string => {
+    const totalSeconds = Math.round(durationMs / 1000);
+    const minutes = Math.floor(totalSeconds / 60);
+    const seconds = totalSeconds % 60;
+
+    if (minutes === 0) {
+      return `${seconds} second${seconds === 1 ? '' : 's'}`;
+    } else if (seconds === 0) {
+      return `${minutes} minute${minutes === 1 ? '' : 's'}`;
+    } else {
+      return `${minutes} minute${minutes === 1 ? '' : 's'} ${seconds} second${seconds === 1 ? '' : 's'}`;
+    }
+  };
+
   return (
     <div className="completion-wrapper">
       <div className="completion-container">
@@ -112,6 +127,13 @@ export function SessionCompletePage({ statistics: fullStatistics, onRestart }: S
                     </div>
                   )}
 
+                  {fullStatistics.config.mode === 'runner' && fullStatistics.maxLevel !== undefined && (
+                    <div className="stat-item">
+                      <span className="stat-label">Maximum Level Completed</span>
+                      <span className="stat-value">{fullStatistics.maxLevel}</span>
+                    </div>
+                  )}
+
                   <div className="stat-item">
                     <span className="stat-label">Characters Practiced</span>
                     <span className="stat-value">{totalChars}</span>
@@ -143,17 +165,16 @@ export function SessionCompletePage({ statistics: fullStatistics, onRestart }: S
                 <div className="setting-item">
                   <span className="setting-label">Duration</span>
                   <span className="setting-value">
-                    {fullStatistics.config.lengthMs === 60000 ? '1 minute' :
-                     fullStatistics.config.lengthMs === 120000 ? '2 minutes' :
-                     fullStatistics.config.lengthMs === 300000 ? '5 minutes' :
-                     `${Math.round(fullStatistics.config.lengthMs / 1000)} seconds`}
+                    {formatDuration(fullStatistics.durationMs)}
                   </span>
                 </div>
 
-                <div className="setting-item">
-                  <span className="setting-label">Speed</span>
-                  <span className="setting-value">{fullStatistics.config.wpm} WPM</span>
-                </div>
+                {fullStatistics.config.mode !== 'runner' && (
+                  <div className="setting-item">
+                    <span className="setting-label">Speed</span>
+                    <span className="setting-value">{fullStatistics.config.wpm} WPM</span>
+                  </div>
+                )}
 
                 <div className="setting-item">
                   <span className="setting-label">Text Source</span>

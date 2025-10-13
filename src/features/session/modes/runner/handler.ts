@@ -142,6 +142,13 @@ export async function handleRunnerCharacter(
 
     // Check if reached threshold for current level
     if (currentLevel <= 10 && charsCleared >= CHARACTERS_PER_LEVEL[currentLevel - 1]) {
+      // Log level completion
+      ctx.io.log({
+        type: 'levelAdvanced',
+        at: ctx.clock.now(),
+        level: currentLevel
+      });
+
       if (currentLevel === 10) {
         // Completed all 10 levels!
         engine.completeGame();
@@ -162,7 +169,8 @@ export async function handleRunnerCharacter(
         engine.reset(startingLevel);
       } else {
         // Advance to next level
-        engine.advanceToLevel(currentLevel + 1);
+        const nextLevel = currentLevel + 1;
+        engine.advanceToLevel(nextLevel);
       }
     }
   }

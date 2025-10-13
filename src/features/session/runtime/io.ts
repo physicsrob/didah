@@ -82,7 +82,8 @@ export type LogEvent =
   | { type: 'emission'; at: number; char: string }
   | { type: 'correct'; at: number; char: string; latencyMs: number }
   | { type: 'incorrect'; at: number; expected: string; got: string }
-  | { type: 'timeout'; at: number; char: string };
+  | { type: 'timeout'; at: number; char: string }
+  | { type: 'levelAdvanced'; at: number; level: number };
 
 export interface IO {
   /**

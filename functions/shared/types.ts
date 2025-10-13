@@ -115,6 +115,9 @@ export type SessionStatistics = {
     char: string
     expectedChar?: string
   }>
+
+  // Runner Mode - Maximum level completed (optional, only for runner mode)
+  maxLevel?: number
 }
 
 // Validation function for settings
@@ -461,6 +464,13 @@ export function validateSessionStatistics(stats: unknown): stats is SessionStati
       if (seg.expectedChar !== undefined && (typeof seg.expectedChar !== 'string' || seg.expectedChar.length !== 1)) {
         return false
       }
+    }
+  }
+
+  // Validate maxLevel if present (optional field for runner mode)
+  if (s.maxLevel !== undefined) {
+    if (typeof s.maxLevel !== 'number' || s.maxLevel < 1 || s.maxLevel > 10 || !Number.isInteger(s.maxLevel)) {
+      return false
     }
   }
 

@@ -327,8 +327,8 @@ export function ActiveSessionPage({ config, sourceContent, onComplete }: ActiveS
         </div>
       )}
 
-      {/* Session Header - only during active session */}
-      {sessionPhase === 'active' && (
+      {/* Session Header - only during active session, hidden for runner mode */}
+      {sessionPhase === 'active' && config.mode !== 'runner' && (
         <div className="session-header">
           <div className="header-left">
             <button className="pause-button" onClick={handlePause}>
@@ -339,9 +339,7 @@ export function ActiveSessionPage({ config, sourceContent, onComplete }: ActiveS
               <div className="info-source">{getSourceDisplay()}</div>
             </div>
           </div>
-          {config.mode !== 'runner' && (
-            <div className="timer">{formatTime(snapshot.remainingMs)}</div>
-          )}
+          <div className="timer">{formatTime(snapshot.remainingMs)}</div>
         </div>
       )}
 
