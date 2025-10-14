@@ -11,7 +11,7 @@ export function setupCanvasMock() {
     height = 100;
     complete = false;
     onload: (() => void) | null = null;
-    onerror: ((error: any) => void) | null = null;
+    onerror: ((error: string | Event) => void) | null = null;
 
     get src() {
       return this._src;
@@ -27,7 +27,7 @@ export function setupCanvasMock() {
         }
       }, 0);
     }
-  } as any;
+  } as unknown as typeof Image;
 
   // Mock requestAnimationFrame
   if (typeof requestAnimationFrame === 'undefined') {
@@ -43,12 +43,12 @@ export function setupCanvasMock() {
   if (typeof performance === 'undefined') {
     global.performance = {
       now: () => Date.now()
-    } as any;
+    } as unknown as Performance;
   }
 
   // Enhance canvas mock to provide 2D context
   const originalCreateElement = document.createElement.bind(document);
-  document.createElement = function (tagName: string, options?: ElementCreationOptions): any {
+  document.createElement = function (tagName: string, options?: ElementCreationOptions): HTMLElement {
     const element = originalCreateElement(tagName, options);
 
     if (tagName === 'canvas') {
@@ -84,10 +84,10 @@ export function setupCanvasMock() {
             font: '',
             textAlign: 'left',
             imageSmoothingEnabled: true
-          } as any;
+          } as unknown as CanvasRenderingContext2D;
         }
         return null;
-      };
+      } as HTMLCanvasElement['getContext'];
     }
 
     return element;
