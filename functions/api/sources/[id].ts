@@ -119,11 +119,11 @@ export async function onRequestGet(context: CloudflareContext) {
       }
 
       case 'top-100':
-        items = [TOP_100_WORDS.join(' ')];
+        items = [shuffleArray(TOP_100_WORDS).join(' ')];
         break;
 
       case 'top-1000':
-        items = [TOP_1000_WORDS.join(' ')];
+        items = [shuffleArray(TOP_1000_WORDS).join(' ')];
         break;
 
       case 'confusing_characters': {
