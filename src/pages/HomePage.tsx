@@ -1,8 +1,8 @@
 import { useNavigate } from 'react-router-dom'
 import type { SessionMode } from '../core/types/domain'
 import { useAudio } from '../hooks/useAudio'
-import { useAuth } from '../hooks/useAuth'
-import GoogleSignInButton from '../components/GoogleSignInButton'
+import { useUser } from '@clerk/clerk-react'
+import { SignInButton } from '@clerk/clerk-react'
 import { UserDropdown } from '../components/UserDropdown'
 import { ModeCarousel } from '../components/ModeCarousel'
 import '../styles/main.css'
@@ -44,7 +44,7 @@ const MODES = [
 export default function HomePage() {
   const navigate = useNavigate()
   const { initializeAudio } = useAudio()
-  const { user, handleCredentialResponse, error } = useAuth()
+  const { user, isLoaded } = useUser()
 
   const handleModeSelect = async (mode: SessionMode) => {
     // Initialize audio while we have user gesture context
@@ -67,15 +67,13 @@ export default function HomePage() {
       {/* Top navigation */}
       <nav className="home-nav">
         <div className="home-nav-items">
-          {user ? (
+          {isLoaded && user ? (
             <UserDropdown />
-          ) : error ? (
-            <span className="text-error text-xs" title={error}>
-              Auth Error
-            </span>
-          ) : (
-            <GoogleSignInButton onCredentialResponse={handleCredentialResponse} />
-          )}
+          ) : isLoaded ? (
+            <SignInButton mode="modal">
+              <button className="btn btn-utility btn-small">Sign In</button>
+            </SignInButton>
+          ) : null}
         </div>
       </nav>
 
@@ -86,13 +84,6 @@ export default function HomePage() {
         <p className="text-center text-lg mb-16 home-subtitle">
           Flow state learning for morse code mastery
         </p>
-
-        {/* Show error banner if there's a critical auth error */}
-        {error && (
-          <div className="bg-error text-white p-3 rounded-lg mb-6 text-sm">
-            <strong>Authentication Error:</strong> {error}
-          </div>
-        )}
 
         <div className="flex flex-col gap-8 items-center">
           {/* Mode selection carousel */}

@@ -1,5 +1,5 @@
 import { useCallback } from 'react';
-import { useAuth } from '../../hooks/useAuth';
+import { useUser, useAuth } from '@clerk/clerk-react';
 import { StatsAPI } from './statsAPI';
 import type { SessionStatisticsWithMaps } from '../../core/types/statistics';
 
@@ -10,7 +10,8 @@ import type { SessionStatisticsWithMaps } from '../../core/types/statistics';
  * Anonymous users' stats are not saved.
  */
 export function useStatsAPI() {
-  const { user } = useAuth();
+  const { user } = useUser();
+  const { getToken } = useAuth();
 
   const saveSessionStats = useCallback(async (stats: SessionStatisticsWithMaps): Promise<void> => {
     if (!user) {
@@ -18,43 +19,23 @@ export function useStatsAPI() {
       return;
     }
 
-    const token = localStorage.getItem('google_token');
+    const token = await getToken();
     if (!token) {
       console.log('Stats not saved - no auth token found');
-      return;
-    }
-
-    // Check if token is expired
-    const isTokenExpired = (token: string): boolean => {
-      try {
-        const payload = JSON.parse(atob(token.split('.')[1]));
-        if (!payload.exp) return false;
-        const now = Math.floor(Date.now() / 1000);
-        return payload.exp < now;
-      } catch (error) {
-        console.error('Failed to parse JWT token:', error);
-        return true;
-      }
-    };
-
-    if (isTokenExpired(token)) {
-      console.log('Stats not saved - token expired');
-      localStorage.removeItem('google_token');
-      throw new Error('Session expired. Please sign in again to save your statistics.');
+      throw new Error('Failed to get authentication token. Please sign in again.');
     }
 
     try {
       const api = new StatsAPI(token);
       await api.saveSessionStats(stats);
     } catch (error) {
-      // If it's a 401, clear the token
+      // If it's a 401, the token is invalid
       if (error instanceof Error && error.message.includes('Authentication failed')) {
-        localStorage.removeItem('google_token');
         throw new Error('Session expired. Please sign in again to save your statistics.');
       }
       throw error;
     }
-  }, [user]);
+  }, [user, getToken]);
 
   return {
     saveSessionStats,

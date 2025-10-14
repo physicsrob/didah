@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useAuth } from '../../hooks/useAuth';
+import { useUser, useAuth } from '@clerk/clerk-react';
 import { StatisticsAPI } from '../../features/statistics/api';
 import type { DailyPracticeTime } from '../../features/statistics/api';
 import CalendarView from './CalendarView';
@@ -9,7 +9,8 @@ interface TimeTabProps {
 }
 
 export default function TimeTab({ timeWindow }: TimeTabProps) {
-  const { user } = useAuth();
+  const { user } = useUser();
+  const { getToken } = useAuth();
   const [practiceData, setPracticeData] = useState<DailyPracticeTime[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -20,8 +21,8 @@ export default function TimeTab({ timeWindow }: TimeTabProps) {
         setLoading(true);
         setError(null);
 
-        // Get auth token from localStorage
-        const token = user ? localStorage.getItem('google_token') : null;
+        // Get auth token from Clerk
+        const token = user ? await getToken() : null;
 
         // Create API client
         const statsAPI = new StatisticsAPI(token);
@@ -38,7 +39,7 @@ export default function TimeTab({ timeWindow }: TimeTabProps) {
     }
 
     fetchPracticeTime();
-  }, [user]);
+  }, [user, getToken]);
 
   return (
     <div className="space-y-6">

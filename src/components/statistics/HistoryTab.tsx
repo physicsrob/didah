@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { useAuth } from '../../hooks/useAuth';
+import { useUser, useAuth } from '@clerk/clerk-react';
 import { StatisticsAPI } from '../../features/statistics/api';
 import type { SessionStatisticsWithMaps } from '../../core/types/statistics';
 
@@ -8,7 +8,8 @@ interface HistoryTabProps {
 }
 
 export default function HistoryTab({ timeWindow }: HistoryTabProps) {
-  const { user } = useAuth();
+  const { user } = useUser();
+  const { getToken } = useAuth();
   const [sessions, setSessions] = useState<SessionStatisticsWithMaps[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -19,8 +20,8 @@ export default function HistoryTab({ timeWindow }: HistoryTabProps) {
         setLoading(true);
         setError(null);
 
-        // Get auth token from localStorage
-        const token = user ? localStorage.getItem('google_token') : null;
+        // Get auth token from Clerk
+        const token = user ? await getToken() : null;
 
         // Create API client
         const statsAPI = new StatisticsAPI(token);
@@ -38,7 +39,7 @@ export default function HistoryTab({ timeWindow }: HistoryTabProps) {
     }
 
     fetchSessions();
-  }, [user]);
+  }, [user, getToken]);
 
   const filteredSessions = useMemo(() => {
     const now = Date.now();

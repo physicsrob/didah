@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import type { ReactNode } from 'react'
-import { useAuth } from '../../../hooks/useAuth'
+import { useUser, useAuth } from '@clerk/clerk-react'
 import { settingsStore } from '../store/settingsStore'
 import '../../../styles/components.css'
 
@@ -9,36 +9,49 @@ interface SettingsProviderProps {
 }
 
 export function SettingsProvider({ children }: SettingsProviderProps) {
-  const { user } = useAuth()
+  const { user, isLoaded } = useUser()
+  const { getToken } = useAuth()
   const [initialized, setInitialized] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    // Get the token from localStorage if user is authenticated
-    const token = user ? localStorage.getItem('google_token') : null
-
-    if (!token) {
-      // User is not authenticated, use localStorage-only mode
-      settingsStore.initializeAnonymous()
-      setInitialized(true)
-      return
+    if (!isLoaded) {
+      return // Wait for Clerk to load
     }
 
-    // Initialize settings with the auth token
-    settingsStore.initialize(token)
-      .then(() => {
+    const initializeSettings = async () => {
+      if (!user) {
+        // User is not authenticated, use localStorage-only mode
+        settingsStore.initializeAnonymous()
+        setInitialized(true)
+        return
+      }
+
+      try {
+        // Get token from Clerk
+        const token = await getToken()
+        if (!token) {
+          console.error('Failed to get token')
+          settingsStore.initializeAnonymous()
+          setInitialized(true)
+          return
+        }
+
+        // Initialize settings with the auth token
+        await settingsStore.initialize(token)
         setInitialized(true)
         setError(null)
-      })
-      .catch(err => {
+      } catch (err) {
         console.error('Failed to initialize settings:', err)
 
         // For any error (auth or network), fall back to anonymous mode
-        localStorage.removeItem('google_token')
         settingsStore.initializeAnonymous()
         setError('Working offline - changes will sync when you sign in again.')
         setInitialized(true)
-      })
+      }
+    }
+
+    initializeSettings()
 
     // Cleanup on logout
     return () => {
@@ -46,7 +59,7 @@ export function SettingsProvider({ children }: SettingsProviderProps) {
         settingsStore.clear()
       }
     }
-  }, [user])
+  }, [user, isLoaded, getToken])
 
   // Show loading state during initial settings fetch
   // Only show loading if we have a user and haven't initialized yet

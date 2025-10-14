@@ -6,11 +6,12 @@
  */
 
 import type { KVNamespace } from '@cloudflare/workers-types';
-import { getUserIdFromToken } from '../shared/auth';
+import { getUserIdFromRequest } from '../shared/auth';
 
 interface Env {
   KV: KVNamespace;
-  GOOGLE_CLIENT_ID: string;
+  CLERK_SECRET_KEY: string;
+  CLERK_PUBLISHABLE_KEY: string;
 }
 
 interface DailyPracticeTime {
@@ -24,20 +25,17 @@ interface DailyPracticeTime {
  * Returns an array of daily practice times for the last 30 days.
  */
 export async function onRequestGet(context: { request: Request; env: Env }): Promise<Response> {
-  // Get Google Client ID from environment
-  const clientId = context.env.GOOGLE_CLIENT_ID;
-  if (!clientId) {
+  // Get Clerk keys from environment
+  const secretKey = context.env.CLERK_SECRET_KEY;
+  const publishableKey = context.env.CLERK_PUBLISHABLE_KEY;
+  if (!secretKey || !publishableKey) {
     return new Response('Server configuration error', { status: 500 });
   }
 
-  // Get user ID from token
+  // Get user ID from request
   let userId: string;
   try {
-    const authHeader = context.request.headers.get('Authorization');
-    if (!authHeader) {
-      return new Response('Authorization required', { status: 401 });
-    }
-    userId = await getUserIdFromToken(authHeader, clientId);
+    userId = await getUserIdFromRequest(context.request, secretKey, publishableKey);
   } catch (error) {
     console.error('Auth error:', error);
     return new Response('Invalid token', { status: 401 });

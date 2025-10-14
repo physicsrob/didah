@@ -6,10 +6,16 @@ import StatisticsPage from './pages/StatisticsPage'
 import SettingsPage from './pages/SettingsPage'
 import AboutPage from './pages/AboutPage'
 import { AudioProvider } from './contexts/AudioContext.tsx'
-import { AuthProvider } from './contexts/AuthContext.tsx'
+import { ClerkProvider } from '@clerk/clerk-react'
 import { SettingsProvider } from './features/settings/context/SettingsProvider.tsx'
 import { MorseBackgroundAnimation } from './components/MorseBackgroundAnimation'
 import { checkLocalStorage } from './utils/localStorage'
+
+const CLERK_PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY
+
+if (!CLERK_PUBLISHABLE_KEY) {
+  throw new Error('Missing Clerk Publishable Key')
+}
 
 function AppContent() {
   const location = useLocation()
@@ -37,7 +43,7 @@ function App() {
   }, [])
 
   return (
-    <AuthProvider>
+    <ClerkProvider publishableKey={CLERK_PUBLISHABLE_KEY}>
       <SettingsProvider>
         <AudioProvider>
           <Router>
@@ -45,7 +51,7 @@ function App() {
           </Router>
         </AudioProvider>
       </SettingsProvider>
-    </AuthProvider>
+    </ClerkProvider>
   )
 }
 
