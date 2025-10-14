@@ -21,8 +21,9 @@
     "prepare": "husky"
   },
   "dependencies": {
+    "@clerk/backend": "^2.17.2",
+    "@clerk/clerk-react": "^5.51.0",
     "@tsndr/cloudflare-worker-jwt": "^3.2.0",
-    "@types/google-one-tap": "^1.2.6",
     "diff": "^8.0.2",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",

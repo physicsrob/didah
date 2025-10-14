@@ -1,87 +1,83 @@
+import { createClerkClient } from '@clerk/backend'
 import { User } from './types'
 
-interface TokenInfoResponse {
-  sub: string
-  email: string
-  name?: string
-  picture?: string
-  aud: string
-  exp: string
-  iss: string
-  error_description?: string
+/**
+ * Authenticates a request and returns the user ID
+ *
+ * @param request - The Request object
+ * @param secretKey - The Clerk secret key from environment variables
+ * @param publishableKey - The Clerk publishable key from environment variables (optional)
+ * @returns User ID if authenticated
+ * @throws Error if authentication fails
+ */
+export async function getUserIdFromRequest(request: Request, secretKey: string, publishableKey?: string): Promise<string> {
+  const clerkClient = createClerkClient({ secretKey, publishableKey })
+
+  const requestState = await clerkClient.authenticateRequest(request, {
+    secretKey,
+    publishableKey
+  })
+
+  if (!requestState.isAuthenticated) {
+    throw new Error(`Authentication failed: ${requestState.reason || 'Unknown reason'}`)
+  }
+
+  const auth = requestState.toAuth()
+
+  if (!auth.userId) {
+    throw new Error('No user ID in authenticated request')
+  }
+
+  return auth.userId
 }
 
 /**
- * Verifies a Google ID token using Google's tokeninfo endpoint.
- * This validates:
- * - JWT signature (verified by Google)
- * - Issuer (iss claim)
- * - Audience (aud claim)
- * - Expiration (exp claim)
+ * Verifies a Clerk session token and returns the authenticated user (full user object)
  *
- * @param token - The Google ID token to verify
- * @param expectedClientId - The expected Google Client ID (aud claim)
+ * @param request - The Request object
+ * @param secretKey - The Clerk secret key from environment variables
+ * @param publishableKey - The Clerk publishable key from environment variables (optional)
  * @returns User object if token is valid
- * @throws Error if token is invalid, expired, or verification fails
+ * @throws Error if token is invalid or verification fails
  */
-export async function verifyGoogleToken(token: string, expectedClientId: string): Promise<User> {
-  try {
-    // Remove 'Bearer ' prefix if present
-    const cleanToken = token.replace(/^Bearer\s+/, '')
+export async function verifyClerkToken(request: Request, secretKey: string, publishableKey?: string): Promise<User> {
+  const clerkClient = createClerkClient({ secretKey, publishableKey })
 
-    // Verify token using Google's tokeninfo endpoint
-    // This endpoint validates signature, expiration, and returns token claims
-    const response = await fetch(`https://oauth2.googleapis.com/tokeninfo?id_token=${cleanToken}`)
+  const requestState = await clerkClient.authenticateRequest(request, {
+    secretKey,
+    publishableKey
+  })
 
-    if (!response.ok) {
-      const errorText = await response.text()
-      console.error('Google tokeninfo error:', response.status, errorText)
-      throw new Error(`Token verification failed: ${response.status} - ${errorText}`)
-    }
-
-    const tokenInfo = await response.json() as TokenInfoResponse
-
-    // Check for error in response
-    if (tokenInfo.error_description) {
-      console.error('Google tokeninfo returned error:', tokenInfo.error_description)
-      throw new Error(tokenInfo.error_description)
-    }
-
-    // Validate required fields
-    if (!tokenInfo.sub || !tokenInfo.email) {
-      throw new Error('Token missing required fields')
-    }
-
-    // Validate issuer
-    const validIssuers = ['https://accounts.google.com', 'accounts.google.com']
-    if (!validIssuers.includes(tokenInfo.iss)) {
-      throw new Error('Invalid token issuer')
-    }
-
-    // Validate audience (must match our client ID)
-    if (tokenInfo.aud !== expectedClientId) {
-      console.error('Token audience mismatch:', {
-        expected: expectedClientId,
-        received: tokenInfo.aud
-      })
-      throw new Error('Invalid token audience')
-    }
-
-    // Expiration is already validated by Google's tokeninfo endpoint
-    // If the token is expired, the endpoint returns an error
-
-    return {
-      id: tokenInfo.sub,
-      email: tokenInfo.email,
-      name: tokenInfo.name || tokenInfo.email,
-      picture: tokenInfo.picture
-    }
-  } catch (error) {
-    throw new Error(`Invalid token: ${error instanceof Error ? error.message : 'Unknown error'}`)
+  if (!requestState.isAuthenticated) {
+    throw new Error(`Authentication failed: ${requestState.reason || 'Unknown reason'}`)
   }
-}
 
-export async function getUserIdFromToken(token: string, expectedClientId: string): Promise<string> {
-  const user = await verifyGoogleToken(token, expectedClientId)
-  return user.id
+  const auth = requestState.toAuth()
+
+  if (!auth.userId) {
+    throw new Error('No user ID in authenticated request')
+  }
+
+  // Get full user details from Clerk
+  const clerkUser = await clerkClient.users.getUser(auth.userId)
+
+  if (!clerkUser) {
+    throw new Error('User not found')
+  }
+
+  // Extract email (prefer primary email)
+  const primaryEmail = clerkUser.emailAddresses.find(e => e.id === clerkUser.primaryEmailAddressId)
+  const email = primaryEmail?.emailAddress || clerkUser.emailAddresses[0]?.emailAddress
+
+  if (!email) {
+    throw new Error('User has no email address')
+  }
+
+  // Map Clerk user to our User type
+  return {
+    id: clerkUser.id,
+    email: email,
+    name: clerkUser.fullName || clerkUser.firstName || email,
+    picture: clerkUser.imageUrl
+  }
 }

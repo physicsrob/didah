@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useAuth } from '../../hooks/useAuth';
+import { useUser, useAuth } from '@clerk/clerk-react';
 import { StatisticsAPI } from '../../features/statistics/api';
 import type { SessionStatisticsWithMaps } from '../../core/types/statistics';
 import SessionGraph from './SessionGraph';
@@ -9,7 +9,8 @@ interface AccuracyTabProps {
 }
 
 export default function AccuracyTab({ timeWindow }: AccuracyTabProps) {
-  const { user } = useAuth();
+  const { user } = useUser();
+  const { getToken } = useAuth();
   const [sessions, setSessions] = useState<SessionStatisticsWithMaps[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -20,8 +21,8 @@ export default function AccuracyTab({ timeWindow }: AccuracyTabProps) {
         setLoading(true);
         setError(null);
 
-        // Get auth token from localStorage
-        const token = user ? localStorage.getItem('google_token') : null;
+        // Get auth token from Clerk
+        const token = user ? await getToken() : null;
 
         // Create API client
         const statsAPI = new StatisticsAPI(token);
@@ -44,7 +45,7 @@ export default function AccuracyTab({ timeWindow }: AccuracyTabProps) {
     }
 
     fetchSessions();
-  }, [user]);
+  }, [user, getToken]);
 
   return (
     <div className="space-y-6">

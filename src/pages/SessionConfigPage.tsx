@@ -4,7 +4,7 @@ import type { FeedbackMode } from '../features/settings/store/types';
 import { fetchSources, fetchSourceContent } from '../features/sources';
 import type { TextSource as ApiTextSource, SourceContent } from '../features/sources';
 import { useSettings } from '../features/settings/hooks/useSettings';
-import { useAuth } from '../hooks/useAuth';
+import { useUser } from '@clerk/clerk-react';
 import { HeaderBar } from '../components/HeaderBar';
 import { getCharactersByCategory } from '../core/morse/alphabet';
 import '../styles/main.css';
@@ -44,7 +44,7 @@ export function SessionConfigPage({ mode, onStart }: SessionConfigPageProps) {
 
   // Use centralized settings
   const { settings, updateSetting, isLoading: settingsLoading } = useSettings();
-  const { user } = useAuth();
+  const { user } = useUser();
 
   // Session configuration state - default values before settings load
   const [duration, setDuration] = useState<1 | 2 | 5>(1);

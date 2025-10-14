@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { useAuth } from '../../hooks/useAuth';
+import { useUser, useAuth } from '@clerk/clerk-react';
 import { StatisticsAPI } from '../../features/statistics/api';
 import type { SessionStatisticsWithMaps } from '../../core/types/statistics';
 import { getMorsePattern } from '../../core/morse/alphabet';
@@ -22,7 +22,8 @@ interface ConfusionTabProps {
 }
 
 export default function ConfusionTab({ timeWindow }: ConfusionTabProps) {
-  const { user } = useAuth();
+  const { user } = useUser();
+  const { getToken } = useAuth();
   const [sessions, setSessions] = useState<SessionStatisticsWithMaps[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -33,7 +34,7 @@ export default function ConfusionTab({ timeWindow }: ConfusionTabProps) {
         setLoading(true);
         setError(null);
 
-        const token = user ? localStorage.getItem('google_token') : null;
+        const token = user ? await getToken() : null;
         const statsAPI = new StatisticsAPI(token);
         const allSessions = await statsAPI.getSessions();
 
@@ -53,7 +54,7 @@ export default function ConfusionTab({ timeWindow }: ConfusionTabProps) {
     }
 
     fetchSessions();
-  }, [user]);
+  }, [user, getToken]);
 
   // Aggregate confusion data from all sessions within time window
   const confusionData = useMemo(() => {
