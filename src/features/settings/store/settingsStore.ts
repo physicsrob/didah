@@ -10,13 +10,13 @@ class SettingsStore {
   private syncQueue: Promise<void> = Promise.resolve()
   private isInitialized = false
 
-  async initialize(authToken: string): Promise<void> {
-    // Prevent re-initialization with the same token
+  async initialize(): Promise<void> {
+    // Prevent re-initialization
     if (this.isInitialized && this.api) {
       return
     }
 
-    this.api = new SettingsAPI(authToken)
+    this.api = new SettingsAPI()
     this.isInitialized = true
 
     try {

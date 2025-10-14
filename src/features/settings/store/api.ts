@@ -1,17 +1,9 @@
 import type { UserSettings } from './types'
 
 export class SettingsAPI {
-  private authToken: string
-
-  constructor(authToken: string) {
-    this.authToken = authToken
-  }
-
   async fetch(): Promise<UserSettings> {
     const response = await fetch('/api/settings', {
-      headers: {
-        'Authorization': `Bearer ${this.authToken}`
-      }
+      credentials: 'include' // Include cookies for authentication
     })
 
     if (!response.ok) {
@@ -28,8 +20,8 @@ export class SettingsAPI {
   async update(settings: UserSettings): Promise<void> {
     const response = await fetch('/api/settings', {
       method: 'PUT',
+      credentials: 'include', // Include cookies for authentication
       headers: {
-        'Authorization': `Bearer ${this.authToken}`,
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({ settings })

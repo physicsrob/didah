@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import type { ReactNode } from 'react'
-import { useUser, useAuth } from '@clerk/clerk-react'
+import { useUser } from '@clerk/clerk-react'
 import { settingsStore } from '../store/settingsStore'
 import '../../../styles/components.css'
 
@@ -10,7 +10,6 @@ interface SettingsProviderProps {
 
 export function SettingsProvider({ children }: SettingsProviderProps) {
   const { user, isLoaded } = useUser()
-  const { getToken } = useAuth()
   const [initialized, setInitialized] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -28,17 +27,8 @@ export function SettingsProvider({ children }: SettingsProviderProps) {
       }
 
       try {
-        // Get token from Clerk
-        const token = await getToken()
-        if (!token) {
-          console.error('Failed to get token')
-          settingsStore.initializeAnonymous()
-          setInitialized(true)
-          return
-        }
-
-        // Initialize settings with the auth token
-        await settingsStore.initialize(token)
+        // Initialize settings (Clerk cookies are automatically included in fetch)
+        await settingsStore.initialize()
         setInitialized(true)
         setError(null)
       } catch (err) {
@@ -59,7 +49,7 @@ export function SettingsProvider({ children }: SettingsProviderProps) {
         settingsStore.clear()
       }
     }
-  }, [user, isLoaded, getToken])
+  }, [user, isLoaded])
 
   // Show loading state during initial settings fetch
   // Only show loading if we have a user and haven't initialized yet
