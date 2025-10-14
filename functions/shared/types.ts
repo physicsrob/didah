@@ -82,12 +82,14 @@ export type SessionStatistics = {
     mode: SessionMode
     lengthMs: number               // Configured session length
     wpm: number
+    farnsworthWpm?: number         // Effective speed (for Farnsworth timing) - optional for backward compatibility
     speedTier: SpeedTier
     sourceId: string
     sourceName?: string            // Display name of the source
     replay: boolean
     feedback: 'buzzer' | 'flash' | 'both' | 'none'
     effectiveAlphabet: string[]    // Characters practiced
+    extraWordSpacing?: number      // Extra word spacing (0-5) - optional for backward compatibility
   }
 
   // Overall Metrics
@@ -315,6 +317,20 @@ export function validateSessionStatistics(stats: unknown): stats is SessionStati
 
   if (typeof config.wpm !== 'number' || config.wpm < 5 || config.wpm > 100) {
     return false
+  }
+
+  // Validate optional farnsworthWpm if present
+  if (config.farnsworthWpm !== undefined) {
+    if (typeof config.farnsworthWpm !== 'number' || config.farnsworthWpm < 5 || config.farnsworthWpm > 100) {
+      return false
+    }
+  }
+
+  // Validate optional extraWordSpacing if present
+  if (config.extraWordSpacing !== undefined) {
+    if (typeof config.extraWordSpacing !== 'number' || config.extraWordSpacing < 0 || config.extraWordSpacing > 5) {
+      return false
+    }
   }
 
   const validSpeedTiers: SpeedTier[] = ['slow', 'medium', 'fast', 'lightning']

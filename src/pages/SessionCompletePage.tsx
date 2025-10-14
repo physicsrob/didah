@@ -10,6 +10,7 @@ import type { SessionStatisticsWithMaps } from '../core/types/statistics';
 import { useStatsAPI } from '../features/statistics/useStatsAPI';
 import { debug } from '../core/debug';
 import { LiveCopyDiff } from '../components/LiveCopyDiff';
+import { formatSpeedDisplay } from '../utils/speedDisplay';
 import '../styles/main.css';
 import '../styles/sessionComplete.css';
 
@@ -86,6 +87,9 @@ export function SessionCompletePage({ statistics: fullStatistics, onRestart }: S
       return `${minutes} minute${minutes === 1 ? '' : 's'} ${seconds} second${seconds === 1 ? '' : 's'}`;
     }
   };
+
+  // Get formatted speed display
+  const speedDisplay = formatSpeedDisplay(fullStatistics.config);
 
   return (
     <div className="completion-wrapper">
@@ -171,7 +175,9 @@ export function SessionCompletePage({ statistics: fullStatistics, onRestart }: S
                 {fullStatistics.config.mode !== 'runner' && (
                   <div className="setting-item">
                     <span className="setting-label">Speed</span>
-                    <span className="setting-value">{fullStatistics.config.wpm} WPM</span>
+                    <span className="setting-value" title={speedDisplay.tooltip}>
+                      {speedDisplay.text}
+                    </span>
                   </div>
                 )}
 

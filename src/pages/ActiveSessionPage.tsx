@@ -23,6 +23,7 @@ import { useSettings } from '../features/settings/hooks/useSettings';
 import { SessionStatsCalculator } from '../features/statistics/sessionStatsCalculator';
 import { getMode } from '../features/session/modes/shared/registry';
 import { evaluateLiveCopy } from '../features/session/modes/liveCopy/evaluator';
+import { formatSpeedDisplay } from '../utils/speedDisplay';
 import '../styles/main.css';
 import '../styles/activeSession.css';
 
@@ -305,6 +306,9 @@ export function ActiveSessionPage({ config, sourceContent, onComplete }: ActiveS
     return config.sourceName || 'Unknown';
   };
 
+  // Get formatted speed display
+  const speedDisplay = useMemo(() => formatSpeedDisplay(config), [config]);
+
   return (
     <div className="active-session-wrapper bg-gradient-primary">
       <div className="active-session-container">
@@ -335,7 +339,9 @@ export function ActiveSessionPage({ config, sourceContent, onComplete }: ActiveS
               Pause
             </button>
             <div className="header-info">
-              <div className="info-wpm">{config.wpm} WPM</div>
+              <div className="info-wpm" title={speedDisplay.tooltip}>
+                {speedDisplay.text}
+              </div>
               <div className="info-source">{getSourceDisplay()}</div>
             </div>
           </div>
