@@ -5,27 +5,33 @@ Morse Academy is deployed on Cloudflare Pages at:
 
 The entire application (frontend + API) is deployed together.
 
-## Quick Deploy
+## Deployment
+
+Cloudflare Pages is configured to **automatically build and deploy** when changes are pushed to the repository.
+
+### Automatic Deployment (Primary Method)
+
+1. Push changes to your git repository
+2. Cloudflare Pages automatically detects the push
+3. Cloudflare builds the project (`npm run build`)
+4. The built application is deployed to production
+
+The build and deployment happen entirely on Cloudflare's infrastructure.
+
+### Manual Deployment (Alternative)
+
+If you need to deploy manually from your local machine:
 
 ```bash
+# Build and deploy in one command
 npm run deploy
-```
 
-This command will:
-1. Build the frontend (`npm run build`)
-2. Deploy to Cloudflare Pages using Wrangler
-
-## Manual Deployment
-
-If you need to deploy manually:
-
-```bash
-# Build the frontend
+# Or step by step:
 npm run build
-
-# Deploy to Cloudflare Pages
 npx wrangler pages deploy ./dist
 ```
+
+Manual deployment is useful for testing deployment configurations or deploying from branches that aren't automatically deployed.
 
 ## Local Development
 
@@ -62,7 +68,7 @@ The `npm run dev` command uses the Cloudflare Pages development server, which ru
 
 ## Deployment Checklist
 
-Before deploying to production:
+Before pushing changes that will be automatically deployed:
 
 1. **Run quality checks**:
    ```bash
@@ -76,18 +82,22 @@ Before deploying to production:
    ```
    Verify the app works with both frontend and API.
 
-3. **Build succeeds**:
+3. **Build succeeds locally**:
    ```bash
    npm run build
    ```
    Ensure the build completes without errors.
 
-4. **Deploy**:
+4. **Commit and push**:
    ```bash
-   npm run deploy
+   git add .
+   git commit -m "Your commit message"
+   git push
    ```
 
-5. **Verify production**: Visit https://morse.academy and test functionality.
+5. **Monitor deployment**: Check the Cloudflare Pages dashboard to monitor the build and deployment progress.
+
+6. **Verify production**: Visit https://morse.academy and test functionality once deployment completes.
 
 ## Troubleshooting
 
@@ -108,6 +118,11 @@ Before deploying to production:
 
 ## CI/CD
 
-Currently, deployment is manual using `npm run deploy`.
+Cloudflare Pages is configured to automatically build and deploy when changes are pushed to the connected git repository.
 
-Cloudflare Pages can be configured to automatically deploy on git pushes. If you want to enable this, configure the GitHub integration in the Cloudflare Pages dashboard.
+- **Automatic builds**: Triggered on every push to the repository
+- **Build command**: `npm run build`
+- **Output directory**: `./dist`
+- **Functions directory**: `/functions/api/`
+
+The GitHub integration is configured in the Cloudflare Pages dashboard. You can view build logs and deployment history in the dashboard.
