@@ -7,11 +7,14 @@ const RSS_URLS: Record<string, string> = {
 
 // Shared source configuration (URL field removed - it's an internal implementation detail)
 export const SOURCES = [
+  // Basic sources
   { id: 'random_letters', name: 'Random Letters', type: 'generated', category: 'basic', description: 'Practice with random letters from the alphabet' },
   { id: 'random_characters', name: 'Random Characters', type: 'generated', category: 'basic', description: 'Practice with letters, numbers, and punctuation' },
   { id: 'top-100', name: 'Top-100 Words', type: 'generated', category: 'basic', description: 'Most common English words for vocabulary building' },
   { id: 'top-1000', name: 'Top-1000 Words', type: 'generated', category: 'basic', description: 'Extended vocabulary with 1000 common English words' },
-  { id: 'confusing_characters', name: 'Confusing Characters', type: 'generated', category: 'basic', description: 'Focus on characters you find difficult', requiresAuth: true },
+
+  // Personalized sources
+  { id: 'confusing_characters', name: 'Confusing Characters', type: 'generated', category: 'personalized', description: 'Focus on characters you find difficult', requiresAuth: true },
 
   // Reddit sources - explicit headlines/full variants
   { id: 'reddit_popular_headlines', name: 'Popular Post Titles', type: 'rss', category: 'reddit', description: 'Trending post titles from r/popular on Reddit' },

@@ -69,37 +69,30 @@ export function TextSourceModal({
     });
   }, [sources, searchQuery]);
 
-  // Group sources by category
+  // Group sources by category, preserving backend order
   const groupedSources = useMemo(() => {
     const groups: GroupedSources = {};
+    const categoriesInOrder: string[] = [];
 
     // First, add favorites group if any exist
     const favoriteSources = filteredSources.filter(s => favorites.includes(s.id));
     if (favoriteSources.length > 0) {
       groups['favorites'] = favoriteSources;
+      categoriesInOrder.push('favorites');
     }
 
-    // Then group by category
+    // Then group by category, preserving order from backend
     filteredSources.forEach(source => {
       const category = source.category || 'other';
       if (!groups[category]) {
         groups[category] = [];
+        categoriesInOrder.push(category);
       }
       groups[category].push(source);
     });
 
-    return groups;
+    return { groups, categoriesInOrder };
   }, [filteredSources, favorites]);
-
-  // Get sorted category keys (favorites first, then alphabetically)
-  const sortedCategories = useMemo(() => {
-    const categories = Object.keys(groupedSources);
-    return categories.sort((a, b) => {
-      if (a === 'favorites') return -1;
-      if (b === 'favorites') return 1;
-      return a.localeCompare(b);
-    });
-  }, [groupedSources]);
 
   const handleSourceClick = (sourceId: string) => {
     onSelect(sourceId);
@@ -170,13 +163,13 @@ export function TextSourceModal({
               <p>No sources found matching "{searchQuery}"</p>
             </div>
           ) : (
-            sortedCategories.map(category => (
+            groupedSources.categoriesInOrder.map(category => (
               <div key={category} className="text-source-category">
                 <h3 className="text-source-category-header">
                   {category.charAt(0).toUpperCase() + category.slice(1)}
                 </h3>
                 <div className="text-source-category-items">
-                  {groupedSources[category].map(source => {
+                  {groupedSources.groups[category].map(source => {
                     const isFavorite = favorites.includes(source.id);
                     const isSelected = source.id === selectedId;
 
