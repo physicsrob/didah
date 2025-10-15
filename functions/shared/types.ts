@@ -26,6 +26,9 @@ export type UserSettings = {
 
   // Active mode settings
   feedbackMode: FeedbackMode
+
+  // User preferences
+  favoriteSourceIds: string[]  // User's favorite text sources
 }
 
 export const DEFAULT_USER_SETTINGS: UserSettings = {
@@ -44,7 +47,8 @@ export const DEFAULT_USER_SETTINGS: UserSettings = {
   defaultSpeedTier: 'slow',
   defaultSourceId: 'random_letters',
   defaultWordSourceId: 'top-100',
-  feedbackMode: 'replay'  // Default to replay (both + replay)
+  feedbackMode: 'replay',  // Default to replay (both + replay)
+  favoriteSourceIds: []  // No favorites by default
 }
 
 export interface User {
@@ -134,7 +138,7 @@ export function validateSettings(settings: unknown): settings is UserSettings {
     'wpm', 'farnsworthWpm', 'frequency', 'volume', 'buzzerVolume', 'tone',
     'includeNumbers', 'includeStdPunct', 'includeAdvPunct', 'extraWordSpacing',
     'defaultDuration', 'defaultMode', 'defaultSpeedTier', 'defaultSourceId', 'defaultWordSourceId',
-    'feedbackMode'
+    'feedbackMode', 'favoriteSourceIds'
   ]
 
   for (const field of requiredFields) {
@@ -202,6 +206,17 @@ export function validateSettings(settings: unknown): settings is UserSettings {
 
   if (typeof s.defaultWordSourceId !== 'string' || !s.defaultWordSourceId) {
     return false
+  }
+
+  if (!Array.isArray(s.favoriteSourceIds)) {
+    return false
+  }
+
+  // Validate each favorite source ID is a string
+  for (const id of s.favoriteSourceIds as unknown[]) {
+    if (typeof id !== 'string') {
+      return false
+    }
   }
 
   return true

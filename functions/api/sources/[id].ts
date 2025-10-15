@@ -1,13 +1,17 @@
-import { SOURCES } from '../sources';
+import { RSS_URLS } from '../sources';
 import { shuffleArray } from '../../shared/utils';
 import { TOP_100_WORDS, TOP_1000_WORDS } from '../../shared/wordData';
 
-// Build RSS feed map from sources
-const RSS_FEEDS: Record<string, string> = {};
-for (const source of SOURCES) {
-  if (source.type === 'rss' && source.url) {
-    RSS_FEEDS[source.id] = source.url;
-  }
+/**
+ * Strip URLs from text (moved from frontend)
+ */
+function stripUrls(text: string): string {
+  return text
+    .replace(/https?:\/\/[^\s]+/g, '')
+    .replace(/www\.[^\s]+/g, '')
+    .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
+    .replace(/\s+/g, ' ')
+    .trim();
 }
 
 /**
@@ -98,14 +102,18 @@ export async function onRequestGet(context: CloudflareContext) {
   const url = new URL(context.request.url);
   const alphabet = url.searchParams.get('alphabet');
 
-  try {
-    let items: string[] | Array<{title: string, body: string}> = [];
+  // Check if this is a Reddit source with _headlines or _full suffix
+  const isFullMode = id.endsWith('_full');
+  const baseId = id.replace(/_(headlines|full)$/, '');
 
-    switch (id) {
+  try {
+    let items: string[] = [];
+
+    switch (baseId) {
       case 'random_letters':
       case 'random_characters': {
         // Use provided alphabet or default to A-Z for random_letters
-        const defaultAlphabet = id === 'random_letters' ? 'ABCDEFGHIJKLMNOPQRSTUVWXYZ' : '';
+        const defaultAlphabet = baseId === 'random_letters' ? 'ABCDEFGHIJKLMNOPQRSTUVWXYZ' : '';
         const sourceAlphabet = alphabet || defaultAlphabet;
 
         if (!sourceAlphabet) {
@@ -133,26 +141,37 @@ export async function onRequestGet(context: CloudflareContext) {
 
       default:
         // Check if it's a Reddit source first (read from KV cache)
-        if (id.startsWith('reddit_') && kv) {
+        if (baseId.startsWith('reddit_') && kv) {
           try {
-            const cacheKey = `reddit:${id}`;
+            const cacheKey = `reddit:${baseId}`;
             const cached = await kv.get(cacheKey, 'json') as { posts: Array<{title: string, body: string}>, fetchedAt: string } | null;
 
             if (cached && cached.posts) {
-              // Always serve cached data, even if stale
-              // Shuffle on every request for variety
+              // Shuffle posts for variety on each request
               const shuffledPosts = shuffleArray(cached.posts);
 
-              // Return structured data for Reddit sources
-              // Frontend will handle formatting based on user preference
-              items = shuffledPosts;
+              // Format based on mode (headlines vs full)
+              let formattedText: string;
+              if (isFullMode) {
+                // Full mode: "Title 1 = Body 1 AR Title 2 = Body 2 AR ..."
+                formattedText = shuffledPosts.map(p => {
+                  const body = stripUrls(p.body.trim());
+                  return body ? `${p.title} = ${body} AR` : `${p.title} AR`;
+                }).join(' ');
+              } else {
+                // Headlines mode: "Title 1 = Title 2 = Title 3 = ..."
+                formattedText = shuffledPosts.map(p => p.title).join(' = ') + ' = ';
+              }
+
+              // Return as single-element array containing the formatted string
+              items = [formattedText];
 
               // Add staleness warning in response headers if data is old
               const fetchedAt = new Date(cached.fetchedAt);
               const ageHours = (Date.now() - fetchedAt.getTime()) / (1000 * 60 * 60);
 
               const response = Response.json({
-                id,
+                id,  // Use original ID (with suffix)
                 items,
                 cached: true,
                 fetchedAt: cached.fetchedAt,
@@ -180,7 +199,7 @@ export async function onRequestGet(context: CloudflareContext) {
               }, { status: 503 });
             }
           } catch (error) {
-            console.error(`Error reading KV cache for ${id}:`, error);
+            console.error(`Error reading KV cache for ${baseId}:`, error);
             return Response.json({
               error: 'Failed to fetch Reddit data from cache',
               details: error instanceof Error ? error.message : 'Unknown error'
@@ -188,8 +207,8 @@ export async function onRequestGet(context: CloudflareContext) {
           }
         }
         // Otherwise check if it's an RSS source
-        else if (id in RSS_FEEDS) {
-          const titles = await fetchRSS(RSS_FEEDS[id]);
+        else if (baseId in RSS_URLS) {
+          const titles = await fetchRSS(RSS_URLS[baseId]);
           // Shuffle RSS feed items on every request too
           items = titles.length > 0 ? shuffleArray(titles) : ['No items found in feed'];
         } else {
