@@ -86,6 +86,11 @@
   padding: 0 24px;
 }
 
+/* Add bottom padding when virtual keyboard is visible */
+.session-display-area-with-keyboard {
+  padding-bottom: 220px;
+}
+
 /* Welcome Screen */
 .welcome-container {
   height: 100vh;

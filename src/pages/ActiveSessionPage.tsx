@@ -24,6 +24,8 @@ import { SessionStatsCalculator } from '../features/statistics/sessionStatsCalcu
 import { getMode } from '../features/session/modes/shared/registry';
 import { evaluateLiveCopy } from '../features/session/modes/liveCopy/evaluator';
 import { formatSpeedDisplay } from '../utils/speedDisplay';
+import { isTouchDevice } from '../utils/deviceDetection';
+import { VirtualKeyboard } from '../components/VirtualKeyboard';
 import '../styles/main.css';
 import '../styles/activeSession.css';
 
@@ -309,6 +311,13 @@ export function ActiveSessionPage({ config, sourceContent, onComplete }: ActiveS
   // Get formatted speed display
   const speedDisplay = useMemo(() => formatSpeedDisplay(config), [config]);
 
+  // Determine if virtual keyboard should be shown
+  const isTouch = useMemo(() => isTouchDevice(), []);
+  const modeNeedsKeyboard = useMemo(() => {
+    return ['practice', 'live-copy', 'runner'].includes(config.mode);
+  }, [config.mode]);
+  const showVirtualKeyboard = isTouch && modeNeedsKeyboard && sessionPhase === 'active' && !isPaused;
+
   return (
     <div className="active-session-wrapper bg-gradient-primary">
       <div className="active-session-container">
@@ -351,7 +360,7 @@ export function ActiveSessionPage({ config, sourceContent, onComplete }: ActiveS
 
       {/* Main Display Area */}
       {(sessionPhase === 'countdown' || sessionPhase === 'active') && (
-        <div className="session-display-area">
+        <div className={`session-display-area ${showVirtualKeyboard ? 'session-display-area-with-keyboard' : ''}`}>
           {mode.renderDisplay({ snapshot })}
         </div>
       )}
@@ -394,6 +403,17 @@ export function ActiveSessionPage({ config, sourceContent, onComplete }: ActiveS
             <div className="replay-label">Missed Character</div>
           </div>
         </div>
+      )}
+
+      {/* Virtual Keyboard - Mobile only */}
+      {showVirtualKeyboard && (
+        <VirtualKeyboard
+          alphabet={config.effectiveAlphabet}
+          mode={config.mode}
+          onKeyPress={(key) => {
+            input.push({ at: performance.now(), key });
+          }}
+        />
       )}
       </div>
     </div>

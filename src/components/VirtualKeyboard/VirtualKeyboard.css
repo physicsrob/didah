@@ -1,0 +1,135 @@
+/* Virtual Keyboard Styles */
+
+.virtual-keyboard {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: rgba(26, 26, 46, 0.95);
+  backdrop-filter: blur(10px);
+  padding: 12px;
+  z-index: 1000;
+  border-top: 1px solid var(--border-primary);
+  /* Prevent pull-to-refresh when interacting with keyboard */
+  overscroll-behavior: contain;
+}
+
+.keyboard-row {
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+  margin-bottom: 6px;
+}
+
+.keyboard-row:last-child {
+  margin-bottom: 0;
+}
+
+.keyboard-key {
+  min-width: 32px;
+  height: 44px;
+  font-size: 16px;
+  font-weight: 600;
+  font-family: var(--font-mono);
+  border: 1px solid var(--border-primary);
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  border-radius: 6px;
+  cursor: pointer;
+  /* Prevent text selection */
+  user-select: none;
+  -webkit-user-select: none;
+  /* Prevent double-tap zoom */
+  touch-action: manipulation;
+  /* Smooth animation */
+  transition: all 0.1s ease;
+  /* Flex for centering content */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 8px;
+}
+
+/* Enabled key state */
+.keyboard-key-enabled {
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  border-color: var(--border-primary);
+}
+
+.keyboard-key-enabled:active {
+  transform: scale(0.95);
+  background: var(--color-blue-primary);
+  color: white;
+  border-color: var(--color-blue-primary);
+}
+
+/* Disabled key state */
+.keyboard-key-disabled {
+  background: rgba(60, 60, 80, 0.3);
+  color: rgba(255, 255, 255, 0.3);
+  border-color: rgba(100, 100, 120, 0.3);
+  cursor: not-allowed;
+}
+
+/* Space bar - wider */
+.keyboard-key-space {
+  flex: 1;
+  min-width: 120px;
+}
+
+/* Backspace - slightly wider */
+.keyboard-key-backspace {
+  min-width: 48px;
+  font-size: 20px;
+}
+
+/* Responsive adjustments for smaller screens */
+@media (max-width: 400px) {
+  .keyboard-key {
+    min-width: 28px;
+    height: 40px;
+    font-size: 14px;
+    padding: 0 6px;
+  }
+
+  .keyboard-row {
+    gap: 4px;
+    margin-bottom: 4px;
+  }
+
+  .virtual-keyboard {
+    padding: 8px;
+  }
+
+  .keyboard-key-backspace {
+    min-width: 40px;
+    font-size: 18px;
+  }
+}
+
+/* Responsive adjustments for larger screens / tablets */
+@media (min-width: 600px) {
+  .keyboard-key {
+    min-width: 48px;
+    height: 48px;
+    font-size: 18px;
+  }
+
+  .keyboard-row {
+    gap: 8px;
+    margin-bottom: 8px;
+  }
+
+  .virtual-keyboard {
+    padding: 16px;
+  }
+
+  .keyboard-key-backspace {
+    min-width: 64px;
+  }
+
+  .keyboard-key-space {
+    min-width: 200px;
+  }
+}
