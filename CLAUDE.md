@@ -25,7 +25,8 @@ npm run typecheck   # TypeScript type checking only
 npm run lint        # ESLint only
 
 # Deployment
-npm run deploy      # Deploy to Cloudflare Pages
+# Note: Cloudflare Pages automatically builds and deploys on git push
+npm run deploy      # Manual deployment (alternative to automatic)
 ```
 
 ## Architecture
@@ -70,7 +71,7 @@ When working on this project:
 - **Dev server is likely already running** - The user probably has `npm run dev` running in another terminal. Check before starting it.
 - **Run tests** after implementing core logic (`npm test`)
 - **Run quality checks** before committing (`npm run check`)
-- **Deploy with** `npm run deploy` to push changes to production
+- **Deployment is automatic** - Cloudflare Pages automatically builds and deploys when changes are pushed to the repository. Manual deployment with `npm run deploy` is available but not typically needed.
 - **Read brand.md before modifying HTML/CSS** to ensure consistent styling and branding
 - **IMPORTANT** Never provide implementation time estimates. Don't say how long it will take to implement or fix something!
 

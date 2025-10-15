@@ -35,7 +35,8 @@ npm run typecheck   # TypeScript only
 npm run lint        # ESLint only
 
 # Deployment
-npm run deploy      # Deploy to Cloudflare Pages
+# Note: Cloudflare Pages automatically builds and deploys on git push
+npm run deploy      # Manual deployment (alternative to automatic)
 ```
 
 ## Tech Stack
@@ -180,4 +181,4 @@ Pull requests are welcome! Please:
 3. Add tests for new functionality
 4. Keep changes focused and atomic
 
-See [DEPLOYMENT.md](DEPLOYMENT.md) for information on how the production site is deployed.
+See [DEPLOYMENT.md](DEPLOYMENT.md) for deployment details. Note that Cloudflare Pages automatically builds and deploys when changes are pushed to the repository.
