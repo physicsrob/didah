@@ -17,14 +17,14 @@ export const SOURCES = [
   { id: 'confusing_characters', name: 'Confusing Characters', type: 'generated', category: 'basic', description: 'Focus on characters you find difficult', requiresAuth: true },
 
   // Reddit sources - explicit headlines/full variants
-  { id: 'reddit_popular_headlines', name: 'Popular (Headlines)', type: 'rss', category: 'reddit', description: 'Trending post titles from r/popular on Reddit' },
-  { id: 'reddit_popular_full', name: 'Popular (Full)', type: 'rss', category: 'reddit', description: 'Complete posts with content from r/popular on Reddit' },
-  { id: 'reddit_news_headlines', name: 'News (Headlines)', type: 'rss', category: 'reddit', description: 'Breaking news headlines from r/news on Reddit' },
-  { id: 'reddit_news_full', name: 'News (Full)', type: 'rss', category: 'reddit', description: 'Full news articles and discussions from r/news on Reddit' },
-  { id: 'reddit_amateurradio_headlines', name: 'Amateur Radio (Headlines)', type: 'rss', category: 'reddit', description: 'Ham radio discussion topics from r/amateurradio on Reddit' },
-  { id: 'reddit_amateurradio_full', name: 'Amateur Radio (Full)', type: 'rss', category: 'reddit', description: 'In-depth ham radio conversations from r/amateurradio on Reddit' },
-  { id: 'reddit_aitah_headlines', name: 'AITA Stories (Headlines)', type: 'rss', category: 'reddit', description: 'Relationship dilemma titles from r/AmItheAsshole on Reddit' },
-  { id: 'reddit_aitah_full', name: 'AITA Stories (Full)', type: 'rss', category: 'reddit', description: 'Complete relationship stories from r/AmItheAsshole on Reddit' },
+  { id: 'reddit_popular_headlines', name: 'Popular Post Titles', type: 'rss', category: 'reddit', description: 'Trending post titles from r/popular on Reddit' },
+  { id: 'reddit_popular_full', name: 'Popular Posts (Title and Body)', type: 'rss', category: 'reddit', description: 'Complete posts with content from r/popular on Reddit' },
+  { id: 'reddit_news_headlines', name: 'News Post Titles', type: 'rss', category: 'reddit', description: 'Breaking news headlines from r/news on Reddit' },
+  { id: 'reddit_news_full', name: 'News Posts (Title and Body)', type: 'rss', category: 'reddit', description: 'Full news articles and discussions from r/news on Reddit' },
+  { id: 'reddit_amateurradio_headlines', name: 'Amateur Radio Post Titles', type: 'rss', category: 'reddit', description: 'Ham radio discussion topics from r/amateurradio on Reddit' },
+  { id: 'reddit_amateurradio_full', name: 'Amateur Radio Posts (Title and Body)', type: 'rss', category: 'reddit', description: 'In-depth ham radio conversations from r/amateurradio on Reddit' },
+  { id: 'reddit_aitah_headlines', name: 'AITA Post Titles', type: 'rss', category: 'reddit', description: 'Relationship dilemma titles from r/AmItheAsshole on Reddit' },
+  { id: 'reddit_aitah_full', name: 'AITA Posts (Title and Body)', type: 'rss', category: 'reddit', description: 'Complete relationship stories from r/AmItheAsshole on Reddit' },
 
   // Other RSS sources
   { id: 'hackernews', name: 'Hacker News', type: 'rss', category: 'news', description: 'Tech news and discussions from Hacker News' },
