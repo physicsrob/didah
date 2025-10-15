@@ -109,6 +109,9 @@ describe('handleRunnerCharacter - pre-spawn behavior', () => {
     const engine = game.getEngine();
     const levelConfig = engine.getConfig();
 
+    // Advance through initial 1-second delay for first obstacle
+    await advanceGameTime(clock, 1000);
+
     // Advance through morse (both FakeClock and GameEngine time)
     const morseDuration = calculateCharacterDurationMs('A', levelConfig.wpm, 0);
     await advanceGameTime(clock, morseDuration);
@@ -172,6 +175,9 @@ describe('handleRunnerCharacter - pre-spawn behavior', () => {
     // Process first character with 'B' as next
     const handler1Promise = handleRunnerCharacter(config, 'A', startTime, ctx, signal.signal, 'B');
 
+    // Advance through initial 1-second delay for first obstacle
+    await advanceGameTime(clock, 1000);
+
     // Advance through morse for A
     const morseDurationA = calculateCharacterDurationMs('A', levelConfig.wpm, 0);
     await advanceGameTime(clock, morseDurationA);
@@ -222,6 +228,9 @@ describe('handleRunnerCharacter - pre-spawn behavior', () => {
 
     // Process first character with 'B' as next
     const handler1Promise = handleRunnerCharacter(config, 'A', startTime, ctx, signal.signal, 'B');
+
+    // Advance through initial 1-second delay for first obstacle
+    await advanceGameTime(clock, 1000);
 
     // Advance through morse for A
     const morseDurationA = calculateCharacterDurationMs('A', levelConfig.wpm, 0);

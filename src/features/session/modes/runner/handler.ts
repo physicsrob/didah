@@ -52,6 +52,14 @@ export async function handleRunnerCharacter(
   // Use level's WPM, not user's configured WPM
   const levelWpm = gameConfig.wpm;
 
+  // Add delay before the very first obstacle
+  const isFirstObstacle = engine.getState().obstacles.length === 0 &&
+                          engine.getState().charactersCleared === 0;
+  if (isFirstObstacle) {
+    console.log('[Runner] Adding 1s delay before first obstacle');
+    await ctx.clock.sleep(1000, signal);
+  }
+
   // Check if this character's obstacle was already pre-spawned
   const existingObstacle = engine.getState().obstacles
     .find(o => o.requiredLetter === char.toUpperCase());
