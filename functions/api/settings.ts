@@ -60,10 +60,7 @@ export async function onRequestGet(context: { request: Request; env: Env }) {
     return new Response(JSON.stringify({ settings }), {
       status: 200,
       headers: {
-        'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Methods': 'GET, PUT, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type, Authorization'
+        'Content-Type': 'application/json'
       }
     })
 
@@ -151,10 +148,7 @@ export async function onRequestPut(context: { request: Request; env: Env }) {
     return new Response(JSON.stringify({ settings }), {
       status: 200,
       headers: {
-        'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Methods': 'GET, PUT, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type, Authorization'
+        'Content-Type': 'application/json'
       }
     })
 
@@ -167,15 +161,3 @@ export async function onRequestPut(context: { request: Request; env: Env }) {
   }
 }
 
-// Handle preflight requests
-export async function onRequestOptions() {
-  return new Response(null, {
-    status: 204,
-    headers: {
-      'Access-Control-Allow-Origin': '*',
-      'Access-Control-Allow-Methods': 'GET, PUT, OPTIONS',
-      'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-      'Access-Control-Max-Age': '86400'
-    }
-  })
-}
