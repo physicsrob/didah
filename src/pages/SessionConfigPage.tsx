@@ -6,6 +6,7 @@ import type { TextSource as ApiTextSource, SourceContent } from '../features/sou
 import { useSettings } from '../features/settings/hooks/useSettings';
 import { useUser } from '@clerk/clerk-react';
 import { HeaderBar } from '../components/HeaderBar';
+import { TextSourceModal } from '../components/TextSourceModal';
 import { getCharactersByCategory } from '../core/morse/alphabet';
 import '../styles/main.css';
 import '../styles/sessionConfig.css';
@@ -60,6 +61,7 @@ export function SessionConfigPage({ mode, onStart }: SessionConfigPageProps) {
   const [sourceContent, setSourceContent] = useState<SourceContent | null>(null);
   const [sourcesLoading, setSourcesLoading] = useState(true);
   const [sourceLoadError, setSourceLoadError] = useState<string | null>(null);
+  const [isSourceModalOpen, setIsSourceModalOpen] = useState(false);
 
   // Single source of truth for feedback configuration
   const [feedbackMode, setFeedbackMode] = useState<FeedbackMode>('flash');
@@ -111,17 +113,16 @@ export function SessionConfigPage({ mode, onStart }: SessionConfigPageProps) {
     try {
       // For random sources, pass alphabet parameter
       let alphabet: string | undefined;
-      if (source.backendId === 'random_letters') {
+      if (source.id === 'random_letters') {
         alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-      } else if (source.backendId === 'random_characters') {
+      } else if (source.id === 'random_characters') {
         alphabet = buildAlphabet().join('');
       }
 
-      const content = await fetchSourceContent(source.backendId, source.requiresAuth ?? false, alphabet);
-      // Override the content ID with the frontend ID for proper source factory detection
-      return { ...content, id: sourceId };
+      const content = await fetchSourceContent(source.id, source.requiresAuth ?? false, alphabet);
+      return content;
     } catch (error) {
-      console.error(`Failed to fetch source ${source.backendId}:`, error);
+      console.error(`Failed to fetch source ${source.id}:`, error);
       if (options.setError) {
         setSourceLoadError(`Failed to load "${source.name}". Please try again or select a different source.`);
       }
@@ -162,7 +163,7 @@ export function SessionConfigPage({ mode, onStart }: SessionConfigPageProps) {
       .catch(error => {
         console.error('Failed to fetch sources:', error);
         // Fallback to local source
-        setAvailableSources([{ id: 'random_letters', name: 'Random Letters', type: 'generated', backendId: 'random_letters' }]);
+        setAvailableSources([{ id: 'random_letters', name: 'Random Letters', type: 'generated' }]);
       })
       .finally(() => {
         setSourcesLoading(false);
@@ -246,6 +247,18 @@ export function SessionConfigPage({ mode, onStart }: SessionConfigPageProps) {
     setSourceContent(content);
   };
 
+  // Handle favorite toggling
+  const handleToggleFavorite = (sourceId: string) => {
+    if (!settings) return;
+
+    const currentFavorites = settings.favoriteSourceIds || [];
+    const newFavorites = currentFavorites.includes(sourceId)
+      ? currentFavorites.filter(id => id !== sourceId)
+      : [...currentFavorites, sourceId];
+
+    updateSetting('favoriteSourceIds', newFavorites);
+  };
+
   const handleStartSession = async () => {
     // Don't start if there's a source loading error
     if (sourceLoadError) {
@@ -315,31 +328,50 @@ export function SessionConfigPage({ mode, onStart }: SessionConfigPageProps) {
               {mode === 'word-practice' ? 'Word Source' : 'Text Source'}
             </div>
             <div className="settings-control">
-              <select
+              <button
                 style={{
                   width: '100%',
-                  padding: '10px 16px',
+                  padding: '12px 16px',
                   fontSize: '15px',
                   background: 'var(--background-tertiary)',
                   color: '#ffffff',
                   border: '1px solid var(--border-primary)',
                   borderRadius: '6px',
-                  cursor: 'pointer'
+                  cursor: 'pointer',
+                  textAlign: 'left',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '4px',
+                  transition: 'all 0.15s'
                 }}
-                value={selectedSourceId}
-                onChange={(e) => handleSourceChange(e.target.value)}
+                onClick={() => setIsSourceModalOpen(true)}
                 disabled={sourcesLoading}
+                onMouseEnter={(e) => {
+                  if (!sourcesLoading) {
+                    e.currentTarget.style.background = 'var(--color-tertiary-gray)';
+                    e.currentTarget.style.borderColor = 'var(--border-secondary)';
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = 'var(--background-tertiary)';
+                  e.currentTarget.style.borderColor = 'var(--border-primary)';
+                }}
               >
                 {sourcesLoading ? (
-                  <option>Loading sources...</option>
+                  <span>Loading sources...</span>
                 ) : (
-                  availableSources.map(source => (
-                    <option key={source.id} value={source.id}>
-                      {source.name}
-                    </option>
-                  ))
+                  <>
+                    <span style={{ fontWeight: '600', color: 'var(--text-primary)' }}>
+                      {availableSources.find(s => s.id === selectedSourceId)?.name || 'Select source'}
+                    </span>
+                    {availableSources.find(s => s.id === selectedSourceId)?.description && (
+                      <span style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>
+                        {availableSources.find(s => s.id === selectedSourceId)?.description}
+                      </span>
+                    )}
+                  </>
                 )}
-              </select>
+              </button>
             </div>
           </div>
 
@@ -623,6 +655,17 @@ export function SessionConfigPage({ mode, onStart }: SessionConfigPageProps) {
           </button>
         </div>
       </div>
+
+      {/* Text Source Modal */}
+      <TextSourceModal
+        isOpen={isSourceModalOpen}
+        sources={availableSources}
+        selectedId={selectedSourceId}
+        favorites={settings?.favoriteSourceIds || []}
+        onSelect={handleSourceChange}
+        onToggleFavorite={handleToggleFavorite}
+        onClose={() => setIsSourceModalOpen(false)}
+      />
     </div>
   );
 }
