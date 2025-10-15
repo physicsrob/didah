@@ -1,9 +1,6 @@
-// Internal RSS URL mapping (not exposed to frontend)
+// RSS URL mapping for non-Reddit sources (not exposed to frontend)
+// Reddit sources use the API via cron job and KV cache, not RSS
 const RSS_URLS: Record<string, string> = {
-  'reddit_popular': 'https://www.reddit.com/r/popular.rss',
-  'reddit_news': 'https://www.reddit.com/r/news.rss',
-  'reddit_amateurradio': 'https://www.reddit.com/r/amateurradio.rss',
-  'reddit_aitah': 'https://www.reddit.com/r/AmItheAsshole.rss',
   'hackernews': 'https://news.ycombinator.com/rss',
   'bbc_news': 'http://feeds.bbci.co.uk/news/rss.xml',
 };
@@ -19,14 +16,14 @@ export const SOURCES = [
   // Reddit sources - explicit headlines/full variants
   { id: 'reddit_popular_headlines', name: 'Popular Post Titles', type: 'rss', category: 'reddit', description: 'Trending post titles from r/popular on Reddit' },
   { id: 'reddit_popular_full', name: 'Popular Posts (Title and Body)', type: 'rss', category: 'reddit', description: 'Complete posts with content from r/popular on Reddit' },
-  { id: 'reddit_news_headlines', name: 'News Post Titles', type: 'rss', category: 'reddit', description: 'Breaking news headlines from r/news on Reddit' },
-  { id: 'reddit_news_full', name: 'News Posts (Title and Body)', type: 'rss', category: 'reddit', description: 'Full news articles and discussions from r/news on Reddit' },
   { id: 'reddit_amateurradio_headlines', name: 'Amateur Radio Post Titles', type: 'rss', category: 'reddit', description: 'Ham radio discussion topics from r/amateurradio on Reddit' },
   { id: 'reddit_amateurradio_full', name: 'Amateur Radio Posts (Title and Body)', type: 'rss', category: 'reddit', description: 'In-depth ham radio conversations from r/amateurradio on Reddit' },
-  { id: 'reddit_aitah_headlines', name: 'AITA Post Titles', type: 'rss', category: 'reddit', description: 'Relationship dilemma titles from r/AmItheAsshole on Reddit' },
-  { id: 'reddit_aitah_full', name: 'AITA Posts (Title and Body)', type: 'rss', category: 'reddit', description: 'Complete relationship stories from r/AmItheAsshole on Reddit' },
+  { id: 'reddit_aitah_headlines', name: 'AITA Post Titles', type: 'rss', category: 'reddit', description: 'Relationship dilemma titles from r/AITAH on Reddit' },
+  { id: 'reddit_aitah_full', name: 'AITA Posts (Title and Body)', type: 'rss', category: 'reddit', description: 'Complete relationship stories from r/AITAH on Reddit' },
 
-  // Other RSS sources
+  // News sources
+  { id: 'reddit_news_headlines', name: 'Reddit News Headlines', type: 'rss', category: 'news', description: 'Breaking news headlines from r/news on Reddit' },
+  { id: 'reddit_news_full', name: 'Reddit News Posts (Headline and Body)', type: 'rss', category: 'news', description: 'Full news articles and discussions from r/news on Reddit' },
   { id: 'hackernews', name: 'Hacker News', type: 'rss', category: 'news', description: 'Tech news and discussions from Hacker News' },
   { id: 'bbc_news', name: 'BBC News', type: 'rss', category: 'news', description: 'World news headlines from BBC' },
 ];

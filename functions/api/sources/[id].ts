@@ -140,64 +140,70 @@ export async function onRequestGet(context: CloudflareContext) {
       }
 
       default:
-        // Check if it's a Reddit source first (read from KV cache)
-        if (baseId.startsWith('reddit_') && kv) {
+        // Reddit sources - require KV cache (populated by cron job)
+        if (baseId.startsWith('reddit_')) {
+          if (!kv) {
+            return Response.json({
+              error: 'KV storage not available',
+              details: 'Reddit sources require KV storage'
+            }, { status: 500 });
+          }
+
           try {
             const cacheKey = `reddit:${baseId}`;
             const cached = await kv.get(cacheKey, 'json') as { posts: Array<{title: string, body: string}>, fetchedAt: string } | null;
 
-            if (cached && cached.posts) {
-              // Shuffle posts for variety on each request
-              const shuffledPosts = shuffleArray(cached.posts);
-
-              // Format based on mode (headlines vs full)
-              let formattedText: string;
-              if (isFullMode) {
-                // Full mode: "Title 1 = Body 1 AR Title 2 = Body 2 AR ..."
-                formattedText = shuffledPosts.map(p => {
-                  const body = stripUrls(p.body.trim());
-                  return body ? `${p.title} = ${body} AR` : `${p.title} AR`;
-                }).join(' ');
-              } else {
-                // Headlines mode: "Title 1 = Title 2 = Title 3 = ..."
-                formattedText = shuffledPosts.map(p => p.title).join(' = ') + ' = ';
-              }
-
-              // Return as single-element array containing the formatted string
-              items = [formattedText];
-
-              // Add staleness warning in response headers if data is old
-              const fetchedAt = new Date(cached.fetchedAt);
-              const ageHours = (Date.now() - fetchedAt.getTime()) / (1000 * 60 * 60);
-
-              const response = Response.json({
-                id,  // Use original ID (with suffix)
-                items,
-                cached: true,
-                fetchedAt: cached.fetchedAt,
-                ageHours: Math.round(ageHours * 10) / 10
-              }, {
-                headers: {
-                  'Cache-Control': 'no-store, no-cache, must-revalidate',
-                  'Pragma': 'no-cache',
-                  'Expires': '0'
-                }
-              });
-
-              // Add cache headers to indicate staleness
-              if (ageHours > 2) {
-                response.headers.set('X-Cache-Status', 'stale');
-                response.headers.set('X-Cache-Age-Hours', ageHours.toString());
-              }
-
-              return response;
-            } else {
-              // No cache found at all - this should be rare
+            if (!cached || !cached.posts) {
               return Response.json({
                 error: 'Reddit data not yet available. Please try again in a few minutes.',
                 details: 'This source has not been initialized yet. The cron job will populate it shortly.'
               }, { status: 503 });
             }
+
+            // Shuffle posts for variety on each request
+            const shuffledPosts = shuffleArray(cached.posts);
+
+            // Format based on mode (headlines vs full)
+            let formattedText: string;
+            if (isFullMode) {
+              // Full mode: "Title 1 = Body 1 AR Title 2 = Body 2 AR ..."
+              formattedText = shuffledPosts.map(p => {
+                const body = stripUrls(p.body.trim());
+                return body ? `${p.title} = ${body} AR` : `${p.title} AR`;
+              }).join(' ');
+            } else {
+              // Headlines mode: "Title 1 = Title 2 = Title 3 = ..."
+              formattedText = shuffledPosts.map(p => p.title).join(' = ') + ' = ';
+            }
+
+            // Return as single-element array containing the formatted string
+            items = [formattedText];
+
+            // Add staleness warning in response headers if data is old
+            const fetchedAt = new Date(cached.fetchedAt);
+            const ageHours = (Date.now() - fetchedAt.getTime()) / (1000 * 60 * 60);
+
+            const response = Response.json({
+              id,  // Use original ID (with suffix)
+              items,
+              cached: true,
+              fetchedAt: cached.fetchedAt,
+              ageHours: Math.round(ageHours * 10) / 10
+            }, {
+              headers: {
+                'Cache-Control': 'no-store, no-cache, must-revalidate',
+                'Pragma': 'no-cache',
+                'Expires': '0'
+              }
+            });
+
+            // Add cache headers to indicate staleness
+            if (ageHours > 2) {
+              response.headers.set('X-Cache-Status', 'stale');
+              response.headers.set('X-Cache-Age-Hours', ageHours.toString());
+            }
+
+            return response;
           } catch (error) {
             console.error(`Error reading KV cache for ${baseId}:`, error);
             return Response.json({
@@ -206,10 +212,9 @@ export async function onRequestGet(context: CloudflareContext) {
             }, { status: 500 });
           }
         }
-        // Otherwise check if it's an RSS source
+        // Non-Reddit RSS sources (Hacker News, BBC News)
         else if (baseId in RSS_URLS) {
           const titles = await fetchRSS(RSS_URLS[baseId]);
-          // Shuffle RSS feed items on every request too
           items = titles.length > 0 ? shuffleArray(titles) : ['No items found in feed'];
         } else {
           return Response.json({ error: 'Source not found' }, { status: 404 });
