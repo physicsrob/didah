@@ -1344,13 +1344,71 @@ input[type="range"]::-moz-range-track {
     }
 }
 
+@media (max-width: 600px) {
+    /* Segmented controls - single row, flexible sizing */
+    .segmented-btn {
+        min-width: 0;
+        flex: 1;
+    }
+
+    /* Settings rows stack vertically */
+    .settings-row {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+    }
+
+    .settings-label {
+        min-width: auto;
+    }
+
+    .settings-control {
+        width: 100%;
+    }
+
+    /* Header wraps */
+    .config-header {
+        flex-wrap: wrap;
+        gap: 12px;
+        padding: 16px;
+    }
+
+    .config-header .brand-title {
+        font-size: 24px;
+    }
+
+    .config-header .page-title {
+        font-size: 18px;
+        flex-basis: 100%;
+    }
+
+    /* Card padding */
+    .card {
+        padding: 20px;
+    }
+
+    /* Start button full width */
+    .btn-start-session {
+        width: 100%;
+        min-width: 0;
+    }
+}
+
 @media (max-width: 480px) {
     .brand-title {
-        font-size: 32px;
+        font-size: 22px;
     }
 
     .btn-large {
         min-width: 160px;
+    }
+
+    .config-header .brand-title {
+        font-size: 20px;
+    }
+
+    .card {
+        padding: 16px;
     }
 }
 
