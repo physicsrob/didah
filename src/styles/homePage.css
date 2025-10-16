@@ -21,6 +21,18 @@
   z-index: 1;
 }
 
+/* Logo */
+.logo-container {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 0;
+}
+
+.logo {
+  height: 120px;
+  width: auto;
+}
+
 .home-title {
   font-size: 48px;
 }

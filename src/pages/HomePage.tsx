@@ -78,9 +78,9 @@ export default function HomePage() {
       </nav>
 
       <div className="w-full px-6 py-10 home-content-wrapper">
-        <h1 className="brand-title text-center mb-4 home-title">
-          MorseAcademy
-        </h1>
+        <div className="logo-container">
+          <img src="/logo.svg" alt="didah" className="logo" />
+        </div>
         <p className="text-center text-lg mb-16 home-subtitle">
           Flow state learning for morse code mastery
         </p>
