@@ -170,4 +170,107 @@ describe('handleListenCharacter - integration', () => {
     // Should reject with abort error
     await expect(handlerPromise).rejects.toThrow();
   });
+
+  describe('display offset timing', () => {
+    it('adds character to emissions with zero offset (default)', async () => {
+      const config = createTestConfig({ mode: 'listen', wpm: 20, listenTimingOffset: 0.0 });
+      const startTime = clock.now();
+
+      const handlerPromise = handleListenCharacter(config, 'A', startTime, ctx, signal.signal, null);
+
+      // Character should appear immediately (offset = 0)
+      await advanceAndFlush(clock, 1);
+      expect(ctx.snapshot.emissions).toHaveLength(1);
+      expect(ctx.snapshot.emissions[0].char).toBe('A');
+
+      // Complete the emission
+      const audioDuration = calculateCharacterDurationMs('A', config.wpm, 0);
+      await advanceAndFlush(clock, audioDuration);
+
+      const { preRevealDelayMs, postRevealDelayMs } = getListenModeTimingMs(config.wpm, config.farnsworthWpm);
+      await advanceAndFlush(clock, preRevealDelayMs + postRevealDelayMs);
+
+      await handlerPromise;
+    });
+
+    it('adds character to emissions with negative offset (before audio)', async () => {
+      const config = createTestConfig({ mode: 'listen', wpm: 20, listenTimingOffset: -0.5 });
+      const startTime = clock.now();
+
+      const handlerPromise = handleListenCharacter(config, 'B', startTime, ctx, signal.signal, null);
+
+      // Character should appear immediately (negative offset)
+      await advanceAndFlush(clock, 1);
+      expect(ctx.snapshot.emissions).toHaveLength(1);
+      expect(ctx.snapshot.emissions[0].char).toBe('B');
+
+      // Calculate the offset delay
+      const charDuration = calculateCharacterDurationMs('B', config.wpm, 0);
+      const offsetMs = Math.abs(-0.5 * charDuration);
+      await advanceAndFlush(clock, offsetMs);
+
+      // Now audio plays
+      await advanceAndFlush(clock, charDuration);
+
+      const { preRevealDelayMs, postRevealDelayMs } = getListenModeTimingMs(config.wpm, config.farnsworthWpm);
+      await advanceAndFlush(clock, preRevealDelayMs + postRevealDelayMs);
+
+      await handlerPromise;
+    });
+
+    it('adds character to emissions with positive offset (during/after audio)', async () => {
+      const config = createTestConfig({ mode: 'listen', wpm: 20, listenTimingOffset: 0.5 });
+      const startTime = clock.now();
+
+      const handlerPromise = handleListenCharacter(config, 'C', startTime, ctx, signal.signal, null);
+
+      // Character should NOT appear immediately
+      await advanceAndFlush(clock, 1);
+      expect(ctx.snapshot.emissions).toHaveLength(0);
+
+      // Audio plays first
+      const charDuration = calculateCharacterDurationMs('C', config.wpm, 0);
+      await advanceAndFlush(clock, charDuration);
+
+      // Then wait for offset
+      const offsetMs = 0.5 * charDuration;
+      await advanceAndFlush(clock, offsetMs);
+
+      // Now character should appear
+      expect(ctx.snapshot.emissions).toHaveLength(1);
+      expect(ctx.snapshot.emissions[0].char).toBe('C');
+
+      const { preRevealDelayMs, postRevealDelayMs } = getListenModeTimingMs(config.wpm, config.farnsworthWpm);
+      await advanceAndFlush(clock, preRevealDelayMs + postRevealDelayMs);
+
+      await handlerPromise;
+    });
+
+    it('handles offset = 1.0 (show at audio end)', async () => {
+      const config = createTestConfig({ mode: 'listen', wpm: 20, listenTimingOffset: 1.0 });
+      const startTime = clock.now();
+
+      const handlerPromise = handleListenCharacter(config, 'D', startTime, ctx, signal.signal, null);
+
+      // Character should NOT appear immediately
+      await advanceAndFlush(clock, 1);
+      expect(ctx.snapshot.emissions).toHaveLength(0);
+
+      // Audio plays
+      const charDuration = calculateCharacterDurationMs('D', config.wpm, 0);
+      await advanceAndFlush(clock, charDuration);
+
+      // Wait exactly one char duration (offset = 1.0)
+      await advanceAndFlush(clock, charDuration);
+
+      // Now character should appear
+      expect(ctx.snapshot.emissions).toHaveLength(1);
+      expect(ctx.snapshot.emissions[0].char).toBe('D');
+
+      const { preRevealDelayMs, postRevealDelayMs } = getListenModeTimingMs(config.wpm, config.farnsworthWpm);
+      await advanceAndFlush(clock, preRevealDelayMs + postRevealDelayMs);
+
+      await handlerPromise;
+    });
+  });
 });

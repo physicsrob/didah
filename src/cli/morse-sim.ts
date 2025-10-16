@@ -37,7 +37,9 @@ const config: SessionConfig = {
   sourceName: 'Random Letters',
   feedback: 'none',
   effectiveAlphabet: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789.,?'.split(''),
-  extraWordSpacing: 0
+  extraWordSpacing: 0,
+  listenTimingOffset: 0.0,
+  startingLevel: 1
 };
 
 // Create mock IO
@@ -130,11 +132,23 @@ async function run() {
           abortController.signal
         );
       } else {
+        // Create minimal context for Listen mode
+        const ctx = {
+          io,
+          input: inputBus,
+          clock,
+          snapshot: { phase: 'running' as const, startedAt: clock.now(), remainingMs: 0, emissions: [] },
+          updateSnapshot: () => {},
+          updateStats: () => {},
+          updateRemainingTime: () => {},
+          publish: () => {},
+          waitIfPaused: async () => {},
+          requestQuit: () => {}
+        };
         await runListenEmission(
           config,
           char,
-          io,
-          clock,
+          ctx,
           abortController.signal
         );
       }

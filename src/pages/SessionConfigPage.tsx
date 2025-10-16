@@ -54,6 +54,7 @@ export function SessionConfigPage({ mode, onStart }: SessionConfigPageProps) {
   const [wpm, setWpm] = useState(15);
   const [farnsworthWpm, setFarnsworthWpm] = useState(10);
   const [extraWordSpacing, setExtraWordSpacing] = useState(0);
+  const [listenTimingOffset, setListenTimingOffset] = useState(1.0);
   const [startingLevel, setStartingLevel] = useState<number>(1);
 
   // Source state
@@ -283,7 +284,8 @@ export function SessionConfigPage({ mode, onStart }: SessionConfigPageProps) {
       replay,
       effectiveAlphabet: buildAlphabet(),
       extraWordSpacing,
-      ...(mode === 'runner' && { startingLevel }),
+      listenTimingOffset: mode === 'listen' ? listenTimingOffset : 1.0,
+      startingLevel: mode === 'runner' ? startingLevel : 1,
     };
 
     // Fetch fresh content for each new session (except random_letters which is generated locally)
@@ -563,6 +565,45 @@ export function SessionConfigPage({ mode, onStart }: SessionConfigPageProps) {
                   textAlign: 'right'
                 }}>
                   {extraWordSpacing === 0 ? 'None' : `+${extraWordSpacing}`}
+                </span>
+              </div>
+            </div>
+          )}
+
+          {/* Character Display Timing - Only show for listen mode */}
+          {mode === 'listen' && (
+            <div className="settings-row">
+              <div className="settings-label">Display Timing</div>
+              <div className="settings-control">
+                <input
+                  type="range"
+                  min="-0.5"
+                  max="1.5"
+                  step="0.5"
+                  value={listenTimingOffset}
+                  onChange={(e) => setListenTimingOffset(Number(e.target.value))}
+                  style={{
+                    flex: 1,
+                    height: '4px',
+                    background: 'rgba(255, 255, 255, 0.2)',
+                    borderRadius: '2px',
+                    outline: 'none',
+                    WebkitAppearance: 'none',
+                    appearance: 'none'
+                  }}
+                />
+                <span style={{
+                  color: '#4dabf7',
+                  fontSize: '16px',
+                  fontWeight: '500',
+                  minWidth: '120px',
+                  textAlign: 'right'
+                }}>
+                  {listenTimingOffset === 0.0 ? 'With Audio' :
+                   listenTimingOffset === -0.5 ? 'Before (-0.5)' :
+                   listenTimingOffset === 0.5 ? 'During (+0.5)' :
+                   listenTimingOffset === 1.0 ? 'After (+1.0)' :
+                   'Later (+1.5)'}
                 </span>
               </div>
             </div>

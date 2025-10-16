@@ -17,7 +17,7 @@ export async function handleListenCharacter(
   signal: AbortSignal,
   _nextChar: string | null
 ): Promise<void> {
-  await runListenEmission(config, char, ctx.io, ctx.clock, signal);
+  await runListenEmission(config, char, ctx, signal);
 
   // Listen mode displays emissions directly, no need to maintain separate history
   ctx.updateRemainingTime(startTime, config);

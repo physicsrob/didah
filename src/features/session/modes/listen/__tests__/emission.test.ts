@@ -6,19 +6,61 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import { runListenEmission } from '../emission';
 import { FakeClock } from '../../../runtime/clock';
 import { TestIO } from '../../../runtime/__tests__/testIO';
+import { TestInputBus } from '../../../runtime/inputBus';
 import { calculateCharacterDurationMs, wpmToDitMs } from '../../../../../core/morse/timing';
 import { advanceAndFlush, createTestConfig } from '../../../runtime/__tests__/testUtils';
 import { getListenSequence } from '../../../runtime/__tests__/timingTestHelpers';
+import type { HandlerContext } from '../../shared/types';
+import type { SessionSnapshot } from '../../../runtime/io';
 
 describe('runListenEmission', () => {
   let clock: FakeClock;
   let io: TestIO;
+  let input: TestInputBus;
   let signal: AbortSignal;
+  let snapshot: SessionSnapshot;
+  let ctx: HandlerContext;
 
   beforeEach(() => {
     clock = new FakeClock();
     io = new TestIO(clock);
+    input = new TestInputBus();
     signal = new AbortController().signal;
+
+    // Create initial snapshot
+    snapshot = {
+      phase: 'running' as const,
+      startedAt: clock.now(),
+      remainingMs: 60000,
+      emissions: []
+    };
+
+    // Create handler context
+    ctx = {
+      io,
+      input,
+      clock,
+      snapshot,
+      updateSnapshot: (updates: Partial<SessionSnapshot>) => {
+        snapshot = { ...snapshot, ...updates };
+      },
+      updateStats: () => {
+        throw new Error('Listen mode should not update stats');
+      },
+      updateRemainingTime: (startTime: number, config) => {
+        const elapsed = clock.now() - startTime;
+        snapshot.remainingMs = Math.max(0, config.lengthMs - elapsed);
+      },
+      publish: () => {
+        // No-op for emission tests
+      },
+      waitIfPaused: async () => {
+        // No-op for tests
+      },
+      requestQuit: () => {
+        // No-op for tests
+      }
+    };
   });
 
   it('follows passive timing sequence', async () => {
@@ -32,8 +74,7 @@ describe('runListenEmission', () => {
     const emissionPromise = runListenEmission(
       config,
       'F',
-      io,
-      clock,
+      ctx,
       signal
     );
 
@@ -47,15 +88,12 @@ describe('runListenEmission', () => {
 
     await emissionPromise;
 
-    // Check sequence of operations
-    // Should hide first
-    expect(io.getHideCount()).toBeGreaterThan(0);
-
     // Should log emission
     expect(io.hasLoggedEvent('emission', 'F')).toBe(true);
 
-    // Should reveal after delays
-    expect(io.getReveals()).toContain('F');
+    // Should have added character to emissions
+    expect(ctx.snapshot.emissions).toHaveLength(1);
+    expect(ctx.snapshot.emissions[0].char).toBe('F');
   });
 
   it('uses standard 3-dit spacing regardless of speed tier', async () => {
@@ -64,7 +102,34 @@ describe('runListenEmission', () => {
 
     for (const speedTier of testSpeedTiers) {
       // Reset state for each iteration
+      clock = new FakeClock();
       io = new TestIO(clock);
+      input = new TestInputBus();
+      snapshot = {
+        phase: 'running' as const,
+        startedAt: clock.now(),
+        remainingMs: 60000,
+        emissions: []
+      };
+      ctx = {
+        io,
+        input,
+        clock,
+        snapshot,
+        updateSnapshot: (updates: Partial<SessionSnapshot>) => {
+          snapshot = { ...snapshot, ...updates };
+        },
+        updateStats: () => {
+          throw new Error('Listen mode should not update stats');
+        },
+        updateRemainingTime: (startTime: number, config) => {
+          const elapsed = clock.now() - startTime;
+          snapshot.remainingMs = Math.max(0, config.lengthMs - elapsed);
+        },
+        publish: () => {},
+        waitIfPaused: async () => {},
+        requestQuit: () => {}
+      };
 
       const config = createTestConfig({
         mode: 'listen',
@@ -78,8 +143,7 @@ describe('runListenEmission', () => {
       const emissionPromise = runListenEmission(
         config,
         'G',
-        io,
-        clock,
+        ctx,
         signal
       );
 
@@ -105,11 +169,9 @@ describe('runListenEmission', () => {
       expect(totalTime).toBeGreaterThanOrEqual(expectedTotal - 2);
       expect(totalTime).toBeLessThanOrEqual(expectedTotal + 2);
 
-      // Verify the reveal happened
-      expect(io.getReveals()).toContain('G');
-
-      // Reset clock for next iteration
-      clock = new FakeClock();
+      // Verify character was added to emissions
+      expect(ctx.snapshot.emissions).toHaveLength(1);
+      expect(ctx.snapshot.emissions[0].char).toBe('G');
     }
   });
 
@@ -125,15 +187,14 @@ describe('runListenEmission', () => {
     const emissionPromise = runListenEmission(
       config,
       'H',
-      io,
-      clock,
+      ctx,
       controller.signal
     );
 
     // Calculate audio duration
     const charDuration = calculateCharacterDurationMs('H', config.wpm, 0);
 
-    // Advance past audio, then abort during pre-reveal delay
+    // Advance past audio, then abort during spacing delay
     await advanceAndFlush(clock, charDuration);
     controller.abort();
 

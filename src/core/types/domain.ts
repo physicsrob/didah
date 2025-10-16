@@ -16,7 +16,8 @@ export type SessionConfig = {
   replay: boolean;
   effectiveAlphabet: string[]; // based on toggles
   extraWordSpacing: number; // Extra space characters to add between words (0-5, for listen/live-copy only)
-  startingLevel?: number; // Starting level for runner mode (1-10)
+  listenTimingOffset: number; // For listen mode: when to display character relative to audio duration (-1.0 to 2.0, default 1.0)
+  startingLevel: number; // Starting level for runner mode (1-10, default 1)
 };
 
 export type OutcomeEvent =

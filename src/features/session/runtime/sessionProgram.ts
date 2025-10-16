@@ -291,7 +291,11 @@ export function createSessionRunner(deps: SessionRunnerDeps): SessionRunner {
         // Peek ahead up to 10 characters to find the next non-space character
         const peeked = deps.source.peek(10);
         const nextChar = peeked?.replace(/\s/g, '')[0] || null;
-        prepareEmission(char, config);
+
+        // Listen mode manages its own emissions timing for display offset control
+        if (config.mode !== 'listen') {
+          prepareEmission(char, config);
+        }
 
         try {
           // Get mode implementation

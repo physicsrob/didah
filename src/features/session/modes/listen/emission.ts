@@ -1,57 +1,74 @@
 /**
  * Listen Mode - Emission Logic
  *
- * Handles audio playback with timed reveal for Listen mode.
- * - Play audio (wait for completion)
- * - Wait standard spacing before reveal
- * - Reveal character
- * - Wait standard spacing after reveal
+ * Handles audio playback with configurable display offset for Listen mode.
+ * The display offset ratio controls when the character appears relative to its audio:
+ * - Negative: show before audio starts
+ * - Zero: show when audio starts
+ * - Positive: show during/after audio
  */
 
 import type { SessionConfig } from '../../../../core/types/domain';
-import type { IO } from '../../runtime/io';
-import type { Clock } from '../../runtime/clock';
-import { getListenModeTimingMs } from '../../../../core/morse/timing';
+import type { HandlerContext } from '../shared/types';
+import { calculateCharacterDurationMs, getInterCharacterSpacingMs, getListenModeTimingMs } from '../../../../core/morse/timing';
 import { debug } from '../../../../core/debug';
 
 /**
- * Run a Listen mode emission
- * - Play audio (wait for completion)
- * - Wait standard spacing before reveal
- * - Reveal character
- * - Wait standard spacing after reveal
+ * Run a Listen mode emission with configurable display timing
  */
 export async function runListenEmission(
   cfg: SessionConfig,
   char: string,
-  io: IO,
-  clock: Clock,
+  ctx: HandlerContext,
   sessionSignal: AbortSignal
 ): Promise<void> {
-  const emissionStart = clock.now();
-
-  // Hide any previous character
-  io.hide();
+  const emissionStart = ctx.clock.now();
 
   // Log emission start
-  io.log({ type: 'emission', at: emissionStart, char });
+  ctx.io.log({ type: 'emission', at: emissionStart, char });
+
+  // Calculate character duration and display offset
+  const charDuration = calculateCharacterDurationMs(char, cfg.wpm, cfg.extraWordSpacing);
+  const offsetMs = cfg.listenTimingOffset * charDuration;
+
+  // Helper to add character to display at the current time
+  const addToDisplay = () => {
+    const interCharSpacingMs = getInterCharacterSpacingMs(cfg.wpm);
+    const totalEmissionDurationMs = charDuration + interCharSpacingMs;
+
+    ctx.snapshot.emissions.push({
+      char,
+      startTime: ctx.clock.now(),
+      duration: totalEmissionDurationMs
+    });
+    ctx.publish();
+  };
+
+  // Negative offset: Show character BEFORE audio starts
+  if (offsetMs < 0) {
+    addToDisplay();
+    await ctx.clock.sleep(-offsetMs, sessionSignal);
+  }
+
+  // Zero offset: Show at audio start
+  if (offsetMs === 0) {
+    addToDisplay();
+  }
 
   // Play audio and wait for completion
   try {
-    await io.playChar(char, cfg.wpm);
+    await ctx.io.playChar(char, cfg.wpm);
   } catch (error) {
     debug.warn(`Audio failed for char: ${char}`, error);
   }
 
-  // Get listen mode timing with Farnsworth support
+  // Positive offset: Show character DURING/AFTER audio
+  if (offsetMs > 0) {
+    await ctx.clock.sleep(offsetMs, sessionSignal);
+    addToDisplay();
+  }
+
+  // Standard post-audio spacing
   const { preRevealDelayMs, postRevealDelayMs } = getListenModeTimingMs(cfg.wpm, cfg.farnsworthWpm);
-
-  // Wait before revealing character
-  await clock.sleep(preRevealDelayMs, sessionSignal);
-
-  // Reveal character
-  io.reveal(char);
-
-  // Wait after revealing character
-  await clock.sleep(postRevealDelayMs, sessionSignal);
+  await ctx.clock.sleep(preRevealDelayMs + postRevealDelayMs, sessionSignal);
 }

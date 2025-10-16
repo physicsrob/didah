@@ -139,6 +139,8 @@ export function createTestConfig(overrides?: Partial<SessionConfig>): SessionCon
     replay: false,
     effectiveAlphabet: ['A', 'B', 'C'],
     extraWordSpacing: 0,
+    listenTimingOffset: 0.0,
+    startingLevel: 1,
     ...overrides
   };
 }
