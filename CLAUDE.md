@@ -1,12 +1,12 @@
 # Claude Code Configuration
 
-This file contains configuration and context for working with Morse Academy using Claude Code.
+This file contains configuration and context for working with didah using Claude Code.
 
 ## Project Overview
 
 A modern web application for learning Morse code with real-time feedback, statistics tracking, and multiple study modes. Built with React + TypeScript + Vite, deployed on Cloudflare Pages.
 
-**Live App:** https://morse.academy
+**Live App:** https://didah.app
 
 ## Development Commands
 

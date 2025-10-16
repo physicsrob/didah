@@ -1,8 +1,8 @@
 # API Documentation
 
-Morse Academy provides several API endpoints for retrieving text sources and utilities. All API endpoints are implemented as Cloudflare Pages Functions.
+didah provides several API endpoints for retrieving text sources and utilities. All API endpoints are implemented as Cloudflare Pages Functions.
 
-**Base URL**: https://morse.academy/api
+**Base URL**: https://didah.app/api
 **Local Development**: http://localhost:3000/api (when running `npm run dev`)
 
 ## Endpoints

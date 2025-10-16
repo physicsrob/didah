@@ -97,7 +97,7 @@ export function SessionCompletePage({ statistics: fullStatistics, onRestart }: S
         {/* Top branding */}
         <div className="brand-header">
         <h1 className="brand-title" onClick={handleBackToMenu}>
-          MorseAcademy
+          didah
         </h1>
       </div>
 

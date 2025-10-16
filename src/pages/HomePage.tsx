@@ -116,7 +116,7 @@ export default function HomePage() {
             </button>
             <span className="footer-separator">•</span>
             <a
-              href="http://github.com/physicsrob/morseacademy"
+              href="http://github.com/physicsrob/didah"
               target="_blank"
               rel="noopener noreferrer"
               className="footer-link"

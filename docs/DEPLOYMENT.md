@@ -1,7 +1,7 @@
 # Deployment Guide
 
-Morse Academy is deployed on Cloudflare Pages at:
-**https://morse.academy**
+didah is deployed on Cloudflare Pages at:
+**https://didah.app**
 
 The entire application (frontend + API) is deployed together.
 
@@ -49,7 +49,7 @@ The `npm run dev` command uses the Cloudflare Pages development server, which ru
 
 ## Cloudflare Configuration
 
-- **Project Name**: morseacademy
+- **Project Name**: didah
 - **Functions Directory**: `/functions/api/`
 - **Build Output Directory**: `./dist`
 - **Config File**: `wrangler.toml`
@@ -97,7 +97,7 @@ Before pushing changes that will be automatically deployed:
 
 5. **Monitor deployment**: Check the Cloudflare Pages dashboard to monitor the build and deployment progress.
 
-6. **Verify production**: Visit https://morse.academy and test functionality once deployment completes.
+6. **Verify production**: Visit https://didah.app and test functionality once deployment completes.
 
 ## Troubleshooting
 
@@ -114,7 +114,7 @@ Before pushing changes that will be automatically deployed:
 ### Deployment Fails
 - Verify Wrangler authentication: `npx wrangler whoami`
 - Check `wrangler.toml` configuration
-- Ensure you have permissions for the morseacademy project
+- Ensure you have permissions for the didah project
 
 ## CI/CD
 

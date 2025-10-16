@@ -24,7 +24,7 @@ export function HeaderBar({ pageTitle }: HeaderBarProps) {
         className="brand-title"
         onClick={() => navigate('/')}
       >
-        MorseAcademy
+        didah
       </h1>
       {pageTitle && (
         <h2 className="page-title">{pageTitle}</h2>

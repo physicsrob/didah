@@ -1,7 +1,7 @@
-# MorseAcademy Brand Guide
+# didah Brand Guide
 
 ## Overview
-MorseAcademy is a morse code learning app focused on creating flow state experiences for optimal learning. The brand emphasizes focused energy, technical precision, and approachable expertise.
+didah is a morse code learning app focused on creating flow state experiences for optimal learning. The brand emphasizes focused energy, technical precision, and approachable expertise.
 
 ---
 
@@ -164,11 +164,12 @@ MorseAcademy is a morse code learning app focused on creating flow state experie
 
 ## Logo/Brand Treatment
 
-MorseAcademy uses clean typography treatment rather than a graphical logo:
-- Brand name in Inter, 600 weight, #4dabf7 color
+didah uses clean typography treatment rather than a graphical logo:
+- Brand name in IBM Plex Mono, 600 weight, #60a5fa color
+- Morse code accent (• −) displayed below with reduced opacity
 - Can be used at various sizes maintaining consistent letter-spacing
-- No additional graphical elements needed
+- SVG format for scalability
 
 ---
 
-*This guide provides the foundation for all MorseAcademy visual design decisions. When in doubt, prioritize clarity, consistency, and the user's ability to focus on learning.*
+*This guide provides the foundation for all didah visual design decisions. When in doubt, prioritize clarity, consistency, and the user's ability to focus on learning.*

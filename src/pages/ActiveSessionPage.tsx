@@ -330,7 +330,7 @@ export function ActiveSessionPage({ config, sourceContent, onComplete }: ActiveS
       {sessionPhase === 'waiting' && (
         <div className="welcome-container">
           <div className="welcome-card">
-            <h2 className="welcome-title">MorseAcademy</h2>
+            <h2 className="welcome-title">didah</h2>
             <p className="welcome-text">Click to start your practice session</p>
             <button className="btn btn-primary" onClick={handleStartClick}>
               Start Session

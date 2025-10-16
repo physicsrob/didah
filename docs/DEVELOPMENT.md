@@ -1,6 +1,6 @@
 # Development Guide
 
-This guide covers everything you need to know to develop and contribute to Morse Academy.
+This guide covers everything you need to know to develop and contribute to didah.
 
 ## Quick Start
 

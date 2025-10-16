@@ -1,8 +1,8 @@
-# Morse Academy
+# didah
 
 A Morse code trainer built by someone frustrated with the existing options. Real-time feedback, interesting text to copy, and practice modes designed around how people actually learn CW.
 
-**[Try it now](https://morse.academy)**
+**[Try it now](https://didah.app)**
 
 ## Features
 
