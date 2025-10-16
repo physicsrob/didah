@@ -13,7 +13,7 @@ jobs:
     steps:
       - name: Call Reddit refresh endpoint
         run: |
-          response=$(curl -s -w "\n%{http_code}" https://morse.academy/api/cron/refresh-reddit)
+          response=$(curl -s -w "\n%{http_code}" https://didah.app/api/cron/refresh-reddit)
           http_code=$(echo "$response" | tail -1)
           body=$(echo "$response" | head -n -1)
 
@@ -30,7 +30,7 @@ jobs:
       - name: Verify cache populated
         run: |
           # Test one of the Reddit sources to ensure cache is working
-          response=$(curl -s -w "\n%{http_code}" https://morse.academy/api/sources/reddit_popular)
+          response=$(curl -s -w "\n%{http_code}" https://didah.app/api/sources/reddit_popular)
           http_code=$(echo "$response" | tail -1)
 
           if [ "$http_code" = "200" ]; then
