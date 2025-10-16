@@ -28,9 +28,14 @@ const KEYBOARD_LAYOUT = [
  * Determines if a key should be enabled based on the current alphabet and mode
  */
 function isKeyEnabled(key: string, alphabet: string[], mode: SessionMode): boolean {
-  // Space and backspace are only enabled in Live Copy mode
-  if (key === 'Space' || key === 'Backspace') {
+  // Backspace is only enabled in Live Copy mode
+  if (key === 'Backspace') {
     return mode === 'live-copy';
+  }
+
+  // Space is enabled in Live Copy and Runner modes
+  if (key === 'Space') {
+    return mode === 'live-copy' || mode === 'runner';
   }
 
   // Other keys are enabled if they're in the practice alphabet
