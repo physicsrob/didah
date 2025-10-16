@@ -23,6 +23,8 @@ export const SOURCES = [
   { id: 'reddit_amateurradio_full', name: 'Amateur Radio Posts (Title and Body)', type: 'rss', category: 'reddit', description: 'In-depth ham radio conversations from r/amateurradio on Reddit' },
   { id: 'reddit_aitah_headlines', name: 'AITA Post Titles', type: 'rss', category: 'reddit', description: 'Relationship dilemma titles from r/AITAH on Reddit' },
   { id: 'reddit_aitah_full', name: 'AITA Posts (Title and Body)', type: 'rss', category: 'reddit', description: 'Complete relationship stories from r/AITAH on Reddit' },
+  { id: 'reddit_todayilearned_headlines', name: 'Today I Learned', type: 'rss', category: 'reddit', description: 'Interesting facts and learning topics from r/todayilearned on Reddit' },
+  { id: 'reddit_showerthoughts_headlines', name: 'Shower Thoughts', type: 'rss', category: 'reddit', description: 'Clever observations and miniature epiphanies from r/showerthoughts on Reddit' },
 
   // News sources
   { id: 'reddit_news_headlines', name: 'Reddit News Headlines', type: 'rss', category: 'news', description: 'Breaking news headlines from r/news on Reddit' },

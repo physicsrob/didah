@@ -35,7 +35,9 @@ const REDDIT_SOURCES = [
   { id: 'reddit_popular', subreddit: 'popular' },
   { id: 'reddit_news', subreddit: 'news' },
   { id: 'reddit_aitah', subreddit: 'aitah' },
-  { id: 'reddit_amateurradio', subreddit: 'amateurradio' }
+  { id: 'reddit_amateurradio', subreddit: 'amateurradio' },
+  { id: 'reddit_todayilearned', subreddit: 'todayilearned' },
+  { id: 'reddit_showerthoughts', subreddit: 'showerthoughts' }
 ];
 
 /**
