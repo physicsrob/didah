@@ -3,6 +3,7 @@
  */
 
 import type { CharacterSource } from '../session/runtime/sessionProgram';
+import { isMorseCharacter } from '../../core/morse/alphabet';
 
 /**
  * Maximum attempts to find a valid character before throwing an error.
@@ -47,12 +48,12 @@ export class ContinuousTextSource implements CharacterSource {
       const char = this.currentWord[this.currentCharIndex].toUpperCase();
       this.currentCharIndex++;
 
-      // Check if alphanumeric
-      if (/[A-Z0-9]/.test(char)) {
+      // Check if character has a Morse code pattern
+      if (isMorseCharacter(char)) {
         return char;
       }
 
-      // Character not alphanumeric, continue to next iteration
+      // Character not in Morse alphabet, continue to next iteration
     }
 
     throw new Error(`ContinuousTextSource: Failed to find valid character after ${MAX_SKIP_ATTEMPTS} attempts. Check that source text contains alphanumeric characters.`);
@@ -89,14 +90,14 @@ export class ContinuousTextSource implements CharacterSource {
         const char = tempWord[tempCharIndex].toUpperCase();
         tempCharIndex++;
 
-        // Check if alphanumeric
-        if (/[A-Z0-9]/.test(char)) {
+        // Check if character has a Morse code pattern
+        if (isMorseCharacter(char)) {
           result += char;
           found = true;
           break;
         }
 
-        // Character not alphanumeric, continue to next iteration
+        // Character not in Morse alphabet, continue to next iteration
       }
 
       // If we couldn't find a character, return what we have so far (or null if nothing)

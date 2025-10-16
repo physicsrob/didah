@@ -14,16 +14,13 @@ export function createCharacterSource(
   _effectiveAlphabet: string[],
   emissionGranularity: 'character' | 'word'
 ): CharacterSource {
-  if (!content?.items?.length) {
+  if (!content?.text) {
     throw new Error('No source content provided');
   }
 
-  // Backend always returns items as string[], with items[0] containing the formatted text
-  const text = content.items[0];
-
   if (emissionGranularity === 'word') {
-    return new WordSource(text);
+    return new WordSource(content.text);
   }
 
-  return new ContinuousTextSource(text);
+  return new ContinuousTextSource(content.text);
 }

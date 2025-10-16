@@ -131,7 +131,7 @@ export async function onRequestGet(context: { request: Request; env: Env }): Pro
     if (last10Sessions.length === 0) {
       return Response.json({
         id: 'confusing_characters',
-        items: ['No practice history found. Complete some sessions first!']
+        text: 'No practice history found. Complete some sessions first!'
       });
     }
 
@@ -141,7 +141,7 @@ export async function onRequestGet(context: { request: Request; env: Env }): Pro
 
     return Response.json({
       id: 'confusing_characters',
-      items: [generatedText]
+      text: generatedText
     });
   } catch (error) {
     console.error('Failed to generate confusing characters:', error);

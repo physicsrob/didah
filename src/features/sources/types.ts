@@ -13,7 +13,7 @@ export interface TextSource {
 
 export interface SourceContent {
   id: string;
-  items: string[];  // Always an array of strings (backend handles all formatting)
+  text: string;  // Backend always returns formatted text ready for emission
 }
 
 export interface SourcesResponse {
