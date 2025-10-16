@@ -13,25 +13,25 @@ const MODES = [
     mode: 'practice' as SessionMode,
     icon: '⌨️',
     title: 'Practice',
-    description: 'Interactive training where you type what you hear. Control your own pacing and get immediate feedback on errors.'
+    description: 'Type what you hear. Immediate feedback paced to match your speed.'
   },
   {
     mode: 'listen' as SessionMode,
     icon: '🎧',
     title: 'Listen',
-    description: 'Passive learning where characters are revealed after playing. Perfect for familiarizing yourself with patterns.'
+    description: 'Passive listening where characters are revealed after playing.'
   },
   {
     mode: 'live-copy' as SessionMode,
     icon: '⚡',
     title: 'Live Copy',
-    description: 'Real-time copying like actual CW. Characters stream continuously with no feedback until the session ends.'
+    description: 'Real-time copying like actual CW. Characters stream continuously with no feedback until the end.'
   },
   {
     mode: 'word-practice' as SessionMode,
     icon: '📝',
     title: 'Word Practice',
-    description: 'Multiple choice word recognition. Select the correct word from 3 options to build whole-word fluency.'
+    description: 'Multiple choice word recognition. Select the correct word to build whole-word fluency.'
   },
   {
     mode: 'runner' as SessionMode,
