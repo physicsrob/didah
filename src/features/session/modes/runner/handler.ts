@@ -52,13 +52,9 @@ export async function handleRunnerCharacter(
   // Use level's WPM, not user's configured WPM
   const levelWpm = gameConfig.wpm;
 
-  // Add delay before the very first obstacle
+  // Check if first obstacle - needs special handling with 1s delay
   const isFirstObstacle = engine.getState().obstacles.length === 0 &&
                           engine.getState().charactersCleared === 0;
-  if (isFirstObstacle) {
-    console.log('[Runner] Adding 1s delay before first obstacle');
-    await ctx.clock.sleep(1000, signal);
-  }
 
   // Check if this character's obstacle was already pre-spawned
   const existingObstacle = engine.getState().obstacles
@@ -79,17 +75,41 @@ export async function handleRunnerCharacter(
     const obstacleSize = selectObstacleSize(gameConfig);
     const obstacleDuration = getObstacleDuration(obstacleSize);
 
-    // Calculate spawn distance
-    const spawnDistance = (morseDuration + approachTime) * gameConfig.scrollSpeed;
+    if (isFirstObstacle) {
+      // First obstacle: spawn with timeOffset to account for 1s delay
+      // This allows obstacle to scroll smoothly during the delay period
+      const timeOffset = 1.0; // 1 second before morse plays
+      const normalSpawnDistance = (morseDuration + approachTime) * gameConfig.scrollSpeed;
+      const offsetDistance = timeOffset * gameConfig.scrollSpeed;
+      const adjustedSpawnDistance = normalSpawnDistance + offsetDistance;
 
-    // Spawn obstacle for this character
-    engine.spawnObstacle(
-      char,
-      spawnDistance,
-      obstacleDuration,
-      morseDuration,
-      approachTime
-    );
+      console.log('[Runner] Spawning first obstacle with 1s timeOffset');
+      engine.spawnObstacle(
+        char,
+        adjustedSpawnDistance,
+        obstacleDuration,
+        morseDuration,
+        approachTime,
+        timeOffset
+      );
+    } else {
+      // Normal spawn (not first obstacle, not pre-spawned)
+      const spawnDistance = (morseDuration + approachTime) * gameConfig.scrollSpeed;
+
+      engine.spawnObstacle(
+        char,
+        spawnDistance,
+        obstacleDuration,
+        morseDuration,
+        approachTime
+      );
+    }
+  }
+
+  // Add delay before first obstacle's morse plays
+  if (isFirstObstacle) {
+    console.log('[Runner] Adding 1s delay before first morse plays');
+    await ctx.clock.sleep(1000, signal);
   }
 
   // Log emission event (for statistics tracking)
