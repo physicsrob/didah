@@ -12,16 +12,16 @@
 :root {
     /* Colors - Core Foundation */
     --color-primary-black: #1e2028;
-    --color-secondary-gray: #2a2d38;
+    --color-secondary-gray: #2d3247;
     --color-tertiary-gray: #373b48;
     --color-white: #ffffff;
-    --color-blue-primary: #4dabf7;
-    --color-accent-warm: #f5a573;
+    --color-blue-primary: #70b5ff;
+    --color-accent-warm: #ffa94d;
 
     /* Colors - Text */
     --text-primary: #ffffff;
     --text-secondary: #e0e0e0;
-    --text-accent: #f5a573;
+    --text-accent: #ffa94d;
     --text-muted: #888888;
     --text-disabled: #555555;
 
@@ -52,9 +52,9 @@
     --gradient-dark-end: #252a3a;
 
     /* Colors - Shadows and overlays */
-    --shadow-primary: rgba(77, 171, 247, 0.3);
-    --overlay-primary-subtle: rgba(77, 171, 247, 0.08);
-    --overlay-primary-light: rgba(77, 171, 247, 0.05);
+    --shadow-primary: rgba(112, 181, 255, 0.3);
+    --overlay-primary-subtle: rgba(112, 181, 255, 0.08);
+    --overlay-primary-light: rgba(112, 181, 255, 0.05);
 
     /* Typography */
     --font-primary: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
@@ -92,7 +92,7 @@ html, body {
     background:
         radial-gradient(circle at 20% 80%, var(--overlay-primary-subtle) 0%, transparent 50%),
         radial-gradient(circle at 80% 20%, var(--overlay-primary-light) 0%, transparent 50%),
-        radial-gradient(circle at 50% 50%, rgba(77, 171, 247, 0.03) 0%, transparent 70%);
+        radial-gradient(circle at 50% 50%, rgba(112, 181, 255, 0.03) 0%, transparent 70%);
     pointer-events: none;
     z-index: -1; /* Behind content but within the stacking context */
     opacity: 0.8;
@@ -858,18 +858,18 @@ input[type="range"]::-moz-range-track {
 }
 
 .intensity-1 {
-    background: rgba(77, 171, 247, 0.2);
-    border: 1px solid rgba(77, 171, 247, 0.3);
+    background: rgba(112, 181, 255, 0.2);
+    border: 1px solid rgba(112, 181, 255, 0.3);
 }
 
 .intensity-2 {
-    background: rgba(77, 171, 247, 0.4);
-    border: 1px solid rgba(77, 171, 247, 0.5);
+    background: rgba(112, 181, 255, 0.4);
+    border: 1px solid rgba(112, 181, 255, 0.5);
 }
 
 .intensity-3 {
-    background: rgba(77, 171, 247, 0.6);
-    border: 1px solid rgba(77, 171, 247, 0.7);
+    background: rgba(112, 181, 255, 0.6);
+    border: 1px solid rgba(112, 181, 255, 0.7);
 }
 
 .intensity-4 {
@@ -1094,8 +1094,8 @@ input[type="range"]::-moz-range-track {
     left: 0;
     width: 100%;
     height: 100%;
-    background: radial-gradient(circle at 20% 80%, rgba(77, 171, 247, 0.1) 0%, transparent 50%),
-                radial-gradient(circle at 80% 20%, rgba(77, 171, 247, 0.05) 0%, transparent 50%);
+    background: radial-gradient(circle at 20% 80%, rgba(112, 181, 255, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(112, 181, 255, 0.05) 0%, transparent 50%);
     pointer-events: none;
     z-index: -1;
 }

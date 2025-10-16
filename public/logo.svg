@@ -7,16 +7,16 @@
     font-family="'IBM Plex Mono', monospace"
     font-weight="600"
     font-size="64"
-    fill="#60a5fa">
+    fill="#70b5ff">
     didah
   </text>
 
   <!-- Morse code accent: dot and dash -->
   <g opacity="0.8">
     <!-- Dit (dot) -->
-    <circle cx="114" cy="76" r="8" fill="#60a5fa"/>
+    <circle cx="114" cy="76" r="8" fill="#70b5ff"/>
 
     <!-- Dah (dash) -->
-    <rect x="160" y="70" width="60" height="12" rx="6" fill="#60a5fa"/>
+    <rect x="160" y="70" width="60" height="12" rx="6" fill="#70b5ff"/>
   </g>
 </svg>
