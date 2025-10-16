@@ -16,10 +16,10 @@ const MODES = [
     description: 'Type what you hear. Immediate feedback paced to match your speed.'
   },
   {
-    mode: 'listen' as SessionMode,
-    icon: '🎧',
-    title: 'Listen',
-    description: 'Passive listening where characters are revealed after playing.'
+    mode: 'runner' as SessionMode,
+    icon: '🏃',
+    title: 'Morse Runner',
+    description: 'Endless runner mini-game! Type letters to jump over obstacles. Progress through 10 levels with increasing speed.'
   },
   {
     mode: 'live-copy' as SessionMode,
@@ -34,10 +34,10 @@ const MODES = [
     description: 'Multiple choice word recognition. Select the correct word to build whole-word fluency.'
   },
   {
-    mode: 'runner' as SessionMode,
-    icon: '🏃',
-    title: 'Morse Runner',
-    description: 'Endless runner mini-game! Type letters to jump over obstacles. Progress through 10 levels with increasing speed.'
+    mode: 'listen' as SessionMode,
+    icon: '🎧',
+    title: 'Listen',
+    description: 'Passive listening where characters are revealed after playing.'
   }
 ];
 
