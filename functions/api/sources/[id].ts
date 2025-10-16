@@ -32,7 +32,7 @@ function generateRandomCharacters(alphabet: string, count: number): string {
 /**
  * Extract titles from RSS feed
  */
-function extractTitles(rssText: string, limit: number = 50): string[] {
+function extractTitles(rssText: string, limit: number = 100): string[] {
   const titles: string[] = [];
   const titleRegex = /<title>(?:<!\[CDATA\[)?(.*?)(?:\]\]>)?<\/title>/gs;
   let match;
@@ -107,7 +107,7 @@ export async function onRequestGet(context: CloudflareContext) {
   const baseId = id.replace(/_(headlines|full)$/, '');
 
   try {
-    let items: string[] = [];
+    let text: string;
 
     switch (baseId) {
       case 'random_letters':
@@ -122,16 +122,16 @@ export async function onRequestGet(context: CloudflareContext) {
           }, { status: 400 });
         }
 
-        items = [generateRandomCharacters(sourceAlphabet, 100)];
+        text = generateRandomCharacters(sourceAlphabet, 500);
         break;
       }
 
       case 'top-100':
-        items = [shuffleArray(TOP_100_WORDS).join(' ')];
+        text = shuffleArray(TOP_100_WORDS).join(' ');
         break;
 
       case 'top-1000':
-        items = [shuffleArray(TOP_1000_WORDS).join(' ')];
+        text = shuffleArray(TOP_1000_WORDS).join(' ');
         break;
 
       case 'confusing_characters': {
@@ -164,20 +164,16 @@ export async function onRequestGet(context: CloudflareContext) {
             const shuffledPosts = shuffleArray(cached.posts);
 
             // Format based on mode (headlines vs full)
-            let formattedText: string;
             if (isFullMode) {
               // Full mode: "Title 1 = Body 1 AR Title 2 = Body 2 AR ..."
-              formattedText = shuffledPosts.map(p => {
+              text = shuffledPosts.map(p => {
                 const body = stripUrls(p.body.trim());
                 return body ? `${p.title} = ${body} AR` : `${p.title} AR`;
               }).join(' ');
             } else {
               // Headlines mode: "Title 1 = Title 2 = Title 3 = ..."
-              formattedText = shuffledPosts.map(p => p.title).join(' = ') + ' = ';
+              text = shuffledPosts.map(p => p.title).join(' = ') + ' = ';
             }
-
-            // Return as single-element array containing the formatted string
-            items = [formattedText];
 
             // Add staleness warning in response headers if data is old
             const fetchedAt = new Date(cached.fetchedAt);
@@ -185,7 +181,7 @@ export async function onRequestGet(context: CloudflareContext) {
 
             const response = Response.json({
               id,  // Use original ID (with suffix)
-              items,
+              text,
               cached: true,
               fetchedAt: cached.fetchedAt,
               ageHours: Math.round(ageHours * 10) / 10
@@ -215,7 +211,8 @@ export async function onRequestGet(context: CloudflareContext) {
         // Non-Reddit RSS sources (Hacker News, BBC News)
         else if (baseId in RSS_URLS) {
           const titles = await fetchRSS(RSS_URLS[baseId]);
-          items = titles.length > 0 ? shuffleArray(titles) : ['No items found in feed'];
+          // Join with separator like Reddit headlines
+          text = titles.length > 0 ? shuffleArray(titles).join(' = ') + ' = ' : 'No items found in feed';
         } else {
           return Response.json({ error: 'Source not found' }, { status: 404 });
         }
@@ -223,7 +220,7 @@ export async function onRequestGet(context: CloudflareContext) {
 
     return Response.json({
       id,
-      items
+      text
     }, {
       headers: {
         'Cache-Control': 'no-store, no-cache, must-revalidate',
