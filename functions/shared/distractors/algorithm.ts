@@ -20,6 +20,7 @@ import {
   MORSE_PATTERN_CACHE,
   getFirstMorseSymbols,
   getLastMorseSymbols,
+  wordToMorsePattern,
 } from './morsePatterns.js';
 import { levenshteinDistance } from './levenshtein.js';
 import { getCategoryWords } from './categoryData.js';
@@ -42,10 +43,14 @@ export function findCandidateDistractors(
   wordList: string[],
   tier: number = 1
 ): string[] {
-  const targetPattern = MORSE_PATTERN_CACHE.get(targetWord);
-
+  // Get pattern from cache or compute on-the-fly
+  let targetPattern = MORSE_PATTERN_CACHE.get(targetWord);
   if (!targetPattern) {
-    return [];
+    targetPattern = wordToMorsePattern(targetWord);
+    // Only fail if word has no valid morse pattern
+    if (!targetPattern) {
+      return [];
+    }
   }
 
   const targetLength = targetWord.length;
@@ -108,7 +113,13 @@ export function scoreDistractor(
   targetWord: string,
   candidateWord: string
 ): number {
-  const targetPattern = MORSE_PATTERN_CACHE.get(targetWord);
+  // Get target pattern from cache or compute on-the-fly
+  let targetPattern = MORSE_PATTERN_CACHE.get(targetWord);
+  if (!targetPattern) {
+    targetPattern = wordToMorsePattern(targetWord);
+  }
+
+  // Candidate must be from the word list (always cached)
   const candidatePattern = MORSE_PATTERN_CACHE.get(candidateWord);
 
   if (!targetPattern || !candidatePattern) {

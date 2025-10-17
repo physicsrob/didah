@@ -19,7 +19,7 @@ export function createCharacterSource(
   }
 
   if (emissionGranularity === 'word') {
-    return new WordSource(content.text);
+    return new WordSource(content.text, effectiveAlphabet);
   }
 
   return new ContinuousTextSource(content.text, effectiveAlphabet);

@@ -125,16 +125,32 @@ export class ContinuousTextSource implements CharacterSource {
 export class WordSource implements CharacterSource {
   private words: string[];
   private currentIndex: number = 0;
+  private allowedChars: Set<string>;
 
-  constructor(text: string) {
-    // Split text into words, preserving punctuation
+  constructor(text: string, effectiveAlphabet: string[]) {
+    // Store allowed characters as a Set for O(1) lookup
+    this.allowedChars = new Set(effectiveAlphabet.map(char => char.toUpperCase()));
+
+    // Split text into words and filter characters
     this.words = text
       .split(/\s+/)
+      .map(word => this.filterWord(word))
       .filter(word => word.length > 0);
 
     if (this.words.length === 0) {
       throw new Error('WordSource: No valid words found in source text');
     }
+  }
+
+  /**
+   * Filter a word to only include characters in the enabled alphabet
+   * Example: "white's" with punctuation disabled → "whites"
+   */
+  private filterWord(word: string): string {
+    return word
+      .split('')
+      .filter(char => this.allowedChars.has(char.toUpperCase()))
+      .join('');
   }
 
   next(): string {
