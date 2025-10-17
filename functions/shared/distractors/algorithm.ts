@@ -1,5 +1,5 @@
 /**
- * Distractor Algorithm for Word Practice Mode
+ * Distractor Algorithm for Head Copy Mode
  *
  * Generates confusable distractors by analyzing Morse code pattern similarity
  * with semantic category awareness.

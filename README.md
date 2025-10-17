@@ -23,8 +23,8 @@ Passive listening where Morse code is played and then revealed after a timed del
 ### Live Copy Mode
 Real-time copying that simulates actual Morse code reception. No feedback during the session - type what you hear and see corrections only at the end.
 
-### Word Practice Mode
-Multiple-choice word recognition where you select the correct word from 3 options after hearing it. Builds whole-word fluency and helps develop instant recognition at the word level.
+### Head Copy
+Multiple choice whole-word recognition. Select the correct word to build up fluency and the ability to head copy.
 
 ### Morse Runner
 Endless runner mini-game where you type letters to jump over obstacles. Progress through 10 levels with increasing speed and difficulty - practice disguised as fun!

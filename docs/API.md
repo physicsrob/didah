@@ -66,7 +66,7 @@ RSS feed source (headlines):
 
 ### GET `/api/distractors?word={word}`
 
-Generates confusable distractor words for a given word based on Morse code similarity patterns. Used for multiple-choice word practice.
+Generates confusable distractor words for a given word based on Morse code similarity patterns. Used for Head Copy mode.
 
 **Query Parameters:**
 - `word` (required) - Word to generate distractors for (letters only)

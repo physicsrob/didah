@@ -33,9 +33,9 @@ export function SessionConfigPage({ mode, onStart }: SessionConfigPageProps) {
       title: 'Live Copy Mode',
       description: 'Real-time continuous copying like actual CW. Characters stream at a constant rate - keep up or fall behind!'
     },
-    'word-practice': {
-      title: 'Word Practice Mode',
-      description: 'Multiple choice word recognition - select the word you hear from 3 options. Build whole-word fluency!'
+    'head-copy': {
+      title: 'Head Copy Mode',
+      description: 'Multiple choice whole-word recognition. Select the correct word to build up fluency and the ability to head copy.'
     },
     'runner': {
       title: 'Morse Runner',
@@ -136,8 +136,8 @@ export function SessionConfigPage({ mode, onStart }: SessionConfigPageProps) {
       // Convert settings duration (60/120/300) to minutes (1/2/5)
       setDuration((settings.defaultDuration / 60) as 1 | 2 | 5);
       setSpeedTier(settings.defaultSpeedTier);
-      // For word-practice mode, use defaultWordSourceId; otherwise defaultSourceId
-      setSelectedSourceId(mode === 'word-practice' ? settings.defaultWordSourceId : settings.defaultSourceId);
+      // For head-copy mode, use defaultHeadCopySourceId; otherwise defaultSourceId
+      setSelectedSourceId(mode === 'head-copy' ? settings.defaultHeadCopySourceId : settings.defaultSourceId);
       setWpm(settings.wpm);
       setFarnsworthWpm(settings.farnsworthWpm);
       setExtraWordSpacing(settings.extraWordSpacing);
@@ -195,9 +195,9 @@ export function SessionConfigPage({ mode, onStart }: SessionConfigPageProps) {
     const timer = setTimeout(() => {
       const durationInSeconds = (duration * 60) as 60 | 120 | 300;
 
-      // For word-practice mode, save to defaultWordSourceId; otherwise defaultSourceId
-      const settingKey = mode === 'word-practice' ? 'defaultWordSourceId' : 'defaultSourceId';
-      const currentSettingValue = mode === 'word-practice' ? settings.defaultWordSourceId : settings.defaultSourceId;
+      // For head-copy mode, save to defaultHeadCopySourceId; otherwise defaultSourceId
+      const settingKey = mode === 'head-copy' ? 'defaultHeadCopySourceId' : 'defaultSourceId';
+      const currentSettingValue = mode === 'head-copy' ? settings.defaultHeadCopySourceId : settings.defaultSourceId;
 
       // Check what needs updating
       const needsUpdate =
@@ -325,7 +325,7 @@ export function SessionConfigPage({ mode, onStart }: SessionConfigPageProps) {
           {/* Text Source */}
           <div className="settings-row">
             <div className="settings-label">
-              {mode === 'word-practice' ? 'Word Source' : 'Text Source'}
+              {mode === 'head-copy' ? 'Word Source' : 'Text Source'}
             </div>
             <div className="settings-control">
               <button
@@ -499,8 +499,8 @@ export function SessionConfigPage({ mode, onStart }: SessionConfigPageProps) {
             </div>
           )}
 
-          {/* Farnsworth Speed - Only show for listen, live-copy, and word-practice modes */}
-          {(mode === 'listen' || mode === 'live-copy' || mode === 'word-practice') && (
+          {/* Farnsworth Speed - Only show for listen, live-copy, and head-copy modes */}
+          {(mode === 'listen' || mode === 'live-copy' || mode === 'head-copy') && (
             <div className="settings-row">
               <div className="settings-label">Farnsworth Speed</div>
               <div className="settings-control">

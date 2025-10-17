@@ -157,7 +157,7 @@ export function SessionCompletePage({ statistics: fullStatistics, onRestart }: S
                         'practice': 'Active Practice',
                         'listen': 'Passive Listening',
                         'live-copy': 'Live Copy',
-                        'word-practice': 'Word Practice',
+                        'head-copy': 'Head Copy',
                         'runner': 'Morse Runner'
                       };
                       return modeNames[fullStatistics.config.mode] || fullStatistics.config.mode;

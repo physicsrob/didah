@@ -1,8 +1,8 @@
 /**
- * Word Practice Mode Styles
+ * Head Copy Mode Styles
  */
 
-.word-practice-display {
+.head-copy-display {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -12,7 +12,7 @@
   min-height: 400px;
 }
 
-.word-practice-buttons {
+.head-copy-buttons {
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
@@ -20,7 +20,7 @@
   max-width: 400px;
 }
 
-.word-practice-button {
+.head-copy-button {
   padding: 1.5rem 2rem;
   font-size: 1.5rem;
   font-weight: 600;
@@ -34,37 +34,37 @@
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3); /* Add shadow for depth */
 }
 
-.word-practice-button:hover:not(:disabled) {
+.head-copy-button:hover:not(:disabled) {
   border-color: rgba(74, 171, 247, 1);
   background: rgba(38, 48, 64, 1);
   transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(74, 171, 247, 0.3);
 }
 
-.word-practice-button:active:not(:disabled) {
+.head-copy-button:active:not(:disabled) {
   transform: translateY(0);
 }
 
-.word-practice-button:disabled {
+.head-copy-button:disabled {
   cursor: not-allowed;
   opacity: 0.6;
 }
 
-.word-practice-button-flash-correct {
+.head-copy-button-flash-correct {
   background: #22c55e !important; /* Bright green */
   border-color: #22c55e !important;
   color: white !important;
   animation: flash-correct 500ms ease;
 }
 
-.word-practice-button-flash-incorrect {
+.head-copy-button-flash-incorrect {
   background: #ef4444 !important; /* Bright red */
   border-color: #ef4444 !important;
   color: white !important;
   animation: flash-incorrect 500ms ease;
 }
 
-.word-practice-stats {
+.head-copy-stats {
   font-size: 1.25rem;
   color: var(--color-text-secondary);
   font-family: var(--font-mono);

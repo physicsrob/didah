@@ -117,7 +117,7 @@ export class ContinuousTextSource implements CharacterSource {
 }
 
 /**
- * Source for word practice mode
+ * Source for head copy mode
  * Emits whole words instead of individual characters
  */
 export class WordSource implements CharacterSource {

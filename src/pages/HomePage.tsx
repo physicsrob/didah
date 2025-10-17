@@ -28,10 +28,10 @@ const MODES = [
     description: 'Real-time copying like actual CW. Characters stream continuously with no feedback until the end.'
   },
   {
-    mode: 'word-practice' as SessionMode,
-    icon: '📝',
-    title: 'Word Practice',
-    description: 'Multiple choice word recognition. Select the correct word to build whole-word fluency.'
+    mode: 'head-copy' as SessionMode,
+    icon: '🧠',
+    title: 'Head Copy',
+    description: 'Multiple choice whole-word recognition. Select the correct word to build up fluency and the ability to head copy.'
   },
   {
     mode: 'listen' as SessionMode,

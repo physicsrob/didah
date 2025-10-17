@@ -22,7 +22,7 @@ type ConfigLike = {
  * Format speed display for a given session configuration
  *
  * Practice mode: "20 WPM"
- * Listen/Live-Copy/Word-Practice with Farnsworth: "20/15 WPM"
+ * Listen/Live-Copy/Head-Copy with Farnsworth: "20/15 WPM"
  * Listen/Live-Copy with extra spacing: "20/15 WPM (+2 spacing)"
  * Listen/Live-Copy with standard timing and extra spacing: "20 WPM (+2 spacing)"
  *
@@ -48,7 +48,7 @@ export function formatSpeedDisplay(config: SessionConfig | ConfigLike): SpeedDis
     };
   }
 
-  // For other modes (listen, live-copy, word-practice)
+  // For other modes (listen, live-copy, head-copy)
   // Handle backward compatibility - if farnsworthWpm is undefined, assume standard timing
   const effectiveFarnsworthWpm = farnsworthWpm ?? wpm;
   const effectiveExtraSpacing = extraWordSpacing ?? 0;

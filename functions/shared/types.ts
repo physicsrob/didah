@@ -1,6 +1,6 @@
 // Shared types for API functions
 export type FeedbackMode = 'flash' | 'buzzer' | 'replay' | 'off'
-export type SessionMode = 'practice' | 'listen' | 'live-copy' | 'word-practice' | 'runner'
+export type SessionMode = 'practice' | 'listen' | 'live-copy' | 'head-copy' | 'runner'
 export type SpeedTier = 'slow' | 'medium' | 'fast' | 'lightning'
 export type ToneSetting = 'soft' | 'normal' | 'hard'
 
@@ -22,7 +22,7 @@ export type UserSettings = {
   defaultMode: SessionMode
   defaultSpeedTier: SpeedTier
   defaultSourceId: string  // For text modes (Practice, Listen, Live Copy)
-  defaultWordSourceId: string  // For Word Practice mode
+  defaultHeadCopySourceId: string  // For Head Copy mode
 
   // Active mode settings
   feedbackMode: FeedbackMode
@@ -46,7 +46,7 @@ export const DEFAULT_USER_SETTINGS: UserSettings = {
   defaultMode: 'practice',
   defaultSpeedTier: 'slow',
   defaultSourceId: 'random_letters',
-  defaultWordSourceId: 'top-100',
+  defaultHeadCopySourceId: 'top-100',
   feedbackMode: 'replay',  // Default to replay (both + replay)
   favoriteSourceIds: []  // No favorites by default
 }
@@ -137,7 +137,7 @@ export function validateSettings(settings: unknown): settings is UserSettings {
   const requiredFields: (keyof UserSettings)[] = [
     'wpm', 'farnsworthWpm', 'frequency', 'volume', 'buzzerVolume', 'tone',
     'includeNumbers', 'includeStdPunct', 'includeAdvPunct', 'extraWordSpacing',
-    'defaultDuration', 'defaultMode', 'defaultSpeedTier', 'defaultSourceId', 'defaultWordSourceId',
+    'defaultDuration', 'defaultMode', 'defaultSpeedTier', 'defaultSourceId', 'defaultHeadCopySourceId',
     'feedbackMode', 'favoriteSourceIds'
   ]
 
@@ -181,7 +181,7 @@ export function validateSettings(settings: unknown): settings is UserSettings {
     return false
   }
 
-  const validModes: SessionMode[] = ['practice', 'listen', 'live-copy', 'word-practice', 'runner']
+  const validModes: SessionMode[] = ['practice', 'listen', 'live-copy', 'head-copy', 'runner']
   if (!validModes.includes(s.defaultMode as SessionMode)) {
     return false
   }
@@ -204,7 +204,7 @@ export function validateSettings(settings: unknown): settings is UserSettings {
     return false
   }
 
-  if (typeof s.defaultWordSourceId !== 'string' || !s.defaultWordSourceId) {
+  if (typeof s.defaultHeadCopySourceId !== 'string' || !s.defaultHeadCopySourceId) {
     return false
   }
 
@@ -321,7 +321,7 @@ export function validateSessionStatistics(stats: unknown): stats is SessionStati
   }
 
   // Validate config fields
-  const validModes: SessionMode[] = ['practice', 'listen', 'live-copy', 'word-practice', 'runner']
+  const validModes: SessionMode[] = ['practice', 'listen', 'live-copy', 'head-copy', 'runner']
   if (!validModes.includes(config.mode as SessionMode)) {
     return false
   }

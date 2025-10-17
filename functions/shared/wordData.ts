@@ -1,5 +1,5 @@
 /**
- * Word frequency data for Word Practice mode
+ * Word frequency data for Head Copy mode
  * Words are sorted by frequency (most common first)
  */
 
