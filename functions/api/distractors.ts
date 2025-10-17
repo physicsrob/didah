@@ -3,12 +3,7 @@
  * GET /api/distractors?word=the
  */
 
-import { TOP_1000_WORDS } from '../shared/wordData';
-import {
-  generateDistractors,
-  groupWordsBySimplified,
-  indexWordsByStartAndLength
-} from '../shared/distractorAlgorithm';
+import { generateDistractors } from '../shared/distractors/algorithm.js';
 
 interface CloudflareContext {
   request: Request;
@@ -34,16 +29,8 @@ export async function onRequestGet(context: CloudflareContext) {
   }
 
   try {
-    // Build indices from TOP_1000_WORDS
-    const simplifiedGroups = groupWordsBySimplified(TOP_1000_WORDS);
-    const startLengthIndex = indexWordsByStartAndLength(TOP_1000_WORDS);
-
     // Generate distractors for the given word
-    const distractors = generateDistractors(
-      word.toLowerCase(),
-      simplifiedGroups,
-      startLengthIndex
-    );
+    const distractors = generateDistractors(word.toLowerCase());
 
     if (distractors === null) {
       return Response.json(
