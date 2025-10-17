@@ -1,7 +1,7 @@
 /**
- * Word Practice Mode - UI Components
+ * Head Copy Mode - UI Components
  *
- * React components for Word Practice mode interface.
+ * React components for Head Copy mode interface.
  * Displays 3 buttons with word options.
  */
 
@@ -10,28 +10,28 @@
 import { useEffect } from 'react';
 import type { SessionSnapshot } from '../../runtime/io';
 import type { UIContext } from '../shared/types';
-import './wordPractice.css';
+import './headCopy.css';
 
 /**
- * Display component for Word Practice mode
+ * Display component for Head Copy mode
  * Shows 3 buttons with word choices (pre-shuffled by handler)
  */
-export function WordPracticeDisplay({ snapshot }: { snapshot: SessionSnapshot }) {
-  const state = snapshot.wordPracticeState;
+export function HeadCopyDisplay({ snapshot }: { snapshot: SessionSnapshot }) {
+  const state = snapshot.headCopyState;
 
   const { buttonWords, flashResult, clickedWord } = state || {};
 
   // Show nothing while playing or if no current word
   if (!state || state.isPlaying || !state.currentWord) {
-    return <div className="word-practice-display"></div>;
+    return <div className="head-copy-display"></div>;
   }
 
   // Use pre-shuffled button order from state (shuffled once in handler, stable across renders)
   const buttons = buttonWords || [];
 
   return (
-    <div className="word-practice-display">
-      <div className="word-practice-buttons">
+    <div className="head-copy-display">
+      <div className="head-copy-buttons">
         {buttons.map((word, index) => (
           <WordButton
             key={index}
@@ -60,14 +60,14 @@ function WordButton({
   clickedWord: string | null;
   disabled: boolean;
 }) {
-  let className = 'word-practice-button';
+  let className = 'head-copy-button';
 
   // Apply flash styling only to the clicked button
   const isClickedButton = clickedWord === word;
   if (isClickedButton && flashResult === 'correct') {
-    className += ' word-practice-button-flash-correct';
+    className += ' head-copy-button-flash-correct';
   } else if (isClickedButton && flashResult === 'incorrect') {
-    className += ' word-practice-button-flash-incorrect';
+    className += ' head-copy-button-flash-incorrect';
   }
 
   return (
@@ -82,10 +82,10 @@ function WordButton({
 }
 
 /**
- * Keyboard and click input hook for Word Practice mode
+ * Keyboard and click input hook for Head Copy mode
  * Captures button clicks and forwards to InputBus
  */
-export function useWordPracticeInput(context: UIContext) {
+export function useHeadCopyInput(context: UIContext) {
   const { input, sessionPhase, isPaused, onPause } = context;
 
   useEffect(() => {
@@ -106,7 +106,7 @@ export function useWordPracticeInput(context: UIContext) {
 
       // Check if click is on a word button
       const target = e.target as HTMLElement;
-      if (target.classList.contains('word-practice-button') && !target.hasAttribute('disabled')) {
+      if (target.classList.contains('head-copy-button') && !target.hasAttribute('disabled')) {
         const word = target.getAttribute('data-word');
         if (word) {
           // Send word as input event

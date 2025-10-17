@@ -1,13 +1,13 @@
 /**
- * Word Practice Mode - Handler Logic
+ * Head Copy Mode - Handler Logic
  *
- * Integrates word practice emission with session lifecycle.
+ * Integrates head copy emission with session lifecycle.
  * Handles retry logic for incorrect answers.
  */
 
 import type { SessionConfig } from '../../../../core/types/domain';
 import type { HandlerContext } from '../shared/types';
-import type { WordPracticeState } from '../../runtime/io';
+import type { HeadCopyState } from '../../runtime/io';
 import { playWordAudio, waitForWordClick } from './emission';
 import { debug } from '../../../../core/debug';
 import { shuffleArray } from '../../../../core/utils/array';
@@ -18,20 +18,20 @@ import { shuffleArray } from '../../../../core/utils/array';
 const FLASH_DURATION_MS = 500;
 
 /**
- * Helper to update word practice state
+ * Helper to update head copy state
  * Reduces verbosity by handling the spread and optional field preservation
  */
-function updateWordPracticeState(
+function updateHeadCopyState(
   ctx: HandlerContext,
-  updates: Partial<WordPracticeState>
+  updates: Partial<HeadCopyState>
 ): void {
-  if (!ctx.snapshot.wordPracticeState) {
-    throw new Error('Word Practice state not initialized');
+  if (!ctx.snapshot.headCopyState) {
+    throw new Error('Head Copy state not initialized');
   }
 
   ctx.updateSnapshot({
-    wordPracticeState: {
-      ...ctx.snapshot.wordPracticeState,
+    headCopyState: {
+      ...ctx.snapshot.headCopyState,
       ...updates
     }
   });
@@ -45,19 +45,19 @@ async function fetchDistractors(word: string): Promise<string[] | null> {
   try {
     const response = await fetch(`/api/distractors?word=${encodeURIComponent(word)}`);
     if (!response.ok) {
-      debug.log(`[WordPractice] Unable to get distractors for "${word}": ${response.status}`);
+      debug.log(`[HeadCopy] Unable to get distractors for "${word}": ${response.status}`);
       return null;
     }
     const data = await response.json();
     return data.distractors;
   } catch (error) {
-    debug.log(`[WordPractice] Failed to fetch distractors for "${word}":`, error);
+    debug.log(`[HeadCopy] Failed to fetch distractors for "${word}":`, error);
     return null;
   }
 }
 
 /**
- * Handle a single word in Word Practice mode
+ * Handle a single word in Head Copy mode
  *
  * Flow:
  * 1. Parse word entry from char parameter (JSON-encoded)
@@ -75,7 +75,7 @@ async function fetchDistractors(word: string): Promise<string[] | null> {
  * - flashResult: Visual feedback (correct/incorrect/null)
  * - stats: Attempt-based accuracy tracking
  */
-export async function handleWordPracticeWord(
+export async function handleHeadCopyWord(
   config: SessionConfig,
   char: string,  // Plain word (e.g., "the", "hello")
   startTime: number,
@@ -84,8 +84,8 @@ export async function handleWordPracticeWord(
   _nextChar: string | null
 ): Promise<void> {
   // Verify state is initialized
-  if (!ctx.snapshot.wordPracticeState) {
-    throw new Error('Word Practice mode handler called but wordPracticeState not initialized');
+  if (!ctx.snapshot.headCopyState) {
+    throw new Error('Head Copy mode handler called but headCopyState not initialized');
   }
 
   // Fetch distractors from API
@@ -94,13 +94,13 @@ export async function handleWordPracticeWord(
 
   // Skip this word if we can't get distractors
   if (distractors === null) {
-    debug.log(`[WordPractice] Skipping word "${word}" - no distractors available`);
+    debug.log(`[HeadCopy] Skipping word "${word}" - no distractors available`);
     return;
   }
 
   // Shuffle button order ONCE for this word (stays same across retries)
   const buttonWords = shuffleArray([word, ...distractors]);
-  debug.log(`[WordPractice Handler] Shuffled button order:`, buttonWords);
+  debug.log(`[HeadCopy Handler] Shuffled button order:`, buttonWords);
 
   let isCorrect = false;
   let isFirstTrial = true;
@@ -111,7 +111,7 @@ export async function handleWordPracticeWord(
     await ctx.waitIfPaused();
 
     const emissionStart = ctx.clock.now();
-    debug.log(`[WordPractice Handler] Starting trial for word '${word}' (first: ${isFirstTrial})`);
+    debug.log(`[HeadCopy Handler] Starting trial for word '${word}' (first: ${isFirstTrial})`);
 
     // Log emission event (for statistics)
     ctx.io.log({ type: 'emission', at: emissionStart, char: word });
@@ -119,7 +119,7 @@ export async function handleWordPracticeWord(
     // On first trial: hide buttons during audio playback
     // On retry (timeout/incorrect): show buttons before and during replay
     if (isFirstTrial) {
-      updateWordPracticeState(ctx, {
+      updateHeadCopyState(ctx, {
         currentWord: word,
         distractors,
         buttonWords,
@@ -128,10 +128,10 @@ export async function handleWordPracticeWord(
         clickedWord: null
       });
       ctx.publish();
-      debug.log(`[WordPractice Handler] First trial - buttons hidden during audio`);
+      debug.log(`[HeadCopy Handler] First trial - buttons hidden during audio`);
     } else {
       // Retry - show buttons before playing audio
-      updateWordPracticeState(ctx, {
+      updateHeadCopyState(ctx, {
         currentWord: word,
         distractors,
         buttonWords,
@@ -140,29 +140,29 @@ export async function handleWordPracticeWord(
         clickedWord: null
       });
       ctx.publish();
-      debug.log(`[WordPractice Handler] Retry - buttons visible during replay`);
+      debug.log(`[HeadCopy Handler] Retry - buttons visible during replay`);
     }
 
     // Play word audio
-    debug.log(`[WordPractice Handler] Playing audio for '${word}'`);
+    debug.log(`[HeadCopy Handler] Playing audio for '${word}'`);
     await playWordAudio(word, ctx.io, ctx.clock, config, signal);
-    debug.log(`[WordPractice Handler] Audio complete`);
+    debug.log(`[HeadCopy Handler] Audio complete`);
 
     // Audio complete - show buttons
     if (isFirstTrial) {
-      debug.log(`[WordPractice Handler] Setting isPlaying=false, buttons now visible`);
-      updateWordPracticeState(ctx, {
+      debug.log(`[HeadCopy Handler] Setting isPlaying=false, buttons now visible`);
+      updateHeadCopyState(ctx, {
         currentWord: word,
         distractors,
         buttonWords,
         isPlaying: false
       });
       ctx.publish();
-      debug.log(`[WordPractice Handler] State published with isPlaying=false. Current state:`, ctx.snapshot.wordPracticeState);
+      debug.log(`[HeadCopy Handler] State published with isPlaying=false. Current state:`, ctx.snapshot.headCopyState);
     }
 
     // Wait for button click (or timeout)
-    debug.log(`[WordPractice Handler] Waiting for button click...`);
+    debug.log(`[HeadCopy Handler] Waiting for button click...`);
     const outcome = await waitForWordClick(
       word,
       distractors,
@@ -173,11 +173,11 @@ export async function handleWordPracticeWord(
 
     // Handle timeout
     if (outcome.type === 'timeout') {
-      debug.log(`[WordPractice Handler] Timeout - will replay word '${word}'`);
+      debug.log(`[HeadCopy Handler] Timeout - will replay word '${word}'`);
 
       // Increment timeout counter
-      const currentStats = ctx.snapshot.wordPracticeState!.stats;
-      updateWordPracticeState(ctx, {
+      const currentStats = ctx.snapshot.headCopyState!.stats;
+      updateHeadCopyState(ctx, {
         stats: {
           ...currentStats,
           timeouts: currentStats.timeouts + 1
@@ -199,7 +199,7 @@ export async function handleWordPracticeWord(
 
     // Handle button click
     const { clickedWord, isCorrect: correct } = outcome;
-    debug.log(`[WordPractice Handler] Button clicked: '${clickedWord}', correct: ${correct}`);
+    debug.log(`[HeadCopy Handler] Button clicked: '${clickedWord}', correct: ${correct}`);
 
     isCorrect = correct;
 
@@ -212,7 +212,7 @@ export async function handleWordPracticeWord(
         char: word,
         latencyMs: clickTime - emissionStart
       });
-      debug.log(`[WordPractice Handler] Logged 'correct' event for '${word}'`);
+      debug.log(`[HeadCopy Handler] Logged 'correct' event for '${word}'`);
     } else {
       ctx.io.log({
         type: 'incorrect',
@@ -220,17 +220,17 @@ export async function handleWordPracticeWord(
         expected: word,
         got: clickedWord
       });
-      debug.log(`[WordPractice Handler] Logged 'incorrect' event - expected: '${word}', got: '${clickedWord}'`);
+      debug.log(`[HeadCopy Handler] Logged 'incorrect' event - expected: '${word}', got: '${clickedWord}'`);
     }
 
     // Update stats
-    const currentStats = ctx.snapshot.wordPracticeState!.stats;
+    const currentStats = ctx.snapshot.headCopyState!.stats;
     const newAttempts = currentStats.attempts + 1;
     const newSuccesses = currentStats.successes + (isCorrect ? 1 : 0);
     const newAccuracy = newAttempts > 0 ? (newSuccesses / newAttempts) * 100 : 0;
 
     // Flash result with clicked word (preserve currentWord, distractors, buttonWords for button visibility)
-    updateWordPracticeState(ctx, {
+    updateHeadCopyState(ctx, {
       currentWord: word,
       distractors,
       buttonWords,
@@ -244,13 +244,13 @@ export async function handleWordPracticeWord(
       }
     });
     ctx.publish();
-    debug.log(`[WordPractice Handler] Flash state published - flashResult: ${isCorrect ? 'correct' : 'incorrect'}, clickedWord: ${clickedWord}`);
+    debug.log(`[HeadCopy Handler] Flash state published - flashResult: ${isCorrect ? 'correct' : 'incorrect'}, clickedWord: ${clickedWord}`);
 
     // Wait for flash
     await ctx.clock.sleep(FLASH_DURATION_MS, signal);
 
     // Clear flash and clicked word (keep word/distractors/buttonWords if replaying)
-    updateWordPracticeState(ctx, {
+    updateHeadCopyState(ctx, {
       currentWord: isCorrect ? null : word,  // Clear if correct, keep if retrying
       distractors: isCorrect ? [] : distractors,  // Clear if correct, keep if retrying
       buttonWords: isCorrect ? [] : buttonWords,  // Clear if correct, keep same order if retrying
@@ -258,7 +258,7 @@ export async function handleWordPracticeWord(
       clickedWord: null
     });
     ctx.publish();
-    debug.log(`[WordPractice Handler] Flash cleared, isCorrect: ${isCorrect}`);
+    debug.log(`[HeadCopy Handler] Flash cleared, isCorrect: ${isCorrect}`);
 
     // Mark that we've completed the first trial
     isFirstTrial = false;
@@ -271,7 +271,7 @@ export async function handleWordPracticeWord(
   ctx.updateRemainingTime(startTime, config);
 
   // Clear current word (ready for next)
-  updateWordPracticeState(ctx, {
+  updateHeadCopyState(ctx, {
     currentWord: null,
     distractors: [],
     buttonWords: [],

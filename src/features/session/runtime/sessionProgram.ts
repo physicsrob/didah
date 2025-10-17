@@ -104,10 +104,10 @@ export function createSessionRunner(deps: SessionRunnerDeps): SessionRunner {
       liveCopyState: snapshot.liveCopyState ? {
         typedString: snapshot.liveCopyState.typedString
       } : undefined,
-      wordPracticeState: snapshot.wordPracticeState ? {
-        ...snapshot.wordPracticeState,
-        distractors: [...snapshot.wordPracticeState.distractors],
-        stats: { ...snapshot.wordPracticeState.stats }
+      headCopyState: snapshot.headCopyState ? {
+        ...snapshot.headCopyState,
+        distractors: [...snapshot.headCopyState.distractors],
+        stats: { ...snapshot.headCopyState.stats }
       } : undefined
     };
     if (deps.io.snapshot) {
@@ -166,7 +166,7 @@ export function createSessionRunner(deps: SessionRunnerDeps): SessionRunner {
       liveCopyState: config.mode === 'live-copy' ? {
         typedString: ''
       } : undefined,
-      wordPracticeState: config.mode === 'word-practice' ? {
+      headCopyState: config.mode === 'head-copy' ? {
         currentWord: null,
         distractors: [],
         buttonWords: [],

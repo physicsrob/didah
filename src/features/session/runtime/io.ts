@@ -34,9 +34,9 @@ export interface LiveCopyState {
 }
 
 /**
- * Word Practice mode state
+ * Head Copy mode state
  */
-export interface WordPracticeState {
+export interface HeadCopyState {
   currentWord: string | null;  // Word being played/tested
   distractors: string[];        // Distractor words for current trial
   buttonWords: string[];        // Pre-shuffled button order (to prevent re-shuffle on render)
@@ -71,7 +71,7 @@ export type SessionSnapshot = {
   // Mode-specific state
   practiceState?: PracticeState;
   liveCopyState?: LiveCopyState;
-  wordPracticeState?: WordPracticeState;
+  headCopyState?: HeadCopyState;
 };
 
 import type { SessionConfig } from '../../../core/types/domain';

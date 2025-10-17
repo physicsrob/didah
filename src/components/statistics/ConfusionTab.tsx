@@ -39,7 +39,7 @@ export default function ConfusionTab({ timeWindow }: ConfusionTabProps) {
         const allSessions = await statsAPI.getSessions();
 
         // Filter to character-level recognition modes (where confusion data makes sense)
-        // Excludes: word-practice (word-level), listen (no input), runner (TBD if needed)
+        // Excludes: head-copy (word-level), listen (no input), runner (TBD if needed)
         const relevantSessions = allSessions.filter(
           session => ['practice', 'live-copy', 'runner'].includes(session.config?.mode)
         );

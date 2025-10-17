@@ -1,7 +1,7 @@
 /**
- * Word Practice Mode - Emission Logic
+ * Head Copy Mode - Emission Logic
  *
- * Handles word playback and button click waiting for Word Practice mode.
+ * Handles word playback and button click waiting for Head Copy mode.
  * Returns outcome: correct | incorrect
  */
 
@@ -72,7 +72,7 @@ async function waitForClick(
           armSignal
         );
         const clickedWord = clickEvent.key;
-        debug.log(`[WordPractice Input] Button clicked: '${clickedWord}'`);
+        debug.log(`[HeadCopy Input] Button clicked: '${clickedWord}'`);
         const isCorrect = clickedWord === word;
         return { type: 'click', clickedWord, isCorrect } as const;
       }
@@ -84,7 +84,7 @@ async function waitForClick(
   const outcome = result.value;
 
   if (outcome.type === 'timeout') {
-    debug.log(`[WordPractice Input] Timeout at ${clock.now()}ms for '${word}'`);
+    debug.log(`[HeadCopy Input] Timeout at ${clock.now()}ms for '${word}'`);
   }
 
   return outcome;

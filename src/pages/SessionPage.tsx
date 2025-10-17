@@ -22,7 +22,7 @@ import { useSettings } from '../features/settings/hooks/useSettings';
 
 // Type guard for validating SessionMode
 function isValidSessionMode(value: unknown): value is SessionMode {
-  return value === 'practice' || value === 'listen' || value === 'live-copy' || value === 'word-practice' || value === 'runner';
+  return value === 'practice' || value === 'listen' || value === 'live-copy' || value === 'head-copy' || value === 'runner';
 }
 
 type SessionPhase = 'config' | 'active' | 'complete';
