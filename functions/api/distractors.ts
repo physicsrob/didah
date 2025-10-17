@@ -5,6 +5,7 @@
 
 import { generateDistractors } from '../shared/distractors/algorithm.js';
 import { extractPunctuation, applyPunctuation } from '../shared/distractors/punctuation.js';
+import { hasSubstitution } from '../shared/distractors/substitutionMatrix.js';
 
 interface CloudflareContext {
   request: Request;
@@ -24,11 +25,19 @@ export async function onRequestGet(context: CloudflareContext) {
   // Extract punctuation from the word
   const { leading, base, trailing } = extractPunctuation(word);
 
-  // Validate that base word contains at least one valid character
-  // (letters, numbers, or common punctuation supported by Morse)
-  if (!base || !/[a-zA-Z0-9]/.test(base)) {
+  // Validate that base word contains at least one valid Morse character
+  if (!base) {
     return Response.json(
-      { error: 'Word must contain at least one letter or number' },
+      { error: 'Word cannot be empty' },
+      { status: 400 }
+    );
+  }
+
+  // Check if base contains at least one character with a valid Morse pattern
+  const hasValidMorseChar = base.split('').some(char => hasSubstitution(char));
+  if (!hasValidMorseChar) {
+    return Response.json(
+      { error: 'Word must contain at least one valid Morse code character' },
       { status: 400 }
     );
   }
