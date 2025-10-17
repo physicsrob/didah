@@ -23,20 +23,24 @@ import {
 } from './morsePatterns.js';
 import { levenshteinDistance } from './levenshtein.js';
 import { getCategoryWords } from './categoryData.js';
+import { generateFallbackDistractors } from './fallback.js';
 
 /**
  * Find candidate distractors for a target word from a given word list.
  *
- * Filters words that match:
- * - Same first 2 morse symbols
- * - Same last 2 morse symbols
- * - Similar length (±1 character)
+ * Filters words based on tier level (higher tier = more relaxed):
+ * - Tier 1: First 2 & last 2 morse symbols match, ±1 length
+ * - Tier 2: First 2 & last 2 morse symbols match, ±2 length
+ * - Tier 3: First 1 & last 1 morse symbols match, ±2 length
+ * - Tier 4: ±2 length only
+ * - Tier 5: Any length (guaranteed to find candidates)
  *
  * Returns filtered list of candidate words.
  */
 export function findCandidateDistractors(
   targetWord: string,
-  wordList: string[]
+  wordList: string[],
+  tier: number = 1
 ): string[] {
   const targetPattern = MORSE_PATTERN_CACHE.get(targetWord);
 
@@ -47,6 +51,8 @@ export function findCandidateDistractors(
   const targetLength = targetWord.length;
   const targetFirstTwo = getFirstMorseSymbols(targetPattern, 2);
   const targetLastTwo = getLastMorseSymbols(targetPattern, 2);
+  const targetFirstOne = getFirstMorseSymbols(targetPattern, 1);
+  const targetLastOne = getLastMorseSymbols(targetPattern, 1);
 
   const candidates: string[] = [];
 
@@ -56,17 +62,32 @@ export function findCandidateDistractors(
     const pattern = MORSE_PATTERN_CACHE.get(word);
     if (!pattern) continue;
 
-    // Filter 1: Similar length (±1 characters)
     const lengthDiff = Math.abs(word.length - targetLength);
-    if (lengthDiff > 1) continue;
 
-    // Filter 2: Same first 2 morse symbols
-    const firstTwo = getFirstMorseSymbols(pattern, 2);
-    if (firstTwo !== targetFirstTwo) continue;
-
-    // Filter 3: Same last 2 morse symbols
-    const lastTwo = getLastMorseSymbols(pattern, 2);
-    if (lastTwo !== targetLastTwo) continue;
+    // Apply filters based on tier
+    if (tier === 1) {
+      // Tier 1: First 2 & last 2 morse symbols, ±1 length
+      if (lengthDiff > 1) continue;
+      const firstTwo = getFirstMorseSymbols(pattern, 2);
+      const lastTwo = getLastMorseSymbols(pattern, 2);
+      if (firstTwo !== targetFirstTwo || lastTwo !== targetLastTwo) continue;
+    } else if (tier === 2) {
+      // Tier 2: First 2 & last 2 morse symbols, ±2 length
+      if (lengthDiff > 2) continue;
+      const firstTwo = getFirstMorseSymbols(pattern, 2);
+      const lastTwo = getLastMorseSymbols(pattern, 2);
+      if (firstTwo !== targetFirstTwo || lastTwo !== targetLastTwo) continue;
+    } else if (tier === 3) {
+      // Tier 3: First 1 & last 1 morse symbols, ±2 length
+      if (lengthDiff > 2) continue;
+      const firstOne = getFirstMorseSymbols(pattern, 1);
+      const lastOne = getLastMorseSymbols(pattern, 1);
+      if (firstOne !== targetFirstOne || lastOne !== targetLastOne) continue;
+    } else if (tier === 4) {
+      // Tier 4: ±2 length only
+      if (lengthDiff > 2) continue;
+    }
+    // Tier 5: No filters (accept all words except target)
 
     candidates.push(word);
   }
@@ -142,14 +163,14 @@ export function selectBestDistractor(
  * Get the best distractor from the target word's semantic category.
  * Returns null if word has no category or no suitable candidates found.
  */
-export function getBestDistractorFromCategory(targetWord: string): string | null {
+export function getBestDistractorFromCategory(targetWord: string, tier: number = 1): string | null {
   const categoryWords = getCategoryWords(targetWord);
 
   if (categoryWords.length === 0) {
     return null;
   }
 
-  const candidates = findCandidateDistractors(targetWord, categoryWords);
+  const candidates = findCandidateDistractors(targetWord, categoryWords, tier);
   return selectBestDistractor(targetWord, candidates);
 }
 
@@ -159,49 +180,88 @@ export function getBestDistractorFromCategory(targetWord: string): string | null
  */
 export function getBestDistractorGlobal(
   targetWord: string,
-  excludeWords: string[] = []
+  excludeWords: string[] = [],
+  tier: number = 1
 ): string | null {
   const excludeSet = new Set(excludeWords);
   const filteredWords = TOP_10K_WORDS.filter(word => !excludeSet.has(word));
 
-  const candidates = findCandidateDistractors(targetWord, filteredWords);
+  const candidates = findCandidateDistractors(targetWord, filteredWords, tier);
   return selectBestDistractor(targetWord, candidates);
 }
 
 /**
  * Generate distractors for a target word.
- * Returns exactly 2 distractors, or null if unable to find enough.
+ * Always returns exactly 2 distractors (guaranteed).
  *
  * Strategy:
- * 1. Get best distractor from same semantic category
- * 2. Get best distractor from entire 10k list (excluding category winner)
- * 3. Fallback to 2 global distractors if category approach fails
+ * 1. Check if word contains letters
+ * 2. If no letters (numbers/punctuation/mixed), use character substitution fallback
+ * 3. If has letters, try word-based algorithm with progressively relaxed tiers (1-5)
+ * 4. If word-based fails, use character substitution fallback
+ *
+ * Word-based tiers:
+ * - Tier 1: Strictest morse similarity (first/last 2 symbols, ±1 length)
+ * - Tier 5: Most relaxed (any word from list)
+ *
+ * Fallback uses character substitution with Morse-similar characters.
  *
  * This is the main entry point used by the API.
  */
-export function generateDistractors(targetWord: string): string[] | null {
-  // Try to get best from category
-  const categoryBest = getBestDistractorFromCategory(targetWord);
+export function generateDistractors(targetWord: string): string[] {
+  // Check if word contains any letters
+  const hasLetters = /[a-zA-Z]/.test(targetWord);
 
-  // Get best from global list (excluding category winner if it exists)
-  const excludeWords = categoryBest ? [categoryBest] : [];
-  const globalBest = getBestDistractorGlobal(targetWord, excludeWords);
-
-  // If we have both, return them
-  if (categoryBest && globalBest) {
-    return [categoryBest, globalBest];
+  // If no letters, use fallback immediately (numbers, punctuation, etc.)
+  if (!hasLetters) {
+    const fallbackResult = generateFallbackDistractors(targetWord);
+    if (fallbackResult) {
+      return fallbackResult;
+    }
+    throw new Error(`Failed to generate fallback distractors for word: ${targetWord}`);
   }
 
-  // If we only have global, get second best
-  if (globalBest) {
-    const secondBest = getBestDistractorGlobal(targetWord, [globalBest]);
-    if (secondBest) {
-      return [globalBest, secondBest];
+  // Try word-based algorithm with each tier from strictest to most relaxed
+  for (let tier = 1; tier <= 5; tier++) {
+    // Try to get best from category
+    const categoryBest = getBestDistractorFromCategory(targetWord, tier);
+
+    // Get best from global list (excluding category winner if it exists)
+    const excludeWords = categoryBest ? [categoryBest] : [];
+    const globalBest = getBestDistractorGlobal(targetWord, excludeWords, tier);
+
+    // If we have both, return them
+    if (categoryBest && globalBest) {
+      return [categoryBest, globalBest];
+    }
+
+    // If we only have global, get second best
+    if (globalBest) {
+      const secondBest = getBestDistractorGlobal(targetWord, [globalBest], tier);
+      if (secondBest) {
+        return [globalBest, secondBest];
+      }
+    }
+
+    // Try again with only category
+    if (categoryBest) {
+      // Try to get a second distractor from global, excluding the category winner
+      const globalSecond = getBestDistractorGlobal(targetWord, [categoryBest], tier);
+      if (globalSecond) {
+        return [categoryBest, globalSecond];
+      }
     }
   }
 
-  // Unable to generate 2 distractors
-  return null;
+  // Word-based algorithm failed even at tier 5
+  // Try fallback as last resort
+  const fallbackResult = generateFallbackDistractors(targetWord);
+  if (fallbackResult) {
+    return fallbackResult;
+  }
+
+  // Both word-based and fallback failed
+  throw new Error(`Failed to generate distractors for word: ${targetWord}`);
 }
 
 /**
@@ -221,13 +281,10 @@ export function processWordList(words: string[]): WordEntry[] {
 
   for (const word of words) {
     const distractors = generateDistractors(word);
-
-    if (distractors !== null) {
-      validEntries.push({
-        word,
-        distractors,
-      });
-    }
+    validEntries.push({
+      word,
+      distractors,
+    });
   }
 
   return validEntries;

@@ -4,6 +4,7 @@
  */
 
 import { generateDistractors } from '../shared/distractors/algorithm.js';
+import { extractPunctuation, applyPunctuation } from '../shared/distractors/punctuation.js';
 
 interface CloudflareContext {
   request: Request;
@@ -20,31 +21,33 @@ export async function onRequestGet(context: CloudflareContext) {
     );
   }
 
-  // Validate word format (alphanumeric only)
-  if (!/^[a-zA-Z]+$/.test(word)) {
+  // Extract punctuation from the word
+  const { leading, base, trailing } = extractPunctuation(word);
+
+  // Validate that base word contains at least one valid character
+  // (letters, numbers, or common punctuation supported by Morse)
+  if (!base || !/[a-zA-Z0-9]/.test(base)) {
     return Response.json(
-      { error: 'Word must contain only letters' },
+      { error: 'Word must contain at least one letter or number' },
       { status: 400 }
     );
   }
 
   try {
-    // Generate distractors for the given word
-    const distractors = generateDistractors(word.toLowerCase());
+    // Generate distractors for the base word (without punctuation)
+    const baseDistractors = generateDistractors(base.toLowerCase());
 
-    if (distractors === null) {
-      return Response.json(
-        {
-          error: 'Unable to generate distractors for this word',
-          details: 'Not enough similar words found in word list'
-        },
-        { status: 404 }
-      );
-    }
+    // Apply the same punctuation pattern to all distractors
+    const punctuatedDistractors = baseDistractors.map(distractor =>
+      applyPunctuation(distractor, leading, trailing)
+    );
+
+    // Apply punctuation to the original word as well
+    const punctuatedWord = applyPunctuation(base.toLowerCase(), leading, trailing);
 
     return Response.json({
-      word: word.toLowerCase(),
-      distractors
+      word: punctuatedWord,
+      distractors: punctuatedDistractors
     });
 
   } catch (error) {
