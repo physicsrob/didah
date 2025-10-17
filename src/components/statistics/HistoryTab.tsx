@@ -56,6 +56,10 @@ export default function HistoryTab({ timeWindow }: HistoryTabProps) {
         return 'Listen';
       case 'live-copy':
         return 'Live Copy';
+      case 'head-copy':
+        return 'Head Copy';
+      case 'runner':
+        return 'Runner';
       default:
         return mode;
     }
@@ -147,7 +151,7 @@ export default function HistoryTab({ timeWindow }: HistoryTabProps) {
                       {session.config.sourceName || session.config.sourceId || 'Unknown'}
                     </td>
                     <td className="wpm-cell">
-                      {session.config.mode === 'listen' ? '-' : session.achievedWpm.toFixed(1)}
+                      {(session.config.mode === 'listen' || session.config.mode === 'runner' || session.config.mode === 'head-copy') ? '-' : session.achievedWpm.toFixed(1)}
                     </td>
                     <td className="accuracy-cell">
                       {session.config.mode === 'listen' ? (

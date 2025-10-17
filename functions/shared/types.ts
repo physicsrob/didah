@@ -387,8 +387,11 @@ export function validateSessionStatistics(stats: unknown): stats is SessionStati
 
   // Validate each character stat entry
   const charStats = s.characterStats as Record<string, unknown>
+  const isWordMode = config.mode === 'head-copy' || config.mode === 'runner'
   for (const [char, stat] of Object.entries(charStats)) {
-    if (typeof char !== 'string' || char.length !== 1) {
+    // For word-based modes (head-copy, runner), allow multi-character keys
+    // For character-based modes, require single character keys
+    if (typeof char !== 'string' || (char.length !== 1 && !isWordMode)) {
       return false
     }
 
@@ -450,7 +453,8 @@ export function validateSessionStatistics(stats: unknown): stats is SessionStati
   // Validate confusion matrix structure
   const confusionMatrix = s.confusionMatrix as Record<string, unknown>
   for (const [expected, confusions] of Object.entries(confusionMatrix)) {
-    if (typeof expected !== 'string' || expected.length !== 1) {
+    // For word-based modes, allow multi-character keys
+    if (typeof expected !== 'string' || (expected.length !== 1 && !isWordMode)) {
       return false
     }
 
@@ -460,7 +464,8 @@ export function validateSessionStatistics(stats: unknown): stats is SessionStati
 
     const confusionRecord = confusions as Record<string, unknown>
     for (const [actual, count] of Object.entries(confusionRecord)) {
-      if (typeof actual !== 'string' || actual.length !== 1) {
+      // For word-based modes, allow multi-character keys
+      if (typeof actual !== 'string' || (actual.length !== 1 && !isWordMode)) {
         return false
       }
 

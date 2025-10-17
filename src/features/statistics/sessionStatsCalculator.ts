@@ -225,7 +225,8 @@ export class SessionStatsCalculator {
   ): number {
     // For listen mode, achieved WPM doesn't make sense as there's no user input
     // For runner mode, WPM doesn't make sense as speed is controlled by game levels
-    if (mode === 'listen' || mode === 'runner') {
+    // For head-copy mode, WPM doesn't make sense as it's button-based word recognition
+    if (mode === 'listen' || mode === 'runner' || mode === 'head-copy') {
       return 0;
     }
 
