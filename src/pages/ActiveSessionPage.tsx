@@ -61,6 +61,7 @@ export function ActiveSessionPage({ config, sourceContent, onComplete }: ActiveS
   const [isPaused, setIsPaused] = useState(false);
   const isPausedRef = useRef(false);
   const eventCollector = useRef<LogEvent[]>([]);
+  const [displayTime, setDisplayTime] = useState<number>(0);
 
   // Create runtime dependencies
   const clock = useMemo(() => new SystemClock(), []);
@@ -225,6 +226,7 @@ export function ActiveSessionPage({ config, sourceContent, onComplete }: ActiveS
   useEffect(() => {
     const unsub = runner.subscribe((snap) => {
       setSnapshot(snap);
+      setDisplayTime(snap.remainingMs);
 
       if (snap.phase === 'ended') {
         completeSession(500);
@@ -232,6 +234,19 @@ export function ActiveSessionPage({ config, sourceContent, onComplete }: ActiveS
     });
     return () => unsub();
   }, [runner, completeSession]);
+
+  // Update display time every second
+  useEffect(() => {
+    if (sessionPhase !== 'active' || isPaused) {
+      return;
+    }
+
+    const interval = setInterval(() => {
+      setDisplayTime(prev => Math.max(0, prev - 1000));
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [sessionPhase, isPaused]);
 
   const handleEndSession = useCallback(async () => {
     // Stop the runner and wait for cleanup to complete
@@ -354,7 +369,7 @@ export function ActiveSessionPage({ config, sourceContent, onComplete }: ActiveS
               <div className="info-source">{getSourceDisplay()}</div>
             </div>
           </div>
-          <div className="timer">{formatTime(snapshot.remainingMs)}</div>
+          <div className="timer">{formatTime(displayTime)}</div>
         </div>
       )}
 
