@@ -23,7 +23,7 @@ import { useSettings } from '../features/settings/hooks/useSettings';
 import { SessionStatsCalculator } from '../features/statistics/sessionStatsCalculator';
 import { getMode } from '../features/session/modes/shared/registry';
 import { evaluateLiveCopy } from '../features/session/modes/liveCopy/evaluator';
-import { formatSpeedDisplay } from '../utils/speedDisplay';
+import { SpeedDisplay } from '../components/SpeedDisplay';
 import { isTouchDevice } from '../utils/deviceDetection';
 import { VirtualKeyboard } from '../components/VirtualKeyboard';
 import '../styles/main.css';
@@ -323,9 +323,6 @@ export function ActiveSessionPage({ config, sourceContent, onComplete }: ActiveS
     return config.sourceName || 'Unknown';
   };
 
-  // Get formatted speed display
-  const speedDisplay = useMemo(() => formatSpeedDisplay(config), [config]);
-
   // Determine if virtual keyboard should be shown
   const isTouch = useMemo(() => isTouchDevice(), []);
   const modeNeedsKeyboard = useMemo(() => {
@@ -363,9 +360,7 @@ export function ActiveSessionPage({ config, sourceContent, onComplete }: ActiveS
               Pause
             </button>
             <div className="header-info">
-              <div className="info-wpm" title={speedDisplay.tooltip}>
-                {speedDisplay.text}
-              </div>
+              <SpeedDisplay config={config} className="info-wpm" />
               <div className="info-source">{getSourceDisplay()}</div>
             </div>
           </div>
