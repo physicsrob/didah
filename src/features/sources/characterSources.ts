@@ -127,8 +127,11 @@ export class WordSource implements CharacterSource {
   private currentIndex: number = 0;
 
   constructor(text: string) {
-    // Split text into words and filter out empty strings
-    this.words = text.split(/\s+/).filter(word => word.length > 0);
+    // Split text into words, strip punctuation, and filter out empty strings
+    this.words = text
+      .split(/\s+/)
+      .map(word => word.replace(/[^a-zA-Z0-9]/g, ''))
+      .filter(word => word.length > 0);
 
     if (this.words.length === 0) {
       throw new Error('WordSource: No valid words found in source text');
