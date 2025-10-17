@@ -1,0 +1,14 @@
+{
+  "allowedCommands": [
+    "npm run lint",
+    "npm run lint:fix",
+    "npm run typecheck",
+    "npm test",
+    "npm run test:ui",
+    "npm run check",
+    "npm run check:fix",
+    "npm test --",
+    "npm run test --",
+    "find"
+  ]
+}
