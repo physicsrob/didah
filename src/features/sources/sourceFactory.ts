@@ -11,7 +11,7 @@ import { ContinuousTextSource, WordSource } from './characterSources';
  */
 export function createCharacterSource(
   content: SourceContent | null,
-  _effectiveAlphabet: string[],
+  effectiveAlphabet: string[],
   emissionGranularity: 'character' | 'word'
 ): CharacterSource {
   if (!content?.text) {
@@ -22,5 +22,5 @@ export function createCharacterSource(
     return new WordSource(content.text);
   }
 
-  return new ContinuousTextSource(content.text);
+  return new ContinuousTextSource(content.text, effectiveAlphabet);
 }

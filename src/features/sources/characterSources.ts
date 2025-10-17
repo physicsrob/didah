@@ -3,7 +3,6 @@
  */
 
 import type { CharacterSource } from '../session/runtime/sessionProgram';
-import { isMorseCharacter } from '../../core/morse/alphabet';
 
 /**
  * Maximum attempts to find a valid character before throwing an error.
@@ -20,11 +19,14 @@ export class ContinuousTextSource implements CharacterSource {
   private currentWordIndex: number = 0;
   private currentCharIndex: number = 0;
   private currentWord: string;
+  private allowedChars: Set<string>;
 
-  constructor(text: string) {
+  constructor(text: string, effectiveAlphabet: string[]) {
     // Split text into words and filter out empty strings
     this.words = text.split(/\s+/).filter(word => word.length > 0);
     this.currentWord = this.words[0] || '';
+    // Store allowed characters as a Set for O(1) lookup
+    this.allowedChars = new Set(effectiveAlphabet.map(char => char.toUpperCase()));
   }
 
   next(): string {
@@ -48,8 +50,8 @@ export class ContinuousTextSource implements CharacterSource {
       const char = this.currentWord[this.currentCharIndex].toUpperCase();
       this.currentCharIndex++;
 
-      // Check if character has a Morse code pattern
-      if (isMorseCharacter(char)) {
+      // Check if character is in allowed alphabet
+      if (this.allowedChars.has(char)) {
         return char;
       }
 
@@ -90,8 +92,8 @@ export class ContinuousTextSource implements CharacterSource {
         const char = tempWord[tempCharIndex].toUpperCase();
         tempCharIndex++;
 
-        // Check if character has a Morse code pattern
-        if (isMorseCharacter(char)) {
+        // Check if character is in allowed alphabet
+        if (this.allowedChars.has(char)) {
           result += char;
           found = true;
           break;
