@@ -88,7 +88,7 @@ describe('handlePracticeCharacter - integration', () => {
     const startTime = clock.now();
 
     // Start handler in background
-    const handlerPromise = handlePracticeCharacter(config, 'A', startTime, ctx, signal.signal, null);
+    const handlerPromise = handlePracticeCharacter(config, 'A', startTime, ctx, signal.signal, null, false);
 
     // Advance through audio
     const audioDuration = calculateCharacterDurationMs('A', config.wpm, 0);
@@ -122,7 +122,7 @@ describe('handlePracticeCharacter - integration', () => {
     const startTime = clock.now();
 
     // Start handler
-    const handlerPromise = handlePracticeCharacter(config, 'B', startTime, ctx, signal.signal, null);
+    const handlerPromise = handlePracticeCharacter(config, 'B', startTime, ctx, signal.signal, null, false);
 
     // Advance through audio
     const audioDuration = calculateCharacterDurationMs('B', config.wpm, 0);
@@ -152,7 +152,7 @@ describe('handlePracticeCharacter - integration', () => {
     };
 
     // Start the handler
-    const handlerPromise = handlePracticeCharacter(config, 'C', clock.now(), ctx, signal.signal, null);
+    const handlerPromise = handlePracticeCharacter(config, 'C', clock.now(), ctx, signal.signal, null, false);
 
     // Advance through emission
     await advanceAndFlush(clock, 500);
@@ -166,7 +166,7 @@ describe('handlePracticeCharacter - integration', () => {
   it('publishes snapshot after completing emission', async () => {
     const config = createTestConfig({ wpm: 20, speedTier: 'fast' });
 
-    const handlerPromise = handlePracticeCharacter(config, 'D', clock.now(), ctx, signal.signal, null);
+    const handlerPromise = handlePracticeCharacter(config, 'D', clock.now(), ctx, signal.signal, null, false);
 
     // Complete emission quickly
     await advanceAndFlush(clock, 500);
@@ -188,7 +188,7 @@ describe('handlePracticeCharacter - integration', () => {
       await clock.sleep(100, signal.signal);
     });
 
-    const handlerPromise = handlePracticeCharacter(config, 'E', clock.now(), ctx, signal.signal, null);
+    const handlerPromise = handlePracticeCharacter(config, 'E', clock.now(), ctx, signal.signal, null, false);
 
     // Go through emission with incorrect input
     const audioDuration = calculateCharacterDurationMs('E', config.wpm, 0);

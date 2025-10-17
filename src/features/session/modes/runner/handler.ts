@@ -11,7 +11,8 @@ import {
   randomInRange,
   selectObstacleSize,
   getObstacleDuration,
-  CHARACTERS_PER_LEVEL
+  CHARACTERS_PER_LEVEL,
+  SPACE_PAUSE_SECONDS
 } from './constants';
 import { calculateCharacterDurationMs } from '../../../../core/morse/timing';
 import { isValidChar } from '../shared/utils';
@@ -26,7 +27,8 @@ export async function handleRunnerCharacter(
   startTime: number,
   ctx: HandlerContext,
   signal: AbortSignal,
-  nextChar: string | null
+  nextChar: string | null,
+  hasSpaceAfter: boolean
 ): Promise<void> {
   // Skip spaces - they have no place in the runner game
   if (char === ' ') {
@@ -171,7 +173,8 @@ export async function handleRunnerCharacter(
 
       // Calculate time until next character's morse plays
       const downtimeDuration = gameConfig.downtime;
-      const timeUntilNextMorse = jumpDuration + downtimeDuration;
+      const spacePauseDuration = hasSpaceAfter ? SPACE_PAUSE_SECONDS : 0;
+      const timeUntilNextMorse = jumpDuration + downtimeDuration + spacePauseDuration;
 
       // Calculate next character's parameters
       const nextMorseDuration = calculateCharacterDurationMs(nextChar, levelWpm, 0) / 1000;
@@ -251,9 +254,10 @@ export async function handleRunnerCharacter(
     }
   }
 
-  // Brief downtime before next character
+  // Brief downtime before next character (plus space pause if applicable)
   const downtimeDuration = gameConfig.downtime;
-  await ctx.clock.sleep(downtimeDuration * 1000, signal);
+  const spacePauseDuration = hasSpaceAfter ? SPACE_PAUSE_SECONDS : 0;
+  await ctx.clock.sleep((downtimeDuration + spacePauseDuration) * 1000, signal);
 
   // Update remaining time
   ctx.updateRemainingTime(startTime, config);

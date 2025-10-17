@@ -15,6 +15,9 @@ export const OBSTACLE_DURATION_SMALL = 0.2 as const;   // seconds
 export const OBSTACLE_DURATION_MEDIUM = 0.4 as const;  // seconds
 export const OBSTACLE_DURATION_LARGE = 0.6 as const;   // seconds
 
+// Space pause constant - extra delay before spawning obstacle after space character
+export const SPACE_PAUSE_SECONDS = 1.0 as const;        // Delay in seconds after space
+
 // Physics constants
 export const GRAVITY = 1000 as const;                    // Gravity constant for jump physics (game units/s²)
 

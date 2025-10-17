@@ -17,7 +17,8 @@ export async function handlePracticeCharacter(
   startTime: number,
   ctx: HandlerContext,
   signal: AbortSignal,
-  _nextChar: string | null
+  _nextChar: string | null,
+  _hasSpaceAfter: boolean
 ): Promise<void> {
   const outcome = await runPracticeEmission(
     config,

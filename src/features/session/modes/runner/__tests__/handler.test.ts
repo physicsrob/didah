@@ -103,7 +103,7 @@ describe('handleRunnerCharacter - pre-spawn behavior', () => {
     const startTime = clock.now();
 
     // Start first character handler with 'B' as next character
-    const handler1Promise = handleRunnerCharacter(config, 'A', startTime, ctx, signal.signal, 'B');
+    const handler1Promise = handleRunnerCharacter(config, 'A', startTime, ctx, signal.signal, 'B', false);
 
     const game = getRunnerGame()!;
     const engine = game.getEngine();
@@ -173,7 +173,7 @@ describe('handleRunnerCharacter - pre-spawn behavior', () => {
     const levelConfig = engine.getConfig();
 
     // Process first character with 'B' as next
-    const handler1Promise = handleRunnerCharacter(config, 'A', startTime, ctx, signal.signal, 'B');
+    const handler1Promise = handleRunnerCharacter(config, 'A', startTime, ctx, signal.signal, 'B', false);
 
     // Advance through initial 1-second delay for first obstacle
     await advanceGameTime(clock, 1000);
@@ -227,7 +227,7 @@ describe('handleRunnerCharacter - pre-spawn behavior', () => {
     const levelConfig = engine.getConfig();
 
     // Process first character with 'B' as next
-    const handler1Promise = handleRunnerCharacter(config, 'A', startTime, ctx, signal.signal, 'B');
+    const handler1Promise = handleRunnerCharacter(config, 'A', startTime, ctx, signal.signal, 'B', false);
 
     // Advance through initial 1-second delay for first obstacle
     await advanceGameTime(clock, 1000);

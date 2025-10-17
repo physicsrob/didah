@@ -81,7 +81,8 @@ export async function handleHeadCopyWord(
   startTime: number,
   ctx: HandlerContext,
   signal: AbortSignal,
-  _nextChar: string | null
+  _nextChar: string | null,
+  _hasSpaceAfter: boolean
 ): Promise<void> {
   // Verify state is initialized
   if (!ctx.snapshot.headCopyState) {

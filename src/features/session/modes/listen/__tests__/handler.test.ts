@@ -72,7 +72,7 @@ describe('handleListenCharacter - integration', () => {
     const config = createTestConfig({ wpm: 20 });
     const startTime = clock.now();
 
-    const handlerPromise = handleListenCharacter(config, 'A', startTime, ctx, signal.signal, null);
+    const handlerPromise = handleListenCharacter(config, 'A', startTime, ctx, signal.signal, null, false);
 
     // Advance through audio
     const audioDuration = calculateCharacterDurationMs('A', config.wpm, 0);
@@ -93,7 +93,7 @@ describe('handleListenCharacter - integration', () => {
     const config = createTestConfig({ wpm: 20, lengthMs: 60000 });
     const startTime = clock.now();
 
-    const handlerPromise = handleListenCharacter(config, 'B', startTime, ctx, signal.signal, null);
+    const handlerPromise = handleListenCharacter(config, 'B', startTime, ctx, signal.signal, null, false);
 
     // Advance through audio
     const audioDuration = calculateCharacterDurationMs('B', config.wpm, 0);
@@ -114,7 +114,7 @@ describe('handleListenCharacter - integration', () => {
   it('does not call updateStats (Listen mode has no stats)', async () => {
     const config = createTestConfig({ wpm: 20 });
 
-    const handlerPromise = handleListenCharacter(config, 'C', clock.now(), ctx, signal.signal, null);
+    const handlerPromise = handleListenCharacter(config, 'C', clock.now(), ctx, signal.signal, null, false);
 
     const audioDuration = calculateCharacterDurationMs('C', config.wpm, 0);
     await advanceAndFlush(clock, audioDuration);
@@ -136,7 +136,7 @@ describe('handleListenCharacter - integration', () => {
     const startTime = clock.now();
 
     for (const char of chars) {
-      const handlerPromise = handleListenCharacter(config, char, startTime, ctx, signal.signal, null);
+      const handlerPromise = handleListenCharacter(config, char, startTime, ctx, signal.signal, null, false);
 
       const audioDuration = calculateCharacterDurationMs(char, config.wpm, 0);
       await advanceAndFlush(clock, audioDuration);
@@ -158,7 +158,7 @@ describe('handleListenCharacter - integration', () => {
   it.skip('respects abort signal', async () => {
     const config = createTestConfig({ wpm: 20 });
 
-    const handlerPromise = handleListenCharacter(config, 'G', clock.now(), ctx, signal.signal, null);
+    const handlerPromise = handleListenCharacter(config, 'G', clock.now(), ctx, signal.signal, null, false);
 
     // Abort after starting audio
     const audioDuration = calculateCharacterDurationMs('G', config.wpm, 0);
@@ -176,7 +176,7 @@ describe('handleListenCharacter - integration', () => {
       const config = createTestConfig({ mode: 'listen', wpm: 20, listenTimingOffset: 0.0 });
       const startTime = clock.now();
 
-      const handlerPromise = handleListenCharacter(config, 'A', startTime, ctx, signal.signal, null);
+      const handlerPromise = handleListenCharacter(config, 'A', startTime, ctx, signal.signal, null, false);
 
       // Character should appear immediately (offset = 0)
       await advanceAndFlush(clock, 1);
@@ -197,7 +197,7 @@ describe('handleListenCharacter - integration', () => {
       const config = createTestConfig({ mode: 'listen', wpm: 20, listenTimingOffset: -0.5 });
       const startTime = clock.now();
 
-      const handlerPromise = handleListenCharacter(config, 'B', startTime, ctx, signal.signal, null);
+      const handlerPromise = handleListenCharacter(config, 'B', startTime, ctx, signal.signal, null, false);
 
       // Character should appear immediately (negative offset)
       await advanceAndFlush(clock, 1);
@@ -222,7 +222,7 @@ describe('handleListenCharacter - integration', () => {
       const config = createTestConfig({ mode: 'listen', wpm: 20, listenTimingOffset: 0.5 });
       const startTime = clock.now();
 
-      const handlerPromise = handleListenCharacter(config, 'C', startTime, ctx, signal.signal, null);
+      const handlerPromise = handleListenCharacter(config, 'C', startTime, ctx, signal.signal, null, false);
 
       // Character should NOT appear immediately
       await advanceAndFlush(clock, 1);
@@ -250,7 +250,7 @@ describe('handleListenCharacter - integration', () => {
       const config = createTestConfig({ mode: 'listen', wpm: 20, listenTimingOffset: 1.0 });
       const startTime = clock.now();
 
-      const handlerPromise = handleListenCharacter(config, 'D', startTime, ctx, signal.signal, null);
+      const handlerPromise = handleListenCharacter(config, 'D', startTime, ctx, signal.signal, null, false);
 
       // Character should NOT appear immediately
       await advanceAndFlush(clock, 1);

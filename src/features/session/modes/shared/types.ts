@@ -70,7 +70,8 @@ export interface ModeDefinition {
     startTime: number,
     ctx: HandlerContext,
     signal: AbortSignal,
-    nextChar: string | null
+    nextChar: string | null,
+    hasSpaceAfter: boolean
   ): Promise<void>;
 
   // UI components

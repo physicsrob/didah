@@ -15,7 +15,8 @@ export async function handleLiveCopyCharacter(
   startTime: number,
   ctx: HandlerContext,
   signal: AbortSignal,
-  _nextChar: string | null
+  _nextChar: string | null,
+  _hasSpaceAfter: boolean
 ): Promise<void> {
   // Log emission event (needed for evaluation at session end)
   const emissionStart = ctx.clock.now();
