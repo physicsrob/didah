@@ -22,16 +22,16 @@ const MODES = [
     description: 'Endless runner mini-game! Type letters to jump over obstacles. Progress through 10 levels with increasing speed.'
   },
   {
-    mode: 'live-copy' as SessionMode,
-    icon: '⚡',
-    title: 'Live Copy',
-    description: 'Real-time copying like actual CW. Characters stream continuously with no feedback until the end.'
-  },
-  {
     mode: 'head-copy' as SessionMode,
     icon: '🧠',
     title: 'Head Copy',
     description: 'Multiple choice whole-word recognition. Select the correct word to build up fluency and the ability to head copy.'
+  },
+  {
+    mode: 'live-copy' as SessionMode,
+    icon: '⚡',
+    title: 'Live Copy',
+    description: 'Real-time copying like actual CW. Characters stream continuously with no feedback until the end.'
   },
   {
     mode: 'listen' as SessionMode,
