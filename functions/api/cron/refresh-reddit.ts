@@ -198,7 +198,7 @@ async function processBatch(
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      model: 'anthropic/claude-4.5-haiku',
+      model: 'anthropic/claude-haiku-4.5',
       messages: [
         {
           role: 'user',
