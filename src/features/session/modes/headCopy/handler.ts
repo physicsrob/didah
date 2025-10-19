@@ -11,11 +11,17 @@ import type { HeadCopyState } from '../../runtime/io';
 import { playWordAudio, waitForWordClick } from './emission';
 import { debug } from '../../../../core/debug';
 import { shuffleArray } from '../../../../core/utils/array';
+import { calculateCharacterDurationMs, calculateFarnsworthSpacingMs } from '../../../../core/morse/timing';
 
 /**
  * Flash duration for visual feedback (green/red)
  */
 const FLASH_DURATION_MS = 500;
+
+/**
+ * Button timeout for post-audio waiting (2.5 seconds)
+ */
+const BUTTON_TIMEOUT_MS = 2500;
 
 /**
  * Helper to update head copy state
@@ -35,6 +41,27 @@ function updateHeadCopyState(
       ...updates
     }
   });
+}
+
+/**
+ * Calculate the total audio duration for a word in milliseconds
+ * Includes character durations and Farnsworth inter-character spacing
+ */
+function calculateWordDurationMs(word: string, config: SessionConfig): number {
+  const chars = word.split('');
+  let total = 0;
+
+  for (let i = 0; i < chars.length; i++) {
+    // Add duration for this character
+    total += calculateCharacterDurationMs(chars[i], config.wpm, 0);
+
+    // Add Farnsworth spacing between characters (except after last)
+    if (i < chars.length - 1) {
+      total += calculateFarnsworthSpacingMs(config.wpm, config.farnsworthWpm);
+    }
+  }
+
+  return total;
 }
 
 /**
@@ -130,8 +157,24 @@ export async function handleHeadCopyWord(
       });
       ctx.publish();
       debug.log(`[HeadCopy Handler] First trial - buttons hidden during audio`);
+
+      // Play word audio
+      debug.log(`[HeadCopy Handler] Playing audio for '${word}'`);
+      await playWordAudio(word, ctx.io, ctx.clock, config, signal);
+      debug.log(`[HeadCopy Handler] Audio complete`);
+
+      // Audio complete - show buttons
+      debug.log(`[HeadCopy Handler] Setting isPlaying=false, buttons now visible`);
+      updateHeadCopyState(ctx, {
+        currentWord: word,
+        distractors,
+        buttonWords,
+        isPlaying: false
+      });
+      ctx.publish();
+      debug.log(`[HeadCopy Handler] State published with isPlaying=false. Current state:`, ctx.snapshot.headCopyState);
     } else {
-      // Retry - show buttons before playing audio
+      // Retry - show buttons before playing audio, run audio and click-listening in parallel
       updateHeadCopyState(ctx, {
         currentWord: word,
         distractors,
@@ -142,27 +185,134 @@ export async function handleHeadCopyWord(
       });
       ctx.publish();
       debug.log(`[HeadCopy Handler] Retry - buttons visible during replay`);
-    }
 
-    // Play word audio
-    debug.log(`[HeadCopy Handler] Playing audio for '${word}'`);
-    await playWordAudio(word, ctx.io, ctx.clock, config, signal);
-    debug.log(`[HeadCopy Handler] Audio complete`);
+      // Calculate precise timeout: audio duration + post-audio button timeout
+      const wordDurationMs = calculateWordDurationMs(word, config);
+      const retryTimeoutMs = wordDurationMs + BUTTON_TIMEOUT_MS;
+      debug.log(`[HeadCopy Handler] Calculated retry timeout: ${retryTimeoutMs}ms (audio: ${wordDurationMs}ms + button wait: ${BUTTON_TIMEOUT_MS}ms)`);
 
-    // Audio complete - show buttons
-    if (isFirstTrial) {
-      debug.log(`[HeadCopy Handler] Setting isPlaying=false, buttons now visible`);
+      // Run audio and click-listening in parallel
+      const [, outcome] = await Promise.all([
+        playWordAudio(word, ctx.io, ctx.clock, config, signal),
+        waitForWordClick(word, distractors, ctx.input, ctx.clock, signal, retryTimeoutMs)
+          .then(outcome => {
+            // Flash immediately when clicked (even during audio)
+            if (outcome.type === 'click') {
+              // ctx.snapshot is stale after updateSnapshot calls, so explicitly preserve all fields
+              updateHeadCopyState(ctx, {
+                currentWord: word,
+                distractors,
+                buttonWords,
+                flashResult: outcome.isCorrect ? 'correct' : 'incorrect',
+                clickedWord: outcome.clickedWord
+              });
+              ctx.publish();
+              debug.log(`[HeadCopy Handler] Flash during audio - ${outcome.isCorrect ? 'correct' : 'incorrect'}`);
+            }
+            return outcome;
+          })
+      ]);
+
+      debug.log(`[HeadCopy Handler] Retry audio and click both complete`);
+
+      // Handle timeout
+      if (outcome.type === 'timeout') {
+        debug.log(`[HeadCopy Handler] Timeout - will replay word '${word}'`);
+
+        // Increment timeout counter
+        const currentStats = ctx.snapshot.headCopyState!.stats;
+        updateHeadCopyState(ctx, {
+          stats: {
+            ...currentStats,
+            timeouts: currentStats.timeouts + 1
+          }
+        });
+        ctx.publish();
+
+        // Mark that we've completed the first trial
+        isFirstTrial = false;
+
+        // Check if session was stopped before retrying
+        if (signal.aborted) {
+          throw new DOMException('Aborted', 'AbortError');
+        }
+
+        // Continue loop to retry (loop will play audio again)
+        continue;
+      }
+
+      // Handle button click
+      const { clickedWord, isCorrect: correct } = outcome;
+      debug.log(`[HeadCopy Handler] Button clicked: '${clickedWord}', correct: ${correct}`);
+
+      isCorrect = correct;
+
+      // Log outcome event (for statistics)
+      const clickTime = ctx.clock.now();
+      if (isCorrect) {
+        ctx.io.log({
+          type: 'correct',
+          at: clickTime,
+          char: word,
+          latencyMs: clickTime - emissionStart
+        });
+        debug.log(`[HeadCopy Handler] Logged 'correct' event for '${word}'`);
+      } else {
+        ctx.io.log({
+          type: 'incorrect',
+          at: clickTime,
+          expected: word,
+          got: clickedWord
+        });
+        debug.log(`[HeadCopy Handler] Logged 'incorrect' event - expected: '${word}', got: '${clickedWord}'`);
+      }
+
+      // Update stats
+      const currentStats = ctx.snapshot.headCopyState!.stats;
+      const newAttempts = currentStats.attempts + 1;
+      const newSuccesses = currentStats.successes + (isCorrect ? 1 : 0);
+      const newAccuracy = newAttempts > 0 ? (newSuccesses / newAttempts) * 100 : 0;
+
+      // Update stats and preserve all fields (ctx.snapshot becomes stale after updateSnapshot calls)
       updateHeadCopyState(ctx, {
         currentWord: word,
         distractors,
         buttonWords,
-        isPlaying: false
+        flashResult: outcome.isCorrect ? 'correct' : 'incorrect',
+        clickedWord: outcome.clickedWord,
+        stats: {
+          attempts: newAttempts,
+          successes: newSuccesses,
+          timeouts: currentStats.timeouts,
+          accuracy: newAccuracy
+        }
       });
       ctx.publish();
-      debug.log(`[HeadCopy Handler] State published with isPlaying=false. Current state:`, ctx.snapshot.headCopyState);
+      debug.log(`[HeadCopy Handler] Stats updated - attempts: ${newAttempts}, successes: ${newSuccesses}`);
+
+      // Wait for flash
+      await ctx.clock.sleep(FLASH_DURATION_MS, signal);
+
+      // Clear flash and clicked word (keep word/distractors/buttonWords if replaying)
+      updateHeadCopyState(ctx, {
+        currentWord: isCorrect ? null : word,  // Clear if correct, keep if retrying
+        distractors: isCorrect ? [] : distractors,  // Clear if correct, keep if retrying
+        buttonWords: isCorrect ? [] : buttonWords,  // Clear if correct, keep same order if retrying
+        flashResult: null,
+        clickedWord: null
+      });
+      ctx.publish();
+      debug.log(`[HeadCopy Handler] Flash cleared, isCorrect: ${isCorrect}`);
+
+      // Mark that we've completed the first trial
+      isFirstTrial = false;
+
+      // If incorrect, loop will replay the word
+      // If correct, loop will exit
+      continue;
     }
 
-    // Wait for button click (or timeout)
+    // Wait for button click (or timeout) - first trial only
     debug.log(`[HeadCopy Handler] Waiting for button click...`);
     const outcome = await waitForWordClick(
       word,

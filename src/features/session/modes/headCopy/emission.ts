@@ -57,7 +57,8 @@ async function waitForClick(
   distractors: string[],
   input: InputBus,
   clock: Clock,
-  signal: AbortSignal
+  signal: AbortSignal,
+  timeoutMs: number = BUTTON_TIMEOUT_MS
 ): Promise<WordClickOutcome> {
   // Create all possible button words (correct + distractors)
   const allWords = [word, ...distractors];
@@ -77,8 +78,8 @@ async function waitForClick(
         return { type: 'click', clickedWord, isCorrect } as const;
       }
     },
-    // Arm 1: Timeout after 1.5s
-    clockTimeout(clock, BUTTON_TIMEOUT_MS, { type: 'timeout' } as const)
+    // Arm 1: Timeout
+    clockTimeout(clock, timeoutMs, { type: 'timeout' } as const)
   ], signal);
 
   const outcome = result.value;
@@ -111,7 +112,8 @@ export async function waitForWordClick(
   distractors: string[],
   input: InputBus,
   clock: Clock,
-  signal: AbortSignal
+  signal: AbortSignal,
+  timeoutMs?: number
 ): Promise<WordClickOutcome> {
-  return waitForClick(word, distractors, input, clock, signal);
+  return waitForClick(word, distractors, input, clock, signal, timeoutMs);
 }
