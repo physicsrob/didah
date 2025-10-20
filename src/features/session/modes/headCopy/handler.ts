@@ -219,6 +219,9 @@ export async function handleHeadCopyWord(
       if (outcome.type === 'timeout') {
         debug.log(`[HeadCopy Handler] Timeout - will replay word '${word}'`);
 
+        // Log timeout event (for statistics)
+        ctx.io.log({ type: 'timeout', at: ctx.clock.now(), char: word });
+
         // Increment timeout counter
         const currentStats = ctx.snapshot.headCopyState!.stats;
         updateHeadCopyState(ctx, {
@@ -325,6 +328,9 @@ export async function handleHeadCopyWord(
     // Handle timeout
     if (outcome.type === 'timeout') {
       debug.log(`[HeadCopy Handler] Timeout - will replay word '${word}'`);
+
+      // Log timeout event (for statistics)
+      ctx.io.log({ type: 'timeout', at: ctx.clock.now(), char: word });
 
       // Increment timeout counter
       const currentStats = ctx.snapshot.headCopyState!.stats;

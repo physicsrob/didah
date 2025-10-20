@@ -47,20 +47,32 @@ export class SessionStatsCalculator {
     // Process each event
     for (const event of events) {
       switch (event.type) {
-        case 'correct':
-          correctCount++;
+        case 'correct': {
+          // For head-copy mode, count word length; for other modes, count as 1 character
+          const correctChars = config.mode === 'head-copy' ? event.char.length : 1;
+          correctCount += correctChars;
           recognitionTimes.push(event.latencyMs);
           this.updateCharacterStats(characterStats, event.char, 'correct', event.latencyMs);
           break;
-        case 'incorrect':
-          incorrectCount++;
+        }
+        case 'incorrect': {
+          // For head-copy mode, count word length; for other modes, count as 1 character
+          const incorrectChars = config.mode === 'head-copy' ? event.expected.length : 1;
+          incorrectCount += incorrectChars;
           this.updateCharacterStats(characterStats, event.expected, 'incorrect');
-          this.updateConfusionMatrix(confusionMatrix, event.expected, event.got);
+          // Skip confusion matrix for head-copy mode (word-level confusion doesn't make sense)
+          if (config.mode !== 'head-copy') {
+            this.updateConfusionMatrix(confusionMatrix, event.expected, event.got);
+          }
           break;
-        case 'timeout':
-          timeoutCount++;
+        }
+        case 'timeout': {
+          // For head-copy mode, count word length; for other modes, count as 1 character
+          const timeoutChars = config.mode === 'head-copy' ? event.char.length : 1;
+          timeoutCount += timeoutChars;
           this.updateCharacterStats(characterStats, event.char, 'timeout');
           break;
+        }
         case 'levelAdvanced':
           // Track maximum level completed (runner mode)
           if (maxLevel === undefined || event.level > maxLevel) {
