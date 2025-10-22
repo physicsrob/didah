@@ -74,7 +74,7 @@ export class SessionStatsCalculator {
           break;
         }
         case 'levelAdvanced':
-          // Track maximum level completed (runner mode)
+          // Track maximum level completed (ditDash mode)
           if (maxLevel === undefined || event.level > maxLevel) {
             maxLevel = event.level;
           }
@@ -144,7 +144,7 @@ export class SessionStatsCalculator {
       medianRecognitionTimeMs,
     };
 
-    // Add maxLevel if present (runner mode)
+    // Add maxLevel if present (ditDash mode)
     if (maxLevel !== undefined) {
       return { ...baseStats, maxLevel };
     }
@@ -238,9 +238,9 @@ export class SessionStatsCalculator {
     mode: string
   ): number {
     // For listen mode, achieved WPM doesn't make sense as there's no user input
-    // For runner mode, WPM doesn't make sense as speed is controlled by game levels
+    // For ditDash mode, WPM doesn't make sense as speed is controlled by game levels
     // For head-copy mode, WPM doesn't make sense as it's button-based word recognition
-    if (mode === 'listen' || mode === 'runner' || mode === 'head-copy') {
+    if (mode === 'listen' || mode === 'ditDash' || mode === 'head-copy') {
       return 0;
     }
 

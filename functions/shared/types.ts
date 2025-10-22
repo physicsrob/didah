@@ -1,6 +1,6 @@
 // Shared types for API functions
 export type FeedbackMode = 'flash' | 'buzzer' | 'replay' | 'off'
-export type SessionMode = 'practice' | 'listen' | 'live-copy' | 'head-copy' | 'runner'
+export type SessionMode = 'practice' | 'listen' | 'live-copy' | 'head-copy' | 'ditDash'
 export type SpeedTier = 'slow' | 'medium' | 'fast' | 'lightning'
 export type ToneSetting = 'soft' | 'normal' | 'hard'
 
@@ -122,7 +122,7 @@ export type SessionStatistics = {
     expectedChar?: string
   }>
 
-  // Runner Mode - Maximum level completed (optional, only for runner mode)
+  // Dit Dash Mode - Maximum level completed (optional, only for ditDash mode)
   maxLevel?: number
 }
 
@@ -181,7 +181,7 @@ export function validateSettings(settings: unknown): settings is UserSettings {
     return false
   }
 
-  const validModes: SessionMode[] = ['practice', 'listen', 'live-copy', 'head-copy', 'runner']
+  const validModes: SessionMode[] = ['practice', 'listen', 'live-copy', 'head-copy', 'ditDash']
   if (!validModes.includes(s.defaultMode as SessionMode)) {
     return false
   }
@@ -321,7 +321,7 @@ export function validateSessionStatistics(stats: unknown): stats is SessionStati
   }
 
   // Validate config fields
-  const validModes: SessionMode[] = ['practice', 'listen', 'live-copy', 'head-copy', 'runner']
+  const validModes: SessionMode[] = ['practice', 'listen', 'live-copy', 'head-copy', 'ditDash']
   if (!validModes.includes(config.mode as SessionMode)) {
     return false
   }
@@ -387,9 +387,9 @@ export function validateSessionStatistics(stats: unknown): stats is SessionStati
 
   // Validate each character stat entry
   const charStats = s.characterStats as Record<string, unknown>
-  const isWordMode = config.mode === 'head-copy' || config.mode === 'runner'
+  const isWordMode = config.mode === 'head-copy' || config.mode === 'ditDash'
   for (const [char, stat] of Object.entries(charStats)) {
-    // For word-based modes (head-copy, runner), allow multi-character keys
+    // For word-based modes (head-copy, ditDash), allow multi-character keys
     // For character-based modes, require single character keys
     if (typeof char !== 'string' || (char.length !== 1 && !isWordMode)) {
       return false
@@ -503,7 +503,7 @@ export function validateSessionStatistics(stats: unknown): stats is SessionStati
     }
   }
 
-  // Validate maxLevel if present (optional field for runner mode)
+  // Validate maxLevel if present (optional field for ditDash mode)
   if (s.maxLevel !== undefined) {
     if (typeof s.maxLevel !== 'number' || s.maxLevel < 1 || s.maxLevel > 10 || !Number.isInteger(s.maxLevel)) {
       return false

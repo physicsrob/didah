@@ -16,9 +16,9 @@ const MODES = [
     description: 'Type what you hear. Immediate feedback paced to match your speed.'
   },
   {
-    mode: 'runner' as SessionMode,
+    mode: 'ditDash' as SessionMode,
     icon: '🏃',
-    title: 'Morse Runner',
+    title: 'Dit Dash',
     description: 'Endless runner mini-game! Type letters to jump over obstacles. Progress through 10 levels with increasing speed.'
   },
   {

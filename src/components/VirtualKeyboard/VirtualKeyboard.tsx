@@ -33,9 +33,9 @@ function isKeyEnabled(key: string, alphabet: string[], mode: SessionMode): boole
     return mode === 'live-copy';
   }
 
-  // Space is enabled in Live Copy and Runner modes
+  // Space is enabled in Live Copy and Dit Dash modes
   if (key === 'Space') {
-    return mode === 'live-copy' || mode === 'runner';
+    return mode === 'live-copy' || mode === 'ditDash';
   }
 
   // Other keys are enabled if they're in the practice alphabet

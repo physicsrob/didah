@@ -26,7 +26,7 @@ Real-time copying that simulates actual Morse code reception. No feedback during
 ### Head Copy
 Multiple choice whole-word recognition. Select the correct word to build up fluency and the ability to head copy.
 
-### Morse Runner
+### Dit Dash
 Endless runner mini-game where you type letters to jump over obstacles. Progress through 10 levels with increasing speed and difficulty - practice disguised as fun!
 
 ## Try It Locally

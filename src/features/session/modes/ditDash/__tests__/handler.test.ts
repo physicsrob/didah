@@ -1,5 +1,5 @@
 /**
- * Tests for Runner mode handler logic - specifically pre-spawn behavior
+ * Tests for Dit Dash mode handler logic - specifically pre-spawn behavior
  * @vitest-environment jsdom
  */
 
@@ -11,14 +11,14 @@ import { createTestConfig, advanceAndFlush, flushPromises } from '../../../runti
 import type { HandlerContext } from '../../shared/types';
 import type { SessionSnapshot } from '../../../runtime/io';
 import { calculateCharacterDurationMs } from '../../../../../core/morse/timing';
-import { getRunnerGame, getOrCreateRunnerGame, unregisterRunnerGame } from '../gameRegistry';
+import { getDitDashGame, getOrCreateDitDashGame, unregisterDitDashGame } from '../gameRegistry';
 import { CHARACTER_X, CHARACTER_WIDTH } from '../constants';
 import { setupCanvasMock } from './canvasMock';
 
 // Setup canvas mocking before importing handler
 setupCanvasMock();
 
-const { handleRunnerCharacter } = await import('../handler');
+const { handleDitDashCharacter } = await import('../handler');
 
 /**
  * Helper to advance both FakeClock and GameEngine time together.
@@ -26,7 +26,7 @@ const { handleRunnerCharacter } = await import('../handler');
  * but in tests we need to manually sync it with our FakeClock.
  */
 async function advanceGameTime(clock: FakeClock, ms: number) {
-  const game = getRunnerGame()!;
+  const game = getDitDashGame()!;
   const engine = game.getEngine();
 
   // Update game engine with the delta time
@@ -36,7 +36,7 @@ async function advanceGameTime(clock: FakeClock, ms: number) {
   await advanceAndFlush(clock, ms);
 }
 
-describe('handleRunnerCharacter - pre-spawn behavior', () => {
+describe('handleDitDashCharacter - pre-spawn behavior', () => {
   let clock: FakeClock;
   let io: TestIO;
   let input: TestInputBus;
@@ -68,7 +68,7 @@ describe('handleRunnerCharacter - pre-spawn behavior', () => {
         snapshot = { ...snapshot, ...updates };
       },
       updateStats: () => {
-        // No-op for runner mode
+        // No-op for ditDash mode
       },
       updateRemainingTime: (startTime: number, config) => {
         const elapsed = clock.now() - startTime;
@@ -87,7 +87,7 @@ describe('handleRunnerCharacter - pre-spawn behavior', () => {
 
     // Initialize game
     const canvas = document.createElement('canvas');
-    const game = getOrCreateRunnerGame(canvas);
+    const game = getOrCreateDitDashGame(canvas);
     await game.start();
 
     // Let game initialize
@@ -95,7 +95,7 @@ describe('handleRunnerCharacter - pre-spawn behavior', () => {
   }, 5000); // 5 second timeout for canvas/animation setup
 
   afterEach(() => {
-    unregisterRunnerGame();
+    unregisterDitDashGame();
   });
 
   it('should pre-spawn second obstacle immediately after first jump starts (BEFORE jump completes)', async () => {
@@ -103,9 +103,9 @@ describe('handleRunnerCharacter - pre-spawn behavior', () => {
     const startTime = clock.now();
 
     // Start first character handler with 'B' as next character
-    const handler1Promise = handleRunnerCharacter(config, 'A', startTime, ctx, signal.signal, 'B', false);
+    const handler1Promise = handleDitDashCharacter(config, 'A', startTime, ctx, signal.signal, 'B', false);
 
-    const game = getRunnerGame()!;
+    const game = getDitDashGame()!;
     const engine = game.getEngine();
     const levelConfig = engine.getConfig();
 
@@ -168,12 +168,12 @@ describe('handleRunnerCharacter - pre-spawn behavior', () => {
     const config = createTestConfig({ wpm: 20, startingLevel: 1 });
     const startTime = clock.now();
 
-    const game = getRunnerGame()!;
+    const game = getDitDashGame()!;
     const engine = game.getEngine();
     const levelConfig = engine.getConfig();
 
     // Process first character with 'B' as next
-    const handler1Promise = handleRunnerCharacter(config, 'A', startTime, ctx, signal.signal, 'B', false);
+    const handler1Promise = handleDitDashCharacter(config, 'A', startTime, ctx, signal.signal, 'B', false);
 
     // Advance through initial 1-second delay for first obstacle
     await advanceGameTime(clock, 1000);
@@ -222,12 +222,12 @@ describe('handleRunnerCharacter - pre-spawn behavior', () => {
     const config = createTestConfig({ wpm: 20, startingLevel: 1 });
     const startTime = clock.now();
 
-    const game = getRunnerGame()!;
+    const game = getDitDashGame()!;
     const engine = game.getEngine();
     const levelConfig = engine.getConfig();
 
     // Process first character with 'B' as next
-    const handler1Promise = handleRunnerCharacter(config, 'A', startTime, ctx, signal.signal, 'B', false);
+    const handler1Promise = handleDitDashCharacter(config, 'A', startTime, ctx, signal.signal, 'B', false);
 
     // Advance through initial 1-second delay for first obstacle
     await advanceGameTime(clock, 1000);

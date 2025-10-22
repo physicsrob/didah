@@ -1,22 +1,22 @@
 /**
- * Runner Mode - UI Components
+ * Dit Dash Mode - UI Components
  *
- * React wrapper for the canvas-based runner game.
+ * React wrapper for the canvas-based ditDash game.
  */
 
 import { useEffect, useRef } from 'react';
 import type { SessionSnapshot } from '../../runtime/io';
 import type { UIContext } from '../shared/types';
 import type { Game } from './Game';
-import { getOrCreateRunnerGame, unregisterRunnerGame } from './gameRegistry';
+import { getOrCreateDitDashGame, unregisterDitDashGame } from './gameRegistry';
 import { LOGICAL_WIDTH, LOGICAL_HEIGHT } from './constants';
 
 /**
- * Display component for runner mode.
+ * Display component for ditDash mode.
  * Just renders the canvas - game initialization happens in useKeyboardInput
  * Breaks out of normal container to use full viewport.
  */
-export function RunnerDisplay(_props: { snapshot: SessionSnapshot }) {
+export function DitDashDisplay(_props: { snapshot: SessionSnapshot }) {
   return (
     <div style={{
       position: 'fixed',
@@ -31,7 +31,7 @@ export function RunnerDisplay(_props: { snapshot: SessionSnapshot }) {
       zIndex: 1
     }}>
       <canvas
-        id="runner-canvas"
+        id="ditDash-canvas"
         style={{
           border: '2px solid #fff',
           maxWidth: '95vw',
@@ -73,11 +73,11 @@ function resizeCanvas(canvas: HTMLCanvasElement): void {
 }
 
 /**
- * Keyboard input hook for runner mode.
+ * Keyboard input hook for ditDash mode.
  * Initializes and manages the game instance, and handles keyboard input.
  */
 // eslint-disable-next-line react-refresh/only-export-components
-export function useRunnerInput(context: UIContext): void {
+export function useDitDashInput(context: UIContext): void {
   const gameRef = useRef<Game | null>(null);
   const { input, sessionPhase, isPaused, onPause, config } = context;
 
@@ -93,10 +93,10 @@ export function useRunnerInput(context: UIContext): void {
       return;
     }
 
-    const canvas = document.getElementById('runner-canvas') as HTMLCanvasElement | null;
+    const canvas = document.getElementById('ditDash-canvas') as HTMLCanvasElement | null;
 
     if (!canvas) {
-      console.error('[Runner] Canvas element not found!');
+      console.error('[DitDash] Canvas element not found!');
       return;
     }
 
@@ -104,7 +104,7 @@ export function useRunnerInput(context: UIContext): void {
     resizeCanvas(canvas);
 
     // Get or create game (singleton)
-    const game = getOrCreateRunnerGame(canvas);
+    const game = getOrCreateDitDashGame(canvas);
     gameRef.current = game;
 
     // Start game (idempotent - safe to call multiple times)
@@ -115,7 +115,7 @@ export function useRunnerInput(context: UIContext): void {
         game.getEngine().advanceToLevel(startingLevel);
       }
     }).catch((error) => {
-      console.error('Failed to start runner game:', error);
+      console.error('Failed to start ditDash game:', error);
     });
 
     // Handle window resize
@@ -133,7 +133,7 @@ export function useRunnerInput(context: UIContext): void {
   // Game cleanup effect - only runs on unmount
   useEffect(() => {
     return () => {
-      unregisterRunnerGame();
+      unregisterDitDashGame();
       if (gameRef.current) {
         gameRef.current.destroy();
         gameRef.current = null;

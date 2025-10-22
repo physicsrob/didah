@@ -326,7 +326,7 @@ export function ActiveSessionPage({ config, sourceContent, onComplete }: ActiveS
   // Determine if virtual keyboard should be shown
   const isTouch = useMemo(() => isTouchDevice(), []);
   const modeNeedsKeyboard = useMemo(() => {
-    return ['practice', 'live-copy', 'runner'].includes(config.mode);
+    return ['practice', 'live-copy', 'ditDash'].includes(config.mode);
   }, [config.mode]);
   const showVirtualKeyboard = isTouch && modeNeedsKeyboard && sessionPhase === 'active' && !isPaused;
 
@@ -352,8 +352,8 @@ export function ActiveSessionPage({ config, sourceContent, onComplete }: ActiveS
         </div>
       )}
 
-      {/* Session Header - only during active session, hidden for runner mode */}
-      {sessionPhase === 'active' && config.mode !== 'runner' && (
+      {/* Session Header - only during active session, hidden for ditDash mode */}
+      {sessionPhase === 'active' && config.mode !== 'ditDash' && (
         <div className="session-header">
           <div className="header-left">
             <button className="pause-button" onClick={handlePause}>

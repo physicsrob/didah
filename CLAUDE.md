@@ -32,7 +32,7 @@ npm run deploy      # Manual deployment (alternative to automatic)
 ## Architecture
 - **Core Domain**: `src/core/` - Timing engine, alphabet, types
 - **Runtime System**: `src/features/session/runtime/` - Session orchestration
-- **Modes**: `src/features/session/modes/` - Mode implementations (Practice, Listen, Live Copy, Head Copy, Runner)
+- **Modes**: `src/features/session/modes/` - Mode implementations (Practice, Listen, Live Copy, Head Copy, Dit Dash)
 - **Services**: `src/features/session/services/` - Audio, feedback
 - **Pages**: `src/pages/` - React components
 - **API Functions**: `functions/api/` - Cloudflare Pages Functions

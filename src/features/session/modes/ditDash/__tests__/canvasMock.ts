@@ -1,5 +1,5 @@
 /**
- * Minimal canvas mock for runner integration tests.
+ * Minimal canvas mock for ditDash integration tests.
  * Provides just enough functionality to let the Game and CanvasRenderer initialize.
  */
 

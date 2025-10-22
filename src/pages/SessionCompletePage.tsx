@@ -127,7 +127,7 @@ export function SessionCompletePage({ statistics: fullStatistics, onRestart }: S
                     </div>
                   )}
 
-                  {fullStatistics.config.mode === 'runner' && fullStatistics.maxLevel !== undefined && (
+                  {fullStatistics.config.mode === 'ditDash' && fullStatistics.maxLevel !== undefined && (
                     <div className="stat-item">
                       <span className="stat-label">Maximum Level Completed</span>
                       <span className="stat-value">{fullStatistics.maxLevel}</span>
@@ -155,7 +155,7 @@ export function SessionCompletePage({ statistics: fullStatistics, onRestart }: S
                         'listen': 'Passive Listening',
                         'live-copy': 'Live Copy',
                         'head-copy': 'Head Copy',
-                        'runner': 'Morse Runner'
+                        'ditDash': 'Dit Dash'
                       };
                       return modeNames[fullStatistics.config.mode] || fullStatistics.config.mode;
                     })()}
@@ -169,7 +169,7 @@ export function SessionCompletePage({ statistics: fullStatistics, onRestart }: S
                   </span>
                 </div>
 
-                {fullStatistics.config.mode !== 'runner' && (
+                {fullStatistics.config.mode !== 'ditDash' && (
                   <div className="setting-item">
                     <span className="setting-label">Speed</span>
                     <SpeedDisplay config={fullStatistics.config} className="setting-value" />

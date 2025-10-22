@@ -37,8 +37,8 @@ export function SessionConfigPage({ mode, onStart }: SessionConfigPageProps) {
       title: 'Head Copy Mode',
       description: 'Multiple choice whole-word recognition. Select the correct word to build up fluency and the ability to head copy.'
     },
-    'runner': {
-      title: 'Morse Runner',
+    'ditDash': {
+      title: 'Dit Dash',
       description: 'Endless runner mini-game - type letters to jump over obstacles! Progress through 10 levels with increasing speed and difficulty.'
     }
   };
@@ -274,7 +274,7 @@ export function SessionConfigPage({ mode, onStart }: SessionConfigPageProps) {
 
     const config: SessionConfig = {
       mode,
-      lengthMs: mode === 'runner' ? Number.MAX_SAFE_INTEGER : duration * 60 * 1000,
+      lengthMs: mode === 'ditDash' ? Number.MAX_SAFE_INTEGER : duration * 60 * 1000,
       wpm,
       farnsworthWpm,
       speedTier,
@@ -285,7 +285,7 @@ export function SessionConfigPage({ mode, onStart }: SessionConfigPageProps) {
       effectiveAlphabet: buildAlphabet(),
       extraWordSpacing,
       listenTimingOffset: mode === 'listen' ? listenTimingOffset : 1.0,
-      startingLevel: mode === 'runner' ? startingLevel : 1,
+      startingLevel: mode === 'ditDash' ? startingLevel : 1,
     };
 
     // Fetch fresh content for each new session (except random_letters which is generated locally)
@@ -391,8 +391,8 @@ export function SessionConfigPage({ mode, onStart }: SessionConfigPageProps) {
             </div>
           )}
 
-          {/* Duration - hidden for runner mode (endless practice) */}
-          {mode !== 'runner' && (
+          {/* Duration - hidden for ditDash mode (endless practice) */}
+          {mode !== 'ditDash' && (
             <div className="settings-row">
               <div className="settings-label">Duration</div>
               <div className="settings-control">
@@ -426,8 +426,8 @@ export function SessionConfigPage({ mode, onStart }: SessionConfigPageProps) {
             </div>
           )}
 
-          {/* Character Speed - hidden for runner mode (uses level-based WPM) */}
-          {mode !== 'runner' && (
+          {/* Character Speed - hidden for ditDash mode (uses level-based WPM) */}
+          {mode !== 'ditDash' && (
             <div className="settings-row">
               <div className="settings-label">Character Speed</div>
               <div className="settings-control">
@@ -467,8 +467,8 @@ export function SessionConfigPage({ mode, onStart }: SessionConfigPageProps) {
             </div>
           )}
 
-          {/* Starting Level - only for runner mode */}
-          {mode === 'runner' && (
+          {/* Starting Level - only for ditDash mode */}
+          {mode === 'ditDash' && (
             <div className="settings-row">
               <div className="settings-label">Starting Level</div>
               <div className="settings-control">

@@ -1,12 +1,12 @@
 /**
- * Runner Mode - Handler Logic
+ * Dit Dash Mode - Handler Logic
  *
  * Handles one character at a time, integrating with the session runner.
  */
 
 import type { SessionConfig } from '../../../../core/types/domain';
 import type { HandlerContext } from '../shared/types';
-import { getRunnerGame } from './gameRegistry';
+import { getDitDashGame } from './gameRegistry';
 import {
   randomInRange,
   selectObstacleSize,
@@ -18,10 +18,10 @@ import { calculateCharacterDurationMs } from '../../../../core/morse/timing';
 import { isValidChar } from '../shared/utils';
 
 /**
- * Handler function for runner mode.
+ * Handler function for ditDash mode.
  * Processes one character: spawn obstacle, play morse, wait for input, handle jump.
  */
-export async function handleRunnerCharacter(
+export async function handleDitDashCharacter(
   config: SessionConfig,
   char: string,
   startTime: number,
@@ -30,22 +30,22 @@ export async function handleRunnerCharacter(
   nextChar: string | null,
   hasSpaceAfter: boolean
 ): Promise<void> {
-  // Skip spaces - they have no place in the runner game
+  // Skip spaces - they have no place in the ditDash game
   if (char === ' ') {
     return;
   }
 
-  const game = getRunnerGame();
+  const game = getDitDashGame();
   if (!game) {
-    console.error('[Runner] Game not initialized');
+    console.error('[DitDash] Game not initialized');
     return;
   }
 
   // Wait for game to be ready (game loop started)
   if (!game.isReady()) {
-    console.log('[Runner] Waiting for game to be ready...');
+    console.log('[DitDash] Waiting for game to be ready...');
     await game.waitUntilReady(signal);
-    console.log('[Runner] Game is now ready');
+    console.log('[DitDash] Game is now ready');
   }
 
   const engine = game.getEngine();
@@ -65,7 +65,7 @@ export async function handleRunnerCharacter(
   if (existingObstacle) {
     // Already spawned by previous character - just set as active
     engine.setActiveObstacle(existingObstacle);
-    console.log(`[Runner] Found pre-spawned obstacle for "${char}"`);
+    console.log(`[DitDash] Found pre-spawned obstacle for "${char}"`);
   } else {
     // First character or pre-spawn didn't happen - spawn normally
 
@@ -85,7 +85,7 @@ export async function handleRunnerCharacter(
       const offsetDistance = timeOffset * gameConfig.scrollSpeed;
       const adjustedSpawnDistance = normalSpawnDistance + offsetDistance;
 
-      console.log('[Runner] Spawning first obstacle with 1s timeOffset');
+      console.log('[DitDash] Spawning first obstacle with 1s timeOffset');
       engine.spawnObstacle(
         char,
         adjustedSpawnDistance,
@@ -110,7 +110,7 @@ export async function handleRunnerCharacter(
 
   // Add delay before first obstacle's morse plays
   if (isFirstObstacle) {
-    console.log('[Runner] Adding 1s delay before first morse plays');
+    console.log('[DitDash] Adding 1s delay before first morse plays');
     await ctx.clock.sleep(1000, signal);
   }
 
@@ -197,7 +197,7 @@ export async function handleRunnerCharacter(
         timeUntilNextMorse
       );
 
-      console.log(`[Runner] Pre-spawned obstacle for next char "${nextChar}", offset: ${timeUntilNextMorse.toFixed(3)}s`);
+      console.log(`[DitDash] Pre-spawned obstacle for next char "${nextChar}", offset: ${timeUntilNextMorse.toFixed(3)}s`);
     }
 
     // Wait for jump to complete

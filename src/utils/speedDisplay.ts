@@ -40,8 +40,8 @@ export function formatSpeedDisplay(config: SessionConfig | ConfigLike): SpeedDis
     };
   }
 
-  // Runner mode: N/A (header is hidden anyway)
-  if (mode === 'runner') {
+  // Dit Dash mode: N/A (header is hidden anyway)
+  if (mode === 'ditDash') {
     return {
       text: `${wpm} WPM`,
       tooltip: undefined

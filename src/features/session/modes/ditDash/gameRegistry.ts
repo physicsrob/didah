@@ -1,5 +1,5 @@
 /**
- * Global registry for the runner game instance.
+ * Global registry for the ditDash game instance.
  * Ensures only one game instance exists (singleton pattern).
  * Allows the handler to access the game created by the UI hook.
  */
@@ -9,11 +9,11 @@ import { Game } from './Game';
 let gameInstance: Game | null = null;
 
 /**
- * Gets or creates the runner game instance (singleton).
+ * Gets or creates the ditDash game instance (singleton).
  * If an instance exists and is running, reuses it.
  * Otherwise, creates a new instance.
  */
-export function getOrCreateRunnerGame(canvas: HTMLCanvasElement): Game {
+export function getOrCreateDitDashGame(canvas: HTMLCanvasElement): Game {
   if (gameInstance) {
     console.log('[Registry] Reusing existing game instance');
     return gameInstance;
@@ -25,11 +25,11 @@ export function getOrCreateRunnerGame(canvas: HTMLCanvasElement): Game {
   return game;
 }
 
-export function registerRunnerGame(game: Game): void {
+export function registerDitDashGame(game: Game): void {
   gameInstance = game;
 }
 
-export function unregisterRunnerGame(): void {
+export function unregisterDitDashGame(): void {
   console.log('[Registry] Unregistering game instance');
   if (gameInstance) {
     gameInstance.destroy();
@@ -37,6 +37,6 @@ export function unregisterRunnerGame(): void {
   gameInstance = null;
 }
 
-export function getRunnerGame(): Game | null {
+export function getDitDashGame(): Game | null {
   return gameInstance;
 }

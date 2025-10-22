@@ -1,5 +1,5 @@
 /**
- * Type definitions for the Morse Runner game.
+ * Type definitions for the Dit Dash game.
  */
 
 /**

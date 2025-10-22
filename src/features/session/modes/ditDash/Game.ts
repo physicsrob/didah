@@ -84,13 +84,13 @@ export class Game {
   async start(): Promise<void> {
     // If already running, ready, or in the process of starting, don't start again
     if (this.running || this.ready || this.starting) {
-      console.log('[Runner] start() called but already running/ready/starting - ignoring');
+      console.log('[DitDash] start() called but already running/ready/starting - ignoring');
       return;
     }
 
     // Set starting flag immediately (synchronously) to prevent race conditions
     this.starting = true;
-    console.log('[Runner] start() called - initializing game (starting flag set)');
+    console.log('[DitDash] start() called - initializing game (starting flag set)');
 
     try {
       // Show loading screen
@@ -121,7 +121,7 @@ export class Game {
     this.running = true;
     this.lastTime = 0;
     this.ready = true;
-    console.log('[Runner] Game loop started and ready');
+    console.log('[DitDash] Game loop started and ready');
     requestAnimationFrame((t) => this.loop(t));
   }
 

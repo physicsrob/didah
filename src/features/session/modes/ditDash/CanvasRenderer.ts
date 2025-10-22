@@ -47,15 +47,15 @@ export class CanvasRenderer {
 
     // Load rock image for obstacles
     this.rockImage = new Image();
-    this.rockImage.src = '/assets/runner/rock.png';
+    this.rockImage.src = '/assets/ditDash/rock.png';
 
     // Load dirt image for ground
     this.dirtImage = new Image();
-    this.dirtImage.src = '/assets/runner/dirt.png';
+    this.dirtImage.src = '/assets/ditDash/dirt.png';
 
     // Load cloud image
     this.cloudImage = new Image();
-    this.cloudImage.src = '/assets/runner/cloud.png';
+    this.cloudImage.src = '/assets/ditDash/cloud.png';
 
     // Initialize random clouds
     this.clouds = this.generateClouds();
