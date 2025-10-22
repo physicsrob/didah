@@ -76,7 +76,7 @@ export function SessionConfigPage({ mode, onStart }: SessionConfigPageProps) {
       case 'buzzer':
         return { feedback: 'buzzer', replay: false };
       case 'replay':
-        return { feedback: 'both', replay: true };  // 'both' means flash + buzzer, plus replay=true
+        return { feedback: 'none', replay: true };  // Replay provides visual/audio feedback, no flash/buzzer needed
       default:
         return { feedback: 'flash', replay: false };
     }
