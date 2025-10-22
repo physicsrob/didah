@@ -27,10 +27,11 @@ export class Game {
   /**
    * Creates a new Game instance.
    * @param canvas - The canvas element to render to
+   * @param characterSpeed - Optional constant character speed in WPM (defaults to level 1's WPM)
    */
-  constructor(canvas: HTMLCanvasElement) {
+  constructor(canvas: HTMLCanvasElement, characterSpeed?: number) {
     this.canvas = canvas;
-    this.engine = new GameEngine();
+    this.engine = new GameEngine(undefined, characterSpeed);
     this.animationManager = new AnimationManager();
     this.renderer = new CanvasRenderer(canvas, this.animationManager);
     this.lastTime = 0;

@@ -162,8 +162,7 @@ export async function handleDitDashCharacter(
     }
 
     // Must be SPACE - reset and continue
-    const startingLevel = config.startingLevel || 1;
-    engine.reset(startingLevel);
+    engine.reset();
   } else {
     // Not game over - character is now jumping
     // PRE-SPAWN NEXT OBSTACLE IMMEDIATELY (while still jumping)
@@ -244,8 +243,7 @@ export async function handleDitDashCharacter(
         }
 
         // User pressed SPACE - reset and start over
-        const startingLevel = config.startingLevel || 1;
-        engine.reset(startingLevel);
+        engine.reset();
       } else {
         // Advance to next level
         const nextLevel = currentLevel + 1;

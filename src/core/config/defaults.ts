@@ -34,7 +34,7 @@ export const DEFAULT_SESSION_CONFIG: SessionConfig = {
   lengthMs: 60000, // 1 minute
   extraWordSpacing: 0,
   listenTimingOffset: 1.0,
-  startingLevel: 1,
+  characterSpeed: DEFAULT_WPM, // Character speed in WPM
 };
 
 /**

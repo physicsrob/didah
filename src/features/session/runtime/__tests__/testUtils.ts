@@ -140,7 +140,7 @@ export function createTestConfig(overrides?: Partial<SessionConfig>): SessionCon
     effectiveAlphabet: ['A', 'B', 'C'],
     extraWordSpacing: 0,
     listenTimingOffset: 0.0,
-    startingLevel: 1,
+    characterSpeed: 20,
     ...overrides
   };
 }

@@ -55,7 +55,6 @@ export function SessionConfigPage({ mode, onStart }: SessionConfigPageProps) {
   const [farnsworthWpm, setFarnsworthWpm] = useState(10);
   const [extraWordSpacing, setExtraWordSpacing] = useState(0);
   const [listenTimingOffset, setListenTimingOffset] = useState(1.0);
-  const [startingLevel, setStartingLevel] = useState<number>(1);
 
   // Source state
   const [availableSources, setAvailableSources] = useState<ApiTextSource[]>([]);
@@ -285,7 +284,7 @@ export function SessionConfigPage({ mode, onStart }: SessionConfigPageProps) {
       effectiveAlphabet: buildAlphabet(),
       extraWordSpacing,
       listenTimingOffset: mode === 'listen' ? listenTimingOffset : 1.0,
-      startingLevel: mode === 'ditDash' ? startingLevel : 1,
+      characterSpeed: wpm,
     };
 
     // Fetch fresh content for each new session (except random_letters which is generated locally)
@@ -426,8 +425,8 @@ export function SessionConfigPage({ mode, onStart }: SessionConfigPageProps) {
             </div>
           )}
 
-          {/* Character Speed - hidden for ditDash mode (uses level-based WPM) */}
-          {mode !== 'ditDash' && (
+          {/* Character Speed */}
+          {(
             <div className="settings-row">
               <div className="settings-label">Character Speed</div>
               <div className="settings-control">
@@ -462,40 +461,6 @@ export function SessionConfigPage({ mode, onStart }: SessionConfigPageProps) {
                   textAlign: 'right'
                 }}>
                   {wpm} WPM
-                </span>
-              </div>
-            </div>
-          )}
-
-          {/* Starting Level - only for ditDash mode */}
-          {mode === 'ditDash' && (
-            <div className="settings-row">
-              <div className="settings-label">Starting Level</div>
-              <div className="settings-control">
-                <input
-                  type="range"
-                  min="1"
-                  max="10"
-                  value={startingLevel}
-                  onChange={(e) => setStartingLevel(Number(e.target.value))}
-                  style={{
-                    flex: 1,
-                    height: '4px',
-                    background: 'rgba(255, 255, 255, 0.2)',
-                    borderRadius: '2px',
-                    outline: 'none',
-                    WebkitAppearance: 'none',
-                    appearance: 'none'
-                  }}
-                />
-                <span style={{
-                  color: '#4dabf7',
-                  fontSize: '16px',
-                  fontWeight: '500',
-                  minWidth: '80px',
-                  textAlign: 'right'
-                }}>
-                  Level {startingLevel}
                 </span>
               </div>
             </div>

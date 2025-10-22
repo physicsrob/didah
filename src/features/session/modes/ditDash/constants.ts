@@ -38,10 +38,12 @@ export const OBSTACLE_HEIGHT_VARIANCE = 10 as const; // Random height variation 
 export const JUMP_FRAME_INDEX = 4 as const; // Frame index for jumping sprite (run_5.png)
 
 // All 10 level configurations (interpolated from level 1 to level 10)
+// NOTE: The wpm values in these configs are overridden by the user's configured character speed.
+// Character speed remains constant across all levels - only scroll speed, obstacles, and timing change.
 export const LEVEL_CONFIGS: LevelConfig[] = [
   { // Level 1
     scrollSpeed: 400,
-    wpm: 15,
+    wpm: 15, // Default, but overridden by user's character speed setting
     obstacleSmallFraction: 1.0,
     obstacleMediumFraction: 0.0,
     obstacleLargeFraction: 0.0,

@@ -48,13 +48,18 @@ export class GameEngine {
   private state: GameState;
   private config: LevelConfig;
   private activeObstacle: Obstacle | null = null;
+  private characterSpeed: number; // Constant character speed (WPM) that doesn't change with levels
 
   /**
    * Creates a new GameEngine instance.
    * @param config - Optional level configuration (uses level 1 if not provided)
+   * @param characterSpeed - Optional constant character speed in WPM (uses level 1's WPM if not provided)
    */
-  constructor(config?: LevelConfig) {
-    this.config = config || LEVEL_CONFIGS[0];
+  constructor(config?: LevelConfig, characterSpeed?: number) {
+    const baseConfig = config || LEVEL_CONFIGS[0];
+    this.characterSpeed = characterSpeed || baseConfig.wpm;
+    // Override config's wpm with constant characterSpeed
+    this.config = { ...baseConfig, wpm: this.characterSpeed };
     this.state = {
       character: {
         y: GROUND_Y,
@@ -412,13 +417,14 @@ export class GameEngine {
   }
 
   /**
-   * Resets the game to initial state.
-   * @param startingLevel - Optional starting level (1-10), defaults to 1
+   * Resets the game to initial state (level 1).
+   * Character speed remains constant.
    */
-  reset(startingLevel: number = 1): void {
-    console.log(`[RESET] 🔄 Resetting game to level ${startingLevel}`);
-    const level = Math.max(1, Math.min(10, startingLevel)); // Clamp to 1-10
-    this.config = LEVEL_CONFIGS[level - 1]; // Array is 0-indexed
+  reset(): void {
+    console.log('[RESET] 🔄 Resetting game to level 1');
+    // Reset to level 1 config but maintain constant characterSpeed
+    const baseConfig = LEVEL_CONFIGS[0];
+    this.config = { ...baseConfig, wpm: this.characterSpeed };
     this.state = {
       character: {
         y: GROUND_Y,
@@ -431,7 +437,7 @@ export class GameEngine {
       scrollOffset: 0,
       currentTime: 0,
       isGameOver: false,
-      currentLevel: level,
+      currentLevel: 1,
       charactersCleared: 0,
       isGameComplete: false,
       failedCharacter: null
@@ -448,6 +454,7 @@ export class GameEngine {
 
   /**
    * Advances to a new level with updated configuration.
+   * Character speed (WPM) remains constant - only other difficulty parameters change.
    * @param level - The level number to advance to (1-10)
    */
   advanceToLevel(level: number): void {
@@ -458,7 +465,9 @@ export class GameEngine {
 
     this.state.currentLevel = level;
     this.state.charactersCleared = 0;
-    this.config = LEVEL_CONFIGS[level - 1]; // Array is 0-indexed
+    // Get new level config but override wpm with constant characterSpeed
+    const baseConfig = LEVEL_CONFIGS[level - 1]; // Array is 0-indexed
+    this.config = { ...baseConfig, wpm: this.characterSpeed };
     console.log(`[${this.state.currentTime.toFixed(3)}s] 🎯 ADVANCED TO LEVEL ${level}`);
   }
 

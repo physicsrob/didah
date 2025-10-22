@@ -62,10 +62,11 @@ export interface GameState {
 
 /**
  * Level configuration parameters
+ * Note: wpm is overridden by the user's character speed setting in actual gameplay
  */
 export interface LevelConfig {
   scrollSpeed: number;
-  wpm: number;
+  wpm: number; // Character speed - overridden by user's configured character speed
   obstacleSmallFraction: number;
   obstacleMediumFraction: number;
   obstacleLargeFraction: number;

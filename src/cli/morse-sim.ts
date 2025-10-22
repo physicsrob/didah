@@ -39,7 +39,7 @@ const config: SessionConfig = {
   effectiveAlphabet: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789.,?'.split(''),
   extraWordSpacing: 0,
   listenTimingOffset: 0.0,
-  startingLevel: 1
+  characterSpeed: args.wpm
 };
 
 // Create mock IO

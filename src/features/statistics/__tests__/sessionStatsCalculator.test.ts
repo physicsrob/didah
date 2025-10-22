@@ -21,7 +21,7 @@ const createConfig = (): SessionConfig => ({
   effectiveAlphabet: ['A', 'B', 'C'],
   extraWordSpacing: 0,
   listenTimingOffset: 0.0,
-  startingLevel: 1,
+  characterSpeed: 20,
 });
 
 describe('SessionStatsCalculator', () => {

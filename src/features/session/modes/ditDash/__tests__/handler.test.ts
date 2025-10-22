@@ -99,7 +99,7 @@ describe('handleDitDashCharacter - pre-spawn behavior', () => {
   });
 
   it('should pre-spawn second obstacle immediately after first jump starts (BEFORE jump completes)', async () => {
-    const config = createTestConfig({ wpm: 20, startingLevel: 1 });
+    const config = createTestConfig({ wpm: 20, characterSpeed: 20 });
     const startTime = clock.now();
 
     // Start first character handler with 'B' as next character
@@ -165,7 +165,7 @@ describe('handleDitDashCharacter - pre-spawn behavior', () => {
   });
 
   it('should maintain proper spacing between consecutive obstacles', async () => {
-    const config = createTestConfig({ wpm: 20, startingLevel: 1 });
+    const config = createTestConfig({ wpm: 20, characterSpeed: 20 });
     const startTime = clock.now();
 
     const game = getDitDashGame()!;
@@ -219,7 +219,7 @@ describe('handleDitDashCharacter - pre-spawn behavior', () => {
   });
 
   it('should have second obstacle arrive at correct time after jump completes', async () => {
-    const config = createTestConfig({ wpm: 20, startingLevel: 1 });
+    const config = createTestConfig({ wpm: 20, characterSpeed: 20 });
     const startTime = clock.now();
 
     const game = getDitDashGame()!;

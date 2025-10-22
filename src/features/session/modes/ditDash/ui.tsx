@@ -103,18 +103,13 @@ export function useDitDashInput(context: UIContext): void {
     // Set canvas size
     resizeCanvas(canvas);
 
-    // Get or create game (singleton)
-    const game = getOrCreateDitDashGame(canvas);
+    // Get or create game (singleton) with user's configured character speed
+    const characterSpeed = config.characterSpeed || config.wpm || 15;
+    const game = getOrCreateDitDashGame(canvas, characterSpeed);
     gameRef.current = game;
 
     // Start game (idempotent - safe to call multiple times)
-    const startingLevel = config.startingLevel || 1;
-    game.start().then(() => {
-      // Set starting level if specified in config
-      if (startingLevel > 1) {
-        game.getEngine().advanceToLevel(startingLevel);
-      }
-    }).catch((error) => {
+    game.start().catch((error) => {
       console.error('Failed to start ditDash game:', error);
     });
 
@@ -128,7 +123,7 @@ export function useDitDashInput(context: UIContext): void {
     return () => {
       window.removeEventListener('resize', handleResize);
     };
-  }, [sessionPhase, config.startingLevel]);
+  }, [sessionPhase, config.characterSpeed, config.wpm]);
 
   // Game cleanup effect - only runs on unmount
   useEffect(() => {

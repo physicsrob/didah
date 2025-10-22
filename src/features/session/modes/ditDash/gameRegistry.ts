@@ -12,15 +12,17 @@ let gameInstance: Game | null = null;
  * Gets or creates the ditDash game instance (singleton).
  * If an instance exists and is running, reuses it.
  * Otherwise, creates a new instance.
+ * @param canvas - The canvas element to render to
+ * @param characterSpeed - Optional constant character speed in WPM
  */
-export function getOrCreateDitDashGame(canvas: HTMLCanvasElement): Game {
+export function getOrCreateDitDashGame(canvas: HTMLCanvasElement, characterSpeed?: number): Game {
   if (gameInstance) {
     console.log('[Registry] Reusing existing game instance');
     return gameInstance;
   }
 
   console.log('[Registry] Creating new game instance');
-  const game = new Game(canvas);
+  const game = new Game(canvas, characterSpeed);
   gameInstance = game;
   return game;
 }
