@@ -150,9 +150,21 @@ export default function ConfusionTab({ timeWindow }: ConfusionTabProps) {
       });
     }
 
-    // Sort by accuracy ascending (worst first) and take top 10
-    confusions.sort((a, b) => a.accuracy - b.accuracy);
-    return confusions.slice(0, 10);
+    // Calculate focus score for each character
+    // Score = errorCount × penalty, where penalty is based on error rate
+    // Error rates below 50% get no penalty (penalty = 1.0)
+    // Error rates above 50% (high accuracy) get heavily penalized
+    const scoredConfusions = confusions.map(c => {
+      const errorRate = 1 - (c.accuracy / 100);
+      const penalty = Math.pow(Math.min(errorRate, 0.5) / 0.5, 3);
+      const focusScore = c.incorrectCount * penalty;
+
+      return { ...c, focusScore };
+    });
+
+    // Sort by focus score descending (highest score = most confused)
+    scoredConfusions.sort((a, b) => b.focusScore - a.focusScore);
+    return scoredConfusions.slice(0, 10);
   }, [sessions, timeWindow]);
 
   if (loading) {
