@@ -54,7 +54,7 @@ export function SessionConfigPage({ mode, onStart }: SessionConfigPageProps) {
   const [wpm, setWpm] = useState(15);
   const [farnsworthWpm, setFarnsworthWpm] = useState(10);
   const [extraWordSpacing, setExtraWordSpacing] = useState(0);
-  const [listenTimingOffset, setListenTimingOffset] = useState(1.0);
+  const [listenTimingOffset, setListenTimingOffset] = useState<number | 'word'>(1.0);
 
   // Source state
   const [availableSources, setAvailableSources] = useState<ApiTextSource[]>([]);
@@ -540,36 +540,31 @@ export function SessionConfigPage({ mode, onStart }: SessionConfigPageProps) {
             <div className="settings-row">
               <div className="settings-label">Display Timing</div>
               <div className="settings-control">
-                <input
-                  type="range"
-                  min="-0.5"
-                  max="1.5"
-                  step="0.5"
+                <select
                   value={listenTimingOffset}
-                  onChange={(e) => setListenTimingOffset(Number(e.target.value))}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    setListenTimingOffset(value === 'word' ? 'word' : Number(value));
+                  }}
                   style={{
                     flex: 1,
-                    height: '4px',
-                    background: 'rgba(255, 255, 255, 0.2)',
-                    borderRadius: '2px',
+                    padding: '8px 12px',
+                    fontSize: '16px',
+                    color: '#4dabf7',
+                    background: 'rgba(255, 255, 255, 0.1)',
+                    border: '1px solid rgba(255, 255, 255, 0.2)',
+                    borderRadius: '4px',
                     outline: 'none',
-                    WebkitAppearance: 'none',
-                    appearance: 'none'
+                    cursor: 'pointer'
                   }}
-                />
-                <span style={{
-                  color: '#4dabf7',
-                  fontSize: '16px',
-                  fontWeight: '500',
-                  minWidth: '120px',
-                  textAlign: 'right'
-                }}>
-                  {listenTimingOffset === 0.0 ? 'With Audio' :
-                   listenTimingOffset === -0.5 ? 'Before (-0.5)' :
-                   listenTimingOffset === 0.5 ? 'During (+0.5)' :
-                   listenTimingOffset === 1.0 ? 'After (+1.0)' :
-                   'Later (+1.5)'}
-                </span>
+                >
+                  <option value="-0.5">Before (-0.5)</option>
+                  <option value="0.0">With Audio (0.0)</option>
+                  <option value="0.5">During (+0.5)</option>
+                  <option value="1.0">After (+1.0)</option>
+                  <option value="1.5">Later (+1.5)</option>
+                  <option value="word">After Word</option>
+                </select>
               </div>
             </div>
           )}

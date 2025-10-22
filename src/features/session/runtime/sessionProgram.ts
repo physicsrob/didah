@@ -179,6 +179,9 @@ export function createSessionRunner(deps: SessionRunnerDeps): SessionRunner {
           timeouts: 0,
           accuracy: 0
         }
+      } : undefined,
+      listenState: (config.mode === 'listen' && config.listenTimingOffset === 'word') ? {
+        bufferedWord: []
       } : undefined
     };
     publish();

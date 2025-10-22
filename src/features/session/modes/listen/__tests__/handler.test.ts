@@ -273,4 +273,139 @@ describe('handleListenCharacter - integration', () => {
       await handlerPromise;
     });
   });
+
+  describe('word-level reveal mode', () => {
+    it('buffers characters and reveals word at word boundary (hasSpaceAfter)', async () => {
+      const config = createTestConfig({ mode: 'listen', wpm: 20, listenTimingOffset: 'word' });
+      const startTime = clock.now();
+
+      // Send characters C-A-T with hasSpaceAfter=true on T
+      const word = ['C', 'A', 'T'];
+
+      for (let i = 0; i < word.length; i++) {
+        const char = word[i];
+        const hasSpaceAfter = i === word.length - 1;
+
+        const handlerPromise = handleListenCharacter(config, char, startTime, ctx, signal.signal, null, hasSpaceAfter);
+
+        // Audio plays
+        const audioDuration = calculateCharacterDurationMs(char, config.wpm, 0);
+        await advanceAndFlush(clock, audioDuration);
+
+        const { preRevealDelayMs, postRevealDelayMs } = getListenModeTimingMs(config.wpm, config.farnsworthWpm);
+        await advanceAndFlush(clock, preRevealDelayMs + postRevealDelayMs);
+
+        await handlerPromise;
+
+        // Before word boundary, emissions should be empty
+        if (!hasSpaceAfter) {
+          expect(ctx.snapshot.emissions).toHaveLength(0);
+        }
+      }
+
+      // After word boundary, all characters should be revealed at once
+      expect(ctx.snapshot.emissions).toHaveLength(3);
+      expect(ctx.snapshot.emissions[0].char).toBe('C');
+      expect(ctx.snapshot.emissions[1].char).toBe('A');
+      expect(ctx.snapshot.emissions[2].char).toBe('T');
+
+      // Buffer should be cleared
+      expect(ctx.snapshot.listenState?.bufferedWord).toHaveLength(0);
+    });
+
+    it('reveals word when space character is received', async () => {
+      const config = createTestConfig({ mode: 'listen', wpm: 20, listenTimingOffset: 'word' });
+      const startTime = clock.now();
+
+      // Send characters D-O-G
+      const word = ['D', 'O', 'G'];
+
+      for (const char of word) {
+        const handlerPromise = handleListenCharacter(config, char, startTime, ctx, signal.signal, null, false);
+
+        const audioDuration = calculateCharacterDurationMs(char, config.wpm, 0);
+        await advanceAndFlush(clock, audioDuration);
+
+        const { preRevealDelayMs, postRevealDelayMs } = getListenModeTimingMs(config.wpm, config.farnsworthWpm);
+        await advanceAndFlush(clock, preRevealDelayMs + postRevealDelayMs);
+
+        await handlerPromise;
+      }
+
+      // Before space, emissions should be empty
+      expect(ctx.snapshot.emissions).toHaveLength(0);
+
+      // Send a space
+      const handlerPromise = handleListenCharacter(config, ' ', startTime, ctx, signal.signal, null, false);
+
+      const audioDuration = calculateCharacterDurationMs(' ', config.wpm, 0);
+      await advanceAndFlush(clock, audioDuration);
+
+      const { preRevealDelayMs, postRevealDelayMs } = getListenModeTimingMs(config.wpm, config.farnsworthWpm);
+      await advanceAndFlush(clock, preRevealDelayMs + postRevealDelayMs);
+
+      await handlerPromise;
+
+      // After space, word should be revealed along with the space
+      expect(ctx.snapshot.emissions).toHaveLength(4);
+      expect(ctx.snapshot.emissions[0].char).toBe('D');
+      expect(ctx.snapshot.emissions[1].char).toBe('O');
+      expect(ctx.snapshot.emissions[2].char).toBe('G');
+      expect(ctx.snapshot.emissions[3].char).toBe(' ');
+    });
+
+    it('handles multiple words in sequence', async () => {
+      const config = createTestConfig({ mode: 'listen', wpm: 20, listenTimingOffset: 'word' });
+      const startTime = clock.now();
+
+      // Send "HI BYE" (two words)
+      const sequence = [
+        { char: 'H', hasSpaceAfter: false },
+        { char: 'I', hasSpaceAfter: true },
+        { char: ' ', hasSpaceAfter: false },
+        { char: 'B', hasSpaceAfter: false },
+        { char: 'Y', hasSpaceAfter: false },
+        { char: 'E', hasSpaceAfter: true }
+      ];
+
+      for (const { char, hasSpaceAfter } of sequence) {
+        const handlerPromise = handleListenCharacter(config, char, startTime, ctx, signal.signal, null, hasSpaceAfter);
+
+        const audioDuration = calculateCharacterDurationMs(char, config.wpm, 0);
+        await advanceAndFlush(clock, audioDuration);
+
+        const { preRevealDelayMs, postRevealDelayMs } = getListenModeTimingMs(config.wpm, config.farnsworthWpm);
+        await advanceAndFlush(clock, preRevealDelayMs + postRevealDelayMs);
+
+        await handlerPromise;
+      }
+
+      // Should have both words revealed plus the space
+      expect(ctx.snapshot.emissions).toHaveLength(6);
+      expect(ctx.snapshot.emissions.map(e => e.char).join('')).toBe('HI BYE');
+    });
+
+    it('initializes listenState when using word mode', async () => {
+      const config = createTestConfig({ mode: 'listen', wpm: 20, listenTimingOffset: 'word' });
+      const startTime = clock.now();
+
+      // Initially no listenState
+      expect(ctx.snapshot.listenState).toBeUndefined();
+
+      const handlerPromise = handleListenCharacter(config, 'X', startTime, ctx, signal.signal, null, false);
+
+      const audioDuration = calculateCharacterDurationMs('X', config.wpm, 0);
+      await advanceAndFlush(clock, audioDuration);
+
+      const { preRevealDelayMs, postRevealDelayMs } = getListenModeTimingMs(config.wpm, config.farnsworthWpm);
+      await advanceAndFlush(clock, preRevealDelayMs + postRevealDelayMs);
+
+      await handlerPromise;
+
+      // listenState should be initialized
+      expect(ctx.snapshot.listenState).toBeDefined();
+      expect(ctx.snapshot.listenState?.bufferedWord).toHaveLength(1);
+      expect(ctx.snapshot.listenState?.bufferedWord[0]).toBe('X');
+    });
+  });
 });

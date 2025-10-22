@@ -27,7 +27,21 @@ export async function runListenEmission(
   // Log emission start
   ctx.io.log({ type: 'emission', at: emissionStart, char });
 
-  // Calculate character duration and display offset
+  // Word-level reveal mode: just play audio, handler manages display
+  if (cfg.listenTimingOffset === 'word') {
+    try {
+      await ctx.io.playChar(char, cfg.wpm);
+    } catch (error) {
+      debug.warn(`Audio failed for char: ${char}`, error);
+    }
+
+    // Standard post-audio spacing
+    const { preRevealDelayMs, postRevealDelayMs } = getListenModeTimingMs(cfg.wpm, cfg.farnsworthWpm);
+    await ctx.clock.sleep(preRevealDelayMs + postRevealDelayMs, sessionSignal);
+    return;
+  }
+
+  // Character-level reveal mode: use timing offset
   const charDuration = calculateCharacterDurationMs(char, cfg.wpm, cfg.extraWordSpacing);
   const offsetMs = cfg.listenTimingOffset * charDuration;
 

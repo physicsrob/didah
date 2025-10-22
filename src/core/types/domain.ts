@@ -16,7 +16,7 @@ export type SessionConfig = {
   replay: boolean;
   effectiveAlphabet: string[]; // based on toggles
   extraWordSpacing: number; // Extra space characters to add between words (0-5, for listen/live-copy only)
-  listenTimingOffset: number; // For listen mode: when to display character relative to audio duration (-1.0 to 2.0, default 1.0)
+  listenTimingOffset: number | 'word'; // For listen mode: when to display character relative to audio duration (-1.0 to 2.0), or 'word' to reveal after complete word (default 1.0)
   characterSpeed: number; // Character speed (WPM) - used differently by each mode (for ditDash: constant speed across all levels)
 };
 

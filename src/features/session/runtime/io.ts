@@ -52,6 +52,13 @@ export interface HeadCopyState {
 }
 
 /**
+ * Listen mode state (only when using word-level reveal)
+ */
+export interface ListenState {
+  bufferedWord: string[];  // Characters buffered for word-level reveal
+}
+
+/**
  * Session snapshot - observable state of the current session
  *
  * Contains universal state (all modes) and mode-specific state.
@@ -72,6 +79,7 @@ export type SessionSnapshot = {
   practiceState?: PracticeState;
   liveCopyState?: LiveCopyState;
   headCopyState?: HeadCopyState;
+  listenState?: ListenState;
 };
 
 import type { SessionConfig } from '../../../core/types/domain';
