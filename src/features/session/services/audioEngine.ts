@@ -193,17 +193,26 @@ export class AudioEngine {
   }
 
   /**
-   * Get envelope timings based on tone setting
+   * Get envelope timings based on tone setting and duration
+   * Scales envelope times to prevent cutting off short tones
    */
-  private getEnvelopeTimings(): { riseTime: number; fallTime: number } {
+  private getEnvelopeTimings(durationMs: number): { riseTime: number; fallTime: number } {
+    const duration = durationMs / 1000; // Convert to seconds
+
     switch (this.config.tone) {
-      case 'soft':
-        return { riseTime: 0.025, fallTime: 0.025 };
+      case 'soft': {
+        // Use 15% of duration for rise/fall, but cap at 25ms each
+        const softTime = Math.min(0.025, duration * 0.15);
+        return { riseTime: softTime, fallTime: softTime };
+      }
       case 'hard':
         return { riseTime: 0.001, fallTime: 0.001 };
       case 'normal':
-      default:
-        return { riseTime: 0.005, fallTime: 0.005 };
+      default: {
+        // Use 10% of duration for rise/fall, but cap at 5ms each
+        const normalTime = Math.min(0.005, duration * 0.10);
+        return { riseTime: normalTime, fallTime: normalTime };
+      }
     }
   }
 
@@ -227,7 +236,7 @@ export class AudioEngine {
         oscillator.type = 'sine';
         oscillator.frequency.setValueAtTime(this.config.frequency, startTime);
 
-        const { riseTime, fallTime } = this.getEnvelopeTimings();
+        const { riseTime, fallTime } = this.getEnvelopeTimings(durationMs);
 
         gainNode.gain.setValueAtTime(0, startTime);
         gainNode.gain.linearRampToValueAtTime(this.config.volume, startTime + riseTime);
