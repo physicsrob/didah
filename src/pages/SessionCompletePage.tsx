@@ -63,13 +63,13 @@ export function SessionCompletePage({ statistics: fullStatistics, onRestart }: S
   const getSessionAgainText = () => {
     switch (fullStatistics.config.mode) {
       case 'practice':
-        return 'Practice Again';
+        return 'Letter Practice Again';
       case 'listen':
         return 'Listen Again';
       case 'live-copy':
         return 'Live Copy Again';
       default:
-        return 'Practice Again';
+        return 'Letter Practice Again';
     }
   };
 
@@ -151,7 +151,7 @@ export function SessionCompletePage({ statistics: fullStatistics, onRestart }: S
                   <span className="setting-value">
                     {(() => {
                       const modeNames = {
-                        'practice': 'Active Practice',
+                        'practice': 'Letter Practice',
                         'listen': 'Passive Listening',
                         'live-copy': 'Live Copy',
                         'head-copy': 'Head Copy',

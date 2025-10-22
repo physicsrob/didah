@@ -22,7 +22,7 @@ export function SessionConfigPage({ mode, onStart }: SessionConfigPageProps) {
   // Mode-specific configuration
   const modeConfig = {
     'practice': {
-      title: 'Practice Mode',
+      title: 'Letter Practice Mode',
       description: 'Interactive training where you type what you hear in real-time, but you do have some control of the pacing. Try to go as fast as possible!'
     },
     'listen': {

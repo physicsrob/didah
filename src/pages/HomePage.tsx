@@ -12,7 +12,7 @@ const MODES = [
   {
     mode: 'practice' as SessionMode,
     icon: '⌨️',
-    title: 'Practice',
+    title: 'Letter Practice',
     description: 'Type what you hear. Immediate feedback paced to match your speed.'
   },
   {

@@ -32,7 +32,7 @@ npm run deploy      # Manual deployment (alternative to automatic)
 ## Architecture
 - **Core Domain**: `src/core/` - Timing engine, alphabet, types
 - **Runtime System**: `src/features/session/runtime/` - Session orchestration
-- **Modes**: `src/features/session/modes/` - Mode implementations (Practice, Listen, Live Copy, Head Copy, Dit Dash)
+- **Modes**: `src/features/session/modes/` - Mode implementations (Letter Practice, Listen, Live Copy, Head Copy, Dit Dash)
 - **Services**: `src/features/session/services/` - Audio, feedback
 - **Pages**: `src/pages/` - React components
 - **API Functions**: `functions/api/` - Cloudflare Pages Functions
@@ -54,7 +54,7 @@ npm run deploy      # Manual deployment (alternative to automatic)
 - `src/core/morse/alphabet.ts` - Character to Morse pattern mappings
 - `src/features/session/runtime/sessionProgram.ts` - Main session orchestrator
 - `src/features/session/modes/shared/registry.ts` - Mode registry and type-safe mode system
-- `src/features/session/modes/practice/` - Practice mode implementation
+- `src/features/session/modes/practice/` - Letter Practice mode implementation
 - `src/features/session/modes/listen/` - Listen mode implementation
 - `src/features/session/modes/liveCopy/` - Live Copy mode (evaluation logic not yet implemented)
 - `src/pages/SessionPage.tsx` - Session container managing config → active → complete phases

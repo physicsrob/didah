@@ -11,7 +11,7 @@ import { PracticeDisplay, usePracticeInput } from './ui';
 
 export const practiceMode: ModeDefinition = {
   id: 'practice',
-  displayName: 'Practice',
+  displayName: 'Letter Practice',
   description: 'Interactive training with immediate feedback',
 
   // Emission behavior

@@ -14,7 +14,7 @@ A Morse code trainer built by someone frustrated with the existing options. Real
 
 ## Study Modes
 
-### Practice Mode
+### Letter Practice
 Interactive training where you type what you hear with immediate feedback. You control the pacing up to a timeout, and can enable visual flash, buzzer, or character replay on errors.
 
 ### Listen Mode
