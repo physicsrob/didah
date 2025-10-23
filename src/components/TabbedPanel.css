@@ -8,7 +8,6 @@
 .tabs-header {
     display: flex;
     flex-shrink: 0;
-    border-bottom: 1px solid var(--border-primary);
     background: var(--bg-secondary);
     border-radius: 8px 8px 0 0;
     overflow-x: auto;
@@ -33,7 +32,7 @@
     flex: 1;
     min-width: 120px;
     padding: 16px 24px;
-    background: transparent;
+    background: var(--bg-tertiary);
     border: none;
     color: var(--text-muted);
     font-family: var(--font-primary);
@@ -54,17 +53,7 @@
 
 .tab-button.tab-active {
     color: var(--color-blue-primary);
-    background: var(--bg-tertiary);
-}
-
-.tab-button.tab-active::after {
-    content: '';
-    position: absolute;
-    bottom: -1px;
-    left: 0;
-    right: 0;
-    height: 2px;
-    background: var(--color-blue-primary);
+    background: var(--bg-secondary);
 }
 
 .tab-content {
