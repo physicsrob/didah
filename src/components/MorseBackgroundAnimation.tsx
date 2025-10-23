@@ -7,6 +7,7 @@
 
 import { useEffect, useRef } from 'react';
 import { MORSE_ALPHABET } from '../core/morse/alphabet';
+import { useTheme } from '../hooks/useTheme';
 import '../styles/morseBackground.css';
 
 const SENTENCES = [
@@ -32,7 +33,6 @@ const WORD_SPACING = 60;
 const SENTENCE_SPACING = 100;
 
 const LINE_WIDTH = 3;
-const COLOR = 'rgba(96, 165, 250, 0.08)';
 
 function textToMorse(text: string): string {
   return text
@@ -77,12 +77,14 @@ class MorsePhrase {
   y: number;
   lineIndex: number;
   speed: number;
+  color: string;
 
   constructor(
     lineIndex: number,
     sentence: string,
     canvasHeight: number,
-    lineSpeed: number
+    lineSpeed: number,
+    color: string
   ) {
     this.phrase = sentence;
     this.morse = textToMorse(this.phrase);
@@ -91,6 +93,7 @@ class MorsePhrase {
     this.lineIndex = lineIndex;
     this.y = ((this.lineIndex + 0.5) / LINES_COUNT) * canvasHeight;
     this.speed = lineSpeed;
+    this.color = color;
   }
 
   update() {
@@ -106,8 +109,8 @@ class MorsePhrase {
     for (let i = 0; i < this.morse.length; i++) {
       const char = this.morse[i];
 
-      ctx.strokeStyle = COLOR;
-      ctx.fillStyle = COLOR;
+      ctx.strokeStyle = this.color;
+      ctx.fillStyle = this.color;
       ctx.lineCap = 'round';
       ctx.lineWidth = LINE_WIDTH;
 
@@ -158,6 +161,7 @@ export function MorseBackgroundAnimation() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const phrasesRef = useRef<MorsePhrase[]>([]);
   const animationFrameRef = useRef<number | undefined>(undefined);
+  const { theme } = useTheme();
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -165,6 +169,13 @@ export function MorseBackgroundAnimation() {
 
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
+
+    // Theme-dependent colors
+    const morseColor = theme === 'light' ? 'rgba(0, 0, 0, 0.06)' : 'rgba(96, 165, 250, 0.08)';
+    const gradientStart = theme === 'light' ? '#fafafa' : '#1a1d26';
+    const gradientEnd = theme === 'light' ? '#ececec' : '#252a3a';
+    const overlayColor1 = theme === 'light' ? 'rgba(112, 181, 255, 0.03)' : 'rgba(77, 171, 247, 0.08)';
+    const overlayColor2 = theme === 'light' ? 'rgba(112, 181, 255, 0.02)' : 'rgba(77, 171, 247, 0.05)';
 
     const resizeCanvas = () => {
       canvas.width = window.innerWidth;
@@ -186,7 +197,8 @@ export function MorseBackgroundAnimation() {
           i,
           SENTENCES[i],
           canvas.height,
-          lineSpeed
+          lineSpeed,
+          morseColor
         );
         // Start at random position within the repeat distance for variety
         phrase.x = Math.random() * (phrase.morseWidth + SENTENCE_SPACING);
@@ -195,22 +207,22 @@ export function MorseBackgroundAnimation() {
     };
 
     const drawBackground = () => {
-      // Draw gradient background
-      const gradient = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
-      gradient.addColorStop(0, '#1a1d26');
-      gradient.addColorStop(1, '#252a3a');
+      // Draw vertical gradient background (top to bottom)
+      const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+      gradient.addColorStop(0, gradientStart);
+      gradient.addColorStop(1, gradientEnd);
       ctx.fillStyle = gradient;
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
       // Draw radial gradient overlays
       const radial1 = ctx.createRadialGradient(canvas.width * 0.2, canvas.height * 0.8, 0, canvas.width * 0.2, canvas.height * 0.8, canvas.width * 0.5);
-      radial1.addColorStop(0, 'rgba(77, 171, 247, 0.08)');
+      radial1.addColorStop(0, overlayColor1);
       radial1.addColorStop(1, 'transparent');
       ctx.fillStyle = radial1;
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
       const radial2 = ctx.createRadialGradient(canvas.width * 0.8, canvas.height * 0.2, 0, canvas.width * 0.8, canvas.height * 0.2, canvas.width * 0.5);
-      radial2.addColorStop(0, 'rgba(77, 171, 247, 0.05)');
+      radial2.addColorStop(0, overlayColor2);
       radial2.addColorStop(1, 'transparent');
       ctx.fillStyle = radial2;
       ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -239,7 +251,7 @@ export function MorseBackgroundAnimation() {
         cancelAnimationFrame(animationFrameRef.current);
       }
     };
-  }, []);
+  }, [theme]);
 
   return <canvas ref={canvasRef} className="morse-background-canvas" />;
 }

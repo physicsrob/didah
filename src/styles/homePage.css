@@ -162,7 +162,7 @@
 /* Carousel Indicators */
 .carousel-indicators {
   display: flex;
-  gap: 12px;
+  gap: 16px;
   justify-content: center;
   margin-top: 32px;
 }
@@ -271,4 +271,71 @@
   .footer-separator {
     font-size: 12px;
   }
+}
+
+/* Light Mode Adjustments */
+[data-theme="light"] .mode-card {
+  background: #ffffff;
+  border-color: #e5e7eb;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+}
+
+[data-theme="light"] .mode-card:hover {
+  box-shadow: 0 12px 24px rgba(74, 159, 232, 0.3);
+  border-color: var(--color-blue-primary);
+  transform: translateY(-4px) scale(1.02);
+}
+
+[data-theme="light"] .mode-card-title {
+  color: #1a1a1a;
+  font-size: 22px;
+  font-weight: 700;
+}
+
+[data-theme="light"] .mode-card-description {
+  color: #8b92a0;
+}
+
+[data-theme="light"] .carousel-arrow {
+  background: #ffffff;
+  border-color: #e0e0e0;
+  color: #1a1a1a;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+[data-theme="light"] .carousel-arrow:hover:not(:disabled) {
+  background: var(--color-blue-primary);
+  border-color: var(--color-blue-primary);
+  color: white;
+}
+
+[data-theme="light"] .carousel-indicator {
+  background: #d1d5db;
+}
+
+[data-theme="light"] .carousel-indicator:hover {
+  background: #9ca3af;
+}
+
+[data-theme="light"] .carousel-indicator.active {
+  background: var(--color-blue-primary);
+}
+
+[data-theme="light"] .footer-link {
+  color: #3b82f6;
+  border: 1px solid #93c5fd;
+  background: rgba(59, 130, 246, 0.05);
+  border-radius: 6px;
+  transition: all 0.2s ease;
+  font-weight: 500;
+}
+
+[data-theme="light"] .footer-link:hover {
+  color: #ffffff;
+  background: var(--color-blue-primary);
+  border-color: var(--color-blue-primary);
+}
+
+[data-theme="light"] .footer-separator {
+  color: #757575;
 }
