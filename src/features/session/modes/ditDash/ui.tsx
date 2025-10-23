@@ -27,13 +27,13 @@ export function DitDashDisplay(_props: { snapshot: SessionSnapshot }) {
       display: 'flex',
       justifyContent: 'center',
       alignItems: 'center',
-      backgroundColor: '#222',
+      backgroundColor: 'var(--background-secondary)',
       zIndex: 1
     }}>
       <canvas
         id="ditDash-canvas"
         style={{
-          border: '2px solid #fff',
+          border: '2px solid var(--border-secondary)',
           maxWidth: '95vw',
           maxHeight: '95vh',
           imageRendering: 'pixelated',

@@ -373,10 +373,6 @@
   font-weight: 700;
 }
 
-[data-theme="light"] .mode-card-description {
-  color: #8b92a0;
-}
-
 [data-theme="light"] .carousel-arrow {
   background: #ffffff;
   border-color: #e0e0e0;

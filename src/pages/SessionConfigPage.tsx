@@ -335,7 +335,7 @@ export function SessionConfigPage({ mode, onStart }: SessionConfigPageProps) {
                   padding: '12px 16px',
                   fontSize: '15px',
                   background: 'var(--background-tertiary)',
-                  color: '#ffffff',
+                  color: 'var(--text-primary)',
                   border: '1px solid var(--border-primary)',
                   borderRadius: '6px',
                   cursor: 'pointer',
@@ -403,17 +403,11 @@ export function SessionConfigPage({ mode, onStart }: SessionConfigPageProps) {
                   value={duration}
                   onChange={(e) => setDuration(Number(e.target.value) as 1 | 2 | 5)}
                   style={{
-                    flex: 1,
-                    height: '4px',
-                    background: 'rgba(255, 255, 255, 0.2)',
-                    borderRadius: '2px',
-                    outline: 'none',
-                    WebkitAppearance: 'none',
-                    appearance: 'none'
+                    flex: 1
                   }}
                 />
                 <span style={{
-                  color: '#4dabf7',
+                  color: 'var(--color-blue-primary)',
                   fontSize: '16px',
                   fontWeight: '500',
                   minWidth: '60px',
@@ -444,17 +438,11 @@ export function SessionConfigPage({ mode, onStart }: SessionConfigPageProps) {
                     }
                   }}
                   style={{
-                    flex: 1,
-                    height: '4px',
-                    background: 'rgba(255, 255, 255, 0.2)',
-                    borderRadius: '2px',
-                    outline: 'none',
-                    WebkitAppearance: 'none',
-                    appearance: 'none'
+                    flex: 1
                   }}
                 />
                 <span style={{
-                  color: '#4dabf7',
+                  color: 'var(--color-blue-primary)',
                   fontSize: '16px',
                   fontWeight: '500',
                   minWidth: '80px',
@@ -478,17 +466,11 @@ export function SessionConfigPage({ mode, onStart }: SessionConfigPageProps) {
                   value={farnsworthWpm}
                   onChange={(e) => setFarnsworthWpm(Number(e.target.value))}
                   style={{
-                    flex: 1,
-                    height: '4px',
-                    background: 'rgba(255, 255, 255, 0.2)',
-                    borderRadius: '2px',
-                    outline: 'none',
-                    WebkitAppearance: 'none',
-                    appearance: 'none'
+                    flex: 1
                   }}
                 />
                 <span style={{
-                  color: '#4dabf7',
+                  color: 'var(--color-blue-primary)',
                   fontSize: '16px',
                   fontWeight: '500',
                   minWidth: '80px',
@@ -513,17 +495,11 @@ export function SessionConfigPage({ mode, onStart }: SessionConfigPageProps) {
                   value={extraWordSpacing}
                   onChange={(e) => setExtraWordSpacing(Number(e.target.value))}
                   style={{
-                    flex: 1,
-                    height: '4px',
-                    background: 'rgba(255, 255, 255, 0.2)',
-                    borderRadius: '2px',
-                    outline: 'none',
-                    WebkitAppearance: 'none',
-                    appearance: 'none'
+                    flex: 1
                   }}
                 />
                 <span style={{
-                  color: '#4dabf7',
+                  color: 'var(--color-blue-primary)',
                   fontSize: '16px',
                   fontWeight: '500',
                   minWidth: '60px',
@@ -550,9 +526,9 @@ export function SessionConfigPage({ mode, onStart }: SessionConfigPageProps) {
                     flex: 1,
                     padding: '8px 12px',
                     fontSize: '16px',
-                    color: '#4dabf7',
-                    background: 'rgba(255, 255, 255, 0.1)',
-                    border: '1px solid rgba(255, 255, 255, 0.2)',
+                    color: 'var(--text-primary)',
+                    background: 'var(--background-tertiary)',
+                    border: '1px solid var(--border-primary)',
                     borderRadius: '4px',
                     outline: 'none',
                     cursor: 'pointer'
