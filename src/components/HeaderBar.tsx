@@ -1,10 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 
-interface HeaderBarProps {
-  pageTitle?: string;
-}
-
-export function HeaderBar({ pageTitle }: HeaderBarProps) {
+export function HeaderBar() {
   const navigate = useNavigate();
 
   const handleBack = () => {
@@ -26,9 +22,6 @@ export function HeaderBar({ pageTitle }: HeaderBarProps) {
       >
         didah
       </h1>
-      {pageTitle && (
-        <h2 className="page-title">{pageTitle}</h2>
-      )}
     </header>
   );
 }

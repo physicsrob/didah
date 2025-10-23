@@ -309,19 +309,20 @@ export function SessionConfigPage({ mode, onStart }: SessionConfigPageProps) {
 
   return (
     <div className="min-h-screen">
-      <HeaderBar pageTitle={modeConfig[mode].title} />
+      <HeaderBar />
 
       <div className="container container-centered">
+        <div className="container-narrow">
+          <h1 className="heading-1" style={{ marginBottom: '16px' }}>{modeConfig[mode].title}</h1>
+          <p className="body-regular session-config-description" style={{ marginBottom: '24px' }}>
+            {modeConfig[mode].description}
+          </p>
+        </div>
+
         {/* Main Settings Card */}
         <div className="card mb-4 container-narrow" style={{
           padding: '32px'
         }}>
-          {/* Mode Description */}
-          <div className="session-config-section">
-            <p className="body-regular session-config-description">
-              <span className="session-config-mode-label">{modeConfig[mode].title}:</span> {modeConfig[mode].description}
-            </p>
-          </div>
 
           {/* Text Source */}
           <div className="settings-row">

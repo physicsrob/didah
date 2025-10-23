@@ -6,7 +6,7 @@ import '../styles/aboutPage.css'
 export default function AboutPage() {
   return (
     <div className="min-h-screen about-page-container">
-      <HeaderBar pageTitle="About" />
+      <HeaderBar />
 
       <div className="container container-centered">
         <div className="about-content">

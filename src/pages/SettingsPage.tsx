@@ -28,10 +28,11 @@ export default function SettingsPage() {
 
   return (
     <div className="min-h-screen">
-      <HeaderBar pageTitle="Settings" />
+      <HeaderBar />
 
-      <div className="container container-centered">
+      <div className="container container-centered" style={{ paddingTop: '24px' }}>
         <div className="container-narrow">
+          <h1 className="heading-1" style={{ marginBottom: '24px', position: 'relative', zIndex: 1 }}>Settings</h1>
           <TabbedPanel
             tabs={tabs}
             activeTab={activeTab}

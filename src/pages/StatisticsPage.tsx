@@ -25,9 +25,10 @@ export default function StatisticsPage() {
 
   return (
     <div className="min-h-screen">
-      <HeaderBar pageTitle="Statistics" />
+      <HeaderBar />
 
-      <div className="w-full px-6 py-4 max-w-xl container-centered">
+      <div className="w-full px-6 max-w-xl container-centered" style={{ paddingTop: '24px', paddingBottom: '16px' }}>
+        <h1 className="heading-1" style={{ marginBottom: '24px', position: 'relative', zIndex: 1 }}>Statistics</h1>
         <div className="mb-6 flex-end-container">
           <TimeWindowSelector value={timeWindow} onChange={setTimeWindow} />
         </div>
