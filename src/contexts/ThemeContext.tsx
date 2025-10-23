@@ -16,7 +16,7 @@ const THEME_STORAGE_KEY = 'didah-theme'
 export function ThemeProvider({ children }: { children: ReactNode }) {
   const [theme, setThemeState] = useState<Theme>(() => {
     const stored = localStorage.getItem(THEME_STORAGE_KEY)
-    return (stored === 'light' || stored === 'dark') ? stored : 'dark'
+    return (stored === 'light' || stored === 'dark') ? stored : 'light'
   })
 
   useEffect(() => {

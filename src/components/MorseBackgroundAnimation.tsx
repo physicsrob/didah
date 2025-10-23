@@ -171,7 +171,7 @@ export function MorseBackgroundAnimation() {
     if (!ctx) return;
 
     // Theme-dependent colors
-    const morseColor = theme === 'light' ? 'rgba(0, 0, 0, 0.06)' : 'rgba(96, 165, 250, 0.08)';
+    const morseColor = theme === 'light' ? 'rgba(0, 0, 0, 0.05)' : 'rgba(96, 165, 250, 0.08)';
     const gradientStart = theme === 'light' ? '#fafafa' : '#1a1d26';
     const gradientEnd = theme === 'light' ? '#ececec' : '#252a3a';
     const overlayColor1 = theme === 'light' ? 'rgba(112, 181, 255, 0.03)' : 'rgba(77, 171, 247, 0.08)';

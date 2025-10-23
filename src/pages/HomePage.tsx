@@ -67,6 +67,22 @@ export default function HomePage() {
       {/* Top navigation */}
       <nav className="home-nav">
         <div className="home-nav-items">
+          <button
+            className={`home-nav-button ${!user ? 'disabled' : ''}`}
+            onClick={handleStatistics}
+            disabled={!user}
+            title={!user ? 'Sign in to view statistics' : ''}
+          >
+            <span className="home-nav-button-icon">📊</span>
+            <span className="home-nav-button-text">Statistics</span>
+          </button>
+          <button
+            className="home-nav-button home-nav-button--settings"
+            onClick={handleSettings}
+          >
+            <span className="home-nav-button-icon">⚙️</span>
+            <span className="home-nav-button-text">Settings</span>
+          </button>
           {isLoaded && user ? (
             <UserDropdown />
           ) : isLoaded ? (
@@ -88,24 +104,6 @@ export default function HomePage() {
         <div className="flex flex-col gap-8 items-center">
           {/* Mode selection carousel */}
           <ModeCarousel modes={MODES} onModeSelect={handleModeSelect} />
-
-          {/* Utility buttons */}
-          <div className="flex gap-5 w-full">
-            <button
-              className={`btn btn-utility flex-1 ${!user ? 'btn-disabled' : ''}`}
-              onClick={handleStatistics}
-              disabled={!user}
-              title={!user ? 'Sign in to view statistics' : ''}
-            >
-              Statistics
-            </button>
-            <button
-              className="btn btn-utility flex-1"
-              onClick={handleSettings}
-            >
-              Settings
-            </button>
-          </div>
         </div>
 
         {/* Footer */}

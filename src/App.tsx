@@ -6,6 +6,7 @@ import StatisticsPage from './pages/StatisticsPage'
 import SettingsPage from './pages/SettingsPage'
 import AboutPage from './pages/AboutPage'
 import { AudioProvider } from './contexts/AudioContext.tsx'
+import { ThemeProvider } from './contexts/ThemeContext'
 import { ClerkProvider } from '@clerk/clerk-react'
 import { SettingsProvider } from './features/settings/context/SettingsProvider.tsx'
 import { MorseBackgroundAnimation } from './components/MorseBackgroundAnimation'
@@ -43,15 +44,17 @@ function App() {
   }, [])
 
   return (
-    <ClerkProvider publishableKey={CLERK_PUBLISHABLE_KEY}>
-      <SettingsProvider>
-        <AudioProvider>
-          <Router>
-            <AppContent />
-          </Router>
-        </AudioProvider>
-      </SettingsProvider>
-    </ClerkProvider>
+    <ThemeProvider>
+      <ClerkProvider publishableKey={CLERK_PUBLISHABLE_KEY}>
+        <SettingsProvider>
+          <AudioProvider>
+            <Router>
+              <AppContent />
+            </Router>
+          </AudioProvider>
+        </SettingsProvider>
+      </ClerkProvider>
+    </ThemeProvider>
   )
 }
 

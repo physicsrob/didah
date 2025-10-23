@@ -1,0 +1,54 @@
+/* Compact toggle switch for menu items */
+
+.inline-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.inline-toggle-track {
+  position: relative;
+  width: 32px;
+  height: 18px;
+  background-color: rgba(0, 0, 0, 0.3);
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  transition: background-color 0.2s, border-color 0.2s;
+}
+
+.inline-toggle-track--checked {
+  background-color: var(--color-blue-primary);
+  border-color: var(--color-blue-primary);
+}
+
+.inline-toggle-thumb {
+  position: absolute;
+  top: 50%;
+  left: 2px;
+  width: 12px;
+  height: 12px;
+  background-color: white;
+  border-radius: 50%;
+  transform: translateY(-50%);
+  transition: transform 0.2s;
+}
+
+.inline-toggle-track--checked .inline-toggle-thumb {
+  transform: translateY(-50%) translateX(14px);
+}
+
+/* Light Mode Adjustments */
+[data-theme="light"] .inline-toggle-track {
+  background-color: #d0d0d0;
+  border-color: #b0b0b0;
+}
+
+[data-theme="light"] .inline-toggle-track--checked {
+  background-color: var(--color-blue-primary);
+  border-color: var(--color-blue-primary);
+}
+
+[data-theme="light"] .inline-toggle-thumb {
+  background-color: #ffffff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
