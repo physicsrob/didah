@@ -219,15 +219,24 @@ Note: First encounters (where answer is shown) count as correct, which may sligh
     extraWordSpacing: 0,
     listenTimingOffset: 1.0,
     characterSpeed: <wpm>,
-    // Learn mode specific:
-    learnLevel: <level number>,
-    learnStars: <0-3>
+    // Learn mode specific (input):
+    learnLevel: <level number>  // 1-20
+  }
+  ```
+- SessionStatistics includes Learn Mode specific fields (output):
+  ```typescript
+  {
+    // ... all standard SessionStatistics fields ...
+
+    // Learn mode specific (output):
+    learnLevel: <level number>,  // 1-20, duplicated from config for easy querying
+    learnStars: <0-3>            // calculated from overallAccuracy at session end
   }
   ```
 
 ### Historical Queries
-- On session start, query all sessions to determine which characters need warm-up
-- On level selector page, query all sessions to show star ratings per level
+- On session start, query all sessions to determine which characters are un-mastered (for adaptive reveal)
+- On level selector page, query all sessions to show star ratings per level (from SessionStatistics.learnStars)
 
 ## Technical Implementation Notes
 
