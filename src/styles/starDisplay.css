@@ -1,0 +1,62 @@
+/**
+ * Star Display Component Styles
+ */
+
+.learn-stars {
+  display: flex;
+  gap: 4px;
+}
+
+.learn-star {
+  line-height: 1;
+}
+
+.learn-star-filled {
+  color: #fbbf24; /* Golden yellow for filled stars */
+}
+
+.learn-star-empty {
+  color: rgba(255, 255, 255, 0.2); /* Dim gray for empty stars */
+}
+
+/* Size variants */
+.learn-stars-small .learn-star {
+  font-size: 16px;
+}
+
+.learn-stars-medium .learn-star {
+  font-size: 20px;
+}
+
+.learn-stars-large {
+  gap: 8px;
+}
+
+.learn-stars-large .learn-star {
+  font-size: 48px;
+}
+
+/* Mobile responsive */
+@media (max-width: 768px) {
+  .learn-stars-medium .learn-star {
+    font-size: 18px;
+  }
+
+  .learn-stars-large .learn-star {
+    font-size: 40px;
+  }
+}
+
+@media (max-width: 480px) {
+  .learn-stars-small .learn-star {
+    font-size: 14px;
+  }
+
+  .learn-stars-medium .learn-star {
+    font-size: 16px;
+  }
+
+  .learn-stars-large .learn-star {
+    font-size: 32px;
+  }
+}

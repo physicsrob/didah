@@ -4,13 +4,16 @@
  * Post-session overview showing results and settings with options to continue.
  */
 
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import type { SessionStatisticsWithMaps } from '../core/types/statistics';
 import { useStatsAPI } from '../features/statistics/useStatsAPI';
 import { debug } from '../core/debug';
 import { LiveCopyDiff } from '../components/LiveCopyDiff';
 import { SpeedDisplay } from '../components/SpeedDisplay';
+import { StarDisplay } from '../components/StarDisplay';
+import { calculateStars } from '../../functions/shared/starCalculation';
+import { getCharactersForLevel } from '../../functions/shared/koch';
 import '../styles/main.css';
 import '../styles/sessionComplete.css';
 
@@ -23,21 +26,33 @@ export function SessionCompletePage({ statistics: fullStatistics, onRestart }: S
   const navigate = useNavigate();
   const { saveSessionStats, isAuthenticated } = useStatsAPI();
 
+  // Calculate stars for Learn Mode and prepare statistics for saving
+  const statsToSave = useMemo(() => {
+    if (fullStatistics.config.mode === 'learn') {
+      const stars = calculateStars(fullStatistics.overallAccuracy);
+      return {
+        ...fullStatistics,
+        learnStars: stars,
+        learnLevel: fullStatistics.config.learnLevel
+      };
+    }
+    return fullStatistics;
+  }, [fullStatistics]);
 
   // Save statistics when the component mounts (before early return to satisfy React hooks rules)
   useEffect(() => {
-    if (fullStatistics && isAuthenticated) {
-      saveSessionStats(fullStatistics)
+    if (statsToSave && isAuthenticated) {
+      saveSessionStats(statsToSave)
         .then(() => {
           debug.log('Session statistics saved successfully');
         })
         .catch(err => {
           console.error('Failed to save session statistics:', err);
         });
-    } else if (!isAuthenticated && fullStatistics) {
+    } else if (!isAuthenticated && statsToSave) {
       debug.log('Statistics not saved - user not authenticated');
     }
-  }, [fullStatistics, isAuthenticated, saveSessionStats]);
+  }, [statsToSave, isAuthenticated, saveSessionStats]);
 
   // Navigation handlers
   const handleBackToMenu = () => {
@@ -68,8 +83,50 @@ export function SessionCompletePage({ statistics: fullStatistics, onRestart }: S
         return 'Listen Again';
       case 'live-copy':
         return 'Live Copy Again';
+      case 'learn':
+        return 'Try Again';
       default:
         return 'Letter Practice Again';
+    }
+  };
+
+  // Learn Mode specific data
+  const learnModeData = useMemo(() => {
+    if (fullStatistics.config.mode !== 'learn' || !fullStatistics.config.learnLevel) {
+      return null;
+    }
+
+    const stars = calculateStars(fullStatistics.overallAccuracy);
+    const level = fullStatistics.config.learnLevel;
+    const levelChars = getCharactersForLevel(level);
+
+    // Build per-character breakdown
+    const charBreakdown = levelChars.map(char => {
+      const stats = fullStatistics.characterStats.get(char);
+      if (!stats) {
+        return { char, accuracy: 0, attempts: 0, isStruggling: true };
+      }
+      return {
+        char,
+        accuracy: stats.accuracy,
+        attempts: stats.attempts,
+        isStruggling: stats.accuracy < 80
+      };
+    });
+
+    return {
+      stars,
+      level,
+      charBreakdown,
+      canAdvance: stars >= 1
+    };
+  }, [fullStatistics]);
+
+  // Handle next level navigation
+  const handleNextLevel = () => {
+    if (learnModeData && learnModeData.canAdvance) {
+      // Return to config page (onRestart), which will show next level
+      onRestart();
     }
   };
 
@@ -101,8 +158,53 @@ export function SessionCompletePage({ statistics: fullStatistics, onRestart }: S
       {/* Main content */}
       <div className="content-area">
           <>
-            {/* Two column summary - hide results for listen mode */}
-            <div className="session-summary">
+            {/* Learn Mode Results */}
+            {learnModeData && (
+              <>
+                {/* Star Rating Display */}
+                <div className="learn-results-section">
+                  <h2 className="section-title">Session Complete!</h2>
+                  <div className="learn-star-display-container">
+                    <StarDisplay stars={learnModeData.stars} hasAttempt={true} size="large" />
+                  </div>
+                  <div className="learn-accuracy-display">
+                    <span className="stat-value accuracy">{Math.round(accuracy)}%</span>
+                    <span className="stat-label">Accuracy</span>
+                  </div>
+                  <div className="learn-character-count">
+                    <span className="stat-value">{totalChars}</span>
+                    <span className="stat-label">Characters Practiced</span>
+                  </div>
+                </div>
+
+                {/* Per-Character Breakdown */}
+                <div className="learn-character-breakdown-section">
+                  <h2 className="section-title">Character Performance</h2>
+                  <div className="learn-character-breakdown">
+                    {learnModeData.charBreakdown.map(({ char, accuracy, attempts, isStruggling }) => (
+                      <div
+                        key={char}
+                        className={`learn-character-item ${isStruggling ? 'learn-character-struggling' : ''}`}
+                      >
+                        <div className="learn-character-char">{char}</div>
+                        <div className="learn-character-accuracy">
+                          {attempts > 0 ? `${Math.round(accuracy)}%` : '—'}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  {learnModeData.charBreakdown.some(c => c.isStruggling) && (
+                    <div className="learn-struggling-note">
+                      Characters with less than 80% accuracy are highlighted
+                    </div>
+                  )}
+                </div>
+              </>
+            )}
+
+            {/* Standard Mode Results - Two column summary - hide results for listen mode */}
+            {!learnModeData && (
+              <div className="session-summary">
               {/* Results section - only show for practice and live-copy modes */}
               {fullStatistics.config.mode !== 'listen' && (
                 <div className="results-section">
@@ -184,6 +286,7 @@ export function SessionCompletePage({ statistics: fullStatistics, onRestart }: S
 
               </div>
             </div>
+            )}
 
             {/* Live Copy Diff Visualization - only for live-copy mode */}
             {fullStatistics.config.mode === 'live-copy' && fullStatistics.liveCopyDiff && (
@@ -194,14 +297,33 @@ export function SessionCompletePage({ statistics: fullStatistics, onRestart }: S
             )}
 
             {/* Action buttons */}
-            <div className="action-buttons">
-              <button className="btn btn-primary" onClick={handleBackToMenu}>
-                Back to Menu
-              </button>
-              <button className="btn btn-secondary" onClick={handleSessionAgain}>
-                {getSessionAgainText()}
-              </button>
-            </div>
+            {learnModeData ? (
+              <div className="action-buttons learn-action-buttons">
+                <button className="btn btn-secondary" onClick={handleBackToMenu}>
+                  Back to Menu
+                </button>
+                <button className="btn btn-secondary" onClick={handleSessionAgain}>
+                  Try Again
+                </button>
+                <button
+                  className="btn btn-primary"
+                  onClick={handleNextLevel}
+                  disabled={!learnModeData.canAdvance}
+                  title={!learnModeData.canAdvance ? 'Earn at least 1 star to advance' : ''}
+                >
+                  {learnModeData.level < 20 ? `Next Level (${learnModeData.level + 1})` : 'Back to Levels'}
+                </button>
+              </div>
+            ) : (
+              <div className="action-buttons">
+                <button className="btn btn-primary" onClick={handleBackToMenu}>
+                  Back to Menu
+                </button>
+                <button className="btn btn-secondary" onClick={handleSessionAgain}>
+                  {getSessionAgainText()}
+                </button>
+              </div>
+            )}
           </>
       </div>
       </div>

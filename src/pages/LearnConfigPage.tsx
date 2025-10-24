@@ -11,6 +11,7 @@ import { useUser, SignInButton } from '@clerk/clerk-react';
 import type { SessionConfig } from '../core/types/domain';
 import type { SourceContent } from '../features/sources';
 import { HeaderBar } from '../components/HeaderBar';
+import { StarDisplay } from '../components/StarDisplay';
 import { getCharactersForLevel, getNewCharactersForLevel, TOTAL_LEVELS } from '../../functions/shared/koch';
 import { fetchSourceContent } from '../features/sources';
 import '../styles/main.css';
@@ -205,7 +206,7 @@ export function LearnConfigPage({ onStart }: LearnConfigPageProps) {
                 >
                   <div className="learn-level-header">
                     <span className="learn-level-number">Level {level}</span>
-                    <StarDisplay stars={stars} hasAttempt={hasAttempt} />
+                    <StarDisplay stars={stars} hasAttempt={hasAttempt} size="medium" />
                   </div>
                   <div className="learn-level-chars">
                     {newChars.join(' ')}
@@ -231,36 +232,6 @@ export function LearnConfigPage({ onStart }: LearnConfigPageProps) {
           </button>
         </div>
       </div>
-    </div>
-  );
-}
-
-/**
- * Star display component
- */
-function StarDisplay({ stars, hasAttempt }: { stars: number; hasAttempt: boolean }) {
-  // Show empty stars if no attempt
-  if (!hasAttempt) {
-    return (
-      <div className="learn-stars">
-        {[1, 2, 3].map((i) => (
-          <span key={i} className="learn-star learn-star-empty">★</span>
-        ))}
-      </div>
-    );
-  }
-
-  // Show filled stars based on achievement
-  return (
-    <div className="learn-stars">
-      {[1, 2, 3].map((i) => (
-        <span
-          key={i}
-          className={`learn-star ${i <= stars ? 'learn-star-filled' : 'learn-star-empty'}`}
-        >
-          ★
-        </span>
-      ))}
     </div>
   );
 }
