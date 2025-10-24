@@ -129,8 +129,8 @@ export function ActiveSessionPage({ config, sourceContent, onComplete }: ActiveS
 
   // Create session runner
   const runner = useMemo(() => {
-    return createSessionRunner({ clock, io, input, source });
-  }, [clock, io, input, source]);
+    return createSessionRunner({ clock, io, input, source, sourceContent });
+  }, [clock, io, input, source, sourceContent]);
 
   // Handle pause/resume
   const handlePause = useCallback(() => {

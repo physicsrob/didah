@@ -6,6 +6,7 @@ import type { Clock } from './clock';
 import type { IO, SessionSnapshot } from './io';
 import type { InputBus } from './inputBus';
 import type { SessionConfig } from '../../../core/types/domain';
+import type { SourceContent } from '../../sources/types';
 import { calculateCharacterDurationMs, getInterCharacterSpacingMs } from '../../../core/morse/timing';
 import { debug } from '../../../core/debug';
 import { getMode } from '../modes/shared/registry';
@@ -68,6 +69,7 @@ export type SessionRunnerDeps = {
   io: IO;
   input: InputBus;
   source: CharacterSource;
+  sourceContent: SourceContent;
 };
 
 /**
@@ -108,6 +110,11 @@ export function createSessionRunner(deps: SessionRunnerDeps): SessionRunner {
         ...snapshot.headCopyState,
         distractors: [...snapshot.headCopyState.distractors],
         stats: { ...snapshot.headCopyState.stats }
+      } : undefined,
+      learnState: snapshot.learnState ? {
+        ...snapshot.learnState,
+        encounteredChars: [...snapshot.learnState.encounteredChars],
+        unmasteredChars: [...snapshot.learnState.unmasteredChars]
       } : undefined
     };
     if (deps.io.snapshot) {
@@ -182,6 +189,15 @@ export function createSessionRunner(deps: SessionRunnerDeps): SessionRunner {
       } : undefined,
       listenState: (config.mode === 'listen' && config.listenTimingOffset === 'word') ? {
         bufferedWord: []
+      } : undefined,
+      learnState: config.mode === 'learn' ? {
+        displayChar: null,
+        flashState: null,
+        correctionMode: false,
+        encounteredChars: [],
+        unmasteredChars: [],
+        currentIndex: 0,
+        practiceSequence: ''
       } : undefined
     };
     publish();
@@ -307,8 +323,11 @@ export function createSessionRunner(deps: SessionRunnerDeps): SessionRunner {
 
           // Create handler context
           const ctx: HandlerContext = {
-            ...deps,
+            io: deps.io,
+            input: deps.input,
+            clock: deps.clock,
             snapshot,
+            sourceContent: deps.sourceContent,
             updateSnapshot: (updates) => {
               snapshot = { ...snapshot, ...updates };
             },

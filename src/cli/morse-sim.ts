@@ -138,6 +138,7 @@ async function run() {
           input: inputBus,
           clock,
           snapshot: { phase: 'running' as const, startedAt: clock.now(), remainingMs: 0, emissions: [] },
+          sourceContent: { id: 'cli', text: '' },
           updateSnapshot: () => {},
           updateStats: () => {},
           updateRemainingTime: () => {},

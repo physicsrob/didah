@@ -41,6 +41,7 @@ describe('runListenEmission', () => {
       input,
       clock,
       snapshot,
+      sourceContent: { id: 'test', text: 'ABC' },
       updateSnapshot: (updates: Partial<SessionSnapshot>) => {
         snapshot = { ...snapshot, ...updates };
       },
@@ -116,6 +117,7 @@ describe('runListenEmission', () => {
         input,
         clock,
         snapshot,
+        sourceContent: { id: 'test', text: 'ABC' },
         updateSnapshot: (updates: Partial<SessionSnapshot>) => {
           snapshot = { ...snapshot, ...updates };
         },

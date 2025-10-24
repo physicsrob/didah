@@ -49,6 +49,7 @@ describe('handleLiveCopyCharacter - integration', () => {
       input,
       clock,
       snapshot,
+      sourceContent: { id: 'test', text: 'ABC' },
       updateSnapshot: (updates: Partial<SessionSnapshot>) => {
         snapshot = { ...snapshot, ...updates };
       },

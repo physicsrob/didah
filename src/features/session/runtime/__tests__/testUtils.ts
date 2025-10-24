@@ -4,6 +4,7 @@
 
 import type { FakeClock } from '../clock';
 import type { SessionConfig } from '../../../../core/types/domain';
+import type { SourceContent } from '../../../sources/types';
 
 /**
  * Force all pending promises to resolve
@@ -142,5 +143,15 @@ export function createTestConfig(overrides?: Partial<SessionConfig>): SessionCon
     listenTimingOffset: 0.0,
     characterSpeed: 20,
     ...overrides
+  };
+}
+
+/**
+ * Create a test SourceContent for testing
+ */
+export function createTestSourceContent(text: string = 'ABCDEFGHIJ'): SourceContent {
+  return {
+    id: 'test_source',
+    text
   };
 }

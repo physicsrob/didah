@@ -8,6 +8,7 @@ import type { SessionConfig, SessionMode } from '../../../../core/types/domain';
 import type { IO, SessionSnapshot } from '../../runtime/io';
 import type { InputBus } from '../../runtime/inputBus';
 import type { Clock } from '../../runtime/clock';
+import type { SourceContent } from '../../../sources/types';
 
 /**
  * Dependencies available to mode handlers
@@ -24,6 +25,7 @@ export interface ModeDeps {
  */
 export interface HandlerContext extends ModeDeps {
   snapshot: SessionSnapshot;
+  sourceContent: SourceContent;
   updateSnapshot(updates: Partial<SessionSnapshot>): void;
   updateStats(outcome: 'correct' | 'incorrect' | 'timeout'): void;
   updateRemainingTime(startTime: number, config: SessionConfig): void;

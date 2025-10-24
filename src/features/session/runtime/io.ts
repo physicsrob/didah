@@ -59,6 +59,22 @@ export interface ListenState {
 }
 
 /**
+ * Learn mode state
+ */
+export interface LearnState {
+  // UI display coordination
+  displayChar: string | null;        // What to show: '?', 'K', etc.
+  flashState: 'correct' | 'incorrect' | null;
+  correctionMode: boolean;           // True when showing answer + waiting for correction
+
+  // Internal tracking
+  encounteredChars: string[];        // Characters seen in this session (Set converted to array)
+  unmasteredChars: string[];         // Characters that are un-mastered (from historical stats)
+  currentIndex: number;              // Position in practice sequence (0-49)
+  practiceSequence: string;          // The 50 characters for this session
+}
+
+/**
  * Session snapshot - observable state of the current session
  *
  * Contains universal state (all modes) and mode-specific state.
@@ -80,6 +96,7 @@ export type SessionSnapshot = {
   liveCopyState?: LiveCopyState;
   headCopyState?: HeadCopyState;
   listenState?: ListenState;
+  learnState?: LearnState;
 };
 
 import type { SessionConfig } from '../../../core/types/domain';

@@ -48,7 +48,8 @@ describe('SessionRunner', () => {
     io = new TestIO(clock);
     input = new TestInputBus();
     source = new TestCharSource('ABC'); // Simple alphabet for predictable tests
-    runner = createSessionRunner({ clock, io, input, source });
+    const sourceContent = { id: 'test', text: 'ABC' };
+    runner = createSessionRunner({ clock, io, input, source, sourceContent });
   });
 
   it('starts in idle state', () => {
