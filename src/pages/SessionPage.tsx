@@ -16,6 +16,7 @@ import type { SessionMode, SessionConfig } from '../core/types/domain';
 import type { SourceContent } from '../features/sources';
 import type { SessionStatisticsWithMaps } from '../core/types/statistics';
 import { SessionConfigPage } from './SessionConfigPage';
+import { LearnConfigPage } from './LearnConfigPage';
 import { ActiveSessionPage } from './ActiveSessionPage';
 import { SessionCompletePage } from './SessionCompletePage';
 import { useSettings } from '../features/settings/hooks/useSettings';
@@ -56,6 +57,19 @@ export function SessionPage() {
 
   // Phase 1: Config
   if (phase === 'config') {
+    // Learn Mode uses a separate configuration page
+    if (mode === 'learn') {
+      return (
+        <LearnConfigPage
+          onStart={(sessionConfig, content) => {
+            setConfig(sessionConfig);
+            setSourceContent(content);
+            setPhase('active');
+          }}
+        />
+      );
+    }
+
     return (
       <SessionConfigPage
         mode={mode}

@@ -1,0 +1,107 @@
+/**
+ * Learn Mode Styles
+ *
+ * Character display with flash animations and progress counter
+ */
+
+.learn-display {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3rem;
+  padding: 2rem;
+  min-height: 400px;
+}
+
+.learn-character {
+  font-size: 8rem;
+  font-weight: bold;
+  font-family: var(--font-mono);
+  color: #ffffff;
+  min-width: 200px;
+  min-height: 200px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 3px solid rgba(74, 171, 247, 0.3);
+  border-radius: 16px;
+  background: rgba(26, 32, 44, 0.6);
+  transition: all 0.2s ease;
+}
+
+.learn-character-flash-correct {
+  background: #22c55e !important;
+  border-color: #22c55e !important;
+  color: white !important;
+  animation: flash-correct 300ms ease;
+}
+
+.learn-character-flash-incorrect {
+  background: #ef4444 !important;
+  border-color: #ef4444 !important;
+  color: white !important;
+  animation: flash-incorrect 300ms ease;
+}
+
+.learn-progress {
+  font-size: 1.5rem;
+  font-family: var(--font-mono);
+  color: var(--color-text-secondary);
+  font-weight: 600;
+}
+
+@keyframes flash-correct {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+@keyframes flash-incorrect {
+  0% {
+    transform: scale(1);
+  }
+  25% {
+    transform: translateX(-10px);
+  }
+  50% {
+    transform: translateX(10px);
+  }
+  75% {
+    transform: translateX(-5px);
+  }
+  100% {
+    transform: translateX(0);
+  }
+}
+
+/* Mobile responsive adjustments */
+@media (max-width: 768px) {
+  .learn-character {
+    font-size: 6rem;
+    min-width: 150px;
+    min-height: 150px;
+  }
+
+  .learn-progress {
+    font-size: 1.25rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .learn-character {
+    font-size: 5rem;
+    min-width: 120px;
+    min-height: 120px;
+  }
+
+  .learn-progress {
+    font-size: 1rem;
+  }
+}
