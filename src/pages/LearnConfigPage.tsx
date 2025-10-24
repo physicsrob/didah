@@ -15,6 +15,7 @@ import { StarDisplay } from '../components/StarDisplay';
 import { getCharactersForLevel, getNewCharactersForLevel, TOTAL_LEVELS } from '../../functions/shared/koch';
 import { fetchSourceContent } from '../features/sources';
 import { useStatsAPI } from '../features/statistics/useStatsAPI';
+import { useSettings } from '../features/settings/hooks/useSettings';
 import '../styles/main.css';
 import '../styles/learnConfig.css';
 
@@ -26,12 +27,20 @@ export function LearnConfigPage({ onStart }: LearnConfigPageProps) {
   const { user, isLoaded } = useUser();
   const navigate = useNavigate();
   const { fetchLearnProgress, fetchCharacterMastery } = useStatsAPI();
+  const { settings, updateSetting } = useSettings();
 
   const [selectedLevel, setSelectedLevel] = useState<number>(1);
-  const [wpm, setWpm] = useState<number>(20);
+  const [wpm, setWpm] = useState<number>(15);
   const [starRatings, setStarRatings] = useState<Map<number, number>>(new Map());
   const [isLoadingStars, setIsLoadingStars] = useState(true);
   const [isStarting, setIsStarting] = useState(false);
+
+  // Sync WPM from centralized settings when they load
+  useEffect(() => {
+    if (settings) {
+      setWpm(settings.wpm);
+    }
+  }, [settings]);
 
   // Fetch historical star ratings
   useEffect(() => {
@@ -175,14 +184,18 @@ export function LearnConfigPage({ onStart }: LearnConfigPageProps) {
         <div className="card container-narrow" style={{ padding: '32px', marginBottom: '24px' }}>
           {/* WPM Slider */}
           <div className="settings-row">
-            <div className="settings-label">Speed</div>
+            <div className="settings-label">Character Speed</div>
             <div className="settings-control">
               <input
                 type="range"
-                min="15"
-                max="25"
+                min="5"
+                max="40"
                 value={wpm}
-                onChange={(e) => setWpm(Number(e.target.value))}
+                onChange={(e) => {
+                  const newWpm = Number(e.target.value);
+                  setWpm(newWpm);
+                  updateSetting('wpm', newWpm);
+                }}
                 style={{ flex: 1 }}
               />
               <span style={{

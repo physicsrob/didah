@@ -1,7 +1,7 @@
 /**
  * Koch Source - Learn Mode Practice Content Generator
  *
- * Generates 50 weighted characters based on user's mastery for a given Koch level.
+ * Generates weighted characters based on user's mastery for a given Koch level.
  * Un-mastered characters appear twice as often as mastered characters.
  *
  * Requires authentication (Learn Mode is a progression system).
@@ -10,7 +10,7 @@
 import type { KVNamespace } from '@cloudflare/workers-types';
 import { getUserIdFromRequest } from '../../shared/auth';
 import type { SessionStatistics } from '../../shared/types';
-import { isValidLevel, getCharactersForLevel } from '../../shared/koch';
+import { isValidLevel, getCharactersForLevel, PRACTICE_SESSION_LENGTH } from '../../shared/koch';
 import { analyzeMastery } from '../../shared/masteryCalculator';
 import { generateWeightedSequence } from '../../shared/contentGenerator';
 
@@ -63,7 +63,7 @@ async function getUserSessions(userId: string, kv: KVNamespace): Promise<Session
 /**
  * GET /api/sources/koch-level-{N}
  *
- * Returns 50 weighted characters for the specified Koch level.
+ * Returns weighted characters for the specified Koch level.
  */
 export async function onRequestGet(context: CloudflareContext): Promise<Response> {
   const { id } = context.params;
@@ -130,17 +130,17 @@ export async function onRequestGet(context: CloudflareContext): Promise<Response
     // Analyze mastery for level characters
     const mastery = analyzeMastery(sessions, levelChars);
 
-    // Generate 50 weighted characters
+    // Generate weighted characters for practice session
     // If both sets are empty (shouldn't happen), throw error
     // Otherwise, generateWeightedSequence handles the weighting
     const sequence = generateWeightedSequence(
       mastery.masteredChars,
       mastery.unMasteredChars,
-      50
+      PRACTICE_SESSION_LENGTH
     );
 
-    // Join into text with spaces between each character
-    const text = sequence.join(' ');
+    // Join into text without spaces (Learn Mode practices individual characters)
+    const text = sequence.join('');
 
     return Response.json({
       id,

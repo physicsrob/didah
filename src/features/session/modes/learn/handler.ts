@@ -9,18 +9,19 @@ import type { SessionConfig } from '../../../../core/types/domain';
 import type { HandlerContext } from '../shared/types';
 import { runLearnEmission } from './emission';
 import { debug } from '../../../../core/debug';
+import { PRACTICE_SESSION_LENGTH } from '../../../../../functions/shared/koch';
 
 /**
  * Handle a single character in Learn Mode
  *
  * On first call:
- * - Initializes practice sequence from sourceContent (50 characters)
+ * - Initializes practice sequence from sourceContent
  * - Queries user's historical stats to determine un-mastered characters
  *
  * On each call:
  * - Delegates to emission logic with adaptive reveal
  * - Updates learnState with result
- * - Checks if session complete (50 characters done)
+ * - Checks if session complete
  */
 export async function handleLearnCharacter(
   config: SessionConfig,
@@ -37,11 +38,13 @@ export async function handleLearnCharacter(
   }
 
   // Lazy initialization on first call
-  if (ctx.snapshot.learnState.practiceSequence === '') {
+  let currentLearnState = ctx.snapshot.learnState;
+
+  if (currentLearnState.practiceSequence === '') {
     debug.log('[Learn] First call - initializing practice sequence and un-mastered chars');
 
-    // Get practice sequence from sourceContent (take first 50 characters)
-    const practiceText = ctx.sourceContent.text.slice(0, 50);
+    // Get practice sequence from sourceContent
+    const practiceText = ctx.sourceContent.text.slice(0, PRACTICE_SESSION_LENGTH);
     debug.log(`[Learn] Practice sequence: ${practiceText} (${practiceText.length} chars)`);
 
     // Get un-mastered characters from config (queried before session start)
@@ -51,19 +54,22 @@ export async function handleLearnCharacter(
       : config.effectiveAlphabet.map(c => c.toUpperCase());
     debug.log(`[Learn] Un-mastered characters: ${unmasteredChars.join(', ')}`);
 
+    // Build updated state
+    currentLearnState = {
+      ...currentLearnState,
+      practiceSequence: practiceText,
+      unmasteredChars
+    };
+
     // Update state with initialization
     ctx.updateSnapshot({
-      learnState: {
-        ...ctx.snapshot.learnState,
-        practiceSequence: practiceText,
-        unmasteredChars
-      }
+      learnState: currentLearnState
     });
     ctx.publish();
   }
 
   // Run emission with adaptive reveal
-  const state = ctx.snapshot.learnState;
+  const state = currentLearnState;
   const result = await runLearnEmission(
     config,
     char,
@@ -108,10 +114,10 @@ export async function handleLearnCharacter(
       break;
   }
 
-  // Check if session complete (50 characters done)
+  // Check if session complete
   const newIndex = state.currentIndex + 1;
-  if (newIndex >= 50) {
-    debug.log('[Learn] Session complete - 50 characters done');
+  if (newIndex >= PRACTICE_SESSION_LENGTH) {
+    debug.log(`[Learn] Session complete - ${PRACTICE_SESSION_LENGTH} characters done`);
     ctx.requestQuit();
   }
 }

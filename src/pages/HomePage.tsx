@@ -10,6 +10,12 @@ import '../styles/homePage.css'
 
 const MODES = [
   {
+    mode: 'learn' as SessionMode,
+    icon: '🎓',
+    title: 'Learn Mode',
+    description: 'Koch method training with adaptive reveal. Perfect for learning morse code from scratch.'
+  },
+  {
     mode: 'practice' as SessionMode,
     icon: '⌨️',
     title: 'Letter Practice',

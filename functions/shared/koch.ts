@@ -18,6 +18,7 @@ export const KOCH_SEQUENCE = [
 
 export const TOTAL_LEVELS = 20
 export const CHARACTERS_PER_LEVEL = 2
+export const PRACTICE_SESSION_LENGTH = 20
 
 /**
  * Validates that a level number is within valid range (1-20)

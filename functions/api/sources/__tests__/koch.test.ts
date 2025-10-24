@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { onRequestGet } from '../koch';
 import type { SessionStatistics, CharacterStatistics } from '../../../shared/types';
+import { PRACTICE_SESSION_LENGTH } from '../../../shared/koch';
 
 // Mock dependencies
 vi.mock('../../../shared/auth', () => ({
@@ -193,7 +194,7 @@ describe('Koch Source Endpoint', () => {
     expect(body.error).toContain('Authentication required');
   });
 
-  it('should return 50 characters for level 1 with no history', async () => {
+  it('should return correct number of characters for level 1 with no history', async () => {
     const context: TestContext = {
       params: { id: 'koch-level-1' },
       request: new Request('http://localhost/api/sources/koch-level-1'),
@@ -211,9 +212,9 @@ describe('Koch Source Endpoint', () => {
     expect(body.id).toBe('koch-level-1');
     expect(typeof body.text).toBe('string');
 
-    // Split by spaces and count characters
-    const chars = body.text.split(' ').filter((c: string) => c.length > 0);
-    expect(chars).toHaveLength(50);
+    // Split into individual characters
+    const chars = body.text.split('');
+    expect(chars).toHaveLength(PRACTICE_SESSION_LENGTH);
 
     // All characters should be K or M (Level 1)
     for (const char of chars) {
@@ -221,7 +222,7 @@ describe('Koch Source Endpoint', () => {
     }
   });
 
-  it('should return 50 characters for level 5 with no history', async () => {
+  it('should return correct number of characters for level 5 with no history', async () => {
     const context: TestContext = {
       params: { id: 'koch-level-5' },
       request: new Request('http://localhost/api/sources/koch-level-5'),
@@ -236,8 +237,8 @@ describe('Koch Source Endpoint', () => {
     const body = await response.json();
 
     expect(response.status).toBe(200);
-    const chars = body.text.split(' ').filter((c: string) => c.length > 0);
-    expect(chars).toHaveLength(50);
+    const chars = body.text.split('');
+    expect(chars).toHaveLength(PRACTICE_SESSION_LENGTH);
 
     // Level 5 = K M R S U A P T L O (10 characters)
     const validChars = ['K', 'M', 'R', 'S', 'U', 'A', 'P', 'T', 'L', 'O'];
@@ -270,20 +271,25 @@ describe('Koch Source Endpoint', () => {
     const body = await response.json();
 
     expect(response.status).toBe(200);
-    const chars = body.text.split(' ').filter((c: string) => c.length > 0);
-    expect(chars).toHaveLength(50);
+    const chars = body.text.split('');
+    expect(chars).toHaveLength(PRACTICE_SESSION_LENGTH);
 
     // Count occurrences
     const kCount = chars.filter((c: string) => c === 'K').length;
     const mCount = chars.filter((c: string) => c === 'M').length;
 
     // M (un-mastered, weight=2) should appear roughly twice as often as K (mastered, weight=1)
-    // With 50 chars, expect roughly K≈16-17, M≈33-34
-    // Allow some variance for randomness (e.g., 10-25 for K, 25-40 for M)
-    expect(kCount).toBeGreaterThan(10);
-    expect(kCount).toBeLessThan(25);
-    expect(mCount).toBeGreaterThan(25);
-    expect(mCount).toBeLessThan(40);
+    // With PRACTICE_SESSION_LENGTH chars and 2:1 weighting, expect roughly K≈1/3, M≈2/3
+    // Allow variance for randomness
+    const minK = Math.floor(PRACTICE_SESSION_LENGTH / 3) - 3;
+    const maxK = Math.floor(PRACTICE_SESSION_LENGTH / 3) + 3;
+    const minM = Math.floor((PRACTICE_SESSION_LENGTH * 2) / 3) - 3;
+    const maxM = Math.floor((PRACTICE_SESSION_LENGTH * 2) / 3) + 3;
+
+    expect(kCount).toBeGreaterThan(minK);
+    expect(kCount).toBeLessThan(maxK);
+    expect(mCount).toBeGreaterThan(minM);
+    expect(mCount).toBeLessThan(maxM);
   });
 
   it('should handle stats query failure gracefully (fallback to equal weighting)', async () => {
@@ -307,8 +313,8 @@ describe('Koch Source Endpoint', () => {
 
     // Should still succeed with fallback to equal weighting
     expect(response.status).toBe(200);
-    const chars = body.text.split(' ').filter((c: string) => c.length > 0);
-    expect(chars).toHaveLength(50);
+    const chars = body.text.split('');
+    expect(chars).toHaveLength(PRACTICE_SESSION_LENGTH);
   });
 
   it('should set no-cache headers', async () => {
