@@ -1,10 +1,11 @@
 import { useCallback } from 'react';
 import { useUser, useAuth } from '@clerk/clerk-react';
 import { StatsAPI } from './statsAPI';
+import { StatisticsAPI } from './api';
 import type { SessionStatisticsWithMaps } from '../../core/types/statistics';
 
 /**
- * React hook for saving session statistics
+ * React hook for saving session statistics and querying Learn Mode data
  *
  * Provides a simple interface to save stats for authenticated users.
  * Anonymous users' stats are not saved.
@@ -37,8 +38,25 @@ export function useStatsAPI() {
     }
   }, [user, getToken]);
 
+  const fetchLearnProgress = useCallback(async (): Promise<Map<number, number>> => {
+    const token = await getToken();
+    const api = new StatisticsAPI(token);
+    return await api.getLearnModeProgress();
+  }, [getToken]);
+
+  const fetchCharacterMastery = useCallback(async (chars: string[]): Promise<{
+    masteredChars: Set<string>;
+    unMasteredChars: Set<string>;
+  }> => {
+    const token = await getToken();
+    const api = new StatisticsAPI(token);
+    return await api.getCharacterMastery(chars);
+  }, [getToken]);
+
   return {
     saveSessionStats,
+    fetchLearnProgress,
+    fetchCharacterMastery,
     isAuthenticated: !!user
   };
 }

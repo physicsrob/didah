@@ -138,6 +138,99 @@ export class StatisticsAPI {
   }
 
   /**
+   * Get Learn Mode progress (best stars per level)
+   * Returns a map of level number (1-20) to best star rating (0-3)
+   * Only includes levels that have been attempted
+   */
+  async getLearnModeProgress(): Promise<Map<number, number>> {
+    if (!this.authToken) {
+      return new Map();
+    }
+
+    try {
+      const sessions = await this.getSessions();
+
+      // Filter to Learn Mode sessions only
+      const learnSessions = sessions.filter(s =>
+        s.config.mode === 'learn' &&
+        s.learnLevel !== undefined &&
+        s.learnStars !== undefined
+      );
+
+      // Build map of best stars per level
+      const bestStars = new Map<number, number>();
+
+      for (const session of learnSessions) {
+        const level = session.learnLevel!;
+        const stars = session.learnStars!;
+        const currentBest = bestStars.get(level) ?? 0;
+
+        if (stars > currentBest) {
+          bestStars.set(level, stars);
+        }
+      }
+
+      return bestStars;
+    } catch (error) {
+      console.error('Failed to fetch Learn Mode progress:', error);
+      return new Map(); // Graceful fallback
+    }
+  }
+
+  /**
+   * Get character mastery for a set of characters
+   * Queries all historical sessions (all modes) and calculates mastery
+   * Returns sets of mastered vs un-mastered characters
+   *
+   * @param chars Characters to analyze
+   */
+  async getCharacterMastery(chars: string[]): Promise<{
+    masteredChars: Set<string>;
+    unMasteredChars: Set<string>;
+  }> {
+    if (!this.authToken) {
+      // No history - all characters un-mastered
+      return {
+        masteredChars: new Set<string>(),
+        unMasteredChars: new Set(chars)
+      };
+    }
+
+    try {
+      const sessions = await this.getSessions();
+
+      // Convert SessionStatisticsWithMaps back to SessionStatistics format
+      // (masteryCalculator expects Record format)
+      const sessionsForAnalysis = sessions.map(s => ({
+        ...s,
+        characterStats: Object.fromEntries(s.characterStats),
+        confusionMatrix: Object.fromEntries(
+          Array.from(s.confusionMatrix.entries()).map(([key, value]) => [
+            key,
+            Object.fromEntries(value)
+          ])
+        )
+      }));
+
+      // Use shared mastery calculator
+      const { analyzeMastery } = await import('../../../functions/shared/masteryCalculator');
+      const analysis = analyzeMastery(sessionsForAnalysis, chars);
+
+      return {
+        masteredChars: analysis.masteredChars,
+        unMasteredChars: analysis.unMasteredChars
+      };
+    } catch (error) {
+      console.error('Failed to fetch character mastery:', error);
+      // Graceful fallback - treat all as un-mastered
+      return {
+        masteredChars: new Set<string>(),
+        unMasteredChars: new Set(chars)
+      };
+    }
+  }
+
+  /**
    * Generate empty practice time data for the last 30 days
    */
   private generateEmptyPracticeTime(): DailyPracticeTime[] {

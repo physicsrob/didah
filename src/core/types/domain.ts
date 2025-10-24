@@ -19,6 +19,7 @@ export type SessionConfig = {
   listenTimingOffset: number | 'word'; // For listen mode: when to display character relative to audio duration (-1.0 to 2.0), or 'word' to reveal after complete word (default 1.0)
   characterSpeed: number; // Character speed (WPM) - used differently by each mode (for ditDash: constant speed across all levels)
   learnLevel?: number; // Learn mode specific: level number (1-20)
+  learnUnmasteredChars?: string[]; // Learn mode specific: characters that are un-mastered (for adaptive reveal)
 };
 
 export type OutcomeEvent =

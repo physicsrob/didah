@@ -44,10 +44,11 @@ export async function handleLearnCharacter(
     const practiceText = ctx.sourceContent.text.slice(0, 50);
     debug.log(`[Learn] Practice sequence: ${practiceText} (${practiceText.length} chars)`);
 
-    // TODO Phase 4: Query user's historical stats to determine un-mastered characters
-    // For now, treat all characters as un-mastered (will be implemented with stats query)
-    const levelChars = config.effectiveAlphabet;
-    const unmasteredChars = Array.from(new Set(levelChars.map(c => c.toUpperCase())));
+    // Get un-mastered characters from config (queried before session start)
+    // If not provided (e.g., in tests), fall back to treating all as un-mastered
+    const unmasteredChars = config.learnUnmasteredChars
+      ? config.learnUnmasteredChars.map(c => c.toUpperCase())
+      : config.effectiveAlphabet.map(c => c.toUpperCase());
     debug.log(`[Learn] Un-mastered characters: ${unmasteredChars.join(', ')}`);
 
     // Update state with initialization

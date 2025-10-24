@@ -14,6 +14,7 @@ import { HeaderBar } from '../components/HeaderBar';
 import { StarDisplay } from '../components/StarDisplay';
 import { getCharactersForLevel, getNewCharactersForLevel, TOTAL_LEVELS } from '../../functions/shared/koch';
 import { fetchSourceContent } from '../features/sources';
+import { useStatsAPI } from '../features/statistics/useStatsAPI';
 import '../styles/main.css';
 import '../styles/learnConfig.css';
 
@@ -24,6 +25,7 @@ type LearnConfigPageProps = {
 export function LearnConfigPage({ onStart }: LearnConfigPageProps) {
   const { user, isLoaded } = useUser();
   const navigate = useNavigate();
+  const { fetchLearnProgress, fetchCharacterMastery } = useStatsAPI();
 
   const [selectedLevel, setSelectedLevel] = useState<number>(1);
   const [wpm, setWpm] = useState<number>(20);
@@ -38,16 +40,20 @@ export function LearnConfigPage({ onStart }: LearnConfigPageProps) {
       return;
     }
 
-    // TODO: Fetch actual historical sessions and calculate star ratings
-    // For now, mock data (Phase 4.5 will implement actual stats query)
-    const mockStars = new Map<number, number>();
-    // Example: Level 1 = 3 stars, Level 2 = 2 stars, Level 3 = 0 stars (not completed)
-    mockStars.set(1, 3);
-    mockStars.set(2, 2);
-
-    setStarRatings(mockStars);
-    setIsLoadingStars(false);
-  }, [user]);
+    // Fetch actual historical sessions and calculate star ratings
+    (async () => {
+      try {
+        const progress = await fetchLearnProgress();
+        setStarRatings(progress);
+      } catch (error) {
+        console.error('Failed to fetch Learn Mode progress:', error);
+        // Graceful fallback - empty map (no completed levels)
+        setStarRatings(new Map());
+      } finally {
+        setIsLoadingStars(false);
+      }
+    })();
+  }, [user, fetchLearnProgress]);
 
   // Determine the "next level" (first level with 0 stars or no attempt)
   const nextLevel = useCallback(() => {
@@ -78,6 +84,10 @@ export function LearnConfigPage({ onStart }: LearnConfigPageProps) {
       const sourceId = `koch-level-${selectedLevel}`;
       const content = await fetchSourceContent(sourceId, true); // requiresAuth = true
 
+      // Query character mastery for adaptive reveal
+      const levelChars = getCharactersForLevel(selectedLevel);
+      const mastery = await fetchCharacterMastery(levelChars);
+
       // Build session config
       const config: SessionConfig = {
         mode: 'learn',
@@ -94,6 +104,7 @@ export function LearnConfigPage({ onStart }: LearnConfigPageProps) {
         listenTimingOffset: 0,
         characterSpeed: wpm,
         learnLevel: selectedLevel,
+        learnUnmasteredChars: Array.from(mastery.unMasteredChars), // For adaptive reveal
       };
 
       onStart(config, content);
