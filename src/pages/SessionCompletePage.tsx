@@ -155,7 +155,8 @@ export function SessionCompletePage({ statistics: fullStatistics, onRestart }: S
                         'listen': 'Passive Listening',
                         'live-copy': 'Live Copy',
                         'head-copy': 'Head Copy',
-                        'ditDash': 'Dit Dash'
+                        'ditDash': 'Dit Dash',
+                        'learn': 'Learn Mode'
                       };
                       return modeNames[fullStatistics.config.mode] || fullStatistics.config.mode;
                     })()}

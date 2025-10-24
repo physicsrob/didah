@@ -87,6 +87,8 @@ interface CloudflareContext {
   request: Request;
   env?: {
     KV?: KVNamespace;
+    CLERK_SECRET_KEY?: string;
+    CLERK_PUBLISHABLE_KEY?: string;
   };
 }
 
@@ -140,6 +142,11 @@ export async function onRequestGet(context: CloudflareContext) {
       }
 
       default:
+        // Koch Method sources for Learn Mode (koch-level-1 through koch-level-20)
+        if (id.startsWith('koch-level-')) {
+          const kochModule = await import('./koch');
+          return kochModule.onRequestGet(context);
+        }
         // Reddit sources - require KV cache (populated by cron job)
         if (baseId.startsWith('reddit_')) {
           if (!kv) {

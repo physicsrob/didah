@@ -1,6 +1,6 @@
 // Shared types for API functions
 export type FeedbackMode = 'flash' | 'buzzer' | 'replay' | 'off'
-export type SessionMode = 'practice' | 'listen' | 'live-copy' | 'head-copy' | 'ditDash'
+export type SessionMode = 'practice' | 'listen' | 'live-copy' | 'head-copy' | 'ditDash' | 'learn'
 export type SpeedTier = 'slow' | 'medium' | 'fast' | 'lightning'
 export type ToneSetting = 'soft' | 'normal' | 'hard'
 
@@ -94,6 +94,7 @@ export type SessionStatistics = {
     feedback: 'buzzer' | 'flash' | 'both' | 'none'
     effectiveAlphabet: string[]    // Characters practiced
     extraWordSpacing?: number      // Extra word spacing (0-5) - optional for backward compatibility
+    learnLevel?: number            // Learn mode specific: level number (1-20)
   }
 
   // Overall Metrics
@@ -124,6 +125,10 @@ export type SessionStatistics = {
 
   // Dit Dash Mode - Maximum level completed (optional, only for ditDash mode)
   maxLevel?: number
+
+  // Learn Mode - Level and star rating (optional, only for learn mode)
+  learnLevel?: number  // Level number (1-20), duplicated from config for easy querying
+  learnStars?: number  // Star rating (0-3), calculated from session accuracy
 }
 
 // Validation function for settings
@@ -181,7 +186,7 @@ export function validateSettings(settings: unknown): settings is UserSettings {
     return false
   }
 
-  const validModes: SessionMode[] = ['practice', 'listen', 'live-copy', 'head-copy', 'ditDash']
+  const validModes: SessionMode[] = ['practice', 'listen', 'live-copy', 'head-copy', 'ditDash', 'learn']
   if (!validModes.includes(s.defaultMode as SessionMode)) {
     return false
   }
@@ -321,7 +326,7 @@ export function validateSessionStatistics(stats: unknown): stats is SessionStati
   }
 
   // Validate config fields
-  const validModes: SessionMode[] = ['practice', 'listen', 'live-copy', 'head-copy', 'ditDash']
+  const validModes: SessionMode[] = ['practice', 'listen', 'live-copy', 'head-copy', 'ditDash', 'learn']
   if (!validModes.includes(config.mode as SessionMode)) {
     return false
   }
@@ -506,6 +511,26 @@ export function validateSessionStatistics(stats: unknown): stats is SessionStati
   // Validate maxLevel if present (optional field for ditDash mode)
   if (s.maxLevel !== undefined) {
     if (typeof s.maxLevel !== 'number' || s.maxLevel < 1 || s.maxLevel > 10 || !Number.isInteger(s.maxLevel)) {
+      return false
+    }
+  }
+
+  // Validate learnLevel if present (optional field for learn mode - can be in config or statistics)
+  if (config.learnLevel !== undefined) {
+    if (typeof config.learnLevel !== 'number' || config.learnLevel < 1 || config.learnLevel > 20 || !Number.isInteger(config.learnLevel)) {
+      return false
+    }
+  }
+
+  if (s.learnLevel !== undefined) {
+    if (typeof s.learnLevel !== 'number' || s.learnLevel < 1 || s.learnLevel > 20 || !Number.isInteger(s.learnLevel)) {
+      return false
+    }
+  }
+
+  // Validate learnStars if present (optional field for learn mode)
+  if (s.learnStars !== undefined) {
+    if (typeof s.learnStars !== 'number' || s.learnStars < 0 || s.learnStars > 3 || !Number.isInteger(s.learnStars)) {
       return false
     }
   }

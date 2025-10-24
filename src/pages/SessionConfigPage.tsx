@@ -40,6 +40,10 @@ export function SessionConfigPage({ mode, onStart }: SessionConfigPageProps) {
     'ditDash': {
       title: 'Dit Dash',
       description: 'Endless runner mini-game - type letters to jump over obstacles! Progress through 10 levels with increasing speed and difficulty.'
+    },
+    'learn': {
+      title: 'Learn Mode',
+      description: 'Learn Morse code from scratch using the Koch method. Progress through 20 levels, mastering 2 new characters at a time.'
     }
   };
 

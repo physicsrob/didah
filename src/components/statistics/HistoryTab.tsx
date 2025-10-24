@@ -60,6 +60,8 @@ export default function HistoryTab({ timeWindow }: HistoryTabProps) {
         return 'Head Copy';
       case 'ditDash':
         return 'Dit Dash';
+      case 'learn':
+        return 'Learn';
       default:
         return mode;
     }

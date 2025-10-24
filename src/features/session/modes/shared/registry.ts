@@ -9,6 +9,7 @@ import { listenMode } from '../listen';
 import { liveCopyMode } from '../liveCopy';
 import { headCopyMode } from '../headCopy';
 import { ditDashMode } from '../ditDash';
+import { learnMode } from '../learn';
 import type { SessionMode } from '../../../../core/types/domain';
 import type { ModeDefinition } from './types';
 
@@ -26,6 +27,7 @@ export const MODE_REGISTRY: Record<SessionMode, ModeDefinition> = {
   'live-copy': liveCopyMode,
   'head-copy': headCopyMode,
   'ditDash': ditDashMode,
+  'learn': learnMode,
 };
 
 /**

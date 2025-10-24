@@ -40,9 +40,15 @@ K M R S U A P T L O W I . N J E F 0 Y , V G 5 / Q 9 Z H 3 8 B ? 4 2 7 C 1 D 6 X
 - Mastered characters → always quiz format
 - Tracks encountered characters within the session
 
-**Interaction Flow - First Encounter (Un-mastered Character)**:
+**Interaction Flow - First Encounter (Un-mastered Character) - Correct Input**:
 1. Audio plays → character "R" immediately appears in character display
 2. User types R → character flashes green → clears → next character
+
+**Interaction Flow - First Encounter (Un-mastered Character) - Wrong Input**:
+1. Audio plays → character "R" immediately appears in character display
+2. User types M (wrong) → character flashes red
+3. Audio replays → "R" still displayed
+4. User must type R → character flashes green → clears → next character
 
 **Interaction Flow - Quiz Mode (Correct Answer)**:
 1. Audio plays → "?" appears in character display
@@ -58,10 +64,10 @@ K M R S U A P T L O W I . N J E F 0 Y , V G 5 / Q 9 Z H 3 8 B ? 4 2 7 C 1 D 6 X
 
 **Statistics Counting**:
 - Each of the 50 characters counts once toward session statistics
-- First encounter (answer shown) = logged as correct
+- First encounter (answer shown) = logged as correct (even if user types wrong initially)
 - Quiz mode incorrect first attempt = logged as incorrect
-- Forced correct second attempt = does NOT count as separate character (not logged)
-- Only the initial user response affects statistics
+- Forced correct attempts (correction mode or first encounter replays) = do NOT count as separate characters (not logged)
+- Only the initial quiz attempt affects statistics; first encounters always count as correct
 
 **UI Elements**:
 - Large character display (center screen) showing the character (first encounter) or "?" (quiz mode) or the typed character
@@ -72,15 +78,19 @@ K M R S U A P T L O W I . N J E F 0 Y , V G 5 / Q 9 Z H 3 8 B ? 4 2 7 C 1 D 6 X
 **Behavior**:
 - No timeout (unlimited time for beginners)
 - Built-in replay behavior (not configurable)
-- Forced correction on errors in quiz mode (must type correct answer after seeing it)
+- Forced correction on errors:
+  - Quiz mode incorrect: must type correct answer after seeing it
+  - First encounter wrong input: must type correct character (replays audio on wrong input)
+  - Correction mode wrong input: replays audio until correct character typed
 - Adaptive reveal: shows answer on first encounter with un-mastered characters
+- Input handling: Keyboard input ignored during flash animations and audio replay to prevent confusion
 
 **Session End**:
 - Ends automatically after 50 characters complete
 
 ## Visual Interaction Examples
 
-### First Encounter (Un-mastered Character)
+### First Encounter (Un-mastered Character) - Correct Input
 ```
 [Character Display shows: blank]
 Audio: "dah dit dah" (R)
@@ -90,6 +100,22 @@ User presses: R
 [Character Display clears]
 → Next character
 (Logged as correct in statistics)
+```
+
+### First Encounter (Un-mastered Character) - Wrong Input
+```
+[Character Display shows: blank]
+Audio: "dah dit dah" (R)
+[Character Display shows: R]
+User presses: M (wrong)
+[Character Display: R flashes red]
+[R still displayed]
+Audio: "dah dit dah" (R replays)
+User presses: R
+[Character Display: R flashes green]
+[Character Display clears]
+→ Next character
+(Still logged as correct in statistics - first encounters always correct)
 ```
 
 ### Quiz Mode - Correct
@@ -118,6 +144,9 @@ User presses: K
 [Character Display clears]
 → Next character
 (Only the incorrect "M" counts in statistics, not the forced "K")
+
+Note: If user types wrong character during correction (e.g., types J instead of K),
+the character flashes red and audio replays again until K is typed correctly.
 ```
 
 ## Scoring & Progression
@@ -280,7 +309,8 @@ Learn Mode has its own interaction model rather than reusing existing mode abstr
   - Quiz mode: shows "?" initially, then user's typed character
   - Flashes green (correct) or red (incorrect)
   - Flash duration: ~300ms
-  - **Input handling**: Keyboard input ignored during flash animations to prevent confusion
+  - **Input handling**: Keyboard input ignored during flash animations AND audio replay to prevent confusion
+  - **Wrong input during first encounter/correction**: Red flash, audio replays, must type correct character
 - **Progress counter**: "X / 50" (e.g., "15 / 50")
 - **Exit button**: Always accessible
 - **No character history**: Unlike other modes, no scrolling history of past characters
@@ -349,12 +379,12 @@ Learn Mode has its own interaction model rather than reusing existing mode abstr
 
 **Adaptive Reveal Behavior**:
 1. K (mastered) → Quiz with "?"
-2. R (un-mastered, **first encounter**) → **Show "R"** (logged as correct)
+2. R (un-mastered, **first encounter**) → **Show "R"** (logged as correct, even if user types wrong initially and must retry)
 3. M (mastered) → Quiz with "?"
 4. R (un-mastered, second encounter) → Quiz with "?" (may get wrong, logged accordingly)
-5. A (un-mastered, **first encounter**) → **Show "A"** (logged as correct)
-6. T (un-mastered, **first encounter**) → **Show "T"** (logged as correct)
-7. P (un-mastered, **first encounter**) → **Show "P"** (logged as correct)
+5. A (un-mastered, **first encounter**) → **Show "A"** (logged as correct, even if user types wrong initially and must retry)
+6. T (un-mastered, **first encounter**) → **Show "T"** (logged as correct, even if user types wrong initially and must retry)
+7. P (un-mastered, **first encounter**) → **Show "P"** (logged as correct, even if user types wrong initially and must retry)
 8. K (mastered, second encounter) → Quiz with "?"
 9. R (un-mastered, third encounter) → Quiz with "?"
 ... continues for all 50 characters
