@@ -108,6 +108,13 @@ export function SessionPage() {
           setSourceContent(null);
           setStatistics(null);
         }}
+        onStartNewSession={(newConfig, newContent) => {
+          // Start a new session directly without going back to config
+          setConfig(newConfig);
+          setSourceContent(newContent);
+          setStatistics(null);
+          setPhase('active');
+        }}
       />
     );
   }

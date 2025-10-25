@@ -84,11 +84,15 @@ export async function handleLearnCharacter(
     }
   );
 
-  // Update state with result
+  // Check if session complete BEFORE incrementing index
+  const newIndex = state.currentIndex + 1;
+  const isComplete = newIndex >= PRACTICE_SESSION_LENGTH;
+
+  // Update state with result (don't increment if complete to avoid showing 21/20)
   ctx.updateSnapshot({
     learnState: {
       ...result.state,
-      currentIndex: state.currentIndex + 1
+      currentIndex: isComplete ? state.currentIndex : newIndex
     }
   });
   ctx.publish();
@@ -96,27 +100,8 @@ export async function handleLearnCharacter(
   // Update remaining time (Learn Mode has no timeout, but we still track elapsed time)
   ctx.updateRemainingTime(startTime, config);
 
-  // Log statistics based on outcome
-  // Outcomes: 'shown' (first encounter), 'correct' (quiz correct), 'incorrect' (quiz wrong)
-  // Note: Emission logic already logs events, but we track them in stats too
-  switch (result.outcome) {
-    case 'shown':
-      // First encounters always count as correct
-      // (already logged by emission logic)
-      break;
-    case 'correct':
-      // Quiz mode correct
-      // (already logged by emission logic)
-      break;
-    case 'incorrect':
-      // Quiz mode incorrect
-      // (already logged by emission logic)
-      break;
-  }
-
-  // Check if session complete
-  const newIndex = state.currentIndex + 1;
-  if (newIndex >= PRACTICE_SESSION_LENGTH) {
+  // End session if complete
+  if (isComplete) {
     debug.log(`[Learn] Session complete - ${PRACTICE_SESSION_LENGTH} characters done`);
     ctx.requestQuit();
   }

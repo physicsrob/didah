@@ -4,9 +4,12 @@
  * Post-session overview showing results and settings with options to continue.
  */
 
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import type { SessionStatisticsWithMaps } from '../core/types/statistics';
+import type { SessionConfig } from '../core/types/domain';
+import type { SourceContent } from '../features/sources';
+import { fetchSourceContent } from '../features/sources';
 import { useStatsAPI } from '../features/statistics/useStatsAPI';
 import { debug } from '../core/debug';
 import { LiveCopyDiff } from '../components/LiveCopyDiff';
@@ -20,11 +23,13 @@ import '../styles/sessionComplete.css';
 type SessionCompletePageProps = {
   statistics: SessionStatisticsWithMaps;
   onRestart: () => void;
+  onStartNewSession?: (config: import('../core/types/domain').SessionConfig, content: SourceContent) => void;
 };
 
-export function SessionCompletePage({ statistics: fullStatistics, onRestart }: SessionCompletePageProps) {
+export function SessionCompletePage({ statistics: fullStatistics, onRestart, onStartNewSession }: SessionCompletePageProps) {
   const navigate = useNavigate();
-  const { saveSessionStats, isAuthenticated } = useStatsAPI();
+  const { saveSessionStats, isAuthenticated, fetchCharacterMastery } = useStatsAPI();
+  const [isStartingNext, setIsStartingNext] = useState(false);
 
   // Calculate stars for Learn Mode and prepare statistics for saving
   const statsToSave = useMemo(() => {
@@ -70,8 +75,56 @@ export function SessionCompletePage({ statistics: fullStatistics, onRestart }: S
   };
 
   // Handler for session again
-  const handleSessionAgain = () => {
-    onRestart();
+  const handleSessionAgain = async () => {
+    // For Learn Mode with onStartNewSession available, restart the same level immediately
+    if (fullStatistics.config.mode === 'learn' &&
+        fullStatistics.config.learnLevel &&
+        onStartNewSession &&
+        !isStartingNext) {
+
+      setIsStartingNext(true);
+
+      try {
+        const currentLevel = fullStatistics.config.learnLevel;
+        const wpm = fullStatistics.config.wpm;
+
+        // Fetch practice content from backend Koch source
+        const sourceId = `koch-level-${currentLevel}`;
+        const content = await fetchSourceContent(sourceId, true);
+
+        // Query character mastery for adaptive reveal
+        const levelChars = getCharactersForLevel(currentLevel);
+        const mastery = await fetchCharacterMastery(levelChars);
+
+        // Build session config for same level
+        const config: SessionConfig = {
+          mode: 'learn',
+          lengthMs: Number.MAX_SAFE_INTEGER,
+          wpm,
+          farnsworthWpm: wpm,
+          speedTier: 'slow',
+          sourceId,
+          sourceName: `Koch Method - Level ${currentLevel}`,
+          replay: false,
+          feedback: 'none',
+          effectiveAlphabet: getCharactersForLevel(currentLevel),
+          extraWordSpacing: 0,
+          listenTimingOffset: 0,
+          characterSpeed: wpm,
+          learnLevel: currentLevel,
+          learnUnmasteredChars: Array.from(mastery.unMasteredChars),
+        };
+
+        onStartNewSession(config, content);
+      } catch (error) {
+        console.error('Failed to restart level:', error);
+        alert('Failed to restart level. Please try again.');
+        setIsStartingNext(false);
+      }
+    } else {
+      // For other modes or fallback, go back to config
+      onRestart();
+    }
   };
 
   // Get button text based on mode
@@ -100,33 +153,73 @@ export function SessionCompletePage({ statistics: fullStatistics, onRestart }: S
     const level = fullStatistics.config.learnLevel;
     const levelChars = getCharactersForLevel(level);
 
-    // Build per-character breakdown
-    const charBreakdown = levelChars.map(char => {
+    // Build list of missed characters (accuracy < 100%)
+    const missedChars = levelChars.filter(char => {
       const stats = fullStatistics.characterStats.get(char);
-      if (!stats) {
-        return { char, accuracy: 0, attempts: 0, isStruggling: true };
-      }
-      return {
-        char,
-        accuracy: stats.accuracy,
-        attempts: stats.attempts,
-        isStruggling: stats.accuracy < 80
-      };
+      return stats && stats.accuracy < 100;
     });
 
     return {
       stars,
       level,
-      charBreakdown,
+      missedChars,
       canAdvance: stars >= 1
     };
   }, [fullStatistics]);
 
   // Handle next level navigation
-  const handleNextLevel = () => {
-    if (learnModeData && learnModeData.canAdvance) {
-      // Return to config page (onRestart), which will show next level
+  const handleNextLevel = async () => {
+    if (!learnModeData || !learnModeData.canAdvance || !onStartNewSession) {
+      // Fall back to config page if we can't start directly
       onRestart();
+      return;
+    }
+
+    if (isStartingNext) return;
+    setIsStartingNext(true);
+
+    try {
+      const nextLevel = learnModeData.level + 1;
+      if (nextLevel > 20) {
+        // Can't go beyond level 20, go back to config
+        onRestart();
+        return;
+      }
+
+      const wpm = fullStatistics.config.wpm;
+
+      // Fetch practice content from backend Koch source
+      const sourceId = `koch-level-${nextLevel}`;
+      const content = await fetchSourceContent(sourceId, true); // requiresAuth = true
+
+      // Query character mastery for adaptive reveal
+      const levelChars = getCharactersForLevel(nextLevel);
+      const mastery = await fetchCharacterMastery(levelChars);
+
+      // Build session config for next level
+      const config: SessionConfig = {
+        mode: 'learn',
+        lengthMs: Number.MAX_SAFE_INTEGER,
+        wpm,
+        farnsworthWpm: wpm,
+        speedTier: 'slow',
+        sourceId,
+        sourceName: `Koch Method - Level ${nextLevel}`,
+        replay: false,
+        feedback: 'none',
+        effectiveAlphabet: getCharactersForLevel(nextLevel),
+        extraWordSpacing: 0,
+        listenTimingOffset: 0,
+        characterSpeed: wpm,
+        learnLevel: nextLevel,
+        learnUnmasteredChars: Array.from(mastery.unMasteredChars),
+      };
+
+      onStartNewSession(config, content);
+    } catch (error) {
+      console.error('Failed to start next level:', error);
+      alert('Failed to start next level. Please try again.');
+      setIsStartingNext(false);
     }
   };
 
@@ -175,27 +268,9 @@ export function SessionCompletePage({ statistics: fullStatistics, onRestart }: S
                     <span className="stat-value">{totalChars}</span>
                     <span className="stat-label">Characters Practiced</span>
                   </div>
-                </div>
-
-                {/* Per-Character Breakdown */}
-                <div className="learn-character-breakdown-section">
-                  <h2 className="section-title">Character Performance</h2>
-                  <div className="learn-character-breakdown">
-                    {learnModeData.charBreakdown.map(({ char, accuracy, attempts, isStruggling }) => (
-                      <div
-                        key={char}
-                        className={`learn-character-item ${isStruggling ? 'learn-character-struggling' : ''}`}
-                      >
-                        <div className="learn-character-char">{char}</div>
-                        <div className="learn-character-accuracy">
-                          {attempts > 0 ? `${Math.round(accuracy)}%` : '—'}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                  {learnModeData.charBreakdown.some(c => c.isStruggling) && (
-                    <div className="learn-struggling-note">
-                      Characters with less than 80% accuracy are highlighted
+                  {learnModeData.missedChars.length > 0 && (
+                    <div className="learn-missed-characters">
+                      MISSED {learnModeData.missedChars.join(', ')}
                     </div>
                   )}
                 </div>
