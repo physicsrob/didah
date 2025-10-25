@@ -12,11 +12,12 @@
 }
 
 .learn-star-filled {
-  color: #fbbf24; /* Golden yellow for filled stars */
+  color: var(--color-warning);
 }
 
 .learn-star-empty {
-  color: rgba(255, 255, 255, 0.2); /* Dim gray for empty stars */
+  color: var(--text-disabled);
+  opacity: 0.4;
 }
 
 /* Size variants */

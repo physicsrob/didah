@@ -18,36 +18,36 @@
   font-size: 8rem;
   font-weight: bold;
   font-family: var(--font-mono);
-  color: #ffffff;
+  color: var(--text-primary);
   min-width: 200px;
   min-height: 200px;
   display: flex;
   align-items: center;
   justify-content: center;
-  border: 3px solid rgba(74, 171, 247, 0.3);
+  border: 3px solid var(--border-primary);
   border-radius: 16px;
-  background: rgba(26, 32, 44, 0.6);
+  background: var(--bg-secondary);
   transition: all 0.2s ease;
 }
 
 .learn-character-flash-correct {
-  background: #22c55e !important;
-  border-color: #22c55e !important;
-  color: white !important;
+  background: var(--color-success) !important;
+  border-color: var(--color-success) !important;
+  color: var(--text-primary) !important;
   animation: flash-correct 300ms ease;
 }
 
 .learn-character-flash-incorrect {
-  background: #ef4444 !important;
-  border-color: #ef4444 !important;
-  color: white !important;
+  background: var(--color-error) !important;
+  border-color: var(--color-error) !important;
+  color: var(--text-primary) !important;
   animation: flash-incorrect 300ms ease;
 }
 
 .learn-progress {
   font-size: 1.5rem;
   font-family: var(--font-mono);
-  color: var(--color-text-secondary);
+  color: var(--text-secondary);
   font-weight: 600;
 }
 
