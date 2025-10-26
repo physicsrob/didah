@@ -4,7 +4,6 @@ import { useAudio } from '../hooks/useAudio'
 import { useUser } from '@clerk/clerk-react'
 import { SignInButton } from '@clerk/clerk-react'
 import { UserDropdown } from '../components/UserDropdown'
-import { ModeCarousel } from '../components/ModeCarousel'
 import '../styles/main.css'
 import '../styles/homePage.css'
 
@@ -13,25 +12,25 @@ const MODES = [
     mode: 'learn' as SessionMode,
     icon: '🎓',
     title: 'Learn Mode',
-    description: 'Koch method training with adaptive reveal. Perfect for learning morse code from scratch.'
+    description: 'Start here to learn morse code from scratch using the Koch method.'
   },
   {
     mode: 'practice' as SessionMode,
     icon: '⌨️',
     title: 'Letter Practice',
-    description: 'Type what you hear. Immediate feedback paced to match your speed.'
+    description: 'Type what you hear. Immediate feedback paced to your speed.'
   },
   {
     mode: 'ditDash' as SessionMode,
     icon: '🏃',
     title: 'Dit Dash',
-    description: 'Endless runner mini-game! Type letters to jump over obstacles. Progress through 10 levels with increasing speed.'
+    description: 'Endless runner mini-game! Type letters to jump over obstacles.'
   },
   {
     mode: 'head-copy' as SessionMode,
     icon: '🧠',
     title: 'Head Copy',
-    description: 'Multiple choice whole-word recognition. Select the correct word to build up fluency and the ability to head copy.'
+    description: 'Multiple choice whole-word recognition. Select the correct word to build up the ability to head copy.'
   },
   {
     mode: 'live-copy' as SessionMode,
@@ -103,13 +102,25 @@ export default function HomePage() {
         <div className="logo-container">
           <img src="/logo.svg" alt="didah" className="logo" />
         </div>
-        <p className="text-center text-lg mb-16 home-subtitle">
+        <p className="text-center text-lg home-subtitle">
           Flow state learning for morse code mastery
         </p>
 
         <div className="flex flex-col gap-8 items-center">
-          {/* Mode selection carousel */}
-          <ModeCarousel modes={MODES} onModeSelect={handleModeSelect} />
+          {/* Mode selection grid */}
+          <div className="mode-grid">
+            {MODES.map((mode) => (
+              <div
+                key={mode.mode}
+                className="mode-card"
+                onClick={() => handleModeSelect(mode.mode)}
+              >
+                <div className="mode-card-icon">{mode.icon}</div>
+                <div className="mode-card-title">{mode.title}</div>
+                <div className="mode-card-description">{mode.description}</div>
+              </div>
+            ))}
+          </div>
         </div>
 
         {/* Footer */}
