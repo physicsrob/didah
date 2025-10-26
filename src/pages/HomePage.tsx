@@ -9,7 +9,7 @@ import '../styles/main.css'
 import '../styles/homePage.css'
 
 // Define display order for modes on home page
-const MODE_ORDER: SessionMode[] = ['learn', 'practice', 'ditDash', 'head-copy', 'live-copy', 'listen'];
+const MODE_ORDER: SessionMode[] = ['learn', 'practice', 'head-copy', 'live-copy', 'ditDash', 'listen'];
 
 export default function HomePage() {
   const navigate = useNavigate()
