@@ -2,19 +2,75 @@
  * Learn Mode Configuration Page Styles
  */
 
-.learn-level-list {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  max-height: 500px;
-  overflow-y: auto;
-  padding: 4px;
+/* Page container - z-index for canvas background */
+.browse-lessons-container {
+  position: relative;
+  z-index: 1;
 }
 
-.learn-level-item {
+/* WPM Slider Section (top of page) */
+.learn-wpm-section {
+  margin-bottom: 24px;
+}
+
+/* Hero Card */
+.learn-hero-card {
+  padding: 32px;
+  background: var(--bg-secondary);
+  border: 2px solid var(--border-primary);
+  border-radius: 8px;
+  margin-bottom: 24px;
+}
+
+.learn-hero-heading {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--color-blue-primary);
+  margin-bottom: 16px;
+}
+
+.learn-hero-lesson {
+  font-size: 20px;
+  font-weight: 600;
+  font-family: var(--font-mono);
+  color: var(--text-primary);
+  letter-spacing: 2px;
+  margin-bottom: 8px;
+}
+
+.learn-hero-subtitle {
+  font-size: 16px;
+  color: var(--text-secondary);
+  margin-bottom: 20px;
+}
+
+.learn-hero-button {
+  width: 100%;
+}
+
+/* Lesson List Container */
+.learn-lesson-list-section {
+  margin-bottom: 24px;
+}
+
+.learn-lesson-list-heading {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 12px;
+}
+
+.learn-lesson-list {
   display: flex;
   flex-direction: column;
   gap: 8px;
+  padding: 4px;
+}
+
+/* Lesson Item - Collapsed State */
+.learn-lesson-item {
+  display: flex;
+  flex-direction: column;
   padding: 16px 20px;
   background: var(--bg-secondary);
   border: 2px solid var(--border-primary);
@@ -26,60 +82,111 @@
   color: var(--text-primary);
 }
 
-.learn-level-item:hover {
+.learn-lesson-item:hover {
   border-color: var(--color-blue-primary);
   background: var(--bg-tertiary);
   transform: translateX(4px);
 }
 
-.learn-level-selected {
-  border-color: var(--color-blue-primary) !important;
-  background: var(--bg-tertiary) !important;
-  box-shadow: 0 0 12px var(--shadow-primary);
-}
-
-.learn-level-header {
+.learn-lesson-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 12px;
 }
 
-.learn-level-number {
+.learn-lesson-title {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+  min-width: 0;
+}
+
+.learn-lesson-number {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-primary);
+  white-space: nowrap;
+}
+
+.learn-lesson-chars-collapsed {
   font-size: 16px;
   font-weight: 600;
+  font-family: var(--font-mono);
   color: var(--color-blue-primary);
+  letter-spacing: 2px;
 }
 
-.learn-level-chars {
-  font-size: 20px;
+/* Lesson Item - Expanded State */
+.learn-lesson-expanded {
+  border-color: var(--color-blue-primary) !important;
+  background: var(--bg-tertiary) !important;
+  box-shadow: 0 0 12px var(--shadow-primary);
+  padding-bottom: 20px;
+}
+
+.learn-char-breakdown {
+  margin-top: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.learn-char-breakdown-row {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.learn-char-breakdown-label {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  min-width: 70px;
+}
+
+.learn-char-breakdown-chars {
+  font-size: 18px;
   font-weight: 600;
   font-family: var(--font-mono);
   color: var(--text-primary);
-  letter-spacing: 4px;
+  letter-spacing: 3px;
 }
 
-.learn-level-chars-total {
+.learn-char-breakdown-count {
   font-size: 14px;
   font-weight: 400;
-  font-family: var(--font-primary);
   color: var(--text-secondary);
-  margin-left: 12px;
-  letter-spacing: normal;
+  margin-left: 4px;
+}
+
+.learn-lesson-action {
+  margin-top: 16px;
+}
+
+.learn-lesson-action button {
+  width: 100%;
 }
 
 /* Mobile responsive */
 @media (max-width: 768px) {
-  .learn-level-list {
-    max-height: 400px;
+  .learn-hero-card {
+    padding: 24px;
   }
 
-  .learn-level-item {
+  .learn-lesson-item {
     padding: 14px 16px;
   }
 
-  .learn-level-chars {
-    font-size: 18px;
-    letter-spacing: 3px;
+  .learn-lesson-chars-collapsed {
+    font-size: 14px;
+    letter-spacing: 2px;
+  }
+
+  .learn-char-breakdown-chars {
+    font-size: 16px;
+    letter-spacing: 2px;
   }
 
   .learn-star {
@@ -88,12 +195,26 @@
 }
 
 @media (max-width: 480px) {
-  .learn-level-chars {
-    font-size: 16px;
+  .learn-hero-lesson {
+    font-size: 18px;
+  }
+
+  .learn-lesson-number {
+    font-size: 14px;
+  }
+
+  .learn-lesson-chars-collapsed {
+    font-size: 13px;
+    letter-spacing: 1.5px;
+  }
+
+  .learn-char-breakdown-chars {
+    font-size: 15px;
     letter-spacing: 2px;
   }
 
-  .learn-level-chars-total {
-    font-size: 12px;
+  .learn-char-breakdown-label {
+    font-size: 13px;
+    min-width: 60px;
   }
 }

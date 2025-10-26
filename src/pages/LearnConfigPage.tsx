@@ -1,20 +1,17 @@
 /**
  * Learn Mode Configuration Page
  *
- * Koch method onboarding with level selector, WPM controls, and star ratings.
- * Requires authentication.
+ * Koch method onboarding with lesson selector, WPM controls, and star ratings.
+ * Works for anonymous users (stars saved locally) and syncs when authenticated.
  */
 
-import { useState, useEffect, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useUser, SignInButton } from '@clerk/clerk-react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import type { SessionConfig } from '../core/types/domain';
 import type { SourceContent } from '../features/sources';
 import { HeaderBar } from '../components/HeaderBar';
-import { StarDisplay } from '../components/StarDisplay';
-import { getCharactersForLevel, getNewCharactersForLevel, TOTAL_LEVELS } from '../../functions/shared/koch';
+import { getCharactersForLesson, getNewCharactersForLesson, TOTAL_LESSONS } from '../../functions/shared/koch';
 import { fetchSourceContent } from '../features/sources';
-import { useStatsAPI } from '../features/statistics/useStatsAPI';
 import { useSettings } from '../features/settings/hooks/useSettings';
 import '../styles/main.css';
 import '../styles/learnConfig.css';
@@ -24,15 +21,11 @@ type LearnConfigPageProps = {
 };
 
 export function LearnConfigPage({ onStart }: LearnConfigPageProps) {
-  const { user, isLoaded } = useUser();
-  const navigate = useNavigate();
-  const { fetchLearnProgress, fetchCharacterMastery } = useStatsAPI();
   const { settings, updateSetting } = useSettings();
+  const location = useLocation();
+  const navigate = useNavigate();
 
-  const [selectedLevel, setSelectedLevel] = useState<number>(1);
   const [wpm, setWpm] = useState<number>(15);
-  const [starRatings, setStarRatings] = useState<Map<number, number>>(new Map());
-  const [isLoadingStars, setIsLoadingStars] = useState(true);
   const [isStarting, setIsStarting] = useState(false);
 
   // Sync WPM from centralized settings when they load
@@ -42,78 +35,63 @@ export function LearnConfigPage({ onStart }: LearnConfigPageProps) {
     }
   }, [settings]);
 
-  // Fetch historical star ratings
-  useEffect(() => {
-    if (!user) {
-      setIsLoadingStars(false);
-      return;
-    }
+  // Get star ratings from settings (works for both anonymous and authenticated users)
+  const learnProgress = useMemo(() => settings?.learnProgress || {}, [settings]);
 
-    // Fetch actual historical sessions and calculate star ratings
-    (async () => {
-      try {
-        const progress = await fetchLearnProgress();
-        setStarRatings(progress);
-      } catch (error) {
-        console.error('Failed to fetch Learn Mode progress:', error);
-        // Graceful fallback - empty map (no completed levels)
-        setStarRatings(new Map());
-      } finally {
-        setIsLoadingStars(false);
-      }
-    })();
-  }, [user, fetchLearnProgress]);
-
-  // Determine the "next level" (first level with 0 stars or no attempt)
-  const nextLevel = useCallback(() => {
-    for (let level = 1; level <= TOTAL_LEVELS; level++) {
-      const stars = starRatings.get(level);
+  // Determine the "next lesson" (first lesson with 0 stars or no attempt)
+  const nextLesson = useCallback(() => {
+    for (let lesson = 1; lesson <= TOTAL_LESSONS; lesson++) {
+      const stars = learnProgress[lesson];
       if (stars === undefined || stars === 0) {
-        return level;
+        return lesson;
       }
     }
-    return TOTAL_LEVELS; // All levels completed, suggest last level
-  }, [starRatings]);
+    return TOTAL_LESSONS; // All lessons completed, suggest last lesson
+  }, [learnProgress]);
 
-  // Set default selected level to next level
-  useEffect(() => {
-    if (!isLoadingStars) {
-      setSelectedLevel(nextLevel());
+  // Check if all lessons are complete
+  const allLessonsComplete = useCallback(() => {
+    for (let lesson = 1; lesson <= TOTAL_LESSONS; lesson++) {
+      const stars = learnProgress[lesson];
+      if (stars === undefined || stars === 0) {
+        return false;
+      }
     }
-  }, [isLoadingStars, nextLevel]);
+    return true;
+  }, [learnProgress]);
 
-  // Handle start session
-  const handleStart = async () => {
+  // Check if this is a first-time user (no progress at all)
+  const isFirstTime = useCallback(() => {
+    return Object.keys(learnProgress).length === 0;
+  }, [learnProgress]);
+
+  // Handle start session for a specific lesson
+  const handleStartLesson = useCallback(async (lesson: number) => {
     if (isStarting) return;
 
     setIsStarting(true);
 
     try {
       // Fetch practice content from backend Koch source
-      const sourceId = `koch-level-${selectedLevel}`;
-      const content = await fetchSourceContent(sourceId, true); // requiresAuth = true
-
-      // Query character mastery for adaptive reveal
-      const levelChars = getCharactersForLevel(selectedLevel);
-      const mastery = await fetchCharacterMastery(levelChars);
+      const sourceId = `koch-lesson-${lesson}`;
+      const content = await fetchSourceContent(sourceId, false); // No auth required
 
       // Build session config
       const config: SessionConfig = {
         mode: 'learn',
-        lengthMs: Number.MAX_SAFE_INTEGER, // No time limit (ends after 50 characters)
+        lengthMs: Number.MAX_SAFE_INTEGER, // No time limit (ends after 20 characters)
         wpm,
         farnsworthWpm: wpm, // No Farnsworth for Learn Mode
         speedTier: 'slow',
         sourceId,
-        sourceName: `Koch Method - Level ${selectedLevel}`,
+        sourceName: `Koch Method - Lesson ${lesson}`,
         replay: false, // Learn Mode has built-in replay behavior
         feedback: 'none', // Learn Mode has custom feedback
-        effectiveAlphabet: getCharactersForLevel(selectedLevel),
+        effectiveAlphabet: getCharactersForLesson(lesson),
         extraWordSpacing: 0,
         listenTimingOffset: 0,
         characterSpeed: wpm,
-        learnLevel: selectedLevel,
-        learnUnmasteredChars: Array.from(mastery.unMasteredChars), // For adaptive reveal
+        learnLesson: lesson,
       };
 
       onStart(config, content);
@@ -122,40 +100,21 @@ export function LearnConfigPage({ onStart }: LearnConfigPageProps) {
       alert('Failed to start session. Please try again.');
       setIsStarting(false);
     }
-  };
+  }, [isStarting, wpm, onStart]);
 
-  // Show authentication required screen
-  if (isLoaded && !user) {
-    return (
-      <div className="min-h-screen">
-        <HeaderBar />
-        <div className="container container-centered">
-          <div className="card container-narrow" style={{ padding: '48px', textAlign: 'center' }}>
-            <h1 className="heading-1" style={{ marginBottom: '16px' }}>Learn Mode</h1>
-            <p className="body-regular" style={{ marginBottom: '32px', color: 'var(--color-text-secondary)' }}>
-              Learn Mode requires an account to track your progress and save your achievements.
-            </p>
-            <SignInButton mode="modal">
-              <button className="btn btn-primary btn-large">
-                Sign In to Continue
-              </button>
-            </SignInButton>
-            <div style={{ marginTop: '24px' }}>
-              <button
-                className="btn btn-secondary"
-                onClick={() => navigate('/')}
-              >
-                Back to Home
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
+  // Auto-start lesson if navigated from Browse Lessons page
+  useEffect(() => {
+    const state = location.state as { selectedLesson?: number } | null;
+    if (state?.selectedLesson && settings && !isStarting) {
+      // Clear the state so back button doesn't re-trigger
+      navigate(location.pathname, { replace: true });
+      // Start the selected lesson
+      handleStartLesson(state.selectedLesson);
+    }
+  }, [location.state, location.pathname, settings, isStarting, navigate, handleStartLesson]);
 
   // Show loading state
-  if (!isLoaded || isLoadingStars) {
+  if (!settings) {
     return (
       <div className="min-h-screen">
         <HeaderBar />
@@ -168,21 +127,39 @@ export function LearnConfigPage({ onStart }: LearnConfigPageProps) {
     );
   }
 
-  return (
-    <div className="min-h-screen">
-      <HeaderBar />
+  // Render lesson content based on progress
+  const renderLessonContent = () => {
+    const recommended = nextLesson();
+    const allComplete = allLessonsComplete();
+    const firstTime = isFirstTime();
 
-      <div className="container container-centered">
-        <div className="container-narrow">
-          <h1 className="heading-1" style={{ marginBottom: '16px' }}>Learn Mode</h1>
-          <p className="body-regular" style={{ marginBottom: '24px', color: 'var(--color-text-secondary)' }}>
-            Learn Morse code from scratch using the Koch method. Progress through 20 levels, mastering 2 new characters at a time.
-          </p>
-        </div>
+    if (allComplete) {
+      return (
+        <>
+          <div style={{ textAlign: 'center', marginBottom: '24px' }}>
+            <div style={{ fontSize: '32px', marginBottom: '8px' }}>🎉</div>
+            <div style={{ fontSize: '20px', fontWeight: '600', color: 'var(--text-primary)' }}>
+              You've completed all 20 lessons!
+            </div>
+          </div>
+          <button
+            className="btn btn-secondary btn-large"
+            onClick={() => navigate('/learn/browse')}
+            style={{ width: '100%' }}
+          >
+            Browse Lessons
+          </button>
+        </>
+      );
+    }
 
-        {/* Settings Card */}
-        <div className="card container-narrow" style={{ padding: '32px', marginBottom: '24px' }}>
-          {/* WPM Slider */}
+    const lessonNum = firstTime ? 1 : recommended;
+    const newChars = getNewCharactersForLesson(lessonNum);
+    const prevChars = lessonNum > 1 ? getCharactersForLesson(lessonNum - 1) : [];
+
+    return (
+      <>
+        <div style={{ marginBottom: '24px' }}>
           <div className="settings-row">
             <div className="settings-label">Character Speed</div>
             <div className="settings-control">
@@ -211,49 +188,107 @@ export function LearnConfigPage({ onStart }: LearnConfigPageProps) {
           </div>
         </div>
 
-        {/* Level Selector */}
-        <div className="card container-narrow" style={{ padding: '32px' }}>
-          <h2 className="heading-3" style={{ marginBottom: '16px' }}>Select Level</h2>
-          <div className="learn-level-list">
-            {Array.from({ length: TOTAL_LEVELS }, (_, i) => i + 1).map((level) => {
-              const chars = getCharactersForLevel(level);
-              const newChars = getNewCharactersForLevel(level);
-              const stars = starRatings.get(level) || 0;
-              const isSelected = level === selectedLevel;
-              const hasAttempt = starRatings.has(level);
+        <div style={{ fontSize: '14px', fontWeight: '600', color: 'var(--text-secondary)', marginBottom: '12px' }}>
+          {firstTime ? 'Start here' : 'Your Next Lesson'}
+        </div>
 
-              return (
-                <button
-                  key={level}
-                  className={`learn-level-item ${isSelected ? 'learn-level-selected' : ''}`}
-                  onClick={() => setSelectedLevel(level)}
-                >
-                  <div className="learn-level-header">
-                    <span className="learn-level-number">Level {level}</span>
-                    <StarDisplay stars={stars} hasAttempt={hasAttempt} size="medium" />
-                  </div>
-                  <div className="learn-level-chars">
-                    {newChars.join(' ')}
-                    <span className="learn-level-chars-total">
-                      ({chars.length} total)
-                    </span>
-                  </div>
-                </button>
-              );
-            })}
+        <div style={{
+          padding: '24px',
+          background: 'var(--bg-secondary)',
+          border: '1px solid var(--border-primary)',
+          borderRadius: '8px',
+          marginBottom: '24px'
+        }}>
+          <div style={{
+            fontSize: '16px',
+            fontWeight: '600',
+            color: 'var(--text-secondary)',
+            marginBottom: '16px'
+          }}>
+            Lesson {lessonNum}
+          </div>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            <div>
+              <div style={{ fontSize: '11px', fontWeight: '600', color: 'var(--text-secondary)', marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                New Characters
+              </div>
+              <div style={{
+                fontSize: '32px',
+                fontWeight: '600',
+                fontFamily: 'var(--font-mono)',
+                color: 'var(--text-primary)',
+                letterSpacing: '6px',
+                lineHeight: '1.2'
+              }}>
+                {newChars.join(' ')}
+              </div>
+            </div>
+            {prevChars.length > 0 && (
+              <div>
+                <div style={{ fontSize: '11px', fontWeight: '600', color: 'var(--text-secondary)', marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                  Previous Characters
+                </div>
+                <div style={{
+                  fontSize: '16px',
+                  fontWeight: '500',
+                  fontFamily: 'var(--font-mono)',
+                  color: 'var(--text-secondary)',
+                  letterSpacing: '2px',
+                  lineHeight: '1.6'
+                }}>
+                  {prevChars.join(' ')}
+                </div>
+              </div>
+            )}
           </div>
         </div>
 
-        {/* Start Button */}
-        <div className="container-narrow" style={{ marginTop: '24px' }}>
-          <button
-            className="btn btn-primary btn-large"
-            onClick={handleStart}
-            disabled={isStarting}
-            style={{ width: '100%' }}
+        <button
+          className="btn btn-primary btn-large"
+          onClick={() => handleStartLesson(lessonNum)}
+          disabled={isStarting}
+          style={{ width: '100%', marginBottom: '8px' }}
+        >
+          {isStarting ? 'Starting...' : `Start Lesson ${lessonNum}`}
+        </button>
+
+        <div style={{ textAlign: 'center' }}>
+          <a
+            href="/learn/browse"
+            onClick={(e) => {
+              e.preventDefault();
+              navigate('/learn/browse');
+            }}
+            style={{
+              color: 'var(--color-blue-primary)',
+              textDecoration: 'none',
+              fontSize: '14px',
+              cursor: 'pointer'
+            }}
+            onMouseEnter={(e) => e.currentTarget.style.textDecoration = 'underline'}
+            onMouseLeave={(e) => e.currentTarget.style.textDecoration = 'none'}
           >
-            {isStarting ? 'Starting...' : `Start Level ${selectedLevel}`}
-          </button>
+            Browse All Lessons
+          </a>
+        </div>
+      </>
+    );
+  };
+
+  return (
+    <div className="min-h-screen">
+      <HeaderBar />
+
+      <div className="container container-centered">
+        <div className="container-narrow">
+          <h1 className="heading-1" style={{ marginBottom: '16px' }}>Learn Mode</h1>
+          <p className="body-regular" style={{ marginBottom: '32px', color: 'var(--color-text-secondary)' }}>
+            Learn Morse code from scratch using the Koch method. Progress through 20 lessons, mastering 2 new characters at a time.
+          </p>
+
+          {/* Lesson Content */}
+          {renderLessonContent()}
         </div>
       </div>
     </div>

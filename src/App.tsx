@@ -5,6 +5,7 @@ import HomePage from './pages/HomePage'
 import StatisticsPage from './pages/StatisticsPage'
 import SettingsPage from './pages/SettingsPage'
 import AboutPage from './pages/AboutPage'
+import { BrowseLessonsPage } from './pages/BrowseLessonsPage'
 import { AudioProvider } from './contexts/AudioContext.tsx'
 import { ThemeProvider } from './contexts/ThemeContext'
 import { ClerkProvider } from '@clerk/clerk-react'
@@ -28,6 +29,7 @@ function AppContent() {
       <Routes>
         <Route path="/" element={<HomePage />} />
         <Route path="/session/:mode" element={<SessionPage />} />
+        <Route path="/learn/browse" element={<BrowseLessonsPage />} />
         <Route path="/statistics" element={<StatisticsPage />} />
         <Route path="/settings" element={<SettingsPage />} />
         <Route path="/about" element={<AboutPage />} />
