@@ -114,7 +114,7 @@ export function createSessionRunner(deps: SessionRunnerDeps): SessionRunner {
       learnState: snapshot.learnState ? {
         ...snapshot.learnState,
         encounteredChars: [...snapshot.learnState.encounteredChars],
-        unmasteredChars: [...snapshot.learnState.unmasteredChars]
+        newChars: [...snapshot.learnState.newChars]
       } : undefined
     };
     if (deps.io.snapshot) {
@@ -195,7 +195,7 @@ export function createSessionRunner(deps: SessionRunnerDeps): SessionRunner {
         flashState: null,
         correctionMode: false,
         encounteredChars: [],
-        unmasteredChars: [],
+        newChars: [],
         currentIndex: 0,
         practiceSequence: ''
       } : undefined

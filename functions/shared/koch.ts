@@ -2,12 +2,12 @@
  * Koch Method implementation for Learn Mode
  *
  * The Koch method introduces 2 characters at a time, building up from a small set.
- * Each level includes all characters from previous levels plus 2 new ones.
+ * Each lesson includes all characters from previous lessons plus 2 new ones.
  */
 
 /**
  * Standard Koch sequence (40 characters total)
- * 2 characters per level = 20 levels
+ * 2 characters per lesson = 20 lessons
  */
 export const KOCH_SEQUENCE = [
   'K', 'M', 'R', 'S', 'U', 'A', 'P', 'T', 'L', 'O',
@@ -16,80 +16,81 @@ export const KOCH_SEQUENCE = [
   'B', '?', '4', '2', '7', 'C', '1', 'D', '6', 'X'
 ] as const
 
-export const TOTAL_LEVELS = 20
-export const CHARACTERS_PER_LEVEL = 2
-export const PRACTICE_SESSION_LENGTH = 20
+export const TOTAL_LESSONS = 20
+export const CHARACTERS_PER_LESSON = 2
+export const MIN_NEW_CHAR_DRILLS = 5
+export const LEARN_SESSION_LENGTH = 30  // Number of characters in a Learn Mode session
 
 /**
- * Validates that a level number is within valid range (1-20)
+ * Validates that a lesson number is within valid range (1-20)
  */
-export function isValidLevel(level: number): boolean {
-  return Number.isInteger(level) && level >= 1 && level <= TOTAL_LEVELS
+export function isValidLesson(lesson: number): boolean {
+  return Number.isInteger(lesson) && lesson >= 1 && lesson <= TOTAL_LESSONS
 }
 
 /**
- * Gets all characters for a given level (cumulative from level 1 through the given level)
+ * Gets all characters for a given lesson (cumulative from lesson 1 through the given lesson)
  *
- * @param level Level number (1-20)
- * @returns Array of all characters up to and including this level
- * @throws Error if level is invalid
+ * @param lesson Lesson number (1-20)
+ * @returns Array of all characters up to and including this lesson
+ * @throws Error if lesson is invalid
  *
  * @example
- * getCharactersForLevel(1) // ['K', 'M']
- * getCharactersForLevel(2) // ['K', 'M', 'R', 'S']
- * getCharactersForLevel(3) // ['K', 'M', 'R', 'S', 'U', 'A']
+ * getCharactersForLesson(1) // ['K', 'M']
+ * getCharactersForLesson(2) // ['K', 'M', 'R', 'S']
+ * getCharactersForLesson(3) // ['K', 'M', 'R', 'S', 'U', 'A']
  */
-export function getCharactersForLevel(level: number): string[] {
-  if (!isValidLevel(level)) {
-    throw new Error(`Invalid level: ${level}. Must be between 1 and ${TOTAL_LEVELS}`)
+export function getCharactersForLesson(lesson: number): string[] {
+  if (!isValidLesson(lesson)) {
+    throw new Error(`Invalid lesson: ${lesson}. Must be between 1 and ${TOTAL_LESSONS}`)
   }
 
-  const endIndex = level * CHARACTERS_PER_LEVEL
+  const endIndex = lesson * CHARACTERS_PER_LESSON
   return KOCH_SEQUENCE.slice(0, endIndex) as unknown as string[]
 }
 
 /**
- * Gets only the newly introduced characters for a given level
+ * Gets only the newly introduced characters for a given lesson
  *
- * @param level Level number (1-20)
- * @returns Array of the 2 new characters introduced at this level
- * @throws Error if level is invalid
+ * @param lesson Lesson number (1-20)
+ * @returns Array of the 2 new characters introduced at this lesson
+ * @throws Error if lesson is invalid
  *
  * @example
- * getNewCharactersForLevel(1) // ['K', 'M']
- * getNewCharactersForLevel(2) // ['R', 'S']
- * getNewCharactersForLevel(3) // ['U', 'A']
+ * getNewCharactersForLesson(1) // ['K', 'M']
+ * getNewCharactersForLesson(2) // ['R', 'S']
+ * getNewCharactersForLesson(3) // ['U', 'A']
  */
-export function getNewCharactersForLevel(level: number): string[] {
-  if (!isValidLevel(level)) {
-    throw new Error(`Invalid level: ${level}. Must be between 1 and ${TOTAL_LEVELS}`)
+export function getNewCharactersForLesson(lesson: number): string[] {
+  if (!isValidLesson(lesson)) {
+    throw new Error(`Invalid lesson: ${lesson}. Must be between 1 and ${TOTAL_LESSONS}`)
   }
 
-  const startIndex = (level - 1) * CHARACTERS_PER_LEVEL
-  const endIndex = level * CHARACTERS_PER_LEVEL
+  const startIndex = (lesson - 1) * CHARACTERS_PER_LESSON
+  const endIndex = lesson * CHARACTERS_PER_LESSON
   return KOCH_SEQUENCE.slice(startIndex, endIndex) as unknown as string[]
 }
 
 /**
- * Gets a human-readable description of a level
+ * Gets a human-readable description of a lesson
  *
- * @param level Level number (1-20)
- * @returns String description like "Level 3: K M R S U A"
- * @throws Error if level is invalid
+ * @param lesson Lesson number (1-20)
+ * @returns String description like "Lesson 3: K M R S U A"
+ * @throws Error if lesson is invalid
  */
-export function getLevelDescription(level: number): string {
-  const chars = getCharactersForLevel(level)
-  return `Level ${level}: ${chars.join(' ')}`
+export function getLessonDescription(lesson: number): string {
+  const chars = getCharactersForLesson(lesson)
+  return `Lesson ${lesson}: ${chars.join(' ')}`
 }
 
 /**
- * Gets a human-readable description of new characters in a level
+ * Gets a human-readable description of new characters in a lesson
  *
- * @param level Level number (1-20)
- * @returns String description like "Level 3 (+U +A)"
- * @throws Error if level is invalid
+ * @param lesson Lesson number (1-20)
+ * @returns String description like "Lesson 3 (+U +A)"
+ * @throws Error if lesson is invalid
  */
-export function getNewCharactersDescription(level: number): string {
-  const newChars = getNewCharactersForLevel(level)
-  return `Level ${level} (+${newChars.join(' +')})`
+export function getNewCharactersDescription(lesson: number): string {
+  const newChars = getNewCharactersForLesson(lesson)
+  return `Lesson ${lesson} (+${newChars.join(' +')})`
 }

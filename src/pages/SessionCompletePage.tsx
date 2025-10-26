@@ -11,12 +11,13 @@ import type { SessionConfig } from '../core/types/domain';
 import type { SourceContent } from '../features/sources';
 import { fetchSourceContent } from '../features/sources';
 import { useStatsAPI } from '../features/statistics/useStatsAPI';
+import { useSettings } from '../features/settings/hooks/useSettings';
 import { debug } from '../core/debug';
 import { LiveCopyDiff } from '../components/LiveCopyDiff';
 import { SpeedDisplay } from '../components/SpeedDisplay';
 import { StarDisplay } from '../components/StarDisplay';
 import { calculateStars } from '../../functions/shared/starCalculation';
-import { getCharactersForLevel } from '../../functions/shared/koch';
+import { getCharactersForLesson } from '../../functions/shared/koch';
 import '../styles/main.css';
 import '../styles/sessionComplete.css';
 
@@ -28,7 +29,8 @@ type SessionCompletePageProps = {
 
 export function SessionCompletePage({ statistics: fullStatistics, onRestart, onStartNewSession }: SessionCompletePageProps) {
   const navigate = useNavigate();
-  const { saveSessionStats, isAuthenticated, fetchCharacterMastery } = useStatsAPI();
+  const { saveSessionStats, isAuthenticated } = useStatsAPI();
+  const { settings, updateSettings } = useSettings();
   const [isStartingNext, setIsStartingNext] = useState(false);
 
   // Calculate stars for Learn Mode and prepare statistics for saving
@@ -38,7 +40,7 @@ export function SessionCompletePage({ statistics: fullStatistics, onRestart, onS
       return {
         ...fullStatistics,
         learnStars: stars,
-        learnLevel: fullStatistics.config.learnLevel
+        learnLesson: fullStatistics.config.learnLesson
       };
     }
     return fullStatistics;
@@ -59,6 +61,27 @@ export function SessionCompletePage({ statistics: fullStatistics, onRestart, onS
     }
   }, [statsToSave, isAuthenticated, saveSessionStats]);
 
+  // Save stars to settings for Learn Mode
+  useEffect(() => {
+    if (fullStatistics.config.mode === 'learn' && fullStatistics.config.learnLesson && settings) {
+      const stars = calculateStars(fullStatistics.overallAccuracy);
+      const lesson = fullStatistics.config.learnLesson;
+      const currentStars = settings.learnProgress?.[lesson] || 0;
+
+      // Only update if new stars are better
+      if (stars > currentStars) {
+        updateSettings({
+          learnProgress: {
+            ...settings.learnProgress,
+            [lesson]: stars
+          }
+        }).catch(err => {
+          console.error('Failed to save Learn Mode progress to settings:', err);
+        });
+      }
+    }
+  }, [fullStatistics, settings, updateSettings]);
+
   // Navigation handlers
   const handleBackToMenu = () => {
     navigate('/');
@@ -76,27 +99,23 @@ export function SessionCompletePage({ statistics: fullStatistics, onRestart, onS
 
   // Handler for session again
   const handleSessionAgain = async () => {
-    // For Learn Mode with onStartNewSession available, restart the same level immediately
+    // For Learn Mode with onStartNewSession available, restart the same lesson immediately
     if (fullStatistics.config.mode === 'learn' &&
-        fullStatistics.config.learnLevel &&
+        fullStatistics.config.learnLesson &&
         onStartNewSession &&
         !isStartingNext) {
 
       setIsStartingNext(true);
 
       try {
-        const currentLevel = fullStatistics.config.learnLevel;
+        const currentLesson = fullStatistics.config.learnLesson;
         const wpm = fullStatistics.config.wpm;
 
         // Fetch practice content from backend Koch source
-        const sourceId = `koch-level-${currentLevel}`;
-        const content = await fetchSourceContent(sourceId, true);
+        const sourceId = `koch-lesson-${currentLesson}`;
+        const content = await fetchSourceContent(sourceId, false);
 
-        // Query character mastery for adaptive reveal
-        const levelChars = getCharactersForLevel(currentLevel);
-        const mastery = await fetchCharacterMastery(levelChars);
-
-        // Build session config for same level
+        // Build session config for same lesson
         const config: SessionConfig = {
           mode: 'learn',
           lengthMs: Number.MAX_SAFE_INTEGER,
@@ -104,21 +123,20 @@ export function SessionCompletePage({ statistics: fullStatistics, onRestart, onS
           farnsworthWpm: wpm,
           speedTier: 'slow',
           sourceId,
-          sourceName: `Koch Method - Level ${currentLevel}`,
+          sourceName: `Koch Method - Lesson ${currentLesson}`,
           replay: false,
           feedback: 'none',
-          effectiveAlphabet: getCharactersForLevel(currentLevel),
+          effectiveAlphabet: getCharactersForLesson(currentLesson),
           extraWordSpacing: 0,
           listenTimingOffset: 0,
           characterSpeed: wpm,
-          learnLevel: currentLevel,
-          learnUnmasteredChars: Array.from(mastery.unMasteredChars),
+          learnLesson: currentLesson,
         };
 
         onStartNewSession(config, content);
       } catch (error) {
-        console.error('Failed to restart level:', error);
-        alert('Failed to restart level. Please try again.');
+        console.error('Failed to restart lesson:', error);
+        alert('Failed to restart lesson. Please try again.');
         setIsStartingNext(false);
       }
     } else {
@@ -145,30 +163,30 @@ export function SessionCompletePage({ statistics: fullStatistics, onRestart, onS
 
   // Learn Mode specific data
   const learnModeData = useMemo(() => {
-    if (fullStatistics.config.mode !== 'learn' || !fullStatistics.config.learnLevel) {
+    if (fullStatistics.config.mode !== 'learn' || !fullStatistics.config.learnLesson) {
       return null;
     }
 
     const stars = calculateStars(fullStatistics.overallAccuracy);
-    const level = fullStatistics.config.learnLevel;
-    const levelChars = getCharactersForLevel(level);
+    const lesson = fullStatistics.config.learnLesson;
+    const lessonChars = getCharactersForLesson(lesson);
 
     // Build list of missed characters (accuracy < 100%)
-    const missedChars = levelChars.filter(char => {
+    const missedChars = lessonChars.filter(char => {
       const stats = fullStatistics.characterStats.get(char);
       return stats && stats.accuracy < 100;
     });
 
     return {
       stars,
-      level,
+      lesson,
       missedChars,
       canAdvance: stars >= 1
     };
   }, [fullStatistics]);
 
-  // Handle next level navigation
-  const handleNextLevel = async () => {
+  // Handle next lesson navigation
+  const handleNextLesson = async () => {
     if (!learnModeData || !learnModeData.canAdvance || !onStartNewSession) {
       // Fall back to config page if we can't start directly
       onRestart();
@@ -179,9 +197,9 @@ export function SessionCompletePage({ statistics: fullStatistics, onRestart, onS
     setIsStartingNext(true);
 
     try {
-      const nextLevel = learnModeData.level + 1;
-      if (nextLevel > 20) {
-        // Can't go beyond level 20, go back to config
+      const nextLesson = learnModeData.lesson + 1;
+      if (nextLesson > 20) {
+        // Can't go beyond lesson 20, go back to config
         onRestart();
         return;
       }
@@ -189,14 +207,10 @@ export function SessionCompletePage({ statistics: fullStatistics, onRestart, onS
       const wpm = fullStatistics.config.wpm;
 
       // Fetch practice content from backend Koch source
-      const sourceId = `koch-level-${nextLevel}`;
-      const content = await fetchSourceContent(sourceId, true); // requiresAuth = true
+      const sourceId = `koch-lesson-${nextLesson}`;
+      const content = await fetchSourceContent(sourceId, false); // No auth required
 
-      // Query character mastery for adaptive reveal
-      const levelChars = getCharactersForLevel(nextLevel);
-      const mastery = await fetchCharacterMastery(levelChars);
-
-      // Build session config for next level
+      // Build session config for next lesson
       const config: SessionConfig = {
         mode: 'learn',
         lengthMs: Number.MAX_SAFE_INTEGER,
@@ -204,21 +218,20 @@ export function SessionCompletePage({ statistics: fullStatistics, onRestart, onS
         farnsworthWpm: wpm,
         speedTier: 'slow',
         sourceId,
-        sourceName: `Koch Method - Level ${nextLevel}`,
+        sourceName: `Koch Method - Lesson ${nextLesson}`,
         replay: false,
         feedback: 'none',
-        effectiveAlphabet: getCharactersForLevel(nextLevel),
+        effectiveAlphabet: getCharactersForLesson(nextLesson),
         extraWordSpacing: 0,
         listenTimingOffset: 0,
         characterSpeed: wpm,
-        learnLevel: nextLevel,
-        learnUnmasteredChars: Array.from(mastery.unMasteredChars),
+        learnLesson: nextLesson,
       };
 
       onStartNewSession(config, content);
     } catch (error) {
-      console.error('Failed to start next level:', error);
-      alert('Failed to start next level. Please try again.');
+      console.error('Failed to start next lesson:', error);
+      alert('Failed to start next lesson. Please try again.');
       setIsStartingNext(false);
     }
   };
@@ -382,11 +395,11 @@ export function SessionCompletePage({ statistics: fullStatistics, onRestart, onS
                 </button>
                 <button
                   className="btn btn-primary"
-                  onClick={handleNextLevel}
+                  onClick={handleNextLesson}
                   disabled={!learnModeData.canAdvance}
                   title={!learnModeData.canAdvance ? 'Earn at least 1 star to advance' : ''}
                 >
-                  {learnModeData.level < 20 ? `Next Level (${learnModeData.level + 1})` : 'Back to Levels'}
+                  {learnModeData.lesson < 20 ? `Next Lesson (${learnModeData.lesson + 1})` : 'Back to Lessons'}
                 </button>
               </div>
             ) : (

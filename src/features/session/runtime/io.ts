@@ -69,9 +69,9 @@ export interface LearnState {
 
   // Internal tracking
   encounteredChars: string[];        // Characters seen in this session (Set converted to array)
-  unmasteredChars: string[];         // Characters that are un-mastered (from historical stats)
-  currentIndex: number;              // Position in practice sequence (0-49)
-  practiceSequence: string;          // The 50 characters for this session
+  newChars: string[];                // New characters introduced in this lesson (for adaptive reveal)
+  currentIndex: number;              // Position in practice sequence (0-29)
+  practiceSequence: string;          // The 30 characters for this session
 }
 
 /**

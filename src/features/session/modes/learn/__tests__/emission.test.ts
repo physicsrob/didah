@@ -23,14 +23,14 @@ function createLearnState(overrides?: Partial<LearnState>): LearnState {
     flashState: null,
     correctionMode: false,
     encounteredChars: [],
-    unmasteredChars: ['K', 'M'], // Default: K and M are un-mastered
+    newChars: ['K', 'M'], // Default: K and M are new characters for this lesson
     currentIndex: 0,
     practiceSequence: 'KMRS',
     ...overrides
   };
 }
 
-describe('runLearnEmission - First Encounter (Un-mastered)', () => {
+describe('runLearnEmission - First Encounter (New Character)', () => {
   let clock: FakeClock;
   let io: TestIO;
   let input: TestInputBus;
@@ -142,6 +142,9 @@ describe('runLearnEmission - First Encounter (Un-mastered)', () => {
     // Check outcome - still 'shown' (first encounter)
     expect(result.outcome).toBe('shown');
 
+    // Check that buzzer feedback was triggered
+    expect(io.getFeedbackFor('K')).toBe('incorrect');
+
     // Check that only ONE correct event was logged (not from correction)
     const correctLogs = io.getLoggedEvents().filter(e => e.type === 'correct' && 'char' in e && e.char === 'K');
     expect(correctLogs.length).toBe(1);
@@ -198,6 +201,9 @@ describe('runLearnEmission - First Encounter (Un-mastered)', () => {
     // Should still complete successfully
     expect(result.outcome).toBe('shown');
     expect(result.state.encounteredChars).toContain('K');
+
+    // Check that buzzer feedback was triggered
+    expect(io.getFeedbackFor('K')).toBe('incorrect');
 
     // Only ONE correct event should be logged (not from any correction attempts)
     const correctLogs = io.getLoggedEvents().filter(e => e.type === 'correct');
@@ -272,7 +278,7 @@ describe('runLearnEmission - Quiz Mode', () => {
   });
 
   it('shows "?" when character is mastered', async () => {
-    // R is mastered (not in unmasteredChars)
+    // R is mastered (not in newChars)
     const config = createTestConfig({ wpm: WPM });
     const emissionPromise = runLearnEmission(
       config,
@@ -354,6 +360,9 @@ describe('runLearnEmission - Quiz Mode', () => {
     // Outcome should be 'incorrect' for quiz mode with wrong first attempt
     expect(result.outcome).toBe('incorrect');
 
+    // Check that buzzer feedback was triggered
+    expect(io.getFeedbackFor('K')).toBe('incorrect');
+
     // Check that incorrect was logged for first attempt
     const incorrectAttempts = io.getIncorrectAttempts('K');
     expect(incorrectAttempts).toContain('M');
@@ -406,6 +415,9 @@ describe('runLearnEmission - Quiz Mode', () => {
     const result = await emissionPromise;
 
     expect(result.outcome).toBe('incorrect');
+
+    // Check that buzzer feedback was triggered
+    expect(io.getFeedbackFor('K')).toBe('incorrect');
 
     // Only ONE incorrect event should be logged (first attempt only)
     const incorrectLogs = io.getLoggedEvents().filter(e => e.type === 'incorrect');

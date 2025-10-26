@@ -2,7 +2,7 @@
  * Learn Mode - Emission Logic
  *
  * Handles the adaptive reveal interaction model:
- * - First encounter with un-mastered character: show answer immediately
+ * - First encounter with a new character (for this lesson): show answer immediately
  * - All other encounters: quiz mode (show "?")
  * - Wrong answers trigger correction mode with audio replay
  */
@@ -21,22 +21,22 @@ const FLASH_DURATION_MS = 300;
 
 /**
  * Outcome for Learn Mode emission
- * - shown: First encounter (answer shown, always counts as correct for stats)
+ * - shown: First encounter with new character (answer shown, always counts as correct for stats)
  * - correct: Quiz mode, user typed correct character on first attempt
  * - incorrect: Quiz mode, user typed incorrect character on first attempt
  */
 export type LearnOutcome = 'shown' | 'correct' | 'incorrect';
 
 /**
- * Helper to check if character is first encounter with un-mastered char
+ * Helper to check if character is first encounter with a new character (for adaptive reveal)
  */
-function isFirstEncounterUnmastered(
+function isFirstEncounterNew(
   char: string,
   encounteredChars: Set<string>,
-  unmasteredChars: Set<string>
+  newChars: Set<string>
 ): boolean {
   const upperChar = char.toUpperCase();
-  return !encounteredChars.has(upperChar) && unmasteredChars.has(upperChar);
+  return !encounteredChars.has(upperChar) && newChars.has(upperChar);
 }
 
 /**
@@ -69,9 +69,9 @@ function updateLearnState(
 /**
  * Run a Learn Mode emission with adaptive reveal
  *
- * Flow depends on whether this is first encounter with un-mastered char:
+ * Flow depends on whether this is first encounter with a new character:
  *
- * First Encounter (un-mastered):
+ * First Encounter (new character for this lesson):
  * 1. Play audio → show character immediately
  * 2. Wait for ANY key
  * 3. If correct: green flash → advance
@@ -115,11 +115,11 @@ export async function runLearnEmission(
 
   // Convert arrays to Sets for efficient lookup
   const encounteredSet = new Set(learnState.encounteredChars);
-  const unmasteredSet = new Set(learnState.unmasteredChars);
+  const newCharsSet = new Set(learnState.newChars);
 
-  // Determine if this is first encounter with un-mastered character
-  const isFirstUnmastered = isFirstEncounterUnmastered(char, encounteredSet, unmasteredSet);
-  debug.log(`[Learn] First encounter unmastered: ${isFirstUnmastered}`);
+  // Determine if this is first encounter with a new character (for adaptive reveal)
+  const isFirstNew = isFirstEncounterNew(char, encounteredSet, newCharsSet);
+  debug.log(`[Learn] First encounter with new char: ${isFirstNew}`);
 
   // Log emission event
   io.log({ type: 'emission', at: emissionStart, char });
@@ -132,9 +132,9 @@ export async function runLearnEmission(
   let currentState = learnState;
   let outcome: LearnOutcome;
 
-  if (isFirstUnmastered) {
-    // === FIRST ENCOUNTER FLOW ===
-    debug.log(`[Learn] First encounter - showing character immediately`);
+  if (isFirstNew) {
+    // === FIRST ENCOUNTER WITH NEW CHARACTER ===
+    debug.log(`[Learn] First encounter with new char - showing character immediately`);
 
     // Show character
     currentState = updateLearnState(currentState, {
@@ -172,6 +172,7 @@ export async function runLearnEmission(
     } else {
       // Wrong on first encounter - enforce correction
       debug.log(`[Learn] Wrong on first encounter - enforcing correction`);
+      io.feedback('incorrect', char);
 
       // Red flash with character still visible
       currentState = updateLearnState(currentState, {
@@ -207,6 +208,7 @@ export async function runLearnEmission(
         } else {
           // Wrong - red flash and replay again
           debug.log(`[Learn] Wrong key in correction: '${key}'`);
+          io.feedback('incorrect', char);
           currentState = updateLearnState(currentState, {
             flashState: 'incorrect'
           });
@@ -290,6 +292,7 @@ export async function runLearnEmission(
     } else {
       // Wrong answer
       debug.log(`[Learn] Incorrect in quiz mode - expected '${upperChar}', got '${typedKey}'`);
+      io.feedback('incorrect', char);
       io.log({ type: 'incorrect', at: clock.now(), expected: char, got: typedKey });
 
       // Red flash with user's wrong answer visible
@@ -325,6 +328,7 @@ export async function runLearnEmission(
         } else {
           // Wrong - red flash and replay again
           debug.log(`[Learn] Wrong key in correction: '${key}'`);
+          io.feedback('incorrect', char);
           currentState = updateLearnState(currentState, {
             flashState: 'incorrect'
           });

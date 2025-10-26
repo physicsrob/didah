@@ -94,6 +94,16 @@ export function ActiveSessionPage({ config, sourceContent, onComplete }: ActiveS
     return fb;
   }, [config.feedback, audioEngine, settings]);
 
+  // Initialize feedback audio context when audio becomes ready
+  useEffect(() => {
+    if (feedback && audioEngine && audioActuallyReady) {
+      const audioContext = audioEngine.getAudioContext();
+      if (audioContext) {
+        feedback.initialize?.(audioContext);
+      }
+    }
+  }, [feedback, audioEngine, audioActuallyReady]);
+
   // Create character source
   const source = useMemo(() => {
     return createCharacterSource(sourceContent, config.effectiveAlphabet, mode.emissionGranularity);

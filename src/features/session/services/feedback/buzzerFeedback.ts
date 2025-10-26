@@ -61,14 +61,15 @@ export class BuzzerFeedback implements Feedback {
       const gainNode = this.audioContext.createGain();
 
       // Configure oscillator for buzzer sound
-      oscillator.type = 'square'; // Square wave for more harsh buzzer sound
+      oscillator.type = 'triangle'; // Triangle wave for softer buzzer sound
       oscillator.frequency.setValueAtTime(this.config.frequency, startTime);
 
       // Configure gain with quick attack and release
       const attackTime = 0.005; // 5ms attack
       const releaseTime = 0.01;  // 10ms release
 
-      const compensatedVolume = this.config.volume * SQUARE_WAVE_VOLUME_COMPENSATION;
+      // Triangle waves are softer than square waves, so use less aggressive compensation
+      const compensatedVolume = this.config.volume * 0.7;
 
       gainNode.gain.setValueAtTime(0, startTime);
       gainNode.gain.linearRampToValueAtTime(compensatedVolume, startTime + attackTime);

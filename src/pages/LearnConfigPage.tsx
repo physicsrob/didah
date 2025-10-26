@@ -86,7 +86,7 @@ export function LearnConfigPage({ onStart }: LearnConfigPageProps) {
         sourceId,
         sourceName: `Koch Method - Lesson ${lesson}`,
         replay: false, // Learn Mode has built-in replay behavior
-        feedback: 'none', // Learn Mode has custom feedback
+        feedback: 'buzzer', // Learn Mode uses buzzer + custom flash (not global flash)
         effectiveAlphabet: getCharactersForLesson(lesson),
         extraWordSpacing: 0,
         listenTimingOffset: 0,

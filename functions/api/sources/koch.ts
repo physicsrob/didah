@@ -1,161 +1,105 @@
 /**
  * Koch Source - Learn Mode Practice Content Generator
  *
- * Generates weighted characters based on user's mastery for a given Koch level.
- * Un-mastered characters appear twice as often as mastered characters.
+ * Generates randomized practice sequences for a given Koch lesson:
+ * - Each new character appears MIN_NEW_CHAR_DRILLS times (5)
+ * - Fill to LEARN_SESSION_LENGTH (30) with random characters from all lesson characters
+ * - Shuffle the result
  *
- * Requires authentication (Learn Mode is a progression system).
+ * Each request returns a different random sequence.
+ * No authentication required.
  */
 
-import type { KVNamespace } from '@cloudflare/workers-types';
-import { getUserIdFromRequest } from '../../shared/auth';
-import type { SessionStatistics } from '../../shared/types';
-import { isValidLevel, getCharactersForLevel, PRACTICE_SESSION_LENGTH } from '../../shared/koch';
-import { analyzeMastery } from '../../shared/masteryCalculator';
-import { generateWeightedSequence } from '../../shared/contentGenerator';
+import {
+  isValidLesson,
+  getCharactersForLesson,
+  getNewCharactersForLesson,
+  MIN_NEW_CHAR_DRILLS,
+  LEARN_SESSION_LENGTH
+} from '../../shared/koch';
 
 interface CloudflareContext {
   params: {
     id: string;
   };
-  request: Request;
-  env?: {
-    KV?: KVNamespace;
-    CLERK_SECRET_KEY?: string;
-    CLERK_PUBLISHABLE_KEY?: string;
-  };
 }
 
 /**
- * Query user's session statistics from the last 30 days
+ * Fisher-Yates shuffle algorithm
  */
-async function getUserSessions(userId: string, kv: KVNamespace): Promise<SessionStatistics[]> {
-  const endDate = new Date();
-  const startDate = new Date();
-  startDate.setDate(startDate.getDate() - 29); // 30 days total including today
-
-  // Build list of KV keys to fetch
-  const keysToFetch: string[] = [];
-  const currentDate = new Date(startDate);
-
-  while (currentDate <= endDate) {
-    const dateStr = currentDate.toISOString().split('T')[0];
-    keysToFetch.push(`user:${userId}:stats:${dateStr}`);
-    currentDate.setDate(currentDate.getDate() + 1);
+function shuffleArray<T>(array: T[]): T[] {
+  const shuffled = [...array];
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
   }
-
-  // Batch fetch all keys
-  const statsPromises = keysToFetch.map(key => kv.get(key, 'json'));
-  const allDailyStats = await Promise.all(statsPromises);
-
-  // Concatenate all sessions into a single array
-  const allSessions: SessionStatistics[] = [];
-
-  for (const dailyStats of allDailyStats) {
-    if (dailyStats && Array.isArray(dailyStats)) {
-      allSessions.push(...(dailyStats as SessionStatistics[]));
-    }
-  }
-
-  return allSessions;
+  return shuffled;
 }
 
 /**
- * GET /api/sources/koch-level-{N}
+ * GET /api/sources/koch-lesson-{N}
  *
- * Returns weighted characters for the specified Koch level.
+ * Returns practice sequence for the specified Koch lesson.
  */
 export async function onRequestGet(context: CloudflareContext): Promise<Response> {
   const { id } = context.params;
 
-  // Extract level from ID (format: koch-level-{N})
-  const match = id.match(/^koch-level-(\d+)$/);
+  // Extract lesson from ID (format: koch-lesson-{N})
+  const match = id.match(/^koch-lesson-(\d+)$/);
   if (!match) {
     return Response.json({
-      error: 'Invalid Koch source ID format. Expected: koch-level-{N}'
+      error: 'Invalid Koch source ID format. Expected: koch-lesson-{N}'
     }, { status: 400 });
   }
 
-  const level = parseInt(match[1], 10);
+  const lesson = parseInt(match[1], 10);
 
-  // Validate level (1-20)
-  if (!isValidLevel(level)) {
+  // Validate lesson (1-20)
+  if (!isValidLesson(lesson)) {
     return Response.json({
-      error: `Invalid level: ${level}. Must be between 1 and 20.`
+      error: `Invalid lesson: ${lesson}. Must be between 1 and 20.`
     }, { status: 400 });
   }
 
-  // Check environment configuration
-  const secretKey = context.env?.CLERK_SECRET_KEY;
-  const publishableKey = context.env?.CLERK_PUBLISHABLE_KEY;
-  const kv = context.env?.KV;
-
-  if (!secretKey || !publishableKey) {
-    return Response.json({
-      error: 'Server configuration error'
-    }, { status: 500 });
-  }
-
-  if (!kv) {
-    return Response.json({
-      error: 'KV storage not available'
-    }, { status: 500 });
-  }
-
-  // Require authentication (Learn Mode is a progression system)
-  let userId: string;
   try {
-    userId = await getUserIdFromRequest(context.request, secretKey, publishableKey);
-  } catch {
-    return Response.json({
-      error: 'Authentication required for Learn Mode'
-    }, { status: 401 });
-  }
+    // Get new and all characters for this lesson
+    const newChars = getNewCharactersForLesson(lesson);
+    const allChars = getCharactersForLesson(lesson);
 
-  try {
-    // Get characters for this level
-    const levelChars = getCharactersForLevel(level);
+    // Build sequence
+    const sequence: string[] = [];
 
-    // Query user's historical sessions
-    let sessions: SessionStatistics[];
-    try {
-      sessions = await getUserSessions(userId, kv);
-    } catch (error) {
-      console.error('Failed to query user sessions:', error);
-      // Fallback: treat all characters as un-mastered (equal weighting)
-      // This is a safe default for beginners or when stats are unavailable
-      sessions = [];
+    // Add each new char MIN_NEW_CHAR_DRILLS times
+    for (const char of newChars) {
+      for (let i = 0; i < MIN_NEW_CHAR_DRILLS; i++) {
+        sequence.push(char);
+      }
     }
 
-    // Analyze mastery for level characters
-    const mastery = analyzeMastery(sessions, levelChars);
+    // Fill to LEARN_SESSION_LENGTH with random sampling from all chars
+    while (sequence.length < LEARN_SESSION_LENGTH) {
+      const randomChar = allChars[Math.floor(Math.random() * allChars.length)];
+      sequence.push(randomChar);
+    }
 
-    // Generate weighted characters for practice session
-    // If both sets are empty (shouldn't happen), throw error
-    // Otherwise, generateWeightedSequence handles the weighting
-    const sequence = generateWeightedSequence(
-      mastery.masteredChars,
-      mastery.unMasteredChars,
-      PRACTICE_SESSION_LENGTH
-    );
+    // Shuffle the sequence
+    const shuffled = shuffleArray(sequence);
 
     // Join into text without spaces (Learn Mode practices individual characters)
-    const text = sequence.join('');
+    const text = shuffled.join('');
 
     return Response.json({
       id,
       text
     }, {
       headers: {
-        // Koch sources should NOT be cached - they're personalized to user's current mastery
+        // Koch sources should NOT be cached - each request generates a new random sequence
         'Cache-Control': 'no-store, no-cache, must-revalidate',
-        'Pragma': 'no-cache',
-        'Expires': '0'
       }
     });
 
   } catch (error) {
-    console.error(`Error generating Koch source for level ${level}:`, error);
+    console.error(`Error generating Koch source for lesson ${lesson}:`, error);
     return Response.json({
       error: 'Failed to generate practice content',
       details: error instanceof Error ? error.message : 'Unknown error'

@@ -142,8 +142,8 @@ export async function onRequestGet(context: CloudflareContext) {
       }
 
       default:
-        // Koch Method sources for Learn Mode (koch-level-1 through koch-level-20)
-        if (id.startsWith('koch-level-')) {
+        // Koch Method sources for Learn Mode (koch-lesson-1 through koch-lesson-20)
+        if (id.startsWith('koch-lesson-')) {
           const kochModule = await import('./koch');
           return kochModule.onRequestGet(context);
         }

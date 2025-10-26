@@ -29,6 +29,9 @@ export type UserSettings = {
 
   // User preferences
   favoriteSourceIds: string[]  // User's favorite text sources
+
+  // Learn Mode progress tracking
+  learnProgress?: Record<number, number>  // lesson (1-20) → stars (0-3)
 }
 
 export const DEFAULT_USER_SETTINGS: UserSettings = {
@@ -48,7 +51,8 @@ export const DEFAULT_USER_SETTINGS: UserSettings = {
   defaultSourceId: 'random_letters',
   defaultHeadCopySourceId: 'top-100',
   feedbackMode: 'replay',  // Default to replay (both + replay)
-  favoriteSourceIds: []  // No favorites by default
+  favoriteSourceIds: [],  // No favorites by default
+  learnProgress: {}  // No lessons completed by default
 }
 
 export interface User {
@@ -94,7 +98,7 @@ export type SessionStatistics = {
     feedback: 'buzzer' | 'flash' | 'both' | 'none'
     effectiveAlphabet: string[]    // Characters practiced
     extraWordSpacing?: number      // Extra word spacing (0-5) - optional for backward compatibility
-    learnLevel?: number            // Learn mode specific: level number (1-20)
+    learnLesson?: number           // Learn mode specific: lesson number (1-20)
   }
 
   // Overall Metrics
@@ -126,9 +130,9 @@ export type SessionStatistics = {
   // Dit Dash Mode - Maximum level completed (optional, only for ditDash mode)
   maxLevel?: number
 
-  // Learn Mode - Level and star rating (optional, only for learn mode)
-  learnLevel?: number  // Level number (1-20), duplicated from config for easy querying
-  learnStars?: number  // Star rating (0-3), calculated from session accuracy
+  // Learn Mode - Lesson and star rating (optional, only for learn mode)
+  learnLesson?: number  // Lesson number (1-20), duplicated from config for easy querying
+  learnStars?: number   // Star rating (0-3), calculated from session accuracy
 }
 
 // Validation function for settings
@@ -221,6 +225,28 @@ export function validateSettings(settings: unknown): settings is UserSettings {
   for (const id of s.favoriteSourceIds as unknown[]) {
     if (typeof id !== 'string') {
       return false
+    }
+  }
+
+  // Validate learnProgress if present (optional field)
+  if (s.learnProgress !== undefined) {
+    if (typeof s.learnProgress !== 'object' || Array.isArray(s.learnProgress) || s.learnProgress === null) {
+      return false
+    }
+
+    // Validate each lesson → stars mapping
+    for (const [lesson, stars] of Object.entries(s.learnProgress as Record<string, unknown>)) {
+      const lessonNum = Number(lesson)
+
+      // Lesson must be integer 1-20
+      if (!Number.isInteger(lessonNum) || lessonNum < 1 || lessonNum > 20) {
+        return false
+      }
+
+      // Stars must be integer 0-3
+      if (typeof stars !== 'number' || !Number.isInteger(stars) || stars < 0 || stars > 3) {
+        return false
+      }
     }
   }
 
@@ -515,15 +541,15 @@ export function validateSessionStatistics(stats: unknown): stats is SessionStati
     }
   }
 
-  // Validate learnLevel if present (optional field for learn mode - can be in config or statistics)
-  if (config.learnLevel !== undefined) {
-    if (typeof config.learnLevel !== 'number' || config.learnLevel < 1 || config.learnLevel > 20 || !Number.isInteger(config.learnLevel)) {
+  // Validate learnLesson if present (optional field for learn mode - can be in config or statistics)
+  if (config.learnLesson !== undefined) {
+    if (typeof config.learnLesson !== 'number' || config.learnLesson < 1 || config.learnLesson > 20 || !Number.isInteger(config.learnLesson)) {
       return false
     }
   }
 
-  if (s.learnLevel !== undefined) {
-    if (typeof s.learnLevel !== 'number' || s.learnLevel < 1 || s.learnLevel > 20 || !Number.isInteger(s.learnLevel)) {
+  if (s.learnLesson !== undefined) {
+    if (typeof s.learnLesson !== 'number' || s.learnLesson < 1 || s.learnLesson > 20 || !Number.isInteger(s.learnLesson)) {
       return false
     }
   }
