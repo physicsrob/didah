@@ -265,8 +265,8 @@
 .home-footer {
   position: relative;
   z-index: 1;
-  padding: 32px 24px 24px;
-  margin-top: 48px;
+  padding: 24px 24px 16px;
+  margin-top: 32px;
 }
 
 .home-footer-content {
@@ -303,8 +303,8 @@
 
 @media (max-width: 768px) {
   .home-footer {
-    padding: 24px 16px 20px;
-    margin-top: 32px;
+    padding: 20px 16px 16px;
+    margin-top: 24px;
   }
 
   .footer-link {
