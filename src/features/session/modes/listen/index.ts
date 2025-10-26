@@ -15,6 +15,11 @@ export const listenMode: ModeDefinition = {
   displayName: 'Listen',
   description: 'Passive listening with delayed reveal',
 
+  // UI metadata
+  icon: '🎧',
+  shortDescription: 'Passive listening where characters are revealed after playing.',
+  longDescription: 'Passive listening where characters are revealed after playing. Perfect for learning new characters without pressure.',
+
   // Emission behavior
   emissionGranularity: 'character',
 

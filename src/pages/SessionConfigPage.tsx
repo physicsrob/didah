@@ -8,6 +8,7 @@ import { useUser } from '@clerk/clerk-react';
 import { HeaderBar } from '../components/HeaderBar';
 import { TextSourceModal } from '../components/TextSourceModal';
 import { getCharactersByCategory } from '../core/morse/alphabet';
+import { MODE_REGISTRY } from '../features/session/modes/shared/registry';
 import '../styles/main.css';
 import '../styles/sessionConfig.css';
 import '../styles/components.css';
@@ -18,34 +19,6 @@ type SessionConfigPageProps = {
 };
 
 export function SessionConfigPage({ mode, onStart }: SessionConfigPageProps) {
-
-  // Mode-specific configuration
-  const modeConfig = {
-    'practice': {
-      title: 'Letter Practice Mode',
-      description: 'Interactive training where you type what you hear in real-time, but you do have some control of the pacing. Try to go as fast as possible!'
-    },
-    'listen': {
-      title: 'Listen Mode',
-      description: 'Passive listening where characters are revealed after playing. Perfect for learning new characters without pressure.'
-    },
-    'live-copy': {
-      title: 'Live Copy Mode',
-      description: 'Real-time continuous copying like actual CW. Characters stream at a constant rate - keep up or fall behind!'
-    },
-    'head-copy': {
-      title: 'Head Copy Mode',
-      description: 'Multiple choice whole-word recognition. Select the correct word to build up fluency and the ability to head copy.'
-    },
-    'ditDash': {
-      title: 'Dit Dash',
-      description: 'Endless runner mini-game - type letters to jump over obstacles! Progress through 10 levels with increasing speed and difficulty.'
-    },
-    'learn': {
-      title: 'Learn Mode',
-      description: 'Learn Morse code from scratch using the Koch method. Progress through 20 levels, mastering 2 new characters at a time.'
-    }
-  };
 
   // Use centralized settings
   const { settings, updateSetting, isLoading: settingsLoading } = useSettings();
@@ -317,9 +290,9 @@ export function SessionConfigPage({ mode, onStart }: SessionConfigPageProps) {
 
       <div className="container container-centered">
         <div className="container-narrow">
-          <h1 className="heading-1" style={{ marginBottom: '16px' }}>{modeConfig[mode].title}</h1>
+          <h1 className="heading-1" style={{ marginBottom: '16px' }}>{MODE_REGISTRY[mode].displayName}</h1>
           <p className="body-regular session-config-description" style={{ marginBottom: '24px' }}>
-            {modeConfig[mode].description}
+            {MODE_REGISTRY[mode].longDescription}
           </p>
         </div>
 
@@ -633,7 +606,7 @@ export function SessionConfigPage({ mode, onStart }: SessionConfigPageProps) {
             }}
             title={sourceLoadError ? 'Please resolve the source loading error before starting' : ''}
           >
-            Start {modeConfig[mode].title.replace(' Mode', '')}
+            Start {MODE_REGISTRY[mode].displayName}
           </button>
         </div>
       </div>

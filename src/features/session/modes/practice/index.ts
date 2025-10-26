@@ -11,8 +11,13 @@ import { PracticeDisplay, usePracticeInput } from './ui';
 
 export const practiceMode: ModeDefinition = {
   id: 'practice',
-  displayName: 'Letter Practice',
+  displayName: 'Practice',
   description: 'Interactive training with immediate feedback',
+
+  // UI metadata
+  icon: '⌨️',
+  shortDescription: 'Type what you hear. Immediate feedback paced to your speed.',
+  longDescription: 'Interactive training where you type what you hear in real-time. Although you do have some control of the pacing, try to go as fast as possible!',
 
   // Emission behavior
   emissionGranularity: 'character',

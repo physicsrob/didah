@@ -14,6 +14,11 @@ export const headCopyMode: ModeDefinition = {
   displayName: 'Head Copy',
   description: 'Multiple choice whole-word recognition. Select the correct word to build up fluency and the ability to head copy.',
 
+  // UI metadata
+  icon: '🧠',
+  shortDescription: 'Multiple choice whole-word recognition. Select the correct word to build up the ability to head copy.',
+  longDescription: 'Multiple choice whole-word recognition. Select the correct word to build up fluency and the ability to head copy.',
+
   // Emission behavior
   emissionGranularity: 'word',
 

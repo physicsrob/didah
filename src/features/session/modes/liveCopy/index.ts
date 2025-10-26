@@ -15,6 +15,11 @@ export const liveCopyMode: ModeDefinition = {
   displayName: 'Live Copy',
   description: 'Real-time copying with end-of-session corrections',
 
+  // UI metadata
+  icon: '⚡',
+  shortDescription: 'Real-time copying like actual CW. Characters stream continuously with no feedback until the end.',
+  longDescription: 'Real-time continuous copying like actual CW. Characters stream at a constant rate - keep up or fall behind!',
+
   // Emission behavior
   emissionGranularity: 'character',
 

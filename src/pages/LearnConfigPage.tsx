@@ -3,6 +3,8 @@
  *
  * Koch method onboarding with lesson selector, WPM controls, and star ratings.
  * Works for anonymous users (stars saved locally) and syncs when authenticated.
+ *
+ * NOTE: Backend mode identifier is 'learn', but UI displays "Morse Lessons"
  */
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
@@ -13,6 +15,7 @@ import { HeaderBar } from '../components/HeaderBar';
 import { getCharactersForLesson, getNewCharactersForLesson, TOTAL_LESSONS } from '../../functions/shared/koch';
 import { fetchSourceContent } from '../features/sources';
 import { useSettings } from '../features/settings/hooks/useSettings';
+import { MODE_REGISTRY } from '../features/session/modes/shared/registry';
 import '../styles/main.css';
 import '../styles/learnConfig.css';
 
@@ -282,9 +285,9 @@ export function LearnConfigPage({ onStart }: LearnConfigPageProps) {
 
       <div className="container container-centered">
         <div className="container-narrow">
-          <h1 className="heading-1" style={{ marginBottom: '16px' }}>Learn Mode</h1>
+          <h1 className="heading-1" style={{ marginBottom: '16px' }}>{MODE_REGISTRY['learn'].displayName}</h1>
           <p className="body-regular" style={{ marginBottom: '32px', color: 'var(--color-text-secondary)' }}>
-            Learn Morse code from scratch using the Koch method. Progress through 20 lessons, mastering 2 new characters at a time.
+            {MODE_REGISTRY['learn'].longDescription}
           </p>
 
           {/* Lesson Content */}

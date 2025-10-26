@@ -56,6 +56,11 @@ export interface ModeDefinition {
   displayName: string;
   description: string;
 
+  // UI metadata
+  icon: string;
+  shortDescription: string;
+  longDescription: string;
+
   // Emission behavior
   emissionGranularity: 'character' | 'word';
 

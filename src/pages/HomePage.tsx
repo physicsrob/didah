@@ -4,47 +4,12 @@ import { useAudio } from '../hooks/useAudio'
 import { useUser } from '@clerk/clerk-react'
 import { SignInButton } from '@clerk/clerk-react'
 import { UserDropdown } from '../components/UserDropdown'
+import { MODE_REGISTRY } from '../features/session/modes/shared/registry'
 import '../styles/main.css'
 import '../styles/homePage.css'
 
-const MODES = [
-  {
-    mode: 'learn' as SessionMode,
-    icon: '🎓',
-    title: 'Learn Mode',
-    description: 'Start here to learn morse code from scratch using the Koch method.'
-  },
-  {
-    mode: 'practice' as SessionMode,
-    icon: '⌨️',
-    title: 'Letter Practice',
-    description: 'Type what you hear. Immediate feedback paced to your speed.'
-  },
-  {
-    mode: 'ditDash' as SessionMode,
-    icon: '🏃',
-    title: 'Dit Dash',
-    description: 'Endless runner mini-game! Type letters to jump over obstacles.'
-  },
-  {
-    mode: 'head-copy' as SessionMode,
-    icon: '🧠',
-    title: 'Head Copy',
-    description: 'Multiple choice whole-word recognition. Select the correct word to build up the ability to head copy.'
-  },
-  {
-    mode: 'live-copy' as SessionMode,
-    icon: '⚡',
-    title: 'Live Copy',
-    description: 'Real-time copying like actual CW. Characters stream continuously with no feedback until the end.'
-  },
-  {
-    mode: 'listen' as SessionMode,
-    icon: '🎧',
-    title: 'Listen',
-    description: 'Passive listening where characters are revealed after playing.'
-  }
-];
+// Define display order for modes on home page
+const MODE_ORDER: SessionMode[] = ['learn', 'practice', 'ditDash', 'head-copy', 'live-copy', 'listen'];
 
 export default function HomePage() {
   const navigate = useNavigate()
@@ -109,17 +74,20 @@ export default function HomePage() {
         <div className="flex flex-col gap-8 items-center">
           {/* Mode selection grid */}
           <div className="mode-grid">
-            {MODES.map((mode) => (
-              <div
-                key={mode.mode}
-                className="mode-card"
-                onClick={() => handleModeSelect(mode.mode)}
-              >
-                <div className="mode-card-icon">{mode.icon}</div>
-                <div className="mode-card-title">{mode.title}</div>
-                <div className="mode-card-description">{mode.description}</div>
-              </div>
-            ))}
+            {MODE_ORDER.map((modeId) => {
+              const mode = MODE_REGISTRY[modeId];
+              return (
+                <div
+                  key={modeId}
+                  className="mode-card"
+                  onClick={() => handleModeSelect(modeId)}
+                >
+                  <div className="mode-card-icon">{mode.icon}</div>
+                  <div className="mode-card-title">{mode.displayName}</div>
+                  <div className="mode-card-description">{mode.shortDescription}</div>
+                </div>
+              );
+            })}
           </div>
         </div>
 

@@ -14,6 +14,11 @@ export const ditDashMode: ModeDefinition = {
   displayName: 'Dit Dash',
   description: 'Endless runner mini-game - type letters to jump over obstacles',
 
+  // UI metadata
+  icon: '🏃',
+  shortDescription: 'Endless runner mini-game! Type letters to jump over obstacles.',
+  longDescription: 'Endless runner mini-game - type letters to jump over obstacles! Progress through 10 levels with increasing speed and difficulty.',
+
   // Emission behavior
   emissionGranularity: 'character',
 

@@ -7,6 +7,8 @@
  *
  * This is a skeleton implementation for Phase 0.
  * Full implementation will be completed in later phases.
+ *
+ * NOTE: Backend mode identifier is 'learn', but UI displays "Morse Lessons"
  */
 
 import type { ModeDefinition } from '../shared/types';
@@ -15,8 +17,13 @@ import { LearnDisplay, useLearnInput } from './ui';
 
 export const learnMode: ModeDefinition = {
   id: 'learn',
-  displayName: 'Learn Mode',
+  displayName: 'Morse Lessons',
   description: 'Koch method progression for learning from scratch',
+
+  // UI metadata
+  icon: '🎓',
+  shortDescription: 'Start here to learn morse code from scratch using the Koch method.',
+  longDescription: 'Learn Morse code from scratch using the Koch method. Progress through 20 lessons, mastering 2 new characters at a time. Type what you hear, and proceed to the next lesson after you\'ve reached at least 85% accuracy.',
 
   // Emission behavior
   emissionGranularity: 'character',

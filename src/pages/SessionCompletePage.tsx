@@ -346,7 +346,7 @@ export function SessionCompletePage({ statistics: fullStatistics, onRestart, onS
                         'live-copy': 'Live Copy',
                         'head-copy': 'Head Copy',
                         'ditDash': 'Dit Dash',
-                        'learn': 'Learn Mode'
+                        'learn': 'Morse Lessons'
                       };
                       return modeNames[fullStatistics.config.mode] || fullStatistics.config.mode;
                     })()}
