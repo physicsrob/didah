@@ -362,8 +362,8 @@ export function ActiveSessionPage({ config, sourceContent, onComplete }: ActiveS
         </div>
       )}
 
-      {/* Session Header - only during active session, hidden for ditDash mode */}
-      {sessionPhase === 'active' && config.mode !== 'ditDash' && (
+      {/* Session Header - only during active session, hidden for ditDash and learn modes */}
+      {sessionPhase === 'active' && config.mode !== 'ditDash' && config.mode !== 'learn' && (
         <div className="session-header">
           <div className="header-left">
             <button className="pause-button" onClick={handlePause}>
@@ -375,6 +375,30 @@ export function ActiveSessionPage({ config, sourceContent, onComplete }: ActiveS
             </div>
           </div>
           <div className="timer">{formatTime(displayTime)}</div>
+        </div>
+      )}
+
+      {/* Learn Mode Header - simplified layout with Exit, Level, and Progress */}
+      {sessionPhase === 'active' && config.mode === 'learn' && (
+        <div className="learn-header">
+          <div className="learn-header-left">
+            <button className="learn-exit-button" onClick={handleEndSession}>
+              Exit
+            </button>
+          </div>
+          <div className="learn-header-center">
+            <div className="learn-lesson-title">
+              Level {config.learnLesson}
+            </div>
+            <SpeedDisplay config={config} className="learn-wpm" />
+          </div>
+          <div className="learn-header-right">
+            {snapshot.learnState && (
+              <div className="learn-progress">
+                {snapshot.learnState.currentIndex + 1} / {snapshot.learnState.practiceSequence.length}
+              </div>
+            )}
+          </div>
         </div>
       )}
 
