@@ -1,6 +1,7 @@
 import { RSS_URLS } from '../sources';
 import { shuffleArray } from '../../shared/utils';
 import { TOP_100_WORDS, TOP_1000_WORDS } from '../../shared/wordData';
+import { generateCallsign } from '../../shared/callsign';
 
 /**
  * Strip URLs from text (moved from frontend)
@@ -125,6 +126,17 @@ export async function onRequestGet(context: CloudflareContext) {
         }
 
         text = generateRandomCharacters(sourceAlphabet, 500);
+        break;
+      }
+
+      case 'random_callsigns': {
+        // Generate 100 random callsigns (just the callsign, not QTH)
+        const callsigns: string[] = [];
+        for (let i = 0; i < 100; i++) {
+          const { callsign } = generateCallsign();
+          callsigns.push(callsign);
+        }
+        text = callsigns.join('   ');
         break;
       }
 
