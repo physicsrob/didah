@@ -147,6 +147,11 @@ export async function onRequestGet(context: CloudflareContext) {
           const kochModule = await import('./koch');
           return kochModule.onRequestGet(context);
         }
+        // Koch Practice sources for other modes (koch-practice-1 through koch-practice-20)
+        if (id.startsWith('koch-practice-')) {
+          const kochPracticeModule = await import('./koch-practice');
+          return kochPracticeModule.onRequestGet(context);
+        }
         // Reddit sources - require KV cache (populated by cron job)
         if (baseId.startsWith('reddit_')) {
           if (!kv) {
