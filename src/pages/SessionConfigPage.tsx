@@ -7,6 +7,7 @@ import { useSettings } from '../features/settings/hooks/useSettings';
 import { useUser } from '@clerk/clerk-react';
 import { HeaderBar } from '../components/HeaderBar';
 import { TextSourceModal } from '../components/TextSourceModal';
+import { InfoTooltip } from '../components/InfoTooltip';
 import { getCharactersByCategory } from '../core/morse/alphabet';
 import { MODE_REGISTRY } from '../features/session/modes/shared/registry';
 import '../styles/main.css';
@@ -400,7 +401,12 @@ export function SessionConfigPage({ mode, onStart }: SessionConfigPageProps) {
           {/* Character Speed */}
           {(
             <div className="settings-row">
-              <div className="settings-label">Character Speed</div>
+              <div className="settings-label">
+                <span>Character Speed</span>
+                <InfoTooltip content="The speed at which individual characters are sent. Higher WPM means faster dits and dahs.">
+                  <span className="info-icon-trigger">ⓘ</span>
+                </InfoTooltip>
+              </div>
               <div className="settings-control">
                 <input
                   type="range"
