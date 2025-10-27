@@ -6,6 +6,7 @@
  */
 
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import type { SessionConfig } from '../core/types/domain';
 import type { SessionStatisticsWithMaps } from '../core/types/statistics';
 import { getMorsePattern as getMorsePatternFromAlphabet } from '../core/morse/alphabet.js';
@@ -40,6 +41,7 @@ type ActiveSessionPageProps = {
 export function ActiveSessionPage({ config, sourceContent, onComplete }: ActiveSessionPageProps) {
   const { initializeAudio, getAudioEngine, isAudioReady } = useAudio();
   const { settings } = useSettings();
+  const navigate = useNavigate();
 
   // Get mode definition
   const mode = useMemo(() => getMode(config.mode), [config.mode]);
@@ -264,6 +266,13 @@ export function ActiveSessionPage({ config, sourceContent, onComplete }: ActiveS
     await runner.stop();
   }, [runner]);
 
+  // Handle learn mode exit - discards progress and navigates home
+  const handleLearnExit = useCallback(() => {
+    // Navigate away immediately without completing the session
+    // The cleanup useEffect will handle stopping the runner
+    navigate('/');
+  }, [navigate]);
+
   // Handle click to start when audio not ready
   const handleStartClick = async () => {
     const success = await initializeAudio();
@@ -382,7 +391,7 @@ export function ActiveSessionPage({ config, sourceContent, onComplete }: ActiveS
       {sessionPhase === 'active' && config.mode === 'learn' && (
         <div className="learn-header">
           <div className="learn-header-left">
-            <button className="learn-exit-button" onClick={handleEndSession}>
+            <button className="learn-exit-button" onClick={handleLearnExit}>
               Exit
             </button>
           </div>
