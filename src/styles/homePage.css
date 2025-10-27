@@ -115,6 +115,7 @@
 
 .home-subtitle {
   color: var(--text-accent);
+  margin-top: 10px;
   margin-bottom: 24px;
 }
 
