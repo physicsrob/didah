@@ -336,7 +336,7 @@ export function ActiveSessionPage({ config, sourceContent, onComplete }: ActiveS
   // Determine if virtual keyboard should be shown
   const isTouch = useMemo(() => isTouchDevice(), []);
   const modeNeedsKeyboard = useMemo(() => {
-    return ['practice', 'live-copy', 'ditDash'].includes(config.mode);
+    return ['practice', 'live-copy', 'ditDash', 'learn'].includes(config.mode);
   }, [config.mode]);
   const showVirtualKeyboard = isTouch && modeNeedsKeyboard && sessionPhase === 'active' && !isPaused;
 
@@ -452,8 +452,6 @@ export function ActiveSessionPage({ config, sourceContent, onComplete }: ActiveS
       {/* Virtual Keyboard - Mobile only */}
       {showVirtualKeyboard && (
         <VirtualKeyboard
-          alphabet={config.effectiveAlphabet}
-          mode={config.mode}
           onKeyPress={(key) => {
             input.push({ at: performance.now(), key });
           }}
