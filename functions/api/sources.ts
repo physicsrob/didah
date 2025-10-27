@@ -1,9 +1,28 @@
+import { getNewCharactersForLesson, TOTAL_LESSONS } from '../shared/koch';
+
 // RSS URL mapping for non-Reddit sources (not exposed to frontend)
 // Reddit sources use the API via cron job and KV cache, not RSS
 const RSS_URLS: Record<string, string> = {
   'hackernews': 'https://news.ycombinator.com/rss',
   'bbc_news': 'http://feeds.bbci.co.uk/news/rss.xml',
 };
+
+// Generate Koch practice sources (1-20)
+const KOCH_PRACTICE_SOURCES = Array.from({ length: TOTAL_LESSONS }, (_, i) => {
+  const lesson = i + 1;
+  const newChars = getNewCharactersForLesson(lesson);
+  const description = lesson === 1
+    ? `Focus on ${newChars.join(', ')}`
+    : `Focus on ${newChars.join(', ')}; Revisits previous characters`;
+
+  return {
+    id: `koch-practice-${lesson}`,
+    name: `Koch Level ${lesson} (${newChars.join(', ')})`,
+    type: 'generated' as const,
+    category: 'koch',
+    description
+  };
+});
 
 // Shared source configuration (URL field removed - it's an internal implementation detail)
 export const SOURCES = [
@@ -31,6 +50,9 @@ export const SOURCES = [
   { id: 'reddit_news_full', name: 'Reddit News Posts (Headline and Body)', type: 'rss', category: 'news', description: 'Full news articles and discussions from r/news on Reddit' },
   { id: 'hackernews', name: 'Hacker News', type: 'rss', category: 'news', description: 'Tech news and discussions from Hacker News' },
   { id: 'bbc_news', name: 'BBC News', type: 'rss', category: 'news', description: 'World news headlines from BBC' },
+
+  // Koch Method progressive training
+  ...KOCH_PRACTICE_SOURCES,
 ];
 
 // Export RSS URLs for use by sources/[id].ts
