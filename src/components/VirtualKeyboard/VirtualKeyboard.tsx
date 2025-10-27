@@ -3,49 +3,28 @@
  *
  * Touch-optimized on-screen keyboard for mobile devices.
  * Shows full QWERTY layout with numbers and punctuation.
- * Keys are enabled/disabled based on current practice alphabet.
+ * All keys are always enabled across all modes.
  */
 
 import { useCallback } from 'react';
-import type { SessionMode } from '../../core/types/domain';
 import './VirtualKeyboard.css';
 
 interface VirtualKeyboardProps {
-  alphabet: string[];
   onKeyPress: (key: string) => void;
-  mode: SessionMode;
 }
 
 const KEYBOARD_LAYOUT = [
   ['1', '2', '3', '4', '5', '6', '7', '8', '9', '0'],
   ['Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P'],
   ['A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L'],
-  ['Z', 'X', 'C', 'V', 'B', 'N', 'M', 'Backspace'],
-  ['.', ',', '?', '/', '=', 'Space']
+  ['Z', 'X', 'C', 'V', 'B', 'N', 'M', ',', '.'],
+  ['Backspace', 'Space', '?', '/', '=']
 ] as const;
-
-/**
- * Determines if a key should be enabled based on the current alphabet and mode
- */
-function isKeyEnabled(key: string, alphabet: string[], mode: SessionMode): boolean {
-  // Backspace is only enabled in Live Copy mode
-  if (key === 'Backspace') {
-    return mode === 'live-copy';
-  }
-
-  // Space is enabled in Live Copy and Dit Dash modes
-  if (key === 'Space') {
-    return mode === 'live-copy' || mode === 'ditDash';
-  }
-
-  // Other keys are enabled if they're in the practice alphabet
-  return alphabet.includes(key);
-}
 
 /**
  * Virtual keyboard component for mobile touch input
  */
-export function VirtualKeyboard({ alphabet, onKeyPress, mode }: VirtualKeyboardProps) {
+export function VirtualKeyboard({ onKeyPress }: VirtualKeyboardProps) {
   const handleKeyPress = useCallback((key: string) => {
     // Convert special keys to their character equivalents
     let keyToSend = key;
@@ -64,29 +43,34 @@ export function VirtualKeyboard({ alphabet, onKeyPress, mode }: VirtualKeyboardP
   return (
     <div className="virtual-keyboard">
       {KEYBOARD_LAYOUT.map((row, rowIndex) => (
-        <div key={rowIndex} className="keyboard-row">
+        <div key={rowIndex} className={`keyboard-row keyboard-row-${rowIndex + 1}`}>
           {row.map((key) => {
-            const enabled = isKeyEnabled(key, alphabet, mode);
             const isSpace = key === 'Space';
             const isBackspace = key === 'Backspace';
 
             let displayKey: string = key;
             if (isBackspace) {
-              displayKey = '⌫';
+              displayKey = '←';
             } else if (isSpace) {
-              displayKey = '';
+              displayKey = 'SPACE';
+            }
+
+            // Determine key type for styling
+            let keyClass = 'keyboard-key';
+            if (isSpace) {
+              keyClass += ' keyboard-key-space';
+            } else if (isBackspace) {
+              keyClass += ' keyboard-key-backspace';
+            } else if (['1','2','3','4','5','6','7','8','9','0'].includes(key)) {
+              keyClass += ' keyboard-key-number';
+            } else if ([',', '.', '?', '/', '='].includes(key)) {
+              keyClass += ' keyboard-key-punctuation';
             }
 
             return (
               <button
                 key={key}
-                className={`
-                  keyboard-key
-                  ${enabled ? 'keyboard-key-enabled' : 'keyboard-key-disabled'}
-                  ${isSpace ? 'keyboard-key-space' : ''}
-                  ${isBackspace ? 'keyboard-key-backspace' : ''}
-                `}
-                disabled={!enabled}
+                className={keyClass}
                 onClick={() => handleKeyPress(key)}
                 onTouchStart={(e) => {
                   // Prevent default to avoid any scroll or zoom behavior
