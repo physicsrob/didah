@@ -2,6 +2,7 @@ import { RSS_URLS } from '../sources';
 import { shuffleArray } from '../../shared/utils';
 import { TOP_100_WORDS, TOP_1000_WORDS } from '../../shared/wordData';
 import { generateCallsign } from '../../shared/callsign';
+import { generateQso } from '../../shared/qso';
 
 /**
  * Strip URLs from text (moved from frontend)
@@ -137,6 +138,17 @@ export async function onRequestGet(context: CloudflareContext) {
           callsigns.push(callsign);
         }
         text = callsigns.join('   ');
+        break;
+      }
+
+      case 'simulated_qso': {
+        // Generate 5 simulated QSOs
+        const qsos: string[] = [];
+        for (let i = 0; i < 5; i++) {
+          qsos.push(generateQso());
+        }
+        // Join with AR AR AR (end of message) as separator
+        text = qsos.join(' AR AR AR ');
         break;
       }
 

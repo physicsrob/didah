@@ -30,6 +30,7 @@ export const SOURCES = [
   { id: 'random_letters', name: 'Random Letters', type: 'generated', category: 'basic', description: 'Practice with random letters from the alphabet' },
   { id: 'random_characters', name: 'Random Characters', type: 'generated', category: 'basic', description: 'Practice with letters, numbers, and punctuation' },
   { id: 'random_callsigns', name: 'Random Callsigns', type: 'generated', category: 'basic', description: 'Randomly generated callsigns from around the world' },
+  { id: 'simulated_qso', name: 'Simulated QSO', type: 'generated', category: 'basic', description: 'Realistic amateur radio contacts with signal reports, weather, and equipment exchanges' },
   { id: 'top-100', name: 'Top-100 Words', type: 'generated', category: 'basic', description: 'Most common English words for vocabulary building' },
   { id: 'top-1000', name: 'Top-1000 Words', type: 'generated', category: 'basic', description: 'Extended vocabulary with 1000 common English words' },
 
