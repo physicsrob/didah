@@ -130,7 +130,7 @@ Build shared code (used by both frontend and backend) for mastery calculation an
 - [x] Can calculate per-character accuracy from mock session data
 - [x] Correctly identifies mastered (≥80%) vs un-mastered (<80%) characters
 - [x] Generates correct weighted pool (un-mastered chars appear twice, mastered once)
-- [x] Generates 50 random characters from weighted pool
+- [x] Generates 30 random characters from weighted pool
 - [x] Handles edge cases: no history, all mastered, all un-mastered
 - [x] Unit tests cover all functions with various scenarios
 - [x] Code works in both browser and Workers environments
@@ -150,7 +150,7 @@ Build shared code (used by both frontend and backend) for mastery calculation an
 Create backend source endpoint that generates weighted practice sequences based on user's mastery data.
 
 ### Relevant Spec Details
-- **Practice phase**: Exactly 50 characters, randomly selected from weighted pool
+- **Practice phase**: Exactly 30 characters, randomly selected from weighted pool
 - **Practice weighting**: Un-mastered (weight=2), Mastered (weight=1)
 - Backend has access to user's session statistics for mastery calculation
 
@@ -161,7 +161,7 @@ Create backend source endpoint that generates weighted practice sequences based 
    - Requires userId (from auth context) - **Learn Mode requires authentication**
    - Queries user's historical session statistics
    - Uses shared mastery calculator to determine un-mastered chars
-   - Uses shared content generator to create 50 weighted practice characters
+   - Uses shared content generator to create 30 weighted practice characters
    - Returns as `SourceContent` with appropriate metadata
 3. Register source in backend source registry
 4. Handle edge cases:
@@ -183,7 +183,7 @@ Create backend source endpoint that generates weighted practice sequences based 
 - [x] Requires authenticated user (returns 401 if not authenticated)
 - [x] Returns 400 for invalid level numbers (< 1 or > 20)
 - [x] Correctly queries user's session statistics
-- [x] Returns exactly 50 characters
+- [x] Returns exactly 30 characters
 - [x] Weighting is correct (verify with user who has known mastery data)
 - [x] Handles users with no history (fallback to equal weighting)
 - [x] Handles stats query failure gracefully (fallback to equal weighting)
@@ -329,23 +329,23 @@ Implement the practice phase interaction model with adaptive reveal (show answer
 Integrate the practice handler with adaptive reveal into a unified mode handler that works with the session runtime system.
 
 ### Relevant Spec Details
-- **Session flow**: 50 character practice session with adaptive reveal
+- **Session flow**: 30 character practice session with adaptive reveal
 - **Emission granularity**: 'character'
 - **Total duration**: Variable (based on user speed, no timeout)
-- **End condition**: After 50 characters complete
+- **End condition**: After 30 characters complete
 
 ### High-Level Plan
 1. Create main handler: `src/features/session/modes/learn/handler.ts`
 2. Implement session initialization:
    - Query user's historical stats to determine un-mastered characters
-   - Fetch practice source from backend (50 weighted characters)
+   - Fetch practice source from backend (30 weighted characters)
    - Store un-mastered character set for adaptive reveal logic
 3. Implement `handleCharacter` function that:
    - Delegates to practice handler (with adaptive reveal)
    - Tracks session progress
-   - Triggers session end after 50th character
+   - Triggers session end after 30th character
 4. Create mode state management:
-   - Track total characters (50)
+   - Track total characters (30)
    - Track current index
    - Track encountered characters (Set)
    - Track un-mastered characters (Set)
@@ -354,20 +354,20 @@ Integrate the practice handler with adaptive reveal into a unified mode handler 
 ### Implementation Notes
 - The `handleCharacter` function is called by `sessionProgram.ts` for each character
 - Mode state should be stored in `SessionSnapshot.modeState`
-- Session end is triggered by calling `ctx.requestQuit()` after 50th character
+- Session end is triggered by calling `ctx.requestQuit()` after 30th character
 - Practice source comes from backend (fetched once at session start)
 - Un-mastered character set determined once at session start
 - Encountered character set updated throughout session
-- Statistics tracking: All 50 characters count (first encounters = correct, quiz = as answered)
+- Statistics tracking: All 30 characters count (first encounters = correct, quiz = as answered)
 - Mode state initialization: Initialize in separate setup function with un-mastered chars from stats query
 - Emission logic: Use standard character emission (no custom logic needed)
 
 ### Acceptance Criteria
 - [ ] Session initialization queries stats for un-mastered characters (deferred to Phase 4.5)
-- [x] Session initialization fetches practice source (50 characters)
+- [x] Session initialization fetches practice source (30 characters)
 - [x] Un-mastered and encountered character sets properly maintained
-- [x] Session ends after exactly 50 characters
-- [x] Statistics correctly track all 50 characters (emission logic logs events)
+- [x] Session ends after exactly 30 characters
+- [x] Statistics correctly track all 30 characters (emission logic logs events)
 - [x] Mode state is properly maintained throughout session
 - [x] Integration test with full session flow (all existing tests passing)
 - [x] Works with existing session runtime without modifications
@@ -381,9 +381,9 @@ Integrate the practice handler with adaptive reveal into a unified mode handler 
   - Future-proofs for modes that need full content
   - Flows from page → runtime → handler cleanly
 - **Handler implementation**: Created `handleLearnCharacter()` with lazy initialization
-  - First call: extracts 50-char sequence from `sourceContent.text`, initializes un-mastered set
-  - Each call: delegates to emission logic, updates state, checks completion (50 chars)
-  - Session ends via `ctx.requestQuit()` after 50th character
+  - First call: extracts 30-char sequence from `sourceContent.text`, initializes un-mastered set
+  - Each call: delegates to emission logic, updates state, checks completion (30 chars)
+  - Session ends via `ctx.requestQuit()` after 30th character
 - **State initialization**: Added `learnState` to `sessionProgram.ts` alongside other mode states
 - **Test updates**: Updated 9 test files + CLI to provide `sourceContent` (no breaking changes)
 
@@ -476,7 +476,7 @@ Build the custom UI components for Learn Mode's character display, progress coun
   - First encounter (un-mastered): shows actual character
   - Quiz mode: shows "?" initially, then user's typed character
   - Flashes green (correct) or red (incorrect)
-- **Progress counter**: Shows current position (e.g., "15 / 50")
+- **Progress counter**: Shows current position (e.g., "15 / 30")
 - **Exit button**: Always accessible
 - **No character history**: Unlike other modes, no scrolling list
 
@@ -500,7 +500,7 @@ Build the custom UI components for Learn Mode's character display, progress coun
 - Character display should be LARGE (consider 4-6rem font size)
 - Flash animation should be brief but noticeable (~300ms)
 - Input handling: Ignore keyboard input during flash animations (prevents confusion from rapid key presses)
-- Progress counter format: "X / 50" (e.g., "15 / 50")
+- Progress counter format: "X / 30" (e.g., "15 / 30")
 - Use CSS animations for flash effect (more performant than JS animation)
 - Morse pattern display: Not included in initial implementation (can add later if requested)
 - Font: Monospace, bold, high contrast for character display
@@ -511,7 +511,7 @@ Build the custom UI components for Learn Mode's character display, progress coun
 - [x] Quiz mode: shows "?" initially
 - [x] Green flash animation works and is noticeable
 - [x] Red flash animation works and is noticeable
-- [x] Progress counter updates correctly (X / 50 format)
+- [x] Progress counter updates correctly (X / 30 format)
 - [x] No character history display (verified by visual inspection)
 - [x] Keyboard input correctly captured and published
 - [x] Input ignored during flash animations (implementation deferred to Phase 9 for UX validation)
@@ -524,7 +524,7 @@ Build the custom UI components for Learn Mode's character display, progress coun
 **Key Accomplishments:**
 - **Character Display Component**: Large (8rem/6rem/5rem responsive), centered display with border and background
 - **Flash Animations**: 300ms CSS animations (green pulse for correct, red shake for incorrect)
-- **Progress Counter**: "X / 50" format with monospace font
+- **Progress Counter**: "X / 30" format with monospace font
 - **Keyboard Input Hook**: `useLearnInput` captures single-char input, handles pause (Escape), integrates with InputBus
 - **Mobile Responsive**: Media queries for 768px, 480px breakpoints
 - **Integration**: Registered in mode definition, called via `mode.renderDisplay()` and `mode.useKeyboardInput()`
@@ -629,11 +629,11 @@ Build the session completion page with star rating display, per-character breakd
 
 ### Relevant Spec Details
 - **Star calculation**:
-  - 3 stars: ≥95% accuracy
-  - 2 stars: ≥90% accuracy
-  - 1 star: ≥85% accuracy
-  - 0 stars: <85% accuracy
-  - Based on overall session accuracy (50 practice characters)
+  - 3 stars: 0 mistakes (100% accuracy)
+  - 2 stars: 1 mistake (96.67% accuracy)
+  - 1 star: 3 mistakes (90% accuracy)
+  - 0 stars: 4+ mistakes (<90% accuracy)
+  - Based on overall session accuracy (30 practice characters)
 - **Results display**:
   - Large star visual (0-3 stars)
   - Overall accuracy percentage
@@ -651,12 +651,12 @@ Build the session completion page with star rating display, per-character breakd
 1. Extend `SessionCompletePage.tsx` or create Learn Mode specific completion page
 2. Implement star rating calculation:
    - Calculate from final session statistics
-   - Use overall accuracy (50 practice characters)
+   - Use overall accuracy (30 practice characters)
    - Map to 0-3 stars based on thresholds
 3. Build results display:
    - Visual star component (0-3 filled stars)
    - Accuracy percentage (large, prominent)
-   - Total characters completed (50)
+   - Total characters completed (30)
 4. Implement per-character breakdown:
    - Extract character stats from session statistics
    - Calculate per-character accuracy
@@ -670,7 +670,7 @@ Build the session completion page with star rating display, per-character breakd
 
 ### Implementation Notes
 - Star calculation happens client-side before saving statistics
-- Star calculation based on session accuracy (50 practice characters)
+- Star calculation based on session accuracy (30 practice characters)
 - The `learnStars` field must be added to session config before saving
 - Per-character accuracy comes from `characterStats` map in session statistics
 - Struggling characters are those with <80% accuracy IN THIS SESSION (different from mastery threshold which is historical)
@@ -683,7 +683,7 @@ Build the session completion page with star rating display, per-character breakd
 ### Acceptance Criteria
 - [x] Star rating calculated correctly (unit test all thresholds)
 - [x] Stars displayed visually (0-3 filled stars)
-- [x] Overall accuracy and character count shown (50 characters)
+- [x] Overall accuracy and character count shown (30 characters)
 - [x] Per-character breakdown displays all level characters
 - [x] Struggling characters highlighted (<80% in session)
 - [x] "Try Again" button works (returns to config)
@@ -839,17 +839,17 @@ Integrate all phases, test the complete user journey, and fix any integration is
 5. User clicks "Start Level X"
 6. Session initialization:
    - Frontend queries historical stats to determine un-mastered characters
-   - Frontend fetches practice source from backend (50 weighted characters)
-7. Session begins (50 characters with adaptive reveal):
+   - Frontend fetches practice source from backend (30 weighted characters)
+7. Session begins (30 characters with adaptive reveal):
    - First encounter with un-mastered char → character shown immediately
    - User types character → green flash → next (logged as correct)
    - All other encounters → "?" appears with audio (quiz mode)
    - User types answer → feedback (green/red)
    - If incorrect: correction mode with replay
-8. After 50 characters, session ends
-9. Completion page shows stars (based on all 50 characters), accuracy, struggling characters
+8. After 30 characters, session ends
+9. Completion page shows stars (based on all 30 characters), accuracy, struggling characters
 10. User clicks "Next Level" or "Try Again"
-11. Session statistics saved to backend (all 50 characters counted)
+11. Session statistics saved to backend (all 30 characters counted)
 
 ### High-Level Plan
 1. Verify all phases work together without errors

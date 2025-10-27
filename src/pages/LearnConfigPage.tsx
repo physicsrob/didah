@@ -12,6 +12,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import type { SessionConfig } from '../core/types/domain';
 import type { SourceContent } from '../features/sources';
 import { HeaderBar } from '../components/HeaderBar';
+import { StarDisplay } from '../components/StarDisplay';
 import { getCharactersForLesson, getNewCharactersForLesson, TOTAL_LESSONS } from '../../functions/shared/koch';
 import { fetchSourceContent } from '../features/sources';
 import { useSettings } from '../features/settings/hooks/useSettings';
@@ -67,6 +68,25 @@ export function LearnConfigPage({ onStart }: LearnConfigPageProps) {
   const isFirstTime = useCallback(() => {
     return Object.keys(learnProgress).length === 0;
   }, [learnProgress]);
+
+  // Determine the lesson to retry (most recent completed lesson)
+  const retryLesson = useCallback(() => {
+    const next = nextLesson();
+    const allComplete = allLessonsComplete();
+
+    // If all lessons complete, offer to retry the last lesson
+    if (allComplete) {
+      return TOTAL_LESSONS;
+    }
+
+    // If next lesson is > 1, offer to retry the previous lesson
+    if (next > 1) {
+      return next - 1;
+    }
+
+    // Otherwise no retry lesson (first time or on lesson 1 with 0 stars)
+    return null;
+  }, [nextLesson, allLessonsComplete]);
 
   // Handle start session for a specific lesson
   const handleStartLesson = useCallback(async (lesson: number) => {
@@ -137,6 +157,9 @@ export function LearnConfigPage({ onStart }: LearnConfigPageProps) {
     const firstTime = isFirstTime();
 
     if (allComplete) {
+      const retry = retryLesson();
+      const retryStars = retry ? learnProgress[retry] || 0 : 0;
+
       return (
         <>
           <div style={{ textAlign: 'center', marginBottom: '24px' }}>
@@ -145,12 +168,23 @@ export function LearnConfigPage({ onStart }: LearnConfigPageProps) {
               You've completed all 20 lessons!
             </div>
           </div>
+          {retry && (
+            <button
+              className="btn btn-secondary btn-large"
+              onClick={() => handleStartLesson(retry)}
+              disabled={isStarting}
+              style={{ width: '100%', marginBottom: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
+            >
+              <span>Retry Lesson {retry}</span>
+              <StarDisplay stars={retryStars} hasAttempt={true} size="small" />
+            </button>
+          )}
           <button
             className="btn btn-secondary btn-large"
             onClick={() => navigate('/learn/browse')}
             style={{ width: '100%' }}
           >
-            Browse Lessons
+            Browse All Lessons
           </button>
         </>
       );
@@ -191,10 +225,6 @@ export function LearnConfigPage({ onStart }: LearnConfigPageProps) {
           </div>
         </div>
 
-        <div style={{ fontSize: '14px', fontWeight: '600', color: 'var(--text-secondary)', marginBottom: '12px' }}>
-          {firstTime ? 'Start here' : 'Your Next Lesson'}
-        </div>
-
         <div style={{
           padding: '24px',
           background: 'var(--bg-secondary)',
@@ -208,7 +238,7 @@ export function LearnConfigPage({ onStart }: LearnConfigPageProps) {
             color: 'var(--text-secondary)',
             marginBottom: '16px'
           }}>
-            Lesson {lessonNum}
+            {firstTime ? '🎯 Start Here: Lesson 1' : `🎯 Up Next: Lesson ${lessonNum}`}
           </div>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
@@ -256,25 +286,31 @@ export function LearnConfigPage({ onStart }: LearnConfigPageProps) {
           {isStarting ? 'Starting...' : `Start Lesson ${lessonNum}`}
         </button>
 
-        <div style={{ textAlign: 'center' }}>
-          <a
-            href="/learn/browse"
-            onClick={(e) => {
-              e.preventDefault();
-              navigate('/learn/browse');
-            }}
-            style={{
-              color: 'var(--color-blue-primary)',
-              textDecoration: 'none',
-              fontSize: '14px',
-              cursor: 'pointer'
-            }}
-            onMouseEnter={(e) => e.currentTarget.style.textDecoration = 'underline'}
-            onMouseLeave={(e) => e.currentTarget.style.textDecoration = 'none'}
-          >
-            Browse All Lessons
-          </a>
-        </div>
+        {(() => {
+          const retry = retryLesson();
+          const retryStars = retry ? learnProgress[retry] || 0 : 0;
+
+          return retry ? (
+            <button
+              className="btn btn-secondary btn-large"
+              onClick={() => handleStartLesson(retry)}
+              disabled={isStarting}
+              style={{ width: '100%', marginBottom: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
+            >
+              <span>Retry Lesson {retry}</span>
+              <StarDisplay stars={retryStars} hasAttempt={true} size="small" />
+            </button>
+          ) : null;
+        })()}
+
+        <button
+          className="btn btn-secondary btn-large"
+          onClick={() => navigate('/learn/browse')}
+          disabled={isStarting}
+          style={{ width: '100%' }}
+        >
+          Browse All Lessons
+        </button>
       </>
     );
   };

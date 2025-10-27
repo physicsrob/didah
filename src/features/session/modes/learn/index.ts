@@ -23,7 +23,7 @@ export const learnMode: ModeDefinition = {
   // UI metadata
   icon: '🎓',
   shortDescription: 'Start here to learn morse code from scratch using the Koch method.',
-  longDescription: 'Learn Morse code from scratch using the Koch method. Progress through 20 lessons, mastering 2 new characters at a time. Type what you hear, and proceed to the next lesson after you\'ve reached at least 85% accuracy.',
+  longDescription: 'Learn Morse code from scratch using the Koch method. Progress through 20 lessons, mastering 2 new characters at a time. Type what you hear, and proceed to the next lesson after you\'ve reached at least one star (max 3 mistakes).',
 
   // Emission behavior
   emissionGranularity: 'character',
