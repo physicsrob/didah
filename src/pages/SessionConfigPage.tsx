@@ -435,7 +435,12 @@ export function SessionConfigPage({ mode, onStart }: SessionConfigPageProps) {
           {/* Farnsworth Speed - Only show for listen, live-copy, and head-copy modes */}
           {(mode === 'listen' || mode === 'live-copy' || mode === 'head-copy') && (
             <div className="settings-row">
-              <div className="settings-label">Farnsworth Speed</div>
+              <div className="settings-label">
+                <span>Farnsworth Speed</span>
+                <InfoTooltip content="The overall speed in words per minute. When set below Character Speed, individual characters still play at full speed, but the spacing between them is extended to slow the overall pace.">
+                  <span className="info-icon-trigger">ⓘ</span>
+                </InfoTooltip>
+              </div>
               <div className="settings-control">
                 <input
                   type="range"
@@ -463,7 +468,12 @@ export function SessionConfigPage({ mode, onStart }: SessionConfigPageProps) {
           {/* Character Display Timing - Only show for listen mode */}
           {mode === 'listen' && (
             <div className="settings-row">
-              <div className="settings-label">Display Timing</div>
+              <div className="settings-label">
+                <span>Display Timing</span>
+                <InfoTooltip content="When the character appears relative to its audio. Values represent character lengths: 1.0 = one character length later, -0.5 = half a character early. 'After Word' reveals complete words.">
+                  <span className="info-icon-trigger">ⓘ</span>
+                </InfoTooltip>
+              </div>
               <div className="settings-control">
                 <select
                   value={listenTimingOffset}
@@ -497,7 +507,12 @@ export function SessionConfigPage({ mode, onStart }: SessionConfigPageProps) {
           {/* Feedback - Only show for practice mode */}
           {mode === 'practice' && (
             <div className="settings-row">
-              <div className="settings-label">Feedback</div>
+              <div className="settings-label">
+                <span>Feedback</span>
+                <InfoTooltip content="What happens when you make a mistake. Flash = screen flashes red, Buzzer = error sound plays, Replay = character is shown and played again, Off = no feedback (just moves to next character).">
+                  <span className="info-icon-trigger">ⓘ</span>
+                </InfoTooltip>
+              </div>
               <div className="settings-control">
                 <div className="segmented-control">
                   <button
@@ -532,7 +547,12 @@ export function SessionConfigPage({ mode, onStart }: SessionConfigPageProps) {
           {/* Timeout Speed - Only show for practice mode */}
           {mode === 'practice' && (
             <div className="settings-row">
-              <div className="settings-label">Timeout Speed</div>
+              <div className="settings-label">
+                <span>Timeout Speed</span>
+                <InfoTooltip content="How long you have to respond after the character finishes playing, ranging from 2 seconds (Slow) to 0.3 seconds (Lightning).">
+                  <span className="info-icon-trigger">ⓘ</span>
+                </InfoTooltip>
+              </div>
               <div className="settings-control">
                 <div className="segmented-control">
                   <button
