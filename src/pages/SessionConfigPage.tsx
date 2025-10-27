@@ -30,7 +30,6 @@ export function SessionConfigPage({ mode, onStart }: SessionConfigPageProps) {
   const [selectedSourceId, setSelectedSourceId] = useState<string>('random_letters');
   const [wpm, setWpm] = useState(15);
   const [farnsworthWpm, setFarnsworthWpm] = useState(10);
-  const [extraWordSpacing, setExtraWordSpacing] = useState(0);
   const [listenTimingOffset, setListenTimingOffset] = useState<number | 'word'>(1.0);
 
   // Source state
@@ -117,7 +116,6 @@ export function SessionConfigPage({ mode, onStart }: SessionConfigPageProps) {
       setSelectedSourceId(mode === 'head-copy' ? settings.defaultHeadCopySourceId : settings.defaultSourceId);
       setWpm(settings.wpm);
       setFarnsworthWpm(settings.farnsworthWpm);
-      setExtraWordSpacing(settings.extraWordSpacing);
 
       // Direct assignment - feedbackMode is stored as-is now
       setFeedbackMode(settings.feedbackMode);
@@ -183,7 +181,6 @@ export function SessionConfigPage({ mode, onStart }: SessionConfigPageProps) {
         currentSettingValue !== selectedSourceId ||
         settings.wpm !== wpm ||
         settings.farnsworthWpm !== farnsworthWpm ||
-        settings.extraWordSpacing !== extraWordSpacing ||
         settings.feedbackMode !== feedbackMode;
 
       if (needsUpdate) {
@@ -203,9 +200,6 @@ export function SessionConfigPage({ mode, onStart }: SessionConfigPageProps) {
         if (settings.farnsworthWpm !== farnsworthWpm) {
           updateSetting('farnsworthWpm', farnsworthWpm);
         }
-        if (settings.extraWordSpacing !== extraWordSpacing) {
-          updateSetting('extraWordSpacing', extraWordSpacing);
-        }
         if (settings.feedbackMode !== feedbackMode) {
           updateSetting('feedbackMode', feedbackMode);
         }
@@ -213,7 +207,7 @@ export function SessionConfigPage({ mode, onStart }: SessionConfigPageProps) {
     }, 300); // 300ms debounce
 
     return () => clearTimeout(timer);
-  }, [duration, speedTier, selectedSourceId, wpm, farnsworthWpm, extraWordSpacing, feedbackMode, settings, settingsLoading, updateSetting, mode]);
+  }, [duration, speedTier, selectedSourceId, wpm, farnsworthWpm, feedbackMode, settings, settingsLoading, updateSetting, mode]);
 
   // Handle source selection
   const handleSourceChange = async (sourceId: string) => {
@@ -259,7 +253,7 @@ export function SessionConfigPage({ mode, onStart }: SessionConfigPageProps) {
       feedback,
       replay,
       effectiveAlphabet: buildAlphabet(),
-      extraWordSpacing,
+      extraWordSpacing: 0,
       listenTimingOffset: mode === 'listen' ? listenTimingOffset : 1.0,
       characterSpeed: wpm,
     };
@@ -455,35 +449,6 @@ export function SessionConfigPage({ mode, onStart }: SessionConfigPageProps) {
                   textAlign: 'right'
                 }}>
                   {farnsworthWpm} WPM{farnsworthWpm === wpm ? ' (std)' : ''}
-                </span>
-              </div>
-            </div>
-          )}
-
-          {/* Extra Word Spacing - Only show for listen and live-copy modes */}
-          {(mode === 'listen' || mode === 'live-copy') && (
-            <div className="settings-row">
-              <div className="settings-label">Extra Word Spacing</div>
-              <div className="settings-control">
-                <input
-                  type="range"
-                  min="0"
-                  max="5"
-                  step="1"
-                  value={extraWordSpacing}
-                  onChange={(e) => setExtraWordSpacing(Number(e.target.value))}
-                  style={{
-                    flex: 1
-                  }}
-                />
-                <span style={{
-                  color: 'var(--color-blue-primary)',
-                  fontSize: '16px',
-                  fontWeight: '500',
-                  minWidth: '60px',
-                  textAlign: 'right'
-                }}>
-                  {extraWordSpacing === 0 ? 'None' : `+${extraWordSpacing}`}
                 </span>
               </div>
             </div>
