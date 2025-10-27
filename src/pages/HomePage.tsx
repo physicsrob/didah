@@ -63,7 +63,7 @@ export default function HomePage() {
         </div>
       </nav>
 
-      <div className="w-full px-6 py-10 home-content-wrapper">
+      <div className="w-full px-6 home-content-wrapper">
         <div className="logo-container">
           <img src="/logo.svg" alt="didah" className="logo" />
         </div>

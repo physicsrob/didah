@@ -2,7 +2,7 @@
 
 /* Navigation */
 .home-nav {
-  position: fixed;
+  position: absolute;
   top: 24px;
   right: 24px;
   z-index: 10;
@@ -58,13 +58,11 @@
   max-width: 1000px;
   position: relative;
   z-index: 1;
+  padding-top: 60px;
+  padding-bottom: 60px;
 }
 
 @media (max-width: 768px) {
-  .home-content-wrapper {
-    padding-top: 80px;
-  }
-
   .home-nav {
     top: 16px;
     right: 12px;
