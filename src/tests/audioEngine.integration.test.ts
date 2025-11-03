@@ -135,4 +135,18 @@ describe('AudioEngine Integration', () => {
     await expect(audioEngine.playCharacter('a', DEFAULT_WPM, 0)).resolves.not.toThrow();
     await expect(audioEngine.playCharacter('A', DEFAULT_WPM, 0)).resolves.not.toThrow();
   });
+
+  it('should handle stop with multiple scheduled oscillators', async () => {
+    await audioEngine.initialize();
+
+    // Start playing a character with multiple elements (e.g., 'B' = -...)
+    // Don't await - we want to stop it mid-playback
+    const playPromise = audioEngine.playCharacter('B', DEFAULT_WPM, 0);
+
+    // Stop immediately (should clean up all scheduled oscillators)
+    await expect(audioEngine.stop()).resolves.not.toThrow();
+
+    // The play promise should also resolve without error
+    await expect(playPromise).resolves.not.toThrow();
+  });
 });

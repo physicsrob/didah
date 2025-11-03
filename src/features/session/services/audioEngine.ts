@@ -17,8 +17,10 @@ export interface AudioEngineConfig {
 
 export class AudioEngine {
   private audioContext: AudioContext | null = null;
-  private currentGain: GainNode | null = null;
-  private currentOscillator: OscillatorNode | null = null;
+  private scheduledNodes: Array<{
+    oscillator: OscillatorNode;
+    gain: GainNode;
+  }> = [];
   private isPlaying = false;
   private playbackPromise: Promise<void> | null = null;
 
@@ -83,7 +85,9 @@ export class AudioEngine {
     if (char === ' ') {
       const ditMs = wpmToDitMs(wpm);
       await this.stop(); // Stop any current playback
-      this.playbackPromise = this.silence(ditMs * (4 + (extraWordSpacing * 7)));
+      this.playbackPromise = new Promise(resolve => {
+        setTimeout(resolve, ditMs * (4 + (extraWordSpacing * 7)));
+      });
       return this.playbackPromise;
     }
 
@@ -101,15 +105,17 @@ export class AudioEngine {
    * Stop current audio playback
    */
   async stop(): Promise<void> {
-    if (this.currentOscillator) {
-      this.currentOscillator.stop();
-      this.currentOscillator = null;
+    // Stop and disconnect all scheduled oscillators
+    for (const { oscillator, gain } of this.scheduledNodes) {
+      try {
+        oscillator.stop();
+        oscillator.disconnect();
+        gain.disconnect();
+      } catch {
+        // Oscillator may already be stopped
+      }
     }
-
-    if (this.currentGain) {
-      this.currentGain.disconnect();
-      this.currentGain = null;
-    }
+    this.scheduledNodes = [];
 
     this.isPlaying = false;
 
@@ -150,6 +156,7 @@ export class AudioEngine {
 
   /**
    * Play a dit/dah pattern with proper timing and spacing
+   * Pre-schedules all tones in WebAudio timeline for precise timing
    */
   private async playPattern(pattern: MorsePattern, wpm: number): Promise<void> {
     if (!this.audioContext) {
@@ -162,19 +169,41 @@ export class AudioEngine {
       const ditMs = wpmToDitMs(wpm);
       const { intraSymbolMs } = getSpacingMs(wpm);
 
+      // Calculate timing for all elements upfront
+      let currentTimeOffset = 0;
+      const schedule: Array<{ startTime: number; duration: number }> = [];
+
       for (let i = 0; i < pattern.length; i++) {
         const element = pattern[i];
-        const duration = element === '.' ? ditMs : ditMs * 3; // dah is 3x dit
+        const durationMs = element === '.' ? ditMs : ditMs * 3; // dah is 3x dit
 
-        await this.playTone(duration);
+        schedule.push({
+          startTime: currentTimeOffset / 1000, // Convert to seconds
+          duration: durationMs / 1000
+        });
 
-        // Add intra-symbol spacing between elements (except after the last one)
+        currentTimeOffset += durationMs;
+
+        // Add spacing after each element except the last
         if (i < pattern.length - 1) {
-          await this.silence(intraSymbolMs);
+          currentTimeOffset += intraSymbolMs;
         }
       }
+
+      // Schedule all tones at precise times relative to now
+      const baseTime = this.audioContext.currentTime;
+      const promises: Promise<void>[] = [];
+
+      for (const { startTime, duration } of schedule) {
+        promises.push(this.playToneAtTime(baseTime + startTime, duration));
+      }
+
+      // Wait for all tones to complete
+      await Promise.all(promises);
+
     } finally {
       this.isPlaying = false;
+      this.scheduledNodes = [];
     }
   }
 
@@ -217,31 +246,29 @@ export class AudioEngine {
   }
 
   /**
-   * Play a tone for the specified duration with shaped envelope
+   * Play a tone at a specific time with shaped envelope
    */
-  private async playTone(durationMs: number): Promise<void> {
+  private async playToneAtTime(startTime: number, durationSeconds: number): Promise<void> {
     if (!this.audioContext) return;
 
     return new Promise((resolve, reject) => {
       try {
-        const startTime = this.audioContext!.currentTime;
-        const duration = durationMs / 1000;
-
         const oscillator = this.audioContext!.createOscillator();
         const gainNode = this.audioContext!.createGain();
 
-        this.currentOscillator = oscillator;
-        this.currentGain = gainNode;
+        // Track nodes for cleanup
+        this.scheduledNodes.push({ oscillator, gain: gainNode });
 
         oscillator.type = 'sine';
         oscillator.frequency.setValueAtTime(this.config.frequency, startTime);
 
-        const { riseTime, fallTime } = this.getEnvelopeTimings(durationMs);
+        const { riseTime, fallTime } = this.getEnvelopeTimings(durationSeconds * 1000);
 
+        // All timing scheduled relative to startTime (not currentTime)
         gainNode.gain.setValueAtTime(0, startTime);
         gainNode.gain.linearRampToValueAtTime(this.config.volume, startTime + riseTime);
-        gainNode.gain.setValueAtTime(this.config.volume, startTime + duration - fallTime);
-        gainNode.gain.linearRampToValueAtTime(0, startTime + duration);
+        gainNode.gain.setValueAtTime(this.config.volume, startTime + durationSeconds - fallTime);
+        gainNode.gain.linearRampToValueAtTime(0, startTime + durationSeconds);
 
         oscillator.connect(gainNode);
 
@@ -255,15 +282,11 @@ export class AudioEngine {
         }
 
         oscillator.start(startTime);
-        oscillator.stop(startTime + duration);
+        oscillator.stop(startTime + durationSeconds);
 
         oscillator.onended = () => {
           oscillator.disconnect();
           gainNode.disconnect();
-          if (this.currentOscillator === oscillator) {
-            this.currentOscillator = null;
-            this.currentGain = null;
-          }
           resolve();
         };
 
@@ -273,14 +296,6 @@ export class AudioEngine {
     });
   }
 
-  /**
-   * Wait for a specified duration (silence)
-   */
-  private async silence(durationMs: number): Promise<void> {
-    return new Promise(resolve => {
-      setTimeout(resolve, durationMs);
-    });
-  }
 }
 
 // Default audio config moved to src/core/config/defaults.ts
