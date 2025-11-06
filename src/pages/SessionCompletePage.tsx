@@ -154,6 +154,10 @@ export function SessionCompletePage({ statistics: fullStatistics, onRestart, onS
         return 'Listen Again';
       case 'live-copy':
         return 'Live Copy Again';
+      case 'head-copy':
+        return 'Head Copy Again';
+      case 'ditDash':
+        return 'Dit Dash Again';
       case 'learn':
         return 'Try Again';
       default:
