@@ -31,7 +31,7 @@ export function SessionConfigPage({ mode, onStart }: SessionConfigPageProps) {
   const [selectedSourceId, setSelectedSourceId] = useState<string>('random_letters');
   const [wpm, setWpm] = useState(15);
   const [farnsworthWpm, setFarnsworthWpm] = useState(10);
-  const [listenTimingOffset, setListenTimingOffset] = useState<number | 'word'>(1.0);
+  const [listenTimingOffset, setListenTimingOffset] = useState<string>('1.0');
 
   // Source state
   const [availableSources, setAvailableSources] = useState<ApiTextSource[]>([]);
@@ -255,7 +255,9 @@ export function SessionConfigPage({ mode, onStart }: SessionConfigPageProps) {
       replay,
       effectiveAlphabet: buildAlphabet(),
       extraWordSpacing: 0,
-      listenTimingOffset: mode === 'listen' ? listenTimingOffset : 1.0,
+      listenTimingOffset: mode === 'listen'
+        ? (listenTimingOffset === 'word' ? 'word' : Number(listenTimingOffset))
+        : 1.0,
       characterSpeed: wpm,
     };
 
@@ -478,8 +480,7 @@ export function SessionConfigPage({ mode, onStart }: SessionConfigPageProps) {
                 <select
                   value={listenTimingOffset}
                   onChange={(e) => {
-                    const value = e.target.value;
-                    setListenTimingOffset(value === 'word' ? 'word' : Number(value));
+                    setListenTimingOffset(e.target.value);
                   }}
                   style={{
                     flex: 1,
