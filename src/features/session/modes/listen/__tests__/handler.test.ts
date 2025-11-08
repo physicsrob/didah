@@ -174,12 +174,12 @@ describe('handleListenCharacter - integration', () => {
 
   describe('display offset timing', () => {
     it('adds character to emissions with zero offset (default)', async () => {
-      const config = createTestConfig({ mode: 'listen', wpm: 20, listenTimingOffset: 0.0 });
+      const config = createTestConfig({ mode: 'listen', wpm: 20, listenTimingOffset: 0 });
       const startTime = clock.now();
 
       const handlerPromise = handleListenCharacter(config, 'A', startTime, ctx, signal.signal, null, false);
 
-      // Character should appear immediately (offset = 0)
+      // Character should appear immediately (offset = 0s)
       await advanceAndFlush(clock, 1);
       expect(ctx.snapshot.emissions).toHaveLength(1);
       expect(ctx.snapshot.emissions[0].char).toBe('A');
@@ -187,86 +187,6 @@ describe('handleListenCharacter - integration', () => {
       // Complete the emission
       const audioDuration = calculateCharacterDurationMs('A', config.wpm, 0);
       await advanceAndFlush(clock, audioDuration);
-
-      const { preRevealDelayMs, postRevealDelayMs } = getListenModeTimingMs(config.wpm, config.farnsworthWpm);
-      await advanceAndFlush(clock, preRevealDelayMs + postRevealDelayMs);
-
-      await handlerPromise;
-    });
-
-    it('adds character to emissions with negative offset (before audio)', async () => {
-      const config = createTestConfig({ mode: 'listen', wpm: 20, listenTimingOffset: -0.5 });
-      const startTime = clock.now();
-
-      const handlerPromise = handleListenCharacter(config, 'B', startTime, ctx, signal.signal, null, false);
-
-      // Character should appear immediately (negative offset)
-      await advanceAndFlush(clock, 1);
-      expect(ctx.snapshot.emissions).toHaveLength(1);
-      expect(ctx.snapshot.emissions[0].char).toBe('B');
-
-      // Calculate the offset delay
-      const charDuration = calculateCharacterDurationMs('B', config.wpm, 0);
-      const offsetMs = Math.abs(-0.5 * charDuration);
-      await advanceAndFlush(clock, offsetMs);
-
-      // Now audio plays
-      await advanceAndFlush(clock, charDuration);
-
-      const { preRevealDelayMs, postRevealDelayMs } = getListenModeTimingMs(config.wpm, config.farnsworthWpm);
-      await advanceAndFlush(clock, preRevealDelayMs + postRevealDelayMs);
-
-      await handlerPromise;
-    });
-
-    it('adds character to emissions with positive offset (during/after audio)', async () => {
-      const config = createTestConfig({ mode: 'listen', wpm: 20, listenTimingOffset: 0.5 });
-      const startTime = clock.now();
-
-      const handlerPromise = handleListenCharacter(config, 'C', startTime, ctx, signal.signal, null, false);
-
-      // Character should NOT appear immediately
-      await advanceAndFlush(clock, 1);
-      expect(ctx.snapshot.emissions).toHaveLength(0);
-
-      // Audio plays first
-      const charDuration = calculateCharacterDurationMs('C', config.wpm, 0);
-      await advanceAndFlush(clock, charDuration);
-
-      // Then wait for offset
-      const offsetMs = 0.5 * charDuration;
-      await advanceAndFlush(clock, offsetMs);
-
-      // Now character should appear
-      expect(ctx.snapshot.emissions).toHaveLength(1);
-      expect(ctx.snapshot.emissions[0].char).toBe('C');
-
-      const { preRevealDelayMs, postRevealDelayMs } = getListenModeTimingMs(config.wpm, config.farnsworthWpm);
-      await advanceAndFlush(clock, preRevealDelayMs + postRevealDelayMs);
-
-      await handlerPromise;
-    });
-
-    it('handles offset = 1.0 (show at audio end)', async () => {
-      const config = createTestConfig({ mode: 'listen', wpm: 20, listenTimingOffset: 1.0 });
-      const startTime = clock.now();
-
-      const handlerPromise = handleListenCharacter(config, 'D', startTime, ctx, signal.signal, null, false);
-
-      // Character should NOT appear immediately
-      await advanceAndFlush(clock, 1);
-      expect(ctx.snapshot.emissions).toHaveLength(0);
-
-      // Audio plays
-      const charDuration = calculateCharacterDurationMs('D', config.wpm, 0);
-      await advanceAndFlush(clock, charDuration);
-
-      // Wait exactly one char duration (offset = 1.0)
-      await advanceAndFlush(clock, charDuration);
-
-      // Now character should appear
-      expect(ctx.snapshot.emissions).toHaveLength(1);
-      expect(ctx.snapshot.emissions[0].char).toBe('D');
 
       const { preRevealDelayMs, postRevealDelayMs } = getListenModeTimingMs(config.wpm, config.farnsworthWpm);
       await advanceAndFlush(clock, preRevealDelayMs + postRevealDelayMs);
@@ -407,6 +327,100 @@ describe('handleListenCharacter - integration', () => {
       expect(ctx.snapshot.listenState).toBeDefined();
       expect(ctx.snapshot.listenState?.bufferedWord).toHaveLength(1);
       expect(ctx.snapshot.listenState?.bufferedWord[0]).toBe('X');
+    });
+  });
+
+  describe('audio timing invariance', () => {
+    it('maintains consistent audio intervals regardless of display offset', async () => {
+      // Test that display offset does NOT affect the interval between audio playbacks
+      const offsets: (0 | 0.5 | 1.0 | 1.5)[] = [0, 0.5, 1.0, 1.5];
+      const testSequence = 'ABC';
+      const allIntervals: number[][] = [];
+
+      for (const offset of offsets) {
+        // Reset for each offset test
+        clock = new FakeClock();
+        io = new TestIO(clock);
+        input = new TestInputBus();
+        signal = new AbortController();
+        snapshot = {
+          phase: 'running' as const,
+          startedAt: clock.now(),
+          remainingMs: 60000,
+          emissions: []
+        };
+        ctx = {
+          io,
+          input,
+          clock,
+          snapshot,
+          sourceContent: { id: 'test', text: testSequence },
+          updateSnapshot: (updates: Partial<SessionSnapshot>) => {
+            snapshot = { ...snapshot, ...updates };
+          },
+          updateStats: () => {
+            throw new Error('Listen mode should not update stats');
+          },
+          updateRemainingTime: (startTime: number, config) => {
+            const elapsed = clock.now() - startTime;
+            snapshot.remainingMs = Math.max(0, config.lengthMs - elapsed);
+          },
+          publish: () => {},
+          waitIfPaused: async () => {},
+          requestQuit: () => {}
+        };
+
+        const config = createTestConfig({
+          mode: 'listen',
+          wpm: 20,
+          listenTimingOffset: offset
+        });
+
+        // Play the sequence
+        const promises: Promise<void>[] = [];
+        for (const char of testSequence) {
+          const startTime = clock.now();
+          const promise = handleListenCharacter(config, char, startTime, ctx, signal.signal, null, false);
+          promises.push(promise);
+
+          // Advance clock in small increments to let everything complete
+          // Use a generous amount to ensure all timing completes
+          for (let i = 0; i < 200; i++) {
+            await advanceAndFlush(clock, 50);
+          }
+        }
+
+        await Promise.all(promises);
+
+        // Get the audio timestamps
+        const timestamps = io.getAudioPlayTimestamps();
+        expect(timestamps.length).toBe(testSequence.length);
+
+        // Calculate intervals between consecutive audio playbacks
+        const intervals: number[] = [];
+        for (let i = 1; i < timestamps.length; i++) {
+          intervals.push(timestamps[i] - timestamps[i - 1]);
+        }
+
+        allIntervals.push(intervals);
+      }
+
+      // Now verify that ALL offsets produced the SAME intervals
+      // This is the invariance property: display offset should not affect audio timing
+      const referenceIntervals = allIntervals[0];
+      const referenceOffset = offsets[0];
+
+      for (let i = 1; i < allIntervals.length; i++) {
+        const currentIntervals = allIntervals[i];
+        const currentOffset = offsets[i];
+
+        // Each interval should match the reference
+        for (let j = 0; j < referenceIntervals.length; j++) {
+          expect(currentIntervals[j],
+            `Audio interval ${j} should be the same for offset ${referenceOffset} and ${currentOffset}`
+          ).toBe(referenceIntervals[j]);
+        }
+      }
     });
   });
 });

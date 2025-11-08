@@ -38,7 +38,7 @@ const config: SessionConfig = {
   feedback: 'none',
   effectiveAlphabet: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789.,?'.split(''),
   extraWordSpacing: 0,
-  listenTimingOffset: 0.0,
+  listenTimingOffset: 0,
   characterSpeed: args.wpm
 };
 

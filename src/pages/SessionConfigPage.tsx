@@ -256,7 +256,7 @@ export function SessionConfigPage({ mode, onStart }: SessionConfigPageProps) {
       effectiveAlphabet: buildAlphabet(),
       extraWordSpacing: 0,
       listenTimingOffset: mode === 'listen'
-        ? (listenTimingOffset === 'word' ? 'word' : Number(listenTimingOffset))
+        ? (listenTimingOffset === 'word' ? 'word' : Number(listenTimingOffset) as 0 | 0.5 | 1.0 | 1.5)
         : 1.0,
       characterSpeed: wpm,
     };
@@ -472,7 +472,7 @@ export function SessionConfigPage({ mode, onStart }: SessionConfigPageProps) {
             <div className="settings-row">
               <div className="settings-label">
                 <span>Display Timing</span>
-                <InfoTooltip content="When the character appears relative to its audio. Values represent character lengths: 1.0 = one character length later, -0.5 = half a character early. 'After Word' reveals complete words.">
+                <InfoTooltip content="When the character appears after its audio starts. Values are in seconds: 0s = immediately with audio, 1.0s = one second after audio starts. 'After Word' reveals complete words.">
                   <span className="info-icon-trigger">ⓘ</span>
                 </InfoTooltip>
               </div>
@@ -494,11 +494,10 @@ export function SessionConfigPage({ mode, onStart }: SessionConfigPageProps) {
                     cursor: 'pointer'
                   }}
                 >
-                  <option value="-0.5">Before (-0.5)</option>
-                  <option value="0.0">With Audio (0.0)</option>
-                  <option value="0.5">During (+0.5)</option>
-                  <option value="1.0">After (+1.0)</option>
-                  <option value="1.5">Later (+1.5)</option>
+                  <option value="0">With Audio (0s)</option>
+                  <option value="0.5">After 0.5s</option>
+                  <option value="1.0">After 1.0s</option>
+                  <option value="1.5">After 1.5s</option>
                   <option value="word">After Word</option>
                 </select>
               </div>

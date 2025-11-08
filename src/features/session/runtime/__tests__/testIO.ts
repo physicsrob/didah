@@ -17,6 +17,7 @@ export class TestIO implements IO {
   private hiddenCount: number = 0;
   private audioStopped: boolean = false;
   private loggedEvents: LogEvent[] = [];
+  private audioPlayTimestamps: number[] = [];
 
   constructor(clock: Clock) {
     this.clock = clock;
@@ -25,6 +26,7 @@ export class TestIO implements IO {
   // ============= IO Implementation =============
 
   async playChar(char: string, wpm: number): Promise<void> {
+    this.audioPlayTimestamps.push(this.clock.now());
     const duration = calculateCharacterDurationMs(char, wpm, 0);
     await this.clock.sleep(duration);
   }
@@ -143,6 +145,13 @@ export class TestIO implements IO {
     });
   }
 
+  /**
+   * Get timestamps of all audio playback calls
+   */
+  getAudioPlayTimestamps(): number[] {
+    return [...this.audioPlayTimestamps];
+  }
+
   // ============= Test Helpers =============
 
   /**
@@ -155,6 +164,7 @@ export class TestIO implements IO {
     this.hiddenCount = 0;
     this.audioStopped = false;
     this.loggedEvents = [];
+    this.audioPlayTimestamps = [];
   }
 
   /**

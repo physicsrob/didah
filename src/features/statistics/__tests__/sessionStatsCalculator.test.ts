@@ -20,7 +20,7 @@ const createConfig = (): SessionConfig => ({
   feedback: 'flash',
   effectiveAlphabet: ['A', 'B', 'C'],
   extraWordSpacing: 0,
-  listenTimingOffset: 0.0,
+  listenTimingOffset: 0,
   characterSpeed: 20,
 });
 

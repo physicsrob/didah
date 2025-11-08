@@ -2,10 +2,11 @@
  * Listen Mode - Emission Logic
  *
  * Handles audio playback with configurable display offset for Listen mode.
- * The display offset ratio controls when the character appears relative to its audio:
- * - Negative: show before audio starts
- * - Zero: show when audio starts
- * - Positive: show during/after audio
+ * The display offset controls when the character appears after audio starts:
+ * - 0s: show immediately when audio starts
+ * - 0.5s/1.0s/1.5s: show N seconds after audio starts
+ *
+ * Display timing is asynchronous and does not affect audio playback intervals.
  */
 
 import type { SessionConfig } from '../../../../core/types/domain';
@@ -41,9 +42,9 @@ export async function runListenEmission(
     return;
   }
 
-  // Character-level reveal mode: use timing offset
+  // Character-level reveal mode: use timing offset (in seconds)
   const charDuration = calculateCharacterDurationMs(char, cfg.wpm, cfg.extraWordSpacing);
-  const offsetMs = cfg.listenTimingOffset * charDuration;
+  const offsetMs = cfg.listenTimingOffset * 1000; // Convert seconds to milliseconds
 
   // Helper to add character to display at the current time
   const addToDisplay = () => {
@@ -58,28 +59,31 @@ export async function runListenEmission(
     ctx.publish();
   };
 
-  // Negative offset: Show character BEFORE audio starts
-  if (offsetMs < 0) {
-    addToDisplay();
-    await ctx.clock.sleep(-offsetMs, sessionSignal);
-  }
-
-  // Zero offset: Show at audio start
+  // Schedule display asynchronously (don't block audio timeline)
   if (offsetMs === 0) {
+    // Zero offset: Show immediately (synchronously)
     addToDisplay();
+  } else {
+    // Positive offset: Schedule display after delay (asynchronously)
+    // Use void to explicitly ignore the promise (fire-and-forget)
+    void (async () => {
+      try {
+        await ctx.clock.sleep(offsetMs, sessionSignal);
+        addToDisplay();
+      } catch (error) {
+        // Aborted - expected during session termination
+        if (error instanceof Error && error.message !== 'Aborted') {
+          debug.warn(`Display scheduling failed for char: ${char}`, error);
+        }
+      }
+    })();
   }
 
-  // Play audio and wait for completion
+  // Main audio timeline (always the same duration regardless of display offset)
   try {
     await ctx.io.playChar(char, cfg.wpm);
   } catch (error) {
     debug.warn(`Audio failed for char: ${char}`, error);
-  }
-
-  // Positive offset: Show character DURING/AFTER audio
-  if (offsetMs > 0) {
-    await ctx.clock.sleep(offsetMs, sessionSignal);
-    addToDisplay();
   }
 
   // Standard post-audio spacing
