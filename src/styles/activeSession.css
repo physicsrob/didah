@@ -348,6 +348,8 @@
 @media (max-width: 480px) {
   .session-display-area {
     padding: 0 12px;
+    align-items: flex-start;
+    padding-top: 40px;
   }
 
   .header-info {
