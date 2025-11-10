@@ -328,6 +328,20 @@ export function SessionCompletePage({ statistics: fullStatistics, onRestart, onS
                     </div>
                   )}
 
+                  {fullStatistics.config.mode === 'head-copy' && fullStatistics.headCopyFirstTryAccuracy !== undefined && (
+                    <div className="stat-item">
+                      <span className="stat-label">First Try Accuracy</span>
+                      <span className="stat-value">{Math.round(fullStatistics.headCopyFirstTryAccuracy)}%</span>
+                    </div>
+                  )}
+
+                  {fullStatistics.config.mode === 'head-copy' && fullStatistics.headCopyAverageAttempts !== undefined && (
+                    <div className="stat-item">
+                      <span className="stat-label">Average Attempts</span>
+                      <span className="stat-value">{fullStatistics.headCopyAverageAttempts.toFixed(1)}</span>
+                    </div>
+                  )}
+
                   <div className="stat-item">
                     <span className="stat-label">Characters Practiced</span>
                     <span className="stat-value">{totalChars}</span>

@@ -34,6 +34,16 @@ export interface LiveCopyState {
 }
 
 /**
+ * Per-word statistics for Head Copy mode
+ */
+export interface HeadCopyWordStats {
+  word: string;
+  attemptCount: number;      // button clicks + timeouts
+  firstTryCorrect: boolean;  // true ONLY if no timeouts AND first click correct
+  completed: boolean;        // eventually got it right
+}
+
+/**
  * Head Copy mode state
  */
 export interface HeadCopyState {
@@ -49,6 +59,7 @@ export interface HeadCopyState {
     timeouts: number;
     accuracy: number; // percentage
   };
+  perWordStats: HeadCopyWordStats[];  // Per-word attempt tracking
 }
 
 /**

@@ -219,7 +219,26 @@ export function ActiveSessionPage({ config, sourceContent, onComplete }: ActiveS
     } else {
       // Non-Live Copy modes: calculate stats normally
       const calculator = new SessionStatsCalculator();
-      const fullStatistics = calculator.calculateStats(eventCollector.current, config);
+      const baseStatistics = calculator.calculateStats(eventCollector.current, config);
+
+      // For Head Copy mode, add first-try accuracy and average attempts
+      let fullStatistics = baseStatistics;
+      if (config.mode === 'head-copy' && snapshot.headCopyState) {
+        const perWordStats = snapshot.headCopyState.perWordStats;
+        const totalWords = perWordStats.length;
+
+        if (totalWords > 0) {
+          const firstTryCorrectWords = perWordStats.filter(w => w.firstTryCorrect).length;
+          const totalAttempts = perWordStats.reduce((sum, w) => sum + w.attemptCount, 0);
+
+          fullStatistics = {
+            ...baseStatistics,
+            headCopyFirstTryAccuracy: (firstTryCorrectWords / totalWords) * 100,
+            headCopyAverageAttempts: totalAttempts / totalWords
+          };
+        }
+      }
+
       debug.log('Session statistics calculated:', fullStatistics);
 
       const doComplete = () => {

@@ -109,7 +109,8 @@ export function createSessionRunner(deps: SessionRunnerDeps): SessionRunner {
       headCopyState: snapshot.headCopyState ? {
         ...snapshot.headCopyState,
         distractors: [...snapshot.headCopyState.distractors],
-        stats: { ...snapshot.headCopyState.stats }
+        stats: { ...snapshot.headCopyState.stats },
+        perWordStats: [...snapshot.headCopyState.perWordStats]
       } : undefined,
       learnState: snapshot.learnState ? {
         ...snapshot.learnState,
@@ -185,7 +186,8 @@ export function createSessionRunner(deps: SessionRunnerDeps): SessionRunner {
           successes: 0,
           timeouts: 0,
           accuracy: 0
-        }
+        },
+        perWordStats: []
       } : undefined,
       listenState: (config.mode === 'listen' && config.listenTimingOffset === 'word') ? {
         bufferedWord: []

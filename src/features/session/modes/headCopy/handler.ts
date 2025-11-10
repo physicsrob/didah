@@ -8,7 +8,7 @@
 import type { SessionConfig } from '../../../../core/types/domain';
 import type { HandlerContext } from '../shared/types';
 import type { HeadCopyState } from '../../runtime/io';
-import { playWordAudio, waitForWordClick } from './emission';
+import { playWordAudio, waitForWordClick, BUTTON_TIMEOUT_MS } from './emission';
 import { debug } from '../../../../core/debug';
 import { shuffleArray } from '../../../../core/utils/array';
 import { calculateCharacterDurationMs, calculateFarnsworthSpacingMs } from '../../../../core/morse/timing';
@@ -17,11 +17,6 @@ import { calculateCharacterDurationMs, calculateFarnsworthSpacingMs } from '../.
  * Flash duration for visual feedback (green/red)
  */
 const FLASH_DURATION_MS = 500;
-
-/**
- * Button timeout for post-audio waiting (2.5 seconds)
- */
-const BUTTON_TIMEOUT_MS = 2500;
 
 /**
  * Helper to update head copy state
@@ -133,6 +128,11 @@ export async function handleHeadCopyWord(
   let isCorrect = false;
   let isFirstTrial = true;
 
+  // Track per-word statistics
+  let wordAttemptCount = 0;
+  let hadFirstOutcome = false;  // Track if we've seen the first timeout/click
+  let firstTryCorrect = false;  // Will be true only if first outcome is a correct click
+
   // Retry loop - keep trying until correct or session ends
   while (!isCorrect) {
     // Check if paused and wait for resume before starting new trial
@@ -219,6 +219,13 @@ export async function handleHeadCopyWord(
       if (outcome.type === 'timeout') {
         debug.log(`[HeadCopy Handler] Timeout - will replay word '${word}'`);
 
+        // Track per-word attempt
+        wordAttemptCount++;
+        if (!hadFirstOutcome) {
+          hadFirstOutcome = true;
+          // Timeout on first try means firstTryCorrect stays false
+        }
+
         // Log timeout event (for statistics)
         ctx.io.log({ type: 'timeout', at: ctx.clock.now(), char: word });
 
@@ -230,6 +237,9 @@ export async function handleHeadCopyWord(
             timeouts: currentStats.timeouts + 1
           }
         });
+
+        // Update remaining time during retry
+        ctx.updateRemainingTime(startTime, config);
         ctx.publish();
 
         // Mark that we've completed the first trial
@@ -249,6 +259,13 @@ export async function handleHeadCopyWord(
       debug.log(`[HeadCopy Handler] Button clicked: '${clickedWord}', correct: ${correct}`);
 
       isCorrect = correct;
+
+      // Track per-word attempt
+      wordAttemptCount++;
+      if (!hadFirstOutcome) {
+        hadFirstOutcome = true;
+        firstTryCorrect = correct;  // First outcome is a click - track if correct
+      }
 
       // Log outcome event (for statistics)
       const clickTime = ctx.clock.now();
@@ -304,6 +321,11 @@ export async function handleHeadCopyWord(
         flashResult: null,
         clickedWord: null
       });
+
+      // Update remaining time during retry (only if incorrect, to keep timer updated during replays)
+      if (!isCorrect) {
+        ctx.updateRemainingTime(startTime, config);
+      }
       ctx.publish();
       debug.log(`[HeadCopy Handler] Flash cleared, isCorrect: ${isCorrect}`);
 
@@ -329,6 +351,13 @@ export async function handleHeadCopyWord(
     if (outcome.type === 'timeout') {
       debug.log(`[HeadCopy Handler] Timeout - will replay word '${word}'`);
 
+      // Track per-word attempt
+      wordAttemptCount++;
+      if (!hadFirstOutcome) {
+        hadFirstOutcome = true;
+        // Timeout on first try means firstTryCorrect stays false
+      }
+
       // Log timeout event (for statistics)
       ctx.io.log({ type: 'timeout', at: ctx.clock.now(), char: word });
 
@@ -340,6 +369,9 @@ export async function handleHeadCopyWord(
           timeouts: currentStats.timeouts + 1
         }
       });
+
+      // Update remaining time during retry
+      ctx.updateRemainingTime(startTime, config);
       ctx.publish();
 
       // Mark that we've completed the first trial
@@ -359,6 +391,13 @@ export async function handleHeadCopyWord(
     debug.log(`[HeadCopy Handler] Button clicked: '${clickedWord}', correct: ${correct}`);
 
     isCorrect = correct;
+
+    // Track per-word attempt
+    wordAttemptCount++;
+    if (!hadFirstOutcome) {
+      hadFirstOutcome = true;
+      firstTryCorrect = correct;  // First outcome is a click - track if correct
+    }
 
     // Log outcome event (for statistics)
     const clickTime = ctx.clock.now();
@@ -414,6 +453,11 @@ export async function handleHeadCopyWord(
       flashResult: null,
       clickedWord: null
     });
+
+    // Update remaining time during retry (only if incorrect, to keep timer updated during replays)
+    if (!isCorrect) {
+      ctx.updateRemainingTime(startTime, config);
+    }
     ctx.publish();
     debug.log(`[HeadCopy Handler] Flash cleared, isCorrect: ${isCorrect}`);
 
@@ -427,12 +471,22 @@ export async function handleHeadCopyWord(
   // Update remaining time
   ctx.updateRemainingTime(startTime, config);
 
-  // Clear current word (ready for next)
+  // Record per-word stats
+  const currentPerWordStats = ctx.snapshot.headCopyState!.perWordStats;
   updateHeadCopyState(ctx, {
     currentWord: null,
     distractors: [],
     buttonWords: [],
-    isPlaying: false
+    isPlaying: false,
+    perWordStats: [
+      ...currentPerWordStats,
+      {
+        word,
+        attemptCount: wordAttemptCount,
+        firstTryCorrect,
+        completed: isCorrect
+      }
+    ]
   });
   ctx.publish();
 }

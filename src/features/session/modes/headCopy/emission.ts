@@ -14,9 +14,9 @@ import { debug } from '../../../../core/debug';
 import { select, clockTimeout } from '../../runtime/select';
 
 /**
- * Button timeout: 2.5 seconds to click a button
+ * Button timeout: 3 seconds to click a button
  */
-const BUTTON_TIMEOUT_MS = 2500;
+export const BUTTON_TIMEOUT_MS = 3000;
 
 export type WordClickOutcome =
   | { type: 'click'; clickedWord: string; isCorrect: boolean }

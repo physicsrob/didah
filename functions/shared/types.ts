@@ -133,6 +133,10 @@ export type SessionStatistics = {
   // Learn Mode - Lesson and star rating (optional, only for learn mode)
   learnLesson?: number  // Lesson number (1-20), duplicated from config for easy querying
   learnStars?: number   // Star rating (0-3), calculated from session accuracy
+
+  // Head Copy Mode - First try accuracy and average attempts (optional, only for head-copy mode)
+  headCopyFirstTryAccuracy?: number  // 0-100 percentage of words correct on first try
+  headCopyAverageAttempts?: number   // Average attempts per word (includes timeouts and clicks)
 }
 
 // Validation function for settings
@@ -557,6 +561,20 @@ export function validateSessionStatistics(stats: unknown): stats is SessionStati
   // Validate learnStars if present (optional field for learn mode)
   if (s.learnStars !== undefined) {
     if (typeof s.learnStars !== 'number' || s.learnStars < 0 || s.learnStars > 3 || !Number.isInteger(s.learnStars)) {
+      return false
+    }
+  }
+
+  // Validate headCopyFirstTryAccuracy if present (optional field for head-copy mode)
+  if (s.headCopyFirstTryAccuracy !== undefined) {
+    if (typeof s.headCopyFirstTryAccuracy !== 'number' || s.headCopyFirstTryAccuracy < 0 || s.headCopyFirstTryAccuracy > 100) {
+      return false
+    }
+  }
+
+  // Validate headCopyAverageAttempts if present (optional field for head-copy mode)
+  if (s.headCopyAverageAttempts !== undefined) {
+    if (typeof s.headCopyAverageAttempts !== 'number' || s.headCopyAverageAttempts < 0) {
       return false
     }
   }
