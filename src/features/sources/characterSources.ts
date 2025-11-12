@@ -16,14 +16,30 @@ const MAX_SKIP_ATTEMPTS = 10000;
  */
 export class ContinuousTextSource implements CharacterSource {
   private words: string[];
+  private separators: string[];
   private currentWordIndex: number = 0;
   private currentCharIndex: number = 0;
   private currentWord: string;
   private allowedChars: Set<string>;
 
   constructor(text: string, effectiveAlphabet: string[]) {
-    // Split text into words and filter out empty strings
-    this.words = text.split(/\s+/).filter(word => word.length > 0);
+    // Split text and capture whitespace to preserve newlines
+    const parts = text.split(/(\s+)/);
+    this.words = [];
+    this.separators = [];
+
+    for (let i = 0; i < parts.length; i += 2) {
+      const word = parts[i];
+      if (word && word.length > 0) {
+        this.words.push(word);
+      }
+      // Capture separator (space or newline)
+      if (i + 1 < parts.length && parts[i + 1]) {
+        const whitespace = parts[i + 1];
+        this.separators.push(whitespace.includes('\n') ? '\n' : ' ');
+      }
+    }
+
     this.currentWord = this.words[0] || '';
     // Store allowed characters as a Set for O(1) lookup
     this.allowedChars = new Set(effectiveAlphabet.map(char => char.toUpperCase()));
@@ -37,13 +53,15 @@ export class ContinuousTextSource implements CharacterSource {
 
       // If we've reached the end of current word
       if (this.currentCharIndex >= this.currentWord.length) {
+        // Get the separator after the previous word (before moving to next)
+        const prevIndex = this.currentWordIndex;
         // Move to next word
         this.currentWordIndex = (this.currentWordIndex + 1) % this.words.length;
         this.currentWord = this.words[this.currentWordIndex] || '';
         this.currentCharIndex = 0;
 
-        // Return space between words
-        return ' ';
+        // Return separator between words (space or newline)
+        return this.separators[prevIndex] || ' ';
       }
 
       // Get next character from current word
@@ -77,13 +95,15 @@ export class ContinuousTextSource implements CharacterSource {
 
         // If we've reached the end of current word
         if (tempCharIndex >= tempWord.length) {
+          // Get the separator after the current word (before moving to next)
+          const separator = this.separators[tempWordIndex] || ' ';
           // Move to next word
           tempWordIndex = (tempWordIndex + 1) % this.words.length;
           tempWord = this.words[tempWordIndex] || '';
           tempCharIndex = 0;
 
-          // Return space between words
-          result += ' ';
+          // Return separator between words (space or newline)
+          result += separator;
           found = true;
           break;
         }

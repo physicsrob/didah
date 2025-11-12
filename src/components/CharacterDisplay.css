@@ -66,9 +66,7 @@
 
 /* Words wrapper for multi-line display */
 .character-words-wrapper {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: baseline;
+    display: block;
     width: 100%;
 }
 

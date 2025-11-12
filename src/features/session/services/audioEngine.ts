@@ -79,10 +79,10 @@ export class AudioEngine {
       await this.audioContext.resume();
     }
 
-    // Handle space character as a silent pause (4 dits + extra word spacing)
+    // Handle space and newline characters as a silent pause (4 dits + extra word spacing)
     // This adds to the standard 3-dit inter-character spacing for 7 total (or more with extraWordSpacing)
     // Each extra word spacing adds 7 dits (one full space character worth)
-    if (char === ' ') {
+    if (char === ' ' || char === '\n') {
       const ditMs = wpmToDitMs(wpm);
       await this.stop(); // Stop any current playback
       this.playbackPromise = new Promise(resolve => {

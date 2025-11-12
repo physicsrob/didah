@@ -65,39 +65,43 @@ function getStatusClass(status: CharacterStatus): string {
 
 /**
  * Group characters into words for wrapping
- * Words are separated by spaces, and each word maintains its character styling
+ * Words are separated by spaces or newlines, and each word maintains its character styling
  */
 function groupIntoWords(characters: DisplayCharacter[]): Array<{
   chars: DisplayCharacter[];
   indices: number[];
   isSpace: boolean;
+  isNewline: boolean;
 }> {
   const words: Array<{
     chars: DisplayCharacter[];
     indices: number[];
     isSpace: boolean;
+    isNewline: boolean;
   }> = [];
 
   let currentWord: DisplayCharacter[] = [];
   let currentIndices: number[] = [];
 
   characters.forEach((char, index) => {
-    if (char.text === ' ') {
+    if (char.text === ' ' || char.text === '\n') {
       // Flush current word if any
       if (currentWord.length > 0) {
         words.push({
           chars: currentWord,
           indices: currentIndices,
-          isSpace: false
+          isSpace: false,
+          isNewline: false
         });
         currentWord = [];
         currentIndices = [];
       }
-      // Add space as its own "word"
+      // Add whitespace as its own "word"
       words.push({
         chars: [char],
         indices: [index],
-        isSpace: true
+        isSpace: char.text === ' ',
+        isNewline: char.text === '\n'
       });
     } else {
       // Add to current word
@@ -111,7 +115,8 @@ function groupIntoWords(characters: DisplayCharacter[]): Array<{
     words.push({
       chars: currentWord,
       indices: currentIndices,
-      isSpace: false
+      isSpace: false,
+      isNewline: false
     });
   }
 
@@ -153,25 +158,30 @@ export function CharacterDisplay({
           </>
         ) : (
           <div className="character-words-wrapper">
-            {words.map((word, wordIndex) => (
-              <span
-                key={wordIndex}
-                className={`character-word ${word.isSpace ? 'word-space' : ''}`}
-              >
-                {word.chars.map((char, charIndex) => {
-                  const globalIndex = word.indices[charIndex];
-                  const isLast = globalIndex === lastCharIndex;
-                  return (
-                    <span
-                      key={char.key ?? globalIndex}
-                      className={`${getStatusClass(char.status)} ${isLast ? 'char-current' : ''}`}
-                    >
-                      {char.text}
-                    </span>
-                  );
-                })}
-              </span>
-            ))}
+            {words.map((word, wordIndex) => {
+              if (word.isNewline) {
+                return <br key={`word-${word.indices[0]}`} />;
+              }
+              return (
+                <span
+                  key={wordIndex}
+                  className={`character-word ${word.isSpace ? 'word-space' : ''}`}
+                >
+                  {word.chars.map((char, charIndex) => {
+                    const globalIndex = word.indices[charIndex];
+                    const isLast = globalIndex === lastCharIndex;
+                    return (
+                      <span
+                        key={char.key ?? globalIndex}
+                        className={`${getStatusClass(char.status)} ${isLast ? 'char-current' : ''}`}
+                      >
+                        {char.text}
+                      </span>
+                    );
+                  })}
+                </span>
+              );
+            })}
           </div>
         )}
       </div>

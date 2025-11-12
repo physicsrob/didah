@@ -145,9 +145,9 @@ export function getSpacingMs(wpm: number) {
  * @param extraWordSpacing Additional space characters worth of time to add to word spacing (0-5)
  */
 export function calculateCharacterDurationMs(char: string, wpm: number, extraWordSpacing: number): number {
-  // Handle space character (4 dits of silence + extra word spacing)
+  // Handle space and newline characters (4 dits of silence + extra word spacing)
   // Each extra space adds 7 dits (the standard inter-word spacing)
-  if (char === ' ') {
+  if (char === ' ' || char === '\n') {
     const ditMs = wpmToDitMs(wpm);
     return ditMs * (4 + (extraWordSpacing * 7));
   }

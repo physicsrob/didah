@@ -147,8 +147,8 @@ export async function onRequestGet(context: CloudflareContext) {
         for (let i = 0; i < 5; i++) {
           qsos.push(generateQso());
         }
-        // Join with AR AR AR (end of message) as separator
-        text = qsos.join(' AR AR AR ');
+        // Join with AR AR AR (end of message) and newline as separator
+        text = qsos.join(' AR AR AR\n');
         break;
       }
 
@@ -201,14 +201,14 @@ export async function onRequestGet(context: CloudflareContext) {
 
             // Format based on mode (headlines vs full)
             if (isFullMode) {
-              // Full mode: "Title 1 = Body 1 AR Title 2 = Body 2 AR ..."
+              // Full mode: "Title 1 = Body 1 AR\nTitle 2 = Body 2 AR\n..."
               text = shuffledPosts.map(p => {
                 const body = stripUrls(p.body.trim());
                 return body ? `${p.title} = ${body} AR` : `${p.title} AR`;
-              }).join(' ');
+              }).join('\n');
             } else {
-              // Headlines mode: "Title 1 = Title 2 = Title 3 = ..."
-              text = shuffledPosts.map(p => p.title).join(' = ') + ' = ';
+              // Headlines mode: "Title 1 =\nTitle 2 =\nTitle 3 =\n..."
+              text = shuffledPosts.map(p => p.title).join(' =\n') + ' =\n';
             }
 
             // Add staleness warning in response headers if data is old
@@ -247,8 +247,8 @@ export async function onRequestGet(context: CloudflareContext) {
         // Non-Reddit RSS sources (Hacker News, BBC News)
         else if (baseId in RSS_URLS) {
           const titles = await fetchRSS(RSS_URLS[baseId]);
-          // Join with separator like Reddit headlines
-          text = titles.length > 0 ? shuffleArray(titles).join(' = ') + ' = ' : 'No items found in feed';
+          // Join with newlines for better display
+          text = titles.length > 0 ? shuffleArray(titles).join('\n') : 'No items found in feed';
         } else {
           return Response.json({ error: 'Source not found' }, { status: 404 });
         }

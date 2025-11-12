@@ -67,8 +67,12 @@ export function evaluateLiveCopy(
     }
   }
 
+  // Normalize newlines to spaces before diffing (they are equivalent for evaluation)
+  const normalizedTransmitted = transmitted.replace(/\n/g, ' ');
+  const normalizedTyped = typed.replace(/\n/g, ' ');
+
   // Get character-level diff
-  const diffParts: Change[] = diffChars(transmitted, typed);
+  const diffParts: Change[] = diffChars(normalizedTransmitted, normalizedTyped);
 
   const diffSegments: DiffSegment[] = [];
   const events: LogEvent[] = [];
@@ -143,15 +147,15 @@ export function evaluateLiveCopy(
   const correctCount = events.filter(e => e.type === 'correct').length;
   const incorrectCount = events.filter(e => e.type === 'incorrect').length;
   const extraCount = diffSegments.filter(s => s.type === 'extra').length;
-  const totalTransmitted = transmitted.length;
+  const totalTransmitted = normalizedTransmitted.length;
   const accuracy = totalTransmitted > 0 ? (correctCount / totalTransmitted) * 100 : 0;
 
   return {
     events,
     diffSegments,
     metrics: {
-      transmitted,
-      typed,
+      transmitted: normalizedTransmitted,
+      typed: normalizedTyped,
       accuracy,
       correctCount,
       incorrectCount,

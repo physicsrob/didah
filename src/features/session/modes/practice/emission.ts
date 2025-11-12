@@ -51,22 +51,22 @@ export async function runPracticeEmission(
   const emissionStart = clock.now();
   debug.log(`[Emission] Start - Char: '${char}', Time: ${emissionStart}ms`);
 
-  // Handle spaces specially - they auto-advance with no user input required
-  if (char === ' ') {
-    debug.log(`[Emission] Space character - auto-advancing`);
+  // Handle spaces and newlines specially - they auto-advance with no user input required
+  if (char === ' ' || char === '\n') {
+    debug.log(`[Emission] Whitespace character - auto-advancing`);
 
-    // Play the space timing (4 dits of silence)
-    await io.playChar(' ', cfg.wpm);
+    // Play the whitespace timing (4 dits of silence)
+    await io.playChar(char, cfg.wpm);
 
     // Log as automatically correct
     io.log({
       type: 'correct',
       at: clock.now(),
-      char: ' ',
+      char,
       latencyMs: 0
     });
 
-    debug.log(`[Emission] End - Char: ' ', Outcome: correct (auto)`);
+    debug.log(`[Emission] End - Char: '${char}', Outcome: correct (auto)`);
     return 'correct';
   }
 
