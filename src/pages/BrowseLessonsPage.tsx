@@ -5,7 +5,7 @@
  * Navigates back to Learn Mode when starting a lesson.
  */
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { HeaderBar } from '../components/HeaderBar';
 import { StarDisplay } from '../components/StarDisplay';
@@ -19,14 +19,6 @@ export function BrowseLessonsPage() {
   const navigate = useNavigate();
 
   const [selectedLesson, setSelectedLesson] = useState<number | null>(null);
-  const [wpm, setWpm] = useState<number>(15);
-
-  // Sync WPM from centralized settings when they load
-  useEffect(() => {
-    if (settings) {
-      setWpm(settings.wpm);
-    }
-  }, [settings]);
 
   // Get star ratings from settings
   const learnProgress = useMemo(() => settings?.learnProgress || {}, [settings]);
@@ -133,11 +125,9 @@ export function BrowseLessonsPage() {
                 type="range"
                 min="5"
                 max="40"
-                value={wpm}
+                value={settings.wpm}
                 onChange={(e) => {
-                  const newWpm = Number(e.target.value);
-                  setWpm(newWpm);
-                  updateSetting('wpm', newWpm);
+                  updateSetting('wpm', Number(e.target.value));
                 }}
                 style={{ flex: 1 }}
               />
@@ -148,7 +138,7 @@ export function BrowseLessonsPage() {
                 minWidth: '80px',
                 textAlign: 'right'
               }}>
-                {wpm} WPM
+                {settings.wpm} WPM
               </span>
             </div>
           </div>

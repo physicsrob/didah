@@ -29,15 +29,7 @@ export function LearnConfigPage({ onStart }: LearnConfigPageProps) {
   const location = useLocation();
   const navigate = useNavigate();
 
-  const [wpm, setWpm] = useState<number>(15);
   const [isStarting, setIsStarting] = useState(false);
-
-  // Sync WPM from centralized settings when they load
-  useEffect(() => {
-    if (settings) {
-      setWpm(settings.wpm);
-    }
-  }, [settings]);
 
   // Get star ratings from settings (works for both anonymous and authenticated users)
   const learnProgress = useMemo(() => settings?.learnProgress || {}, [settings]);
@@ -90,7 +82,7 @@ export function LearnConfigPage({ onStart }: LearnConfigPageProps) {
 
   // Handle start session for a specific lesson
   const handleStartLesson = useCallback(async (lesson: number) => {
-    if (isStarting) return;
+    if (isStarting || !settings) return;
 
     setIsStarting(true);
 
@@ -99,12 +91,15 @@ export function LearnConfigPage({ onStart }: LearnConfigPageProps) {
       const sourceId = `koch-lesson-${lesson}`;
       const content = await fetchSourceContent(sourceId, false); // No auth required
 
+      // Use settings.wpm directly to ensure we always use the correct speed
+      const sessionWpm = settings.wpm;
+
       // Build session config
       const config: SessionConfig = {
         mode: 'learn',
         lengthMs: Number.MAX_SAFE_INTEGER, // No time limit (ends after 20 characters)
-        wpm,
-        farnsworthWpm: wpm, // No Farnsworth for Learn Mode
+        wpm: sessionWpm,
+        farnsworthWpm: sessionWpm, // No Farnsworth for Learn Mode
         speedTier: 'slow',
         sourceId,
         sourceName: `Koch Method - Lesson ${lesson}`,
@@ -113,7 +108,7 @@ export function LearnConfigPage({ onStart }: LearnConfigPageProps) {
         effectiveAlphabet: getCharactersForLesson(lesson),
         extraWordSpacing: 0,
         listenTimingOffset: 0,
-        characterSpeed: wpm,
+        characterSpeed: sessionWpm,
         learnLesson: lesson,
       };
 
@@ -123,7 +118,7 @@ export function LearnConfigPage({ onStart }: LearnConfigPageProps) {
       alert('Failed to start session. Please try again.');
       setIsStarting(false);
     }
-  }, [isStarting, wpm, onStart]);
+  }, [isStarting, settings, onStart]);
 
   // Auto-start lesson if navigated from Browse Lessons page
   useEffect(() => {
@@ -204,11 +199,9 @@ export function LearnConfigPage({ onStart }: LearnConfigPageProps) {
                 type="range"
                 min="5"
                 max="40"
-                value={wpm}
+                value={settings.wpm}
                 onChange={(e) => {
-                  const newWpm = Number(e.target.value);
-                  setWpm(newWpm);
-                  updateSetting('wpm', newWpm);
+                  updateSetting('wpm', Number(e.target.value));
                 }}
                 style={{ flex: 1 }}
               />
@@ -219,7 +212,7 @@ export function LearnConfigPage({ onStart }: LearnConfigPageProps) {
                 minWidth: '80px',
                 textAlign: 'right'
               }}>
-                {wpm} WPM
+                {settings.wpm} WPM
               </span>
             </div>
           </div>
